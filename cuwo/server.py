@@ -399,7 +399,8 @@ class CubeWorldProtocol(Protocol):
         print 'Connected'
 
     def connectionLost(self, reason):
-        pass
+        if self.relay_client is not None:
+            self.relay_client.transport.loseConnection()
 
     def serverDataReceived(self, data):
         self.server_handler.feed(data)
