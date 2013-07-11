@@ -1,3 +1,5 @@
+![cuwo](http://mp2.dk/cuwo/logo.png)
+
 cuwo
 ====
 
