@@ -19,7 +19,10 @@ from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from bytes import ByteReader, ByteWriter, OutOfData
+from printutility import PrintUtility
 import zlib
+
+packetlogfile=open('./packetLog.txt', 'w+')
 
 class debug:
     packets_printed = 0
@@ -55,12 +58,12 @@ class ServerData(Packet):
         if reader.read_uint32() != 0:
             print 'wierd server data'
             return
-        self.connection_id = reader.read_uint64() # must be > 1 and < 10
+        self.entity_id = reader.read_uint64() # must be > 1 and < 10
         self.connection_data = reader.read(0x1168)
 
     def write(self, writer):
         writer.write_uint32(0)
-        writer.write_uint64(self.connection_id)
+        writer.write_uint64(self.entity_id)
         writer.write(self.connection_data)
 
 class SeedData(Packet):
@@ -68,12 +71,48 @@ class SeedData(Packet):
         self.seed = reader.read_uint32()
 
     def write(self, writer):
-        writer.write_uint32(self.seed)
+        writer.write_uint32(self.seed)    
 
-class Unknown0(Packet):
+
+class Server0(Packet):
     def read(self, reader):
         size = reader.read_uint32()
         self.data = zlib.decompress(reader.read(size))
+        
+        datareader = ByteReader(self.data)
+        
+        self.entity = datareader.read_uint64()
+        self.packetflags = datareader.read_uint64()
+        
+        
+        packetlogfile.write("------------server packet0--------------\n")
+        packetlogfile.write(("{0:b}".format(self.packetflags)) + "\n")
+        packetlogfile.write(PrintUtility.to_hex(self.data))
+        packetlogfile.write("\n----------------------------------------\n")
+        
+        
+        
+        
+        
+    def write(self, writer):
+        data = zlib.compress(self.data)
+        writer.write_uint32(len(data))
+        writer.write(data)
+
+class Client0(Packet):
+    def read(self, reader):
+        size = reader.read_uint32()
+        self.data = zlib.decompress(reader.read(size))
+        
+        datareader = ByteReader(self.data)
+        
+        self.entity = datareader.read_uint64()
+        self.packetflags = datareader.read_uint64()
+        
+        packetlogfile.write("------------client packet0--------------\n")
+        packetlogfile.write(("{0:b}".format(self.packetflags)) + "\n")
+        packetlogfile.write(PrintUtility.to_hex(self.data))
+        packetlogfile.write("\n----------------------------------------\n")
 
     def write(self, writer):
         data = zlib.compress(self.data)
@@ -134,60 +173,158 @@ class Unknown5(Packet):
         writer.write_uint32(self.something)
         writer.write_uint32(self.something2)
 
-class Unknown6(Packet):
+class CWItemCustomizationBlock:
+    xOffset = 0
+    yOffset = 0
+    zOffset = 0
+    material = 0
+    level = 0
+    unknown = 0
+
+
+class CWItem:
+    amount = 0
+    itemType = 0
+    subType = 0
+    unknown1 = 0
+    modifier = 0
+    unknown2 = 0
+    rarity = 0
+    adapted = 0
+    level = 0
+    customization = []
+    customizationBlocksUsed = 0
+    
+class ItemFlags:
+    adapted = 1
+    flags = 0
+    
+    def __init__(self, itemflags):
+        self.flags = itemflags
+    
+    def isAdapted(self, flags):
+        return (flags & self.adapted) == self.adapted
+
+
+class ItemPacket(Packet):
+    item = CWItem()
+    
     def read(self, reader):
-        self.data = reader.read(300)
+        self.item.itemType = reader.read_uint8();
+        self.item.subType = reader.read_uint8();
+        self.item.unknown1 = reader.read_uint16();  # just padding?
+        self.item.modifier = reader.read_uint32();
+        self.item.unknown2 = reader.read_uint32();
+        self.item.rarity = reader.read_uint8();
+        self.item.material = reader.read_uint8();
+        self.item.itemFlags = ItemFlags(reader.read_uint16());
+        self.item.level = reader.read_uint16();
+        self.item.unknown3 = reader.read_uint16();
+        
+        self.item.customization = []
+        for i in range(32):
+            block = CWItemCustomizationBlock()
+            block.xOffset = reader.read_uint8();
+            block.yOffset = reader.read_uint8();
+            block.zOffset = reader.read_uint8();
+            block.material = reader.read_uint8();
+            block.level = reader.read_uint16();
+            block.unknown = reader.read_uint16(); # just padding?
+            
+            self.item.customization.append(block)    
+        
+        self.item.customizationBlocksUsed = reader.read_uint32();
+
+        self.data = reader.read(20)
+        
+        print PrintUtility.to_hex(data)
 
     def write(self, writer):
+        writer.write_uint8(self.item.itemType)
+        writer.write_uint8(self.item.subType)
+        writer.write_uint16(self.item.unknown1)
+        writer.write_uint32(self.item.modifier)
+        writer.write_uint32(self.item.unknown2)
+        writer.write_uint8(self.item.rarity)
+        writer.write_uint8(self.item.material)
+        writer.write_uint16(self.item.itemFlags.flags)
+        writer.write_uint16(self.item.level)
+        writer.write_uint16(self.item.unknown3)
+        
+        for block in self.item.customization:
+            writer.write_uint8(block.xOffset)
+            writer.write_uint8(block.yOffset)
+            writer.write_uint8(block.zOffset)
+            writer.write_uint8(block.material)
+            writer.write_uint16(block.level)
+            writer.write_uint16(block.unknown)
+            
+        writer.write_uint32(self.item.customizationBlocksUsed)
+        
         writer.write(self.data)
 
-class HitPacket(Packet):
-    def read(self, reader):
-        self.something = reader.read_uint32()
-        self.something2 = reader.read_uint32()
-        self.something3 = reader.read_uint32()
-        self.something4 = reader.read_uint32()
-        self.something5 = reader.read_uint32()
-        self.something6 = reader.read_uint8()
-        reader.skip(3)
-        self.something7 = reader.read_uint32()
-        self.something8 = reader.read_uint32()
-        self.something9 = reader.read_uint32()
-        self.something10 = reader.read_uint32()
-        self.something11 = reader.read_uint32()
-        self.something12 = reader.read_uint32()
-        self.something13 = reader.read_uint32()
-        self.something14 = reader.read_uint32()
-        self.something15 = reader.read_uint32()
-        self.something16 = reader.read_uint32()
-        self.something17 = reader.read_uint32()
-        self.something18 = reader.read_uint8()
-        self.something19 = reader.read_uint8()
-        self.something20 = reader.read_uint8()
-        reader.skip(1)
-        print vars(self)
 
+class Vector3:
+    x = 0
+    y = 0
+    z = 0
+
+class HitPacket(Packet):
+    hitLocation = Vector3()
+    
+    def read(self, reader):
+        self.attackerEntityId = reader.read_uint64() # Entity ID doing the hitting
+        self.targetEntityId = reader.read_uint64() # Entity ID of what was hit
+        self.damageDealt = reader.read_float() # Negative numbers when getting healed      
+        self.isCritical = reader.read_uint8() # 1 if critical
+        reader.skip(3)
+        self.stunDuration = reader.read_uint32() # stun duration in ms (if >0 stuns target for amount of ms)
+        self.something8 = reader.read_uint32() # always 0
+        self.hitLocation.x = reader.read_uint64()
+        self.hitLocation.y = reader.read_uint64()
+        self.hitLocation.z = reader.read_uint64()
+        self.something15 = reader.read_uint32() # yea... not a clue, tried double\float\int32\int64, and none of it looks like it makes any sense to me.
+        self.something16 = reader.read_uint32() # not a clue here either, seems so random.
+        self.something17 = reader.read_uint32() # seems attack type related, every normal attack changes up to the point of max hitcombo, abilities give different numbers too, perhaps its mutiple things
+        self.isSkillHit = reader.read_uint8() # is 1 when ever hit by a skill, like mouse2, or ability1
+        self.isEvading = reader.read_uint8() # 3 when enemy is evading (misses, when mobs are unable to reach you), seen 4 once, not sure what happend, but its more then just evading
+        self.something20 = reader.read_uint8() # always 0
+        reader.skip(1)       
+        
+        # no clue always printing to figure it out.
+        print "something15", self.something15
+        print "something16", self.something16
+        print "something17", self.something17
+        
+        # things im not sure about that are always one value or another
+        # pay attention when these do show up    
+        if self.something8 != 0:
+            print "!! something8", self.something8
+        if self.something20 != 0:
+            print "!! something20", self.something20
+                
+        if self.isEvading != 0 and self.isEvading != 3:
+            print "!! isEvading", self.isEvading
+            
+        if self.isSkillHit != 0 and self.isSkillHit != 1: 
+            print "!! isSkillHit", self.isSkillHit
+            
     def write(self, writer):
-        writer.write_uint32(self.something)
-        writer.write_uint32(self.something2)
-        writer.write_uint32(self.something3)
-        writer.write_uint32(self.something4)
-        writer.write_uint32(self.something5)
-        writer.write_uint8(self.something6)
+        writer.write_uint64(self.attackerEntityId)
+        writer.write_uint64(self.targetEntityId)
+        writer.write_float(self.damageDealt) 
+        writer.write_uint8(self.isCritical)
         writer.pad(3)
-        writer.write_uint32(self.something7)
+        writer.write_uint32(self.stunDuration)
         writer.write_uint32(self.something8)
-        writer.write_uint32(self.something9)
-        writer.write_uint32(self.something10)
-        writer.write_uint32(self.something11)
-        writer.write_uint32(self.something12)
-        writer.write_uint32(self.something13)
-        writer.write_uint32(self.something14)
+        writer.write_uint64(self.hitLocation.x)
+        writer.write_uint64(self.hitLocation.y)
+        writer.write_uint64(self.hitLocation.z)
         writer.write_uint32(self.something15)
         writer.write_uint32(self.something16)
         writer.write_uint32(self.something17)
-        writer.write_uint8(self.something18)
-        writer.write_uint8(self.something19)
+        writer.write_uint8(self.isSkillHit)
+        writer.write_uint8(self.isEvading)
         writer.write_uint8(self.something20)
         writer.pad(1)
 
@@ -252,8 +389,8 @@ class Unknown12(Packet):
         writer.write_uint32(self.y)
 
 CS_PACKETS = {
-    0 : Unknown0,
-    6 : Unknown6, # drop/pickup/interact
+    0 : Client0,
+    6 : ItemPacket, # drop/pickup/interact
     7 : HitPacket, # hit enemy
     8 : Unknown8, # stealth
     9 : Unknown9, # shoot arrow
@@ -264,7 +401,7 @@ CS_PACKETS = {
 }
 
 SC_PACKETS = {
-    0 : Unknown0,
+    0 : Server0,
     1 : Unknown1,
     2 : Unknown2,
     3 : Unknown3,

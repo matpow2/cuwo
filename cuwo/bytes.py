@@ -24,10 +24,14 @@ import struct
 
 INT8 = struct.Struct('<b')
 UINT8 = struct.Struct('<B')
+INT16 = struct.Struct('<h')
+UINT16 = struct.Struct('<H')
 INT32 = struct.Struct('<i')
 UINT32 = struct.Struct('<I')
 INT64 = struct.Struct('<q')
 UINT64 = struct.Struct('<Q')
+FLOAT = struct.Struct('<f')
+DOUBLE = struct.Struct('<d')
 
 class OutOfData(struct.error):
     pass
@@ -58,6 +62,12 @@ class ByteWriter(object):
     def write_uint8(self, value):
         self.write_struct(UINT8, value)
 
+    def write_int16(self, value):
+        self.write_struct(INT16, value)
+
+    def write_uint16(self, value):
+        self.write_struct(UINT16, value)
+
     def write_int32(self, value):
         self.write_struct(INT32, value)
 
@@ -69,6 +79,12 @@ class ByteWriter(object):
 
     def write_uint64(self, value):
         self.write_struct(UINT64, value)
+        
+    def write_float(self, value):
+        self.write_struct(FLOAT, value)
+        
+    def write_double(self, value):
+        self.write_struct(DOUBLE, value)
 
 class ByteReader(object):
     def __init__(self, data = None, fp = None):
@@ -104,6 +120,12 @@ class ByteReader(object):
     def read_uint8(self):
         return self.read_struct(UINT8)
 
+    def read_int16(self):
+        return self.read_struct(INT16)
+
+    def read_uint16(self):
+        return self.read_struct(UINT16)
+    
     def read_int32(self):
         return self.read_struct(INT32)
 
@@ -115,3 +137,9 @@ class ByteReader(object):
 
     def read_uint64(self):
         return self.read_struct(UINT64)
+    
+    def read_float(self):
+        return self.read_struct(FLOAT)
+    
+    def read_double(self):
+        return self.read_struct(DOUBLE)
