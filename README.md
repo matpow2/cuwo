@@ -17,6 +17,8 @@ There is also a working Cube World/Qubicle model converter. Find it in the
 Special thanks
 ==============
 
+Perl - protocol RE
+
 DRayX - encrypt.py and protocol RE
 
 MAT4DOR - cub model details
