@@ -1,6 +1,4 @@
 ![cuwo](http://mp2.dk/cuwo/logo.png)
-
-cuwo
 ====
 
 cuwo is an open server implementation for Cube World, and includes various
@@ -20,5 +18,7 @@ Special thanks
 ==============
 
 DRayX - encrypt.py and protocol RE
+
 MAT4DOR - cub model details
+
 Xaymar - RE and character details
