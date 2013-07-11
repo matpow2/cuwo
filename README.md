@@ -4,6 +4,12 @@
 cuwo is an open server implementation for Cube World, and includes various
 utilities to manipulate its data.
 
+Running
+=======
+
+See the [quick-start guide](https://github.com/matpow2/cuwo/wiki) for a 
+quick way to get started.
+
 Status
 ======
 
