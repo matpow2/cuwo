@@ -17,6 +17,33 @@
 
 import sys
 
+class InvalidPlayer(Exception):
+    pass
+
+def get_player(factory, value):
+    ret = None
+    try:
+        if value.startswith('#'):
+            value = int(value[1:])
+            ret = factory.connections[value]
+        else:
+            connections = factory.connections
+            try:
+                ret = connections[value]
+            except KeyError:
+                value = value.lower()
+                for player in connections.values():
+                    name = player.entity_data.name.lower()
+                    if name == value:
+                        return player
+                    if name.count(value):
+                        ret = player
+    except (KeyError, IndexError, ValueError):
+        pass
+    if ret is None:
+        raise InvalidPlayer()
+    return ret
+
 class BaseScript(object):
     def on_load(self):
         pass
@@ -42,7 +69,14 @@ class ProtocolScript(BaseScript):
         f = self.parent.commands.get(name, None)
         if f is None:
             return
-        ret = f(self, *args)
+        ret = None
+        try:
+            ret = f(self, *args)
+        except InvalidPlayer:
+            ret = 'Invalid player specified'
+        except Exception, e:
+            import traceback
+            traceback.print_exc()
         if ret is not None:
             self.protocol.send_chat(ret)
         return False

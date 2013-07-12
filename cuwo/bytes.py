@@ -113,7 +113,7 @@ class ByteReader(object):
         return data
 
     def open_editor(self):
-        if raw_input('Open editor? y/n').strip().lower() != 'y':
+        if raw_input('Open editor? y/n ').strip().lower() != 'y':
             return False
         import tempfile
         import subprocess
@@ -134,6 +134,9 @@ class ByteReader(object):
 
     def skip(self, size):
         self.seek(self.tell() + size)
+
+    def rewind(self, size):
+        self.seek(self.tell() - size)
 
     def read_struct(self, format):
         value = format.unpack(self.read(format.size))

@@ -27,6 +27,8 @@ There is also a working Cube World/Qubicle model converter. Find it in the
 Special thanks
 ==============
 
+Sarcen - help with some protocol variables
+
 Perl - protocol RE
 
 DRayX - encrypt.py and protocol RE

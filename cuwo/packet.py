@@ -22,7 +22,7 @@
 # where you got them from (i.e. cuwo) :-)
 
 from cuwo.entity import (EntityData, AppearanceData, EquipmentData, 
-    read_masked_data, write_masked_data)
+    read_masked_data, write_masked_data, get_masked_size)
 from cuwo.loader import Loader
 from bytes import ByteReader, ByteWriter, OutOfData
 import zlib
@@ -41,7 +41,11 @@ class ServerFull(Packet):
     pass
 
 class ServerMismatch(Packet):
-    pass
+    def read(self, reader):
+        self.version = reader.read_uint32()
+
+    def write(self, writer):
+        writer.write_uint32(self.version)
 
 class ServerData(Packet):
     data = None
@@ -91,31 +95,26 @@ class EntityUpdate(Packet):
         writer.write_uint32(len(data))
         writer.write(data)
 
-class Unknown1(Packet):
+class MultipleEntityUpdate(Packet):
     def read(self, reader):
         count = reader.read_uint32()
         self.items = []
         for i in xrange(count):
-            something = reader.read_uint64()
-            # breaks off here
-            something2 = reader.read_uint64()
-            # socket reads, as follows:
-            # 24, 12, 12, 12, 12, 4, 4, 1, 4, 1, 4, 4, 4, 172, 2, 4, 4, 4, 4,
-            # 4, 4, 1, 1, 4, 12, 12, 12, 4, 4, 4, 20, 1, 1, 4, 4, 8, 8, 1, 4,
-            # 12, 24, 12, 1, 280, 3640, 16, 44, 4
-            # sum: 4434
-            data = reader.read(4434)
-            self.items.append((something, something2, data))
+            entity_id = reader.read_uint64()
+            mask = reader.read_uint64()
+            reader.rewind(8)
+            masked_data = reader.read(get_masked_size(mask) + 8)
+            self.items.append((entity_id, masked_data))
 
     def write(self, writer):
         writer.write_uint32(len(self.items))
         for item in items:
-            something, something2, data = item
-            writer.write_uint64(something)
-            writer.write_uint64(something2)
-            writer.write(data)
+            entity_id, masked_data = item
+            writer.write_uint64(entity_id)
+            writer.write(masked_data)
 
-class Unknown2(Packet):
+class UpdateFinished(Packet):
+    # called when entity update (packet 0) is finished
     pass
 
 class Unknown3(Packet):
@@ -127,15 +126,107 @@ class Unknown3(Packet):
         writer.write_uint32(len(self.data) / 120)
         writer.write(self.data)
 
-class debug:
-    should_open = True
+class Packet4Struct1(Loader):
+    def read(self, reader):
+        self.something = reader.read_uint32()
+        self.something2 = reader.read_uint32()
+        self.something3 = reader.read_uint32()
+        self.something4 = reader.read_uint8()
+        self.something5 = reader.read_uint8()
+        self.something6 = reader.read_uint8()
+        self.something7 = reader.read_uint8()
+        self.something8 = reader.read_uint32()
 
 class Unknown4(Packet):
     def read(self, reader):
         size = reader.read_uint32()
         self.data = zlib.decompress(reader.read(size))
         reader = ByteReader(self.data)
-        items = reader.read_uint32()
+
+        self.items_1 = []
+        for _ in xrange(reader.read_uint32()):
+            item = Packet4Struct1() # 20 bytes
+            item.read(reader)
+            self.items_1.append(item)
+
+        # on hit?
+        self.items_2 = []
+        for _ in xrange(reader.read_uint32()):
+            self.items_2.append(reader.read(72))
+
+        self.items_3 = []
+        for _ in xrange(reader.read_uint32()):
+            self.items_3.append(reader.read(72))
+
+        # perform attack?
+        self.items_4 = []
+        for _ in xrange(reader.read_uint32()):
+            self.items_4.append(reader.read(24))
+
+        self.items_5 = []
+        for _ in xrange(reader.read_uint32()):
+            self.items_5.append(reader.read(112))
+
+        self.items_6 = []
+        for _ in xrange(reader.read_uint32()):
+            self.items_6.append(reader.read(88))
+
+        self.items_7 = []
+        for _ in xrange(reader.read_uint32()):
+            something = reader.read_uint64()
+            sub_items = []
+            for _ in xrange(reader.read_uint32()):
+                item = EquipmentData()
+                item.read(reader)
+                data = reader.read(48)
+                sub_items.append((item, data))
+            self.items_7.append((something, sub_items))
+
+        self.items_8 = []
+        for _ in xrange(reader.read_uint32()):
+            something = reader.read_uint64()
+            sub_items = []
+            for _ in xrange(reader.read_uint32()):
+                sub_items.append(reader.read(16))
+            self.items_8.append((soemthing, sub_items))
+
+        # pickup?
+        self.items_9 = []
+        for _ in xrange(reader.read_uint32()):
+            item = EquipmentData()
+            item.read(reader)
+            something = reader.read_uint32()
+            something2 = reader.read_uint32()
+            self.items_9.append((item, something, something2))
+
+        self.items_10 = []
+        for _ in xrange(reader.read_uint32()):
+            self.items_10.append(reader.read(24))
+
+        # follow player?
+        self.items_11 = []
+        for _ in xrange(reader.read_uint32()):
+            self.items_11.append(reader.read(24))
+
+        self.items_12 = []
+        for _ in xrange(reader.read_uint32()):
+            self.items_12.append(reader.read(40))
+
+        self.items_13 = []
+        for _ in xrange(reader.read_uint32()):
+            self.items_13.append(reader.read(56))
+
+        debug = False
+        if debug:
+            v = vars(self).copy()
+            del v['data']
+            for k, v in v.iteritems():
+                if not v:
+                    continue
+                print k, v
+
+        if len(self.data) != reader.tell():
+            raise NotImplementedError()
 
     def write(self, writer):
         data = zlib.compress(self.data)
@@ -177,59 +268,48 @@ class InteractPacket(Packet):
         writer.write_int32(self.something2)
         writer.write_int32(self.something3)
         writer.write_uint32(self.something4)
-        writer.write_uint8(self.something5)
+        writer.write_uint8(self.interact_type)
         writer.write_uint8(self.something6)
         writer.write_uint16(self.something7)
 
 class HitPacket(Packet):
     def read(self, reader):
-        self.something = reader.read_uint32()
-        self.something2 = reader.read_uint32()
-        self.something3 = reader.read_uint32()
-        self.something4 = reader.read_uint32()
-        self.something5 = reader.read_uint32()
-        self.something6 = reader.read_uint8()
+        self.attacker_entity = reader.read_uint64()
+        self.target_entity = reader.read_uint64()
+        self.damage = reader.read_float()
+        self.critical = reader.read_uint8()
         reader.skip(3)
-        self.something7 = reader.read_uint32()
+        self.stun_duration = reader.read_uint32()
         self.something8 = reader.read_uint32()
-        self.something9 = reader.read_uint32()
-        self.something10 = reader.read_uint32()
-        self.something11 = reader.read_uint32()
-        self.something12 = reader.read_uint32()
-        self.something13 = reader.read_uint32()
-        self.something14 = reader.read_uint32()
+        self.hit_x = reader.read_int64()
+        self.hit_y = reader.read_int64()
+        self.hit_z = reader.read_int64()
         self.something15 = reader.read_uint32()
         self.something16 = reader.read_uint32()
         self.something17 = reader.read_uint32()
-        self.something18 = reader.read_uint8()
-        self.something19 = reader.read_uint8()
+        self.skill_hit = reader.read_uint8()
+        self.evading = reader.read_uint8()
         self.something20 = reader.read_uint8()
         reader.skip(1)
-        print vars(self)
 
     def write(self, writer):
-        writer.write_uint32(self.something)
-        writer.write_uint32(self.something2)
-        writer.write_uint32(self.something3)
-        writer.write_uint32(self.something4)
-        writer.write_uint32(self.something5)
-        writer.write_uint8(self.something6)
-        writer.pad(3)
-        writer.write_uint32(self.something7)
+        writer.write_uint64(self.attacker_entity)
+        writer.write_uint64(self.target_entity)
+        writer.write_float(self.damage)
+        writer.write_uint8(self.critical)
+        reader.skip(3)
+        writer.write_uint32(self.stun_duration)
         writer.write_uint32(self.something8)
-        writer.write_uint32(self.something9)
-        writer.write_uint32(self.something10)
-        writer.write_uint32(self.something11)
-        writer.write_uint32(self.something12)
-        writer.write_uint32(self.something13)
-        writer.write_uint32(self.something14)
+        writer.write_int64(self.hit_x)
+        writer.write_int64(self.hit_y)
+        writer.write_int64(self.hit_z)
         writer.write_uint32(self.something15)
         writer.write_uint32(self.something16)
         writer.write_uint32(self.something17)
-        writer.write_uint8(self.something18)
-        writer.write_uint8(self.something19)
+        writer.write_uint8(self.skill_hit)
+        writer.write_uint8(self.evading)
         writer.write_uint8(self.something20)
-        writer.pad(1)
+        reader.skip(1)
 
 class Unknown8(Packet):
     def read(self, reader):
@@ -304,14 +384,14 @@ CS_PACKETS = {
 
 SC_PACKETS = {
     0 : EntityUpdate,
-    1 : Unknown1,
-    2 : Unknown2,
-    3 : Unknown3,
+    1 : MultipleEntityUpdate, # not used
+    2 : UpdateFinished,
+    3 : Unknown3, # not used
     4 : Unknown4,
     5 : Unknown5,
     10 : ServerChatMessage,
-    18 : ServerMismatch,
-    17 : ServerFull,
+    18 : ServerFull,
+    17 : ServerMismatch,
     16 : ServerData,
     15 : SeedData
 }
