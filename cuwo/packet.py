@@ -177,57 +177,71 @@ class InteractPacket(Packet):
         writer.write_int32(self.something2)
         writer.write_int32(self.something3)
         writer.write_uint32(self.something4)
-        writer.write_uint8(self.something5)
+        writer.write_uint8(self.interact_type)
         writer.write_uint8(self.something6)
         writer.write_uint16(self.something7)
 
-class HitPacket(Packet):
-    def read(self, reader):
-        self.something = reader.read_uint32()
-        self.something2 = reader.read_uint32()
-        self.something3 = reader.read_uint32()
-        self.something4 = reader.read_uint32()
-        self.something5 = reader.read_uint32()
-        self.something6 = reader.read_uint8()
-        reader.skip(3)
-        self.something7 = reader.read_uint32()
-        self.something8 = reader.read_uint32()
-        self.something9 = reader.read_uint32()
-        self.something10 = reader.read_uint32()
-        self.something11 = reader.read_uint32()
-        self.something12 = reader.read_uint32()
-        self.something13 = reader.read_uint32()
-        self.something14 = reader.read_uint32()
-        self.something15 = reader.read_uint32()
-        self.something16 = reader.read_uint32()
-        self.something17 = reader.read_uint32()
-        self.something18 = reader.read_uint8()
-        self.something19 = reader.read_uint8()
-        self.something20 = reader.read_uint8()
-        reader.skip(1)
-        print vars(self)
+class Vector3:
+    x = 0
+    y = 0
+    z = 0
 
+class HitPacket(Packet):
+    hitLocation = Vector3()
+    
+    def read(self, reader):
+        self.attackerEntityId = reader.read_uint64() # Entity ID doing the hitting
+        self.targetEntityId = reader.read_uint64() # Entity ID of what was hit
+        self.damageDealt = reader.read_float() # Negative numbers when getting healed      
+        self.isCritical = reader.read_uint8() # 1 if critical
+        reader.skip(3)
+        self.stunDuration = reader.read_uint32() # stun duration in ms (if >0 stuns target for amount of ms)
+        self.something8 = reader.read_uint32() # always 0
+        self.hitLocation.x = reader.read_uint64()
+        self.hitLocation.y = reader.read_uint64()
+        self.hitLocation.z = reader.read_uint64()
+        self.something15 = reader.read_uint32() # yea... not a clue, tried double\float\int32\int64, and none of it looks like it makes any sense to me.
+        self.something16 = reader.read_uint32() # not a clue here either, seems so random.
+        self.something17 = reader.read_uint32() # seems attack type related, every normal attack changes up to the point of max hitcombo, abilities give different numbers too, perhaps its mutiple things
+        self.isSkillHit = reader.read_uint8() # is 1 when ever hit by a skill, like mouse2, or ability1
+        self.isEvading = reader.read_uint8() # 3 when enemy is evading (misses, when mobs are unable to reach you)
+        self.something20 = reader.read_uint8() # always 0
+        reader.skip(1)      
+        
+        # no clue always printing to figure it out.
+        print "something15", self.something15
+        print "something16", self.something16
+        print "something17", self.something17
+        
+        # things im not sure about that are always one value or another
+        # pay attention when these do show up    
+        if self.something8 != 0:
+            print "!! something8", self.something8
+        if self.something20 != 0:
+            print "!! something20", self.something20
+                
+        if self.isEvading != 0 and self.isEvading != 3:
+            print "!! isEvading", self.isEvading
+            
+        if self.isSkillHit != 0 and self.isSkillHit != 1: 
+            print "!! isSkillHit", self.isSkillHit
+            
     def write(self, writer):
-        writer.write_uint32(self.something)
-        writer.write_uint32(self.something2)
-        writer.write_uint32(self.something3)
-        writer.write_uint32(self.something4)
-        writer.write_uint32(self.something5)
-        writer.write_uint8(self.something6)
+        writer.write_uint64(self.attackerEntityId)
+        writer.write_uint64(self.targetEntityId)
+        writer.write_float(self.damageDealt) 
+        writer.write_uint8(self.isCritical)
         writer.pad(3)
-        writer.write_uint32(self.something7)
+        writer.write_uint32(self.stunDuration)
         writer.write_uint32(self.something8)
-        writer.write_uint32(self.something9)
-        writer.write_uint32(self.something10)
-        writer.write_uint32(self.something11)
-        writer.write_uint32(self.something12)
-        writer.write_uint32(self.something13)
-        writer.write_uint32(self.something14)
+        writer.write_uint64(self.hitLocation.x)
+        writer.write_uint64(self.hitLocation.y)
+        writer.write_uint64(self.hitLocation.z)
         writer.write_uint32(self.something15)
         writer.write_uint32(self.something16)
         writer.write_uint32(self.something17)
-        writer.write_uint8(self.something18)
-        writer.write_uint8(self.something19)
+        writer.write_uint8(self.isSkillHit)
+        writer.write_uint8(self.isEvading)
         writer.write_uint8(self.something20)
         writer.pad(1)
 
