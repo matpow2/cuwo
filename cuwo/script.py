@@ -51,7 +51,7 @@ class ProtocolScript(BaseScript):
         if self.parent is None:
             return
         self.protocol.scripts.remove(self)
-        self.factory.scripts.remove(self)
+        self.parent.scripts.remove(self)
         self.on_unload()
         self.parent = self.protocol = self.factory = None
 
@@ -70,12 +70,12 @@ class FactoryScript(object):
     def on_new_connection(self, protocol):
         if self.protocol_class is None:
             return
-        self.protocol_script(protocol)
+        self.protocol_class(self, protocol)
 
     def on_existing_connection(self, protocol):
         if self.protocol_class is None:
             return
-        self.protocol_script(protocol)
+        self.protocol_class(self, protocol)
 
     def unload(self):
         if self.factory is None:

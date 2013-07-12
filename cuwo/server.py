@@ -19,7 +19,7 @@ from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
-    CS_PACKETS, ClientVersion, ServerData, SeedData)
+    CS_PACKETS, ClientVersion, ServerData, SeedData, EntityUpdate)
 from cuwo.types import IDPool, MultikeyDict
 from cuwo import constants
 
@@ -37,13 +37,10 @@ server_data = ServerData()
 seed_data = SeedData()
 
 class CubeWorldProtocol(Protocol):
-    relay_client = None
-    relay_packets = None
+    has_joined = False
 
     def __init__(self, factory):
         self.factory = factory
-        self.packet_handler = PacketHandler(CS_PACKETS, self.on_packet)
-        self.scripts = []
 
     def send_packet(self, packet):
         self.transport.write(write_packet(packet))
@@ -60,8 +57,12 @@ class CubeWorldProtocol(Protocol):
             self.send_packet(server_data)
             seed_data.seed = self.factory.config.seed
             self.send_packet(seed_data)
-
-        print 'Got client packet:', packet.packet_id
+        elif packet_id == EntityUpdate.packet_id:
+            if not self.has_joined:
+                self.has_joined = True
+                self.call_scripts('on_join')
+        else:
+            print 'Got client packet:', packet.packet_id
 
     def on_chat(self, message):
         if message.startswith('/'):
@@ -92,7 +93,9 @@ class CubeWorldProtocol(Protocol):
         self.transport.loseConnection()
 
     def connectionMade(self):
-        pass
+        self.scripts = []
+        self.factory.call_scripts('on_new_connection', self)
+        self.packet_handler = PacketHandler(CS_PACKETS, self.on_packet)
 
     def connectionLost(self, reason):
         try:
@@ -142,6 +145,12 @@ class CubeWorldFactory(Factory):
             return None
         script = mod.get_class()(self)
         return script
+
+    def call_scripts(self, name, *arg, **kw):
+        for script in self.scripts:
+            if call_handler(script, name, *arg, **kw) is False:
+                return False
+        return True
 
     def buildProtocol(self, addr):
         return CubeWorldProtocol(self)
