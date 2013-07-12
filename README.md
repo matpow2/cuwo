@@ -13,9 +13,9 @@ quick way to get started.
 Status
 ======
 
-Right now, cuwo has a server that can serve clients. Players cannot yet see 
-each other. A lot is still to be done though, but there is a basic scripting
-system in place.
+Right now, cuwo has a server that can serve clients. Players can see each other
+in the game, but a lot still needs to be done. There is a basic scripting
+system in place, which allows for chat commands, etc.
 
 There is also a working MITM server that can inject packets. It's useful for
 reverse-engineering the protocol and can be used as an alternative to a
