@@ -13,9 +13,13 @@ quick way to get started.
 Status
 ======
 
-Right now, cuwo has a working MITM server that can inject chat packets. However,
-to create a complete server, the protocol has to be dissected completely, which
-is still WIP.
+Right now, cuwo has a server that can serve clients. Players cannot yet see 
+each other. A lot is still to be done though, but there is a basic scripting
+system in place.
+
+There is also a working MITM server that can inject packets. It's useful for
+reverse-engineering the protocol and can be used as an alternative to a
+standalone server.
 
 There is also a working Cube World/Qubicle model converter. Find it in the 
 'tools' folder.

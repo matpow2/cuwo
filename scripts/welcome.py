@@ -12,7 +12,3 @@ class WelcomeFactory(FactoryScript):
 
 def get_class():
     return WelcomeFactory
-
-@command
-def testcmd(script):
-    script.protocol.send_chat('TEST :))')

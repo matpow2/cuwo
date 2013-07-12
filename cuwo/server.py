@@ -19,11 +19,13 @@ from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
-    CS_PACKETS, ClientVersion, ServerData, SeedData, EntityUpdate)
+    CS_PACKETS, ClientVersion, ServerData, SeedData, EntityUpdate,
+    ClientChatMessage, ServerChatMessage)
 from cuwo.types import IDPool, MultikeyDict
 from cuwo import constants
 
 import imp
+import shlex
 
 def call_handler(script, name, *arg, **kw):
     f = getattr(script, name, None)
@@ -35,6 +37,7 @@ def call_handler(script, name, *arg, **kw):
 
 server_data = ServerData()
 seed_data = SeedData()
+chat_message = ServerChatMessage()
 
 class CubeWorldProtocol(Protocol):
     has_joined = False
@@ -61,8 +64,18 @@ class CubeWorldProtocol(Protocol):
             if not self.has_joined:
                 self.has_joined = True
                 self.call_scripts('on_join')
+        elif packet_id == ClientChatMessage.packet_id:
+            message = packet.value
+            if self.on_chat(message) is False:
+                return
+            chat_message.entity_id = self.entity_id
+            chat_message.value = message
+            self.factory.broadcast_packet(chat_message)
         else:
             print 'Got client packet:', packet.packet_id
+
+    def on_command(self, command, parameters):
+        self.call_scripts('on_command', command, parameters)
 
     def on_chat(self, message):
         if message.startswith('/'):
@@ -76,6 +89,8 @@ class CubeWorldProtocol(Protocol):
             else:
                 command = ''
             self.on_command(command, splitted)
+            return False
+        return self.call_scripts('on_chat', message)
 
     def send_chat(self, value):
         packet = ServerChatMessage()
@@ -126,6 +141,11 @@ class CubeWorldFactory(Factory):
             self.load_script(script)
 
         print 'cuwo running on port 12345'
+
+    def broadcast_packet(self, packet):
+        data = write_packet(packet)
+        for connection in self.connections.values():
+            connection.transport.write(data)
 
     def format(self, value):
         format_dict = {'server_name' : self.config.server_name}
