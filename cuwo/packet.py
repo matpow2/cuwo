@@ -233,14 +233,14 @@ class Unknown4(Packet):
         writer.write_uint32(len(data))
         writer.write(data)
 
-class Unknown5(Packet):
+class CurrentTime(Packet):
     def read(self, reader):
-        self.something = reader.read_uint32()
-        self.something2 = reader.read_uint32()
+        self.day = reader.read_uint32()
+        self.time = reader.read_uint32()
 
     def write(self, writer):
-        writer.write_uint32(self.something)
-        writer.write_uint32(self.something2)
+        writer.write_uint32(self.day)
+        writer.write_uint32(self.time)
 
 INTERACT_NPC = 2
 INTERACT_NORMAL = 3
@@ -252,9 +252,9 @@ class InteractPacket(Packet):
     def read(self, reader):
         self.equipment = EquipmentData()
         self.equipment.read(reader)
-        self.something = reader.read_int32()
-        self.something2 = reader.read_int32()
-        self.something3 = reader.read_int32()
+        self.chunk_x = reader.read_int32()
+        self.chunk_y = reader.read_int32()
+        self.chunk_z = reader.read_int32()
         #
         self.something4 = reader.read_uint32()
         self.interact_type = reader.read_uint8()
@@ -264,9 +264,9 @@ class InteractPacket(Packet):
 
     def write(self, writer):
         self.equipment.write(writer)
-        writer.write_int32(self.something)
-        writer.write_int32(self.something2)
-        writer.write_int32(self.something3)
+        writer.write_int32(self.chunk_x)
+        writer.write_int32(self.chunk_y)
+        writer.write_int32(self.chunk_z)
         writer.write_uint32(self.something4)
         writer.write_uint8(self.interact_type)
         writer.write_uint8(self.something6)
@@ -388,7 +388,7 @@ SC_PACKETS = {
     2 : UpdateFinished,
     3 : Unknown3, # not used
     4 : Unknown4,
-    5 : Unknown5,
+    5 : CurrentTime,
     10 : ServerChatMessage,
     18 : ServerFull,
     17 : ServerMismatch,
