@@ -93,6 +93,8 @@ class CubeWorldProtocol(Protocol):
             except AttributeError:
                 pass
             return
+        if packet.packet_id in (11, 12):
+            return # ignore for now
         print 'Got client packet:', packet.packet_id
 
     def on_server_packet(self, packet):

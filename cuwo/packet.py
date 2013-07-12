@@ -163,9 +163,12 @@ class Unknown4(Packet):
         for _ in xrange(reader.read_uint32()):
             self.items_4.append(reader.read(24))
 
+        # shoot arrow?
         self.items_5 = []
         for _ in xrange(reader.read_uint32()):
-            self.items_5.append(reader.read(112))
+            item = Unknown9()
+            item.read(reader)
+            self.items_5.append(item)
 
         self.items_6 = []
         for _ in xrange(reader.read_uint32()):
@@ -216,7 +219,7 @@ class Unknown4(Packet):
         for _ in xrange(reader.read_uint32()):
             self.items_13.append(reader.read(56))
 
-        debug = False
+        debug = True
         if debug:
             v = vars(self).copy()
             del v['data']
@@ -297,7 +300,7 @@ class HitPacket(Packet):
         writer.write_uint64(self.target_entity)
         writer.write_float(self.damage)
         writer.write_uint8(self.critical)
-        reader.pad(3)
+        writer.pad(3)
         writer.write_uint32(self.stun_duration)
         writer.write_uint32(self.something8)
         writer.write_int64(self.hit_x)
@@ -309,7 +312,7 @@ class HitPacket(Packet):
         writer.write_uint8(self.skill_hit)
         writer.write_uint8(self.evading)
         writer.write_uint8(self.something20)
-        reader.pad(1)
+        writer.pad(1)
 
 class Unknown8(Packet):
     def read(self, reader):
@@ -320,10 +323,70 @@ class Unknown8(Packet):
 
 class Unknown9(Packet):
     def read(self, reader):
-        self.data = reader.read(112)
+        self.something = reader.read_uint32()
+        self.something2 = reader.read_uint32()
+        self.something3 = reader.read_int32()
+        self.something4 = reader.read_int32()
+        self.something5 = reader.read_uint32()
+        self.something6 = reader.read_uint32() # is this even used? not copied
+                                               # in list implementation
+        self.something7 = reader.read_uint32()
+        self.something8 = reader.read_uint32()
+        self.something9 = reader.read_uint32()
+        self.something10 = reader.read_uint32()
+        self.something11 = reader.read_uint32()
+        self.something12 = reader.read_uint32()
+        self.something13 = reader.read_uint32()
+        self.something14 = reader.read_uint32()
+        self.something15 = reader.read_uint32()
+        self.something16 = reader.read_uint32()
+        self.something17 = reader.read_uint32()
+        self.something18 = reader.read_uint32()
+        self.something19 = reader.read_uint32()
+        self.something20 = reader.read_float()
+        self.something21 = reader.read_float()
+        self.something22 = reader.read_float()
+        self.something23 = reader.read_uint32()
+        self.something24 = reader.read_uint8()
+        reader.skip(3)
+        self.something25 = reader.read_uint32()
+        self.something26 = reader.read_uint8()
+        reader.skip(3)
+        self.something27 = reader.read_uint32()
+        self.something28 = reader.read_uint32()
+        print vars(self)
 
     def write(self, writer):
-        writer.write(self.data)
+        writer.write_uint32(self.something)
+        writer.write_uint32(self.something2)
+        writer.write_int32(self.something3)
+        writer.write_int32(self.something4)
+        writer.write_uint32(self.something5)
+        writer.write_uint32(self.something6)
+        writer.write_uint32(self.something7)
+        writer.write_uint32(self.something8)
+        writer.write_uint32(self.something9)
+        writer.write_uint32(self.something10)
+        writer.write_uint32(self.something11)
+        writer.write_uint32(self.something12)
+        writer.write_uint32(self.something13)
+        writer.write_uint32(self.something14)
+        writer.write_uint32(self.something15)
+        writer.write_uint32(self.something16)
+        writer.write_uint32(self.something17)
+        writer.write_uint32(self.something18)
+        writer.write_uint32(self.something19)
+        writer.write_float(self.something20)
+        writer.write_float(self.something21)
+        writer.write_float(self.something22)
+        writer.write_uint32(self.something23)
+        writer.write_uint8(self.something24)
+        writer.pad(3)
+        writer.write_uint32(self.something25)
+        writer.write_uint8(self.something26)
+        writer.pad(3)
+        writer.write_uint32(self.something27)
+        writer.write_uint32(self.something28)
 
 ENCODING = 'utf_16_le'
 
