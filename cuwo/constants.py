@@ -16,4 +16,5 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 CLIENT_VERSION = 3
-MAX_TIME = 86400000
+MAX_TIME = 24 * 60 * 60 * 1000
+UPDATE_FPS = 50

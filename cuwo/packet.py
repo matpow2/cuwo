@@ -297,7 +297,7 @@ class HitPacket(Packet):
         writer.write_uint64(self.target_entity)
         writer.write_float(self.damage)
         writer.write_uint8(self.critical)
-        reader.skip(3)
+        reader.pad(3)
         writer.write_uint32(self.stun_duration)
         writer.write_uint32(self.something8)
         writer.write_int64(self.hit_x)
@@ -309,7 +309,7 @@ class HitPacket(Packet):
         writer.write_uint8(self.skill_hit)
         writer.write_uint8(self.evading)
         writer.write_uint8(self.something20)
-        reader.skip(1)
+        reader.pad(1)
 
 class Unknown8(Packet):
     def read(self, reader):

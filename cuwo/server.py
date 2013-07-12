@@ -18,6 +18,7 @@
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
+from twisted.internet.task import LoopingCall
 from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
     CS_PACKETS, ClientVersion, ServerData, SeedData, EntityUpdate,
     ClientChatMessage, ServerChatMessage)
@@ -160,8 +161,7 @@ class CubeWorldProtocol(Protocol):
         return True
 
 class CubeWorldFactory(Factory):
-    def __init__(self):
-        import config
+    def __init__(self, config):
         self.config = config
 
         self.connections = MultikeyDict()
@@ -173,7 +173,13 @@ class CubeWorldFactory(Factory):
         for script in config.scripts:
             self.load_script(script)
 
+        self.start_time = reactor.seconds()
+        self.update_loop = LoopingCall(self.update)
+        self.update_loop.start(1.0 / constants.UPDATE_FPS)
         print 'cuwo running on port 12345'
+
+    def update(self):
+        pass
 
     def broadcast_packet(self, packet):
         data = write_packet(packet)
@@ -209,7 +215,8 @@ class CubeWorldFactory(Factory):
         return CubeWorldProtocol(self)
 
 def main():
-    reactor.listenTCP(12345, CubeWorldFactory())
+    import config
+    reactor.listenTCP(12345, CubeWorldFactory(config))
     reactor.run()
 
 if __name__ == '__main__':
