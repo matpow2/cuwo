@@ -21,6 +21,7 @@ from twisted.internet.endpoints import TCP4ClientEndpoint
 from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
     CS_PACKETS, ClientVersion, ServerData, SeedData, EntityUpdate,
     ClientChatMessage, ServerChatMessage)
+from cuwo.entity import EntityData, AppearanceData, EquipmentData
 from cuwo.types import IDPool, MultikeyDict
 from cuwo import constants
 
@@ -38,9 +39,21 @@ def call_handler(script, name, *arg, **kw):
 server_data = ServerData()
 seed_data = SeedData()
 chat_message = ServerChatMessage()
+entity_update = EntityUpdate()
+
+def create_entity_data():
+    data = EntityData()
+    data.appearance = AppearanceData()
+    data.equipment_1 = EquipmentData()
+    data.equipment = []
+    for _ in xrange(13):
+        data.equipment.append(EquipmentData())
+    return data
 
 class CubeWorldProtocol(Protocol):
     has_joined = False
+    entity_id = None
+    entity_data = None
 
     def __init__(self, factory):
         self.factory = factory
@@ -55,15 +68,21 @@ class CubeWorldProtocol(Protocol):
                 self.disconnect()
                 return
             self.entity_id = self.factory.entity_ids.pop()
+            self.entity_data = create_entity_data()
+            self.factory.entities[self.entity_id] = self.entity_data
             self.factory.connections[(self.entity_id,)] = self
             server_data.entity_id = self.entity_id
             self.send_packet(server_data)
             seed_data.seed = self.factory.config.seed
             self.send_packet(seed_data)
         elif packet_id == EntityUpdate.packet_id:
-            if not self.has_joined:
+            if packet.entity_id != self.entity_id:
+                raise NotImplementedError()
+            packet.update_entity(self.entity_data)
+            if not self.has_joined and self.entity_data.name:
+                self.on_join()
                 self.has_joined = True
-                self.call_scripts('on_join')
+            self.factory.broadcast_packet(packet)
         elif packet_id == ClientChatMessage.packet_id:
             message = packet.value
             if self.on_chat(message) is False:
@@ -73,6 +92,16 @@ class CubeWorldProtocol(Protocol):
             self.factory.broadcast_packet(chat_message)
         else:
             print 'Got client packet:', packet.packet_id
+
+    def on_join(self):
+        print 'Player %r joined' % self.entity_data.name
+        for connection in self.factory.connections.values():
+            if not connection.has_joined:
+                continue
+            entity_update.set_entity(connection.entity_data,
+                                     connection.entity_id)
+            self.send_packet(entity_update)
+        self.call_scripts('on_join')
 
     def on_command(self, command, parameters):
         self.call_scripts('on_command', command, parameters)
@@ -117,6 +146,8 @@ class CubeWorldProtocol(Protocol):
             del self.factory.connections[self]
         except KeyError:
             pass
+        if self.entity_data is not None:
+            del self.factory.entities[self.entity_id]
         self.call_scripts('on_disconnect')
 
     def dataReceived(self, data):
@@ -134,6 +165,8 @@ class CubeWorldFactory(Factory):
         self.config = config
 
         self.connections = MultikeyDict()
+
+        self.entities = {}
         self.entity_ids = IDPool(1)
 
         self.scripts = []

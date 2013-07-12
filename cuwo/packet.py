@@ -22,7 +22,7 @@
 # where you got them from (i.e. cuwo) :-)
 
 from cuwo.entity import (EntityData, AppearanceData, EquipmentData, 
-    read_masked_data)
+    read_masked_data, write_masked_data)
 from cuwo.loader import Loader
 from bytes import ByteReader, ByteWriter, OutOfData
 import zlib
@@ -72,14 +72,19 @@ class EntityUpdate(Packet):
     def read(self, reader):
         size = reader.read_uint32()
         self.data = zlib.decompress(reader.read(size))
-
         reader = ByteReader(self.data)
         self.entity_id = reader.read_uint64()
-        self.entity = EntityData()
-        self.entity.appearance = AppearanceData()
-        self.entity.equipment_1 = EquipmentData()
-        self.entity.equipment = [EquipmentData() for _ in xrange(13)]
-        mask = read_masked_data(self.entity, reader)
+
+    def update_entity(self, entity):
+        reader = ByteReader(self.data)
+        reader.skip(8)
+        read_masked_data(entity, reader)
+
+    def set_entity(self, entity, entity_id):
+        writer = ByteWriter()
+        writer.write_uint64(entity_id)
+        write_masked_data(entity, writer)
+        self.data = writer.get()
 
     def write(self, writer):
         data = zlib.compress(self.data)
