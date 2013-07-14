@@ -23,6 +23,7 @@ if cmd_folder not in sys.path:
 from cuwo.bytes import ByteReader, ByteWriter
 from cuwo.qmo import QubicleFile, QubicleModel
 from cuwo.cub import CubModel
+import os
 
 def switch_axes(x, y, z):
     return x, z, y
@@ -31,7 +32,7 @@ def to_qmo(in_file, out_file):
     cub = CubModel(ByteReader(fp = open(in_file, 'rb')))
     qmo_file = QubicleFile()
     qmo_model = QubicleModel()
-    x_size,  y_size, z_size = switch_axes(cub.x_size, cub.y_size, cub.z_size)
+    x_size, y_size, z_size = switch_axes(cub.x_size, cub.y_size, cub.z_size)
     qmo_model.x_size = x_size
     qmo_model.y_size = y_size
     qmo_model.z_size = z_size
@@ -45,18 +46,35 @@ def to_qmo(in_file, out_file):
     qmo_file.models.append(qmo_model)
     qmo_file.write(ByteWriter(fp = open(out_file, 'wb')))
 
-def main():
-    parser = argparse.ArgumentParser(description='Convert cubeworld .cub files to .qmo files')
-    parser.add_argument('files', metavar='FILE', nargs='+', help='path to file to convert')
+def to_cub(in_file, out_file):
+    qmo_file = QubicleFile(ByteReader(fp = open(in_file, 'rb')))
+    qmo_model = qmo_file.models[0]
+    cub = CubModel()
+    x_size, y_size, z_size = switch_axes(qmo_model.x_size, 
+                                         qmo_model.y_size,
+                                         qmo_model.z_size)
+    cub.x_size = x_size
+    cub.y_size = y_size
+    cub.z_size = z_size
+    for k, v in qmo_model.blocks.iteritems():
+        x, y, z = k
+        x2, y2, z2 = switch_axes(x, y, z)
+        cub.blocks[x2, y2, z2] = v
+    cub.write(ByteWriter(fp = open(out_file, 'wb')))
 
-    outdir = './tools/out'
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
+def main():
+    parser = argparse.ArgumentParser(
+        description='Convert between cub and qmo files')
+    parser.add_argument('files', metavar='FILE', nargs='+', 
+        help='path to file to convert')
 
     for path in parser.parse_args().files:
-        filename = os.path.splitext(os.path.basename(path))[0]
-        print( "Converting %r" % filename )
-        to_qmo(path, os.path.join(outdir, filename + ".qmo"))
+        print "Converting %r" % path
+        filename, ext = os.path.splitext(path)
+        if ext == '.cub':
+            to_qmo(path, filename + '.qmo')
+        else:
+            to_cub(path, filename + '.cub')
 
 if __name__ == '__main__':
     main()

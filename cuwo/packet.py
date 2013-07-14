@@ -173,6 +173,7 @@ class Unknown4(Packet):
         # on hit?
         self.items_2 = []
         for _ in xrange(reader.read_uint32()):
+            
             self.items_2.append(reader.read(72))
 
         self.items_3 = []
@@ -253,10 +254,12 @@ class Unknown4(Packet):
         for _ in xrange(reader.read_uint32()):
             self.items_13.append(reader.read(56))
 
-        debug = False
+        debug = True
         if debug:
             v = vars(self).copy()
-            del v['data']
+            del v['items_11']
+            del v['items_10']
+            del v['items_9']
             for k, v in v.iteritems():
                 if not v:
                     continue
