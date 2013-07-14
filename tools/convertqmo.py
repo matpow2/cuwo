@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+sys.path.append('.')
+
 from cuwo.bytes import ByteReader, ByteWriter
 from cuwo.qmo import QubicleFile, QubicleModel
 from cuwo.cub import CubModel
@@ -43,6 +46,7 @@ def to_qmo(in_file, out_file):
     qmo_file.write(ByteWriter(fp = open(out_file, 'wb')))
 
 def main():
+    print 'QMO/CUB converter'
     for item in glob.glob('./src/*.cub'):
         basename = os.path.basename(item)
         to_qmo(item, './out/' + basename)
