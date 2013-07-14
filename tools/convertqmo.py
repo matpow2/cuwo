@@ -18,6 +18,8 @@
 from cuwo.bytes import ByteReader, ByteWriter
 from cuwo.qmo import QubicleFile, QubicleModel
 from cuwo.cub import CubModel
+import glob
+import os
 
 def switch_axes(x, y, z):
     return x, z, y
@@ -41,7 +43,9 @@ def to_qmo(in_file, out_file):
     qmo_file.write(ByteWriter(fp = open(out_file, 'wb')))
 
 def main():
-    to_qmo('./out/frame-house01.cub', 'out.qmo')
+    for item in glob.glob('./src/*.cub'):
+        basename = os.path.basename(item)
+        to_qmo(item, './out/' + basename)
 
 if __name__ == '__main__':
     main()

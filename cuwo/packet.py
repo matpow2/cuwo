@@ -239,6 +239,7 @@ class Unknown4(Packet):
             target_entity_id = reader.read_uint64()
             hp = reader.read_float()
             data = reader.read(4)
+            data = '\x00' * 4
             self.items_11.append((entity_id, target_entity_id, hp, data))
 
         for value in self.items_11:
