@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
+import os, sys, argparse
 cmd_folder = os.path.realpath(os.path.abspath('.'))
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
@@ -46,12 +46,16 @@ def to_qmo(in_file, out_file):
     qmo_file.write(ByteWriter(fp = open(out_file, 'wb')))
 
 def main():
+    parser = argparse.ArgumentParser(description='Convert cubeworld .cub files to .qmo files')
+    parser.add_argument('files', metavar='FILE', nargs='+', help='path to file to convert')
+
     outdir = './tools/out'
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    for path in sys.argv[1:]:
+    for path in parser.parse_args().files:
         filename = os.path.splitext(os.path.basename(path))[0]
+        print( "Converting %r" % filename )
         to_qmo(path, os.path.join(outdir, filename + ".qmo"))
 
 if __name__ == '__main__':
