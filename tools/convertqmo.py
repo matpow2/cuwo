@@ -15,14 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-sys.path.append('.')
+import os, sys
+cmd_folder = os.path.realpath(os.path.abspath('.'))
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
 
 from cuwo.bytes import ByteReader, ByteWriter
 from cuwo.qmo import QubicleFile, QubicleModel
 from cuwo.cub import CubModel
-import glob
-import os
 
 def switch_axes(x, y, z):
     return x, z, y
@@ -46,10 +46,13 @@ def to_qmo(in_file, out_file):
     qmo_file.write(ByteWriter(fp = open(out_file, 'wb')))
 
 def main():
-    print 'QMO/CUB converter'
-    for item in glob.glob('./src/*.cub'):
-        basename = os.path.basename(item)
-        to_qmo(item, './out/' + basename)
+    outdir = './tools/out'
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    for path in sys.argv[1:]:
+        filename = os.path.splitext(os.path.basename(path))[0]
+        to_qmo(path, os.path.join(outdir, filename + ".qmo"))
 
 if __name__ == '__main__':
     main()
