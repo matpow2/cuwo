@@ -23,7 +23,7 @@ from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
     CS_PACKETS, ClientVersion, ServerData, SeedData, EntityUpdate,
     ClientChatMessage, ServerChatMessage, create_entity_data)
 from cuwo.entity import EntityData, AppearanceData, EquipmentData
-from cuwo.types import IDPool, MultikeyDict
+from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo import constants
 
 import imp
@@ -46,6 +46,7 @@ class CubeWorldProtocol(Protocol):
     has_joined = False
     entity_id = None
     entity_data = None
+    disconnected = False
 
     def __init__(self, factory):
         self.factory = factory
@@ -127,13 +128,18 @@ class CubeWorldProtocol(Protocol):
 
     def disconnect(self):
         self.transport.loseConnection()
+        self.connectionLost('Kicked by server')
 
     def connectionMade(self):
         self.scripts = []
         self.factory.call_scripts('on_new_connection', self)
         self.packet_handler = PacketHandler(CS_PACKETS, self.on_packet)
+        self.rights = AttributeSet()
 
     def connectionLost(self, reason):
+        if self.disconnected:
+            return
+        self.disconnected = True
         try:
             del self.factory.connections[self]
         except KeyError:
@@ -141,6 +147,11 @@ class CubeWorldProtocol(Protocol):
         if self.entity_data is not None:
             del self.factory.entities[self.entity_id]
         self.call_scripts('on_disconnect')
+
+    def kick(self):
+        self.send_chat('You have been kicked')
+        self.disconnect()
+        self.factory.send_chat('%s has been kicked' % self.get_name())
 
     def dataReceived(self, data):
         self.packet_handler.feed(data)
@@ -151,9 +162,18 @@ class CubeWorldProtocol(Protocol):
                 return False
         return True
 
+    def get_name(self):
+        if self.entity_data is None:
+            return None
+        return self.entity_data.name
+
 class CubeWorldFactory(Factory):
     def __init__(self, config):
         self.config = config
+
+        self.passwords = {}
+        for k, v in config.passwords.iteritems():
+            self.passwords[k.lower()] = v
 
         self.connections = MultikeyDict()
 
@@ -171,6 +191,12 @@ class CubeWorldFactory(Factory):
 
     def update(self):
         pass
+
+    def send_chat(self, value):
+        packet = ServerChatMessage()
+        packet.entity_id = 0
+        packet.value = value
+        self.broadcast_packet(packet)
 
     def broadcast_packet(self, packet):
         data = write_packet(packet)

@@ -20,6 +20,9 @@ import sys
 class InvalidPlayer(Exception):
     pass
 
+class InsufficientRights(Exception):
+    pass
+
 def get_player(factory, value):
     ret = None
     try:
@@ -43,6 +46,18 @@ def get_player(factory, value):
     if ret is None:
         raise InvalidPlayer()
     return ret
+
+def restrict(func, *user_types):
+    def new_func(script, *arg, **kw):
+        if script.protocol.rights.isdisjoint(user_types):
+            raise InsufficientRights()
+        return func(script, *arg, **kw)
+    new_func.__module__ = func.__module__
+    new_func.func_name = func.func_name
+    return new_func
+
+def admin(func):
+    return restrict(func, 'admin')
 
 class BaseScript(object):
     def on_load(self):
@@ -74,6 +89,8 @@ class ProtocolScript(BaseScript):
             ret = f(self, *args)
         except InvalidPlayer:
             ret = 'Invalid player specified'
+        except InsufficientRights:
+            ret = 'Insufficient rights'
         except Exception, e:
             import traceback
             traceback.print_exc()

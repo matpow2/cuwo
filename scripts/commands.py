@@ -1,4 +1,5 @@
-from cuwo.script import FactoryScript, ProtocolScript, command, get_player
+from cuwo.script import (FactoryScript, ProtocolScript, command, get_player,
+    admin)
 import platform
 
 class CommandFactory(FactoryScript):
@@ -12,6 +13,7 @@ def get_class():
     return CommandFactory
 
 @command
+@admin
 def say(script, *args):
     message = ' '.join(args)
     script.protocol.send_chat(message)
@@ -21,11 +23,16 @@ def server(script):
     return 'Server is running on %r' % platform.system()
 
 @command
-def teleport(script, name):
+def login(script, password):
+    password = password.lower()
+    user_types = script.factory.passwords.get(password, [])
+    if not user_types:
+        return 'Invalid password'
+    script.protocol.rights.update(user_types)
+    return 'Logged in as %s' % (', '.join(user_types))
+
+@command
+@admin
+def kick(script, name):
     player = get_player(script.factory, name)
-    this = script.protocol.entity_data
-    other = player.entity_data
-    this.name = 'WOO'
-    this.x = this.x - 100000
-    this.y = this.y - 100000
-    script.protocol.force_entity_update()
+    player.kick()
