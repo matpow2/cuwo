@@ -80,7 +80,8 @@ class SeedData(Packet):
         self.seed = reader.read_uint32()
 
     def write(self, writer):
-        writer.write_uint32(self.seed)
+        # wrap seed because user may provide a silly one
+        writer.write_uint32(self.seed & 0xFFFFFFFF)
 
 class EntityUpdate(Packet):
     def read(self, reader):
@@ -213,38 +214,36 @@ class Unknown4(Packet):
                 sub_items.append(reader.read(16))
             self.items_8.append((something, sub_items))
 
-        # pickup?
+        # item picked up
         self.items_9 = []
         for _ in xrange(reader.read_uint32()):
+            entity_id = reader.read_uint64()
             item = EquipmentData()
             item.read(reader)
-            something = reader.read_uint32()
-            something2 = reader.read_uint32()
-            self.items_9.append((item, something, something2))
+            self.items_9.append((entity_id, item))
 
-        # killed by
+        # killed by, gives xp
         self.items_10 = []
         for _ in xrange(reader.read_uint32()):
-            entity_id = reader.read_uint64()
-            entity_id2 = reader.read_uint64()
-            data = reader.read(8)
-            self.items_10.append((entity_id, entity_id2, data))
+            entity_id = reader.read_uint64() # killer
+            target_id = reader.read_uint64() # killed
+            # see below about padding
+            reader.skip(4)
+            xp_gained = reader.read_int32()
+            self.items_10.append((entity_id, target_id, xp_gained))
 
-        # follow player?
-        # sent when player hits something as well
-        # probably set hp
+        # set entity damage
         self.items_11 = []
         for _ in xrange(reader.read_uint32()):
+            target_id = reader.read_uint64()
             entity_id = reader.read_uint64()
-            target_entity_id = reader.read_uint64()
-            hp = reader.read_float()
-            data = reader.read(4)
-            data = '\x00' * 4
-            self.items_11.append((entity_id, target_entity_id, hp, data))
-
-        for value in self.items_11:
-            entity_id, target_id, hp, data = value
-            print entity_id, target_id, hp, get_hex_string(data)
+            damage = reader.read_float()
+            # is this actually padding? copied as part of MOVQ, but may just be
+            # optimization. not used in client, it seems.
+            # could also be related to items_10, seems to use similar list
+            # copy implementation
+            reader.skip(4)
+            self.items_11.append((target_id, entity_id, damage))
 
         self.items_12 = []
         for _ in xrange(reader.read_uint32()):
@@ -313,25 +312,25 @@ class Unknown4(Packet):
 
         data.write_uint32(len(self.items_9))
         for item in self.items_9:
-            equipment, something, something2 = item
-            equipment.write(item)
-            data.write_uint32(something)
-            data.write_uint32(something2)
+            entity_id, equipment = item
+            data.write_uint64(entity_id)
+            equipment.write(data)
 
         data.write_uint32(len(self.items_10))
         for item in self.items_10:
-            entity_id, entity_id2, d = item
+            entity_id, entity_id2, xp_gained = item
             data.write_uint64(entity_id)
             data.write_uint64(entity_id2)
-            data.write(d)
+            data.pad(4)
+            data.write_int32(xp_gained)
 
         data.write_uint32(len(self.items_11))
         for item in self.items_11:
-            entity_id, target_id, hp, d = item
+            entity_id, target_id, damage = item
             data.write_uint64(entity_id)
             data.write_uint64(target_id)
-            data.write_float(hp)
-            data.write(d)
+            data.write_float(damage)
+            data.pad(4)
 
         data.write_uint32(len(self.items_12))
         for item in self.items_12:
