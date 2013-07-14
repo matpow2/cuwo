@@ -21,7 +21,7 @@ from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
 from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
     CS_PACKETS, ClientVersion, ServerData, SeedData, EntityUpdate,
-    ClientChatMessage, ServerChatMessage)
+    ClientChatMessage, ServerChatMessage, create_entity_data)
 from cuwo.entity import EntityData, AppearanceData, EquipmentData
 from cuwo.types import IDPool, MultikeyDict
 from cuwo import constants
@@ -41,15 +41,6 @@ server_data = ServerData()
 seed_data = SeedData()
 chat_message = ServerChatMessage()
 entity_update = EntityUpdate()
-
-def create_entity_data():
-    data = EntityData()
-    data.appearance = AppearanceData()
-    data.equipment_1 = EquipmentData()
-    data.equipment = []
-    for _ in xrange(13):
-        data.equipment.append(EquipmentData())
-    return data
 
 class CubeWorldProtocol(Protocol):
     has_joined = False

@@ -15,12 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-from cuwo.constants import MAX_TIME
+from cuwo import constants
+
+def get_hex_string(value):
+    v = '0x'
+    for c in value:
+        new_hex = hex(ord(c))[2:].upper()
+        if len(new_hex) < 2:
+            new_hex = '0' + new_hex
+        v += new_hex
+    return v
 
 def is_bit_set(value, index):
     return value & (1 << index)
 
 def get_time_string(value):
-    hour = (value * 24) / MAX_TIME
-    minute = ((value * 24 * 60) / MAX_TIME) % 60
+    hour = (value * 24) / constants.MAX_TIME
+    minute = ((value * 24 * 60) / constants.MAX_TIME) % 60
     return '%02d:%02d' % (hour, minute)
+
+def get_chunk(vec):
+    return (int(vec.x / constants.CHUNK_SCALE), 
+            int(vec.y / constants.CHUNK_SCALE))
+
+def get_sector(vec):
+    return (int(vec.x / constants.SECTOR_SCALE), 
+            int(vec.y / constants.SECTOR_SCALE))

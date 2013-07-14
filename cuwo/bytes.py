@@ -93,6 +93,16 @@ class ByteWriter(object):
         self.write_float(value.y)
         self.write_float(value.z)
 
+    def write_ivec3(self, value):
+        self.write_int32(value.x)
+        self.write_int32(value.y)
+        self.write_int32(value.z)
+
+    def write_qvec3(self, value):
+        self.write_int64(value.x)
+        self.write_int64(value.y)
+        self.write_int64(value.z)
+
 class ByteReader(object):
     def __init__(self, data = None, fp = None):
         if data is not None:
@@ -175,4 +185,16 @@ class ByteReader(object):
         x = self.read_float()
         y = self.read_float()
         z = self.read_float()
+        return Vector3(x, y, z)
+
+    def read_ivec3(self):
+        x = self.read_int32()
+        y = self.read_int32()
+        z = self.read_int32()
+        return Vector3(x, y, z)
+
+    def read_qvec3(self):
+        x = self.read_int64()
+        y = self.read_int64()
+        z = self.read_int64()
         return Vector3(x, y, z)

@@ -3,3 +3,6 @@ class Vector3(object):
         self.x = x
         self.y = y
         self.z = z
+
+    def __repr__(self):
+        return '<Vector %s %s %s>' % (self.x, self.y, self.z)
