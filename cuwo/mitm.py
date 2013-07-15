@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-import cuwo.pypy
+from cuwo.twistedreactor import install_reactor
+install_reactor()
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
@@ -24,10 +25,6 @@ from cuwo.packet import (PacketHandler, write_packet, ServerChatMessage,
     CurrentTime, ShootPacket, Unknown4)
 from cuwo import constants
 from cuwo.common import get_chunk
-
-class debug:
-    packets_printed = 0
-    max_packets = 4
 
 class RelayClient(Protocol):
     def __init__(self, protocol):
@@ -43,15 +40,11 @@ class RelayFactory(Factory):
     def buildProtocol(self, addr):
         return RelayClient(self.protocol)
 
-import collections
-
-server_ids = collections.Counter()
-client_ids = collections.Counter()
-
 class CubeWorldProtocol(Protocol):
     relay_client = None
     relay_packets = None
     entity_id = None
+    disconnected = True
 
     def __init__(self, server):
         self.server = server
@@ -63,38 +56,10 @@ class CubeWorldProtocol(Protocol):
         self.entities = {}
         self.relay_packets = []
         self.print_stats()
-        # self.send_debug()
-
-    def send_debug(self):
-        reactor.callLater(0.01, self.send_debug)
-        if self.entity_id is None:
-            return
-        entity = self.entities[self.entity_id]
-        from cuwo.vector import Vector3
-        shoot = ShootPacket()
-        shoot.entity_id = 2
-        shoot.chunk_x, shoot.chunk_y = get_chunk(
-            Vector3(entity.x, entity.y, entity.z))
-        import random
-        shoot.something5 = random.randrange(0, 10)
-        shoot.something13 = 0
-        shoot.something14 = 0
-        shoot.something15 = 0
-        shoot.something19 = 10.49137020111084
-        shoot.something20 = 0.5
-        shoot.something21 = 1.0
-        shoot.something22 = 0.0
-        shoot.something23 = 0
-        shoot.something24 = 0
-        shoot.something25 = 0
-        shoot.something26 = 0
-        shoot.something27 = 0
-        shoot.something28 = 0
-        shoot.pos = Vector3(entity.x, entity.y, entity.z + 150000)
-        shoot.velocity = Vector3(93.929801940, -34.1773529054, -3.0167741775)
-        self.relay_client.transport.write(write_packet(shoot))
 
     def print_stats(self):
+        if self.disconnected:
+            return
         reactor.callLater(4, self.print_stats)
 
         if self.entity_id is None:
@@ -152,6 +117,7 @@ class CubeWorldProtocol(Protocol):
         print 'Connected'
 
     def connectionLost(self, reason):
+        self.disconnected = True
         print 'Lost connection'
         if self.relay_client is not None:
             self.relay_client.transport.loseConnection()

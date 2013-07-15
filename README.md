@@ -42,7 +42,7 @@ FAQ
 
 Q. How do I pronounce 'cuwo'?
 
-A. It's pronounced the same way you would pronounce cu(be)wo(rld)! :-)
+A. It's pronounced the same way you would pronounce cu(be)wo(rld), ! :-)
 
 Q. What is the MITM server?
 
