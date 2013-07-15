@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+import cuwo.pypy
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
@@ -22,8 +23,8 @@ from twisted.internet.task import LoopingCall
 from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
     CS_PACKETS, ClientVersion, ServerData, SeedData, EntityUpdate,
     ClientChatMessage, ServerChatMessage, create_entity_data)
-from cuwo.entity import EntityData, AppearanceData, EquipmentData
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
+from cuwo.vector import Vector3
 from cuwo import constants
 
 import imp
@@ -161,6 +162,13 @@ class CubeWorldProtocol(Protocol):
             if call_handler(script, name, *arg, **kw) is False:
                 return False
         return True
+
+    def get_position(self):
+        if self.entity_data is None:
+            return None
+        return Vector3(self.entity_data.x, 
+                       self.entity_data.y,
+                       self.entity_data.z)
 
     def get_name(self):
         if self.entity_data is None:

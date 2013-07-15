@@ -36,3 +36,17 @@ DRayX - encrypt.py and protocol RE
 MAT4DOR - cub model details
 
 Xaymar - RE and character details
+
+FAQ
+===
+
+Q. How do I pronounce 'cuwo'?
+
+A. It's pronounced the same way you would pronounce cu(be)wo(rld)! :-)
+
+Q. What is the MITM server?
+
+A. The MITM server sits between your client and server, and can manipulate
+   and inject packets. It's not really useful for the average user, so use the
+   normal server instead.
+

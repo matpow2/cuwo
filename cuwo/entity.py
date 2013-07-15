@@ -33,7 +33,7 @@ class ItemUpgrade(Loader):
         writer.write_int8(self.material)
         writer.write_uint32(self.level)
     
-class EquipmentData(Loader):
+class ItemData(Loader):
     def read(self, reader):
         self.type = reader.read_uint8()
         self.sub_type = reader.read_uint8()
@@ -234,11 +234,11 @@ class EntityData(Loader):
         self.not_used20 = reader.read_uint32()
         self.not_used21 = reader.read_uint32()
         self.not_used22 = reader.read_uint32()
-        self.equipment_1 = EquipmentData()
-        self.equipment_1.read(reader)
+        self.item_data = ItemData()
+        self.item_data.read(reader)
         self.equipment = []
         for _ in xrange(13):
-            new_item = EquipmentData()
+            new_item = ItemData()
             new_item.read(reader)
             self.equipment.append(new_item)
         self.skills = []
@@ -323,7 +323,7 @@ class EntityData(Loader):
         writer.write_uint32(self.not_used20)
         writer.write_uint32(self.not_used21)
         writer.write_uint32(self.not_used22)
-        self.equipment_1.write(writer)
+        self.item_data.write(writer)
         for item in self.equipment:
             item.write(writer)
         for item in self.skills:
@@ -444,7 +444,7 @@ def read_masked_data(entity, reader):
     if is_bit_set(mask, 42):
         entity.not_used19 = reader.read_uint8()
     if is_bit_set(mask, 43):
-        entity.equipment_1.read(reader)
+        entity.item_data.read(reader)
     if is_bit_set(mask, 44):
         for item in entity.equipment:
             item.read(reader)
@@ -625,7 +625,7 @@ def write_masked_data(entity, writer):
     writer.write_uint32(entity.not_used21)
     writer.write_uint32(entity.not_used22)
     writer.write_uint8(entity.not_used19)
-    entity.equipment_1.write(writer)
+    entity.item_data.write(writer)
     for item in entity.equipment:
         item.write(writer)
     writer.write_string(entity.name, 16)

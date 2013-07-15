@@ -21,7 +21,7 @@
 # definitions in your own work, it would be nice with a little notice of
 # where you got them from (i.e. cuwo) :-)
 
-from cuwo.entity import (EntityData, AppearanceData, EquipmentData, 
+from cuwo.entity import (EntityData, AppearanceData, ItemData, 
     read_masked_data, write_masked_data, get_masked_size, SOUNDS)
 from cuwo.loader import Loader
 from cuwo.common import get_hex_string
@@ -31,10 +31,10 @@ import zlib
 def create_entity_data():
     data = EntityData()
     data.appearance = AppearanceData()
-    data.equipment_1 = EquipmentData()
+    data.item_data = ItemData()
     data.equipment = []
     for _ in xrange(13):
-        data.equipment.append(EquipmentData())
+        data.equipment.append(ItemData())
     return data
 
 class Packet(Loader):
@@ -129,6 +129,7 @@ class UpdateFinished(Packet):
     pass
 
 class Unknown3(Packet):
+    # not actually used - probably a legacy packet (or inventory-related?)
     def read(self, reader):
         count = reader.read_uint32()
         self.data = reader.read(120 * count)
@@ -158,42 +159,126 @@ class Packet4Struct1(Loader):
         writer.write_uint8(self.something7)
         writer.write_uint32(self.something8)
 
+class SoundAction(Loader):
+    def read(self, reader):
+        self.pos = reader.read_vec3() * 65536.0
+        self.sound_index = reader.read_uint32()
+        self.pitch = reader.read_float()
+        self.volume = reader.read_float()
+
+    def get_name(self):
+        return SOUNDS[self.sound_index]
+
+    def write(self, writer):
+        writer.write_vec3(self.pos * 65536.0)
+        writer.write_uint32(self.sound_index)
+        writer.write_float(self.pitch)
+        writer.write_float(self.volume)
+
+class PickupAction(Loader):
+    def read(self, reader):
+        self.entity_id = reader.read_uint64()
+        self.item = ItemData()
+        self.item.read(reader)
+
+    def write(self, writer):
+        writer.write_uint64(self.entity_id)
+        self.item.write(writer)
+
+class KillAction(Loader):
+    def read(self, reader):
+        self.entity_id = reader.read_uint64() # killer
+        self.target_id = reader.read_uint64() # killed
+        # is this actually padding? copied as part of MOVQ, but may just be
+        # optimization. not used in client, it seems.
+        # could also be related to items_10, seems to use same list
+        # copy implementation
+        reader.skip(4)
+        self.xp_gained = reader.read_int32()
+
+    def write(self, writer):
+        writer.write_uint64(self.entity_id)
+        writer.write_uint64(self.target_id)
+        writer.pad(4)
+        writer.write_int32(self.xp_gained)
+
+class DamageAction(Loader):
+    def read(self, reader):
+        self.target_id = reader.read_uint64()
+        self.entity_id = reader.read_uint64()
+        self.damage = reader.read_float()
+        # se above for KillAction padding
+        reader.skip(4)
+
+    def write(self, writer):
+        writer.write_uint64(self.target_id)
+        writer.write_uint64(self.entity_id)
+        writer.write_float(self.damage)
+        writer.pad(4)
+
+class PlayerDamage(Loader):
+    def read(self, reader):
+        self.entity_id = reader.read_uint64()
+        self.entity_id2 = reader.read_uint64()
+        self.something = reader.read_float() # damage?
+        self.hit_type = reader.read_uint8()
+        reader.skip(3)
+        self.something2 = reader.read_uint32()
+        self.something3 = reader.read_uint32()
+        self.pos = reader.read_qvec3()
+        self.something4 = reader.read_uint32()
+        self.something5 = reader.read_uint32()
+        self.something6 = reader.read_uint32()
+        self.a = reader.read_uint8()
+        self.b = reader.read_uint8()
+        self.c = reader.read_uint8()
+        reader.skip(1)
+
+    def write(self, writer):
+        writer.write_uint64(self.entity_id)
+        writer.write_uint64(self.entity_id2)
+        writer.write_float(self.something)
+        writer.write_uint8(self.hit_type)
+        writer.pad(3)
+        writer.write_uint32(self.something2)
+        writer.write_uint32(self.something3)
+        writer.write_qvec3(self.pos)
+        writer.write_uint32(self.something4)
+        writer.write_uint32(self.something5)
+        writer.write_uint32(self.something6)
+        writer.write_uint8(self.a)
+        writer.write_uint8(self.b)
+        writer.write_uint8(self.c)
+        writer.pad(1)
+
+def read_list(reader, item_class):
+    items = []
+    for _ in xrange(reader.read_uint32()):
+        item = item_class()
+        item.read(reader)
+        items.append(item)
+    return items
+
+def write_list(writer, items):
+    writer.write_uint32(len(items))
+    for item in items:
+        item.write(writer)
+
 class Unknown4(Packet):
     def read(self, reader):
         size = reader.read_uint32()
         decompressed_data = zlib.decompress(reader.read(size))
         reader = ByteReader(decompressed_data)
 
-        self.items_1 = []
-        for _ in xrange(reader.read_uint32()):
-            item = Packet4Struct1() # 20 bytes
-            item.read(reader)
-            self.items_1.append(item)
-
-        # on hit?
-        self.items_2 = []
-        for _ in xrange(reader.read_uint32()):
-            self.items_2.append(reader.read(72))
+        self.items_1 = read_list(reader, Packet4Struct1)
+        self.items_2 = read_list(reader, PlayerDamage)
 
         self.items_3 = []
         for _ in xrange(reader.read_uint32()):
             self.items_3.append(reader.read(72))
 
-        # make sound
-        self.items_4 = []
-        for _ in xrange(reader.read_uint32()):
-            pos = reader.read_vec3() * 65536.0
-            sound_index = reader.read_uint32()
-            pitch = reader.read_float()
-            volume = reader.read_float()
-            self.items_4.append((pos, sound_index, pitch, volume))
-
-        # shoot arrow?
-        self.items_5 = []
-        for _ in xrange(reader.read_uint32()):
-            item = ShootPacket()
-            item.read(reader)
-            self.items_5.append(item)
+        self.sound_actions = read_list(reader, SoundAction)
+        self.shoot_actions = read_list(reader, ShootPacket)
 
         self.items_6 = []
         for _ in xrange(reader.read_uint32()):
@@ -204,7 +289,7 @@ class Unknown4(Packet):
             something = reader.read_uint64()
             sub_items = []
             for _ in xrange(reader.read_uint32()):
-                item = EquipmentData()
+                item = ItemData()
                 item.read(reader)
                 data = reader.read(48)
                 sub_items.append((item, data))
@@ -218,36 +303,9 @@ class Unknown4(Packet):
                 sub_items.append(reader.read(16))
             self.items_8.append((something, sub_items))
 
-        # item picked up
-        self.items_9 = []
-        for _ in xrange(reader.read_uint32()):
-            entity_id = reader.read_uint64()
-            item = EquipmentData()
-            item.read(reader)
-            self.items_9.append((entity_id, item))
-
-        # killed by, gives xp
-        self.items_10 = []
-        for _ in xrange(reader.read_uint32()):
-            entity_id = reader.read_uint64() # killer
-            target_id = reader.read_uint64() # killed
-            # see below about padding
-            reader.skip(4)
-            xp_gained = reader.read_int32()
-            self.items_10.append((entity_id, target_id, xp_gained))
-
-        # set entity damage
-        self.items_11 = []
-        for _ in xrange(reader.read_uint32()):
-            target_id = reader.read_uint64()
-            entity_id = reader.read_uint64()
-            damage = reader.read_float()
-            # is this actually padding? copied as part of MOVQ, but may just be
-            # optimization. not used in client, it seems.
-            # could also be related to items_10, seems to use similar list
-            # copy implementation
-            reader.skip(4)
-            self.items_11.append((target_id, entity_id, damage))
+        self.pickups = read_list(reader, PickupAction)
+        self.kill_actions = read_list(reader, KillAction)
+        self.damage_actions = read_list(reader, DamageAction)
 
         self.items_12 = []
         for _ in xrange(reader.read_uint32()):
@@ -257,12 +315,14 @@ class Unknown4(Packet):
         for _ in xrange(reader.read_uint32()):
             self.items_13.append(reader.read(56))
 
-        debug = False
+        debug = True
         if debug:
             v = vars(self).copy()
-            del v['items_11']
-            del v['items_10']
-            del v['items_9']
+            del v['pickups']
+            del v['kill_actions']
+            del v['damage_actions']
+            del v['sound_actions']
+            del v['shoot_actions']
             for k, v in v.iteritems():
                 if not v:
                     continue
@@ -274,29 +334,15 @@ class Unknown4(Packet):
     def write(self, writer):
         data = ByteWriter()
 
-        data.write_uint32(len(self.items_1))
-        for item in self.items_1:
-            item.write(data)
-
-        data.write_uint32(len(self.items_2))
-        for item in self.items_2:
-            data.write(item)
+        write_list(data, self.items_1)
+        write_list(data, self.items_2)
 
         data.write_uint32(len(self.items_3))
         for item in self.items_3:
             data.write(item)
 
-        data.write_uint32(len(self.items_4))
-        for item in self.items_4:
-            pos, index, pitch, volume = item
-            data.write_vec3(vec / 65536.0)
-            data.write_uint32(index)
-            data.write_float(pitch)
-            data.write_float(volume)
-
-        data.write_uint32(len(self.items_5))
-        for item in self.items_5:
-            item.write(data)
+        write_list(data, self.sound_actions)
+        write_list(data, self.shoot_actions)
 
         data.write_uint32(len(self.items_6))
         for item in self.items_6:
@@ -320,27 +366,9 @@ class Unknown4(Packet):
             for item in sub_items:
                 data.write(item)
 
-        data.write_uint32(len(self.items_9))
-        for item in self.items_9:
-            entity_id, equipment = item
-            data.write_uint64(entity_id)
-            equipment.write(data)
-
-        data.write_uint32(len(self.items_10))
-        for item in self.items_10:
-            entity_id, entity_id2, xp_gained = item
-            data.write_uint64(entity_id)
-            data.write_uint64(entity_id2)
-            data.pad(4)
-            data.write_int32(xp_gained)
-
-        data.write_uint32(len(self.items_11))
-        for item in self.items_11:
-            entity_id, target_id, damage = item
-            data.write_uint64(entity_id)
-            data.write_uint64(target_id)
-            data.write_float(damage)
-            data.pad(4)
+        write_list(data, self.pickups)
+        write_list(data, self.kill_actions)
+        write_list(data, self.damage_actions)
 
         data.write_uint32(len(self.items_12))
         for item in self.items_12:
@@ -371,7 +399,7 @@ INTERACT_EXAMINE = 8
 
 class InteractPacket(Packet):
     def read(self, reader):
-        self.equipment = EquipmentData()
+        self.equipment = ItemData()
         self.equipment.read(reader)
         self.chunk_x = reader.read_int32()
         self.chunk_y = reader.read_int32()

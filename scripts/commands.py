@@ -1,5 +1,6 @@
 from cuwo.script import (FactoryScript, ProtocolScript, command, get_player,
     admin)
+from cuwo.common import get_chunk
 import platform
 
 class CommandFactory(FactoryScript):
@@ -36,3 +37,13 @@ def login(script, password):
 def kick(script, name):
     player = get_player(script.factory, name)
     player.kick()
+
+@command
+def whereis(script, name = None):
+    if name is None:
+        player = script.protocol
+        message = 'You are at %s'
+    else:
+        player = get_player(script.factory, name)
+        message = '%s is at %%s' % player.get_name()
+    return message % (get_chunk(player.get_position()),)
