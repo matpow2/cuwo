@@ -22,7 +22,7 @@
 # where you got them from (i.e. cuwo) :-)
 
 from cuwo.entity import (EntityData, AppearanceData, EquipmentData, 
-    read_masked_data, write_masked_data, get_masked_size)
+    read_masked_data, write_masked_data, get_masked_size, SOUNDS)
 from cuwo.loader import Loader
 from cuwo.common import get_hex_string
 from bytes import ByteReader, ByteWriter, OutOfData
@@ -173,17 +173,20 @@ class Unknown4(Packet):
         # on hit?
         self.items_2 = []
         for _ in xrange(reader.read_uint32()):
-            
             self.items_2.append(reader.read(72))
 
         self.items_3 = []
         for _ in xrange(reader.read_uint32()):
             self.items_3.append(reader.read(72))
 
-        # perform attack?
+        # make sound
         self.items_4 = []
         for _ in xrange(reader.read_uint32()):
-            self.items_4.append(reader.read(24))
+            pos = reader.read_vec3() * 65536.0
+            sound_index = reader.read_uint32()
+            pitch = reader.read_float()
+            volume = reader.read_float()
+            self.items_4.append((pos, sound_index, pitch, volume))
 
         # shoot arrow?
         self.items_5 = []
@@ -254,7 +257,7 @@ class Unknown4(Packet):
         for _ in xrange(reader.read_uint32()):
             self.items_13.append(reader.read(56))
 
-        debug = True
+        debug = False
         if debug:
             v = vars(self).copy()
             del v['items_11']
@@ -285,7 +288,11 @@ class Unknown4(Packet):
 
         data.write_uint32(len(self.items_4))
         for item in self.items_4:
-            data.write(item)
+            pos, index, pitch, volume = item
+            data.write_vec3(vec / 65536.0)
+            data.write_uint32(index)
+            data.write_float(pitch)
+            data.write_float(volume)
 
         data.write_uint32(len(self.items_5))
         for item in self.items_5:

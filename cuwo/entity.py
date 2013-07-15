@@ -18,7 +18,7 @@
 from cuwo.loader import Loader
 from cuwo.common import is_bit_set
 
-class EquipmentExtra(Loader):
+class ItemUpgrade(Loader):
     def read(self, reader):
         self.x = reader.read_int8()
         self.y = reader.read_int8()
@@ -48,10 +48,10 @@ class EquipmentData(Loader):
         reader.skip(2)
         self.items = []
         for _ in xrange(32):
-            new_item = EquipmentExtra()
+            new_item = ItemUpgrade()
             new_item.read(reader)
             self.items.append(new_item)
-        self.upgrades = reader.read_uint32()
+        self.upgrade_count = reader.read_uint32()
     
     def write(self, writer):
         writer.write_uint8(self.type)
@@ -67,7 +67,7 @@ class EquipmentData(Loader):
         writer.pad(2)
         for item in self.items:
             item.write(writer)
-        writer.write_uint32(self.upgrades)
+        writer.write_uint32(self.upgrade_count)
     
 class AppearanceData(Loader):
     def read(self, reader):
@@ -632,3 +632,107 @@ def write_masked_data(entity, writer):
     for item in entity.skills:
         writer.write_uint32(item)
     writer.write_uint32(entity.ice_block_four)
+
+SOUNDS = {
+    0 : 'hit.wav',
+    1 : 'blade1.wav',
+    2 : 'blade2.wav',
+    3 : 'long-blade1.wav',
+    4 : 'long-blade2.wav',
+    5 : 'hit1.wav',
+    6 : 'hit2.wav',
+    7 : 'punch1.wav',
+    8 : 'punch2.wav',
+    9 : 'hit-arrow.wav',
+    10 : 'hit-arrow-critical.wav',
+    11 : 'smash1.wav',
+    12 : 'slam-ground.wav',
+    13 : 'smash-hit2.wav',
+    14 : 'smash-jump.wav',
+    15 : 'swing.wav',
+    16 : 'shield-swing.wav',
+    17 : 'swing-slow.wav',
+    18 : 'swing-slow2.wav',
+    19 : 'arrow-destroy.wav',
+    20 : 'blade1.wav',
+    21 : 'punch2.wav',
+    22 : 'salvo2.wav',
+    23 : 'sword-hit03.wav',
+    24 : 'block.wav',
+    25 : 'shield-slam.wav',
+    26 : 'roll.wav',
+    27 : 'destroy2.wav',
+    28 : 'cry.wav',
+    29 : 'levelup2.wav',
+    30 : 'missioncomplete.wav',
+    31 : 'water-splash01.wav',
+    32 : 'step2.wav',
+    33 : 'step-water.wav',
+    34 : 'step-water2.wav',
+    35 : 'step-water3.wav',
+    36 : 'channel2.wav',
+    37 : 'channel-hit.wav',
+    38 : 'fireball.wav',
+    39 : 'fire-hit.wav',
+    40 : 'magic02.wav',
+    41 : 'watersplash.wav',
+    42 : 'watersplash-hit.wav',
+    43 : 'lich-scream.wav',
+    44 : 'drink2.wav',
+    45 : 'pickup.wav',
+    46 : 'disenchant2.wav',
+    47 : 'upgrade2.wav',
+    48 : 'swirl.wav',
+    49 : 'human-voice01.wav',
+    50 : 'human-voice02.wav',
+    51 : 'gate.wav',
+    52 : 'spike-trap.wav',
+    53 : 'fire-trap.wav',
+    54 : 'lever.wav',
+    55 : 'charge2.wav',
+    56 : 'magic02.wav',
+    57 : 'drop.wav',
+    58 : 'drop-coin.wav',
+    59 : 'drop-item.wav',
+    60 : 'male-groan.wav',
+    61 : 'female-groan.wav',
+    62 : 'male-groan.wav',
+    63 : 'female-groan.wav',
+    64 : 'goblin-male-groan.wav',
+    65 : 'goblin-female-groan.wav',
+    66 : 'lizard-male-groan.wav',
+    67 : 'lizard-female-groan.wav',
+    68 : 'dwarf-male-groan.wav',
+    69 : 'dwarf-female-groan.wav',
+    70 : 'orc-male-groan.wav',
+    71 : 'orc-female-groan.wav',
+    72 : 'undead-male-groan.wav',
+    73 : 'undead-female-groan.wav',
+    74 : 'frogman-male-groan.wav',
+    75 : 'frogman-female-groan.wav',
+    76 : 'monster-groan.wav',
+    77 : 'troll-groan.wav',
+    78 : 'mole-groan.wav',
+    79 : 'slime-groan.wav',
+    80 : 'zombie-groan.wav',
+    81 : 'Explosion.wav',
+    82 : 'punch2.wav',
+    83 : 'menu-open2.wav',
+    84 : 'menu-close2.wav',
+    85 : 'menu-select.wav',
+    86 : 'menu-tab.wav',
+    87 : 'menu-grab-item.wav',
+    88 : 'menu-drop-item.wav',
+    89 : 'craft.wav',
+    90 : 'craft-proc.wav',
+    91 : 'absorb.wav',
+    92 : 'manashield.wav',
+    93 : 'bulwark.wav',
+    94 : 'bird1.wav',
+    95 : 'bird2.wav',
+    96 : 'bird3.wav',
+    97 : 'cricket1.wav',
+    98 : 'cricket2.wav',
+    99 : 'owl1.wav',
+    100 : 'owl2.wav'
+}
