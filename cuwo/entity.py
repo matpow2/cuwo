@@ -158,9 +158,12 @@ class AppearanceData(Loader):
     
 class EntityData(Loader):
     def read(self, reader):
-        self.x = reader.read_int64()
-        self.y = reader.read_int64()
-        self.z = reader.read_int64()
+        self.x = reader.read_fixed()
+        self.chunk_x = reader.read_int32()
+        self.y = reader.read_fixed()
+        self.chunk_y = reader.read_int32()
+        self.z = reader.read_fixed()
+        self.chunk_z = reader.read_int32()
         self.body_roll = reader.read_float()
         self.body_pitch = reader.read_float()
         self.body_yaw = reader.read_float()
@@ -247,9 +250,12 @@ class EntityData(Loader):
         self.name = reader.read_string(16)
     
     def write(self, writer):
-        writer.write_int64(self.x)
-        writer.write_int64(self.y)
-        writer.write_int64(self.z)
+        writer.write_fixed(self.x)
+        writer.write_int32(self.chunk_x)
+        writer.write_fixed(self.y)
+        writer.write_int32(self.chunk_y)
+        writer.write_fixed(self.z)
+        writer.write_int32(self.chunk_z)
         writer.write_float(self.body_roll)
         writer.write_float(self.body_pitch)
         writer.write_float(self.body_yaw)
@@ -332,9 +338,12 @@ class EntityData(Loader):
 def read_masked_data(entity, reader):
     mask = reader.read_uint64()
     if is_bit_set(mask, 0):
-        entity.x = reader.read_int64()
-        entity.y = reader.read_int64()
-        entity.z = reader.read_int64()
+        entity.x = reader.read_fixed()
+        entity.chunk_x = reader.read_int32()
+        entity.y = reader.read_fixed()
+        entity.chunk_y = reader.read_int32()
+        entity.z = reader.read_fixed()
+        entity.chunk_z = reader.read_int32()
     if is_bit_set(mask, 1):
         entity.body_roll = reader.read_float()
         entity.body_pitch = reader.read_float()
@@ -555,9 +564,12 @@ def get_masked_size(mask):
 
 def write_masked_data(entity, writer):
     writer.write_uint64(0x0000FFFFFFFFFFFF)
-    writer.write_int64(entity.x)
-    writer.write_int64(entity.y)
-    writer.write_int64(entity.z)
+    writer.write_fixed(entity.x)
+    writer.write_int32(entity.chunk_x)
+    writer.write_fixed(entity.y)
+    writer.write_int32(entity.chunk_y)
+    writer.write_fixed(entity.z)
+    writer.write_int32(entity.chunk_z)
     writer.write_float(entity.body_roll)
     writer.write_float(entity.body_pitch)
     writer.write_float(entity.body_yaw)
