@@ -15,7 +15,7 @@ there, and has features like
 Running
 =======
 
-On Windows, see the [[quick-start guide|Quickstart]] for a quick way to get
+On Windows, see the [quick-start guide](Quickstart) for a quick way to get
 started.
 
 On Linux/Mac OS X/FreeBSD/etc., make sure you have Python 2.7 and Twisted
