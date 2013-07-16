@@ -248,8 +248,8 @@ class CubeWorldFactory(Factory):
 
     def update(self):
         for entity_id, entity in self.entities.iteritems():
-            entity_update.set_entity(entity, entity_id)
-            self.broadcast_packet(entity_update)
+            entity_packet.set_entity(entity, entity_id)
+            self.broadcast_packet(entity_packet)
         self.broadcast_packet(update_finished_packet)
         self.broadcast_packet(self.update_packet)
         self.update_packet.reset()
