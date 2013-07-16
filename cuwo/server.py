@@ -23,7 +23,7 @@ from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
 from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
     CS_PACKETS, ClientVersion, ServerData, SeedData, EntityUpdate,
-    ClientChatMessage, ServerChatMessage, create_entity_data)
+    ClientChatMessage, ServerChatMessage, create_entity_data, UpdateFinished)
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
@@ -43,6 +43,7 @@ server_data = ServerData()
 seed_data = SeedData()
 chat_message = ServerChatMessage()
 entity_update = EntityUpdate()
+update_finished_packet = UpdateFinished()
 
 class CubeWorldProtocol(Protocol):
     has_joined = False
@@ -64,7 +65,6 @@ class CubeWorldProtocol(Protocol):
                 return
             self.entity_id = self.factory.entity_ids.pop()
             self.entity_data = create_entity_data()
-            self.factory.entities[self.entity_id] = self.entity_data
             self.factory.connections[(self.entity_id,)] = self
             server_data.entity_id = self.entity_id
             self.send_packet(server_data)
@@ -75,9 +75,9 @@ class CubeWorldProtocol(Protocol):
                 raise NotImplementedError()
             packet.update_entity(self.entity_data)
             if not self.has_joined and self.entity_data.name:
+                self.factory.entities[self.entity_id] = self.entity_data
                 self.on_join()
                 self.has_joined = True
-            self.factory.broadcast_packet(packet)
         elif packet_id == ClientChatMessage.packet_id:
             message = packet.value
             if self.on_chat(message) is False:
@@ -148,6 +148,8 @@ class CubeWorldProtocol(Protocol):
             pass
         if self.entity_data is not None:
             del self.factory.entities[self.entity_id]
+        if self.entity_id is not None:
+            self.factory.entity_ids.put_back(self.entity_id)
         self.call_scripts('on_disconnect')
 
     def kick(self):
@@ -199,7 +201,10 @@ class CubeWorldFactory(Factory):
         print 'cuwo running on port 12345'
 
     def update(self):
-        pass
+        for entity_id, entity in self.entities.iteritems():
+            entity_update.set_entity(entity, entity_id)
+            self.broadcast_packet(entity_update)
+        self.broadcast_packet(update_finished_packet)
 
     def send_chat(self, value):
         packet = ServerChatMessage()

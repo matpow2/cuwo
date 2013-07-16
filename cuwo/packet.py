@@ -190,7 +190,7 @@ class SoundAction(Loader):
 
 class PickupAction(Loader):
     def read(self, reader):
-        self.entity_id = reader.read_uint64()
+        self.entity_id = reader.read_uint64() # player who picked up
         self.item = ItemData()
         self.item.read(reader)
 
@@ -267,39 +267,79 @@ class PlayerDamage(Loader):
         writer.write_uint8(self.show_light)
         writer.pad(1)
 
-class EntitySubAction(Loader):
+class ItemWorldData(Loader):
     def read(self, reader):
         self.item_data = ItemData()
         self.item_data.read(reader)
-        self.vec = reader.read_qvec3()
+        self.pos = reader.read_qvec3()
         self.something = reader.read_float() # angle something
-        self.something2 = reader.read_float()
+        self.something2 = reader.read_float() # probably angle as well
         self.something3 = reader.read_uint8()
         reader.skip(3)
-        self.something4 = reader.read_uint32() # 316
+        self.drop_time = reader.read_uint32() # drop time
         self.something5 = reader.read_uint32() # 320
         self.something6 = reader.read_int32() # 324
-        # print vars(self)
 
     def write(self, writer):
         self.item_data.write(writer)
-        writer.write_qvec3(self.vec)
+        writer.write_qvec3(self.pos)
         writer.write_float(self.something)
         writer.write_float(self.something2)
         writer.write_uint8(self.something3)
         writer.pad(3)
-        writer.write_uint32(self.something4)
+        writer.write_uint32(self.drop_time)
         writer.write_uint32(self.something5)
         writer.write_int32(self.something6)
 
-class EntityAction(Loader):
+class ItemList(Loader):
     def read(self, reader):
-        self.entity_id = reader.read_uint64()
-        self.items = read_list(reader, EntitySubAction)
+        self.chunk_x = reader.read_int32()
+        self.chunk_y = reader.read_int32()
+        self.items = read_list(reader, ItemWorldData)
 
     def write(self, writer):
-        writer.write_uint64(self.entity_id)
+        writer.write_int32(self.chunk_x)
+        writer.write_int32(self.chunk_y)
         write_list(writer, self.items)
+
+class Item13(Loader):
+    def read(self, reader):
+        self.section_x = reader.read_int32() / 8;
+        self.section_y = reader.read_int32() / 8;
+        self.something1 = reader.read_uint32() # padding?
+        self.something2 = reader.read_uint32() # also padding???
+        # --
+        self.something3 = reader.read_uint32()
+        self.something4 = reader.read_uint32()
+        self.something5 = reader.read_uint32()
+        self.something6 = reader.read_uint32()
+        self.something7 = reader.read_uint32()
+        self.something8 = reader.read_uint8()
+        self.something9 = reader.read_uint8()
+        reader.skip(2)
+        self.something10 = reader.read_float()
+        self.something11 = reader.read_float()
+        self.something12 = reader.read_uint32()
+        self.something13 = reader.read_uint32()
+        print vars(self)
+
+    def write(self, writer):
+        writer.write_int32(self.section_x * 8)
+        writer.write_int32(self.section_y * 8)
+        writer.write_uint32(self.something1)
+        writer.write_uint32(self.something2)
+        writer.write_uint32(self.something3)
+        writer.write_uint32(self.something4)
+        writer.write_uint32(self.something5)
+        writer.write_uint32(self.something6)
+        writer.write_uint32(self.something7)
+        writer.write_uint8(self.something8)
+        writer.write_uint8(self.something9)
+        writer.pad(2)
+        writer.write_uint32(self.something10)
+        writer.write_uint32(self.something11)
+        writer.write_uint32(self.something12)
+        writer.write_uint32(self.something13)
 
 class Unknown4(Packet):
     def read(self, reader):
@@ -308,7 +348,7 @@ class Unknown4(Packet):
         reader = ByteReader(decompressed_data)
 
         self.items_1 = read_list(reader, Packet4Struct1)
-        self.items_2 = read_list(reader, PlayerDamage)
+        self.player_hits = read_list(reader, PlayerDamage)
 
         self.items_3 = []
         for _ in xrange(reader.read_uint32()):
@@ -321,7 +361,7 @@ class Unknown4(Packet):
         for _ in xrange(reader.read_uint32()):
             self.items_6.append(reader.read(88))
 
-        self.items_7 = read_list(reader, EntityAction)
+        self.item_list = read_list(reader, ItemList)
 
         self.items_8 = []
         for _ in xrange(reader.read_uint32()):
@@ -339,19 +379,19 @@ class Unknown4(Packet):
         for _ in xrange(reader.read_uint32()):
             self.items_12.append(reader.read(40))
 
-        self.items_13 = []
-        for _ in xrange(reader.read_uint32()):
-            self.items_13.append(reader.read(56))
+        # objective/quests? not sure
+        self.items_13 = read_list(reader, Item13)
 
-        debug = False
+        debug = True
         if debug:
             v = vars(self).copy()
             del v['pickups']
-            del v['kill_actions']
+            # del v['kill_actions']
             del v['damage_actions']
             del v['sound_actions']
             del v['shoot_actions']
-            del v['items_2']
+            # del v['player_hits']
+            del v['item_list']
             for k, v in v.iteritems():
                 if not v:
                     continue
@@ -364,7 +404,7 @@ class Unknown4(Packet):
         data = ByteWriter()
 
         write_list(data, self.items_1)
-        write_list(data, self.items_2)
+        write_list(data, self.player_hits)
 
         data.write_uint32(len(self.items_3))
         for item in self.items_3:
@@ -377,7 +417,7 @@ class Unknown4(Packet):
         for item in self.items_6:
             data.write(item)
 
-        write_list(data, self.items_7)
+        write_list(data, self.item_list)
 
         data.write_uint32(len(self.items_8))
         for item in self.items_8:
@@ -395,9 +435,7 @@ class Unknown4(Packet):
         for item in self.items_12:
             data.write(item)
 
-        data.write_uint32(len(self.items_13))
-        for item in self.items_13:
-            data.write(item)
+        write_list(data, self.items_13)
 
         compressed_data = zlib.compress(data.get())
         writer.write_uint32(len(compressed_data))
