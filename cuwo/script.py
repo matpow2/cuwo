@@ -106,7 +106,7 @@ class ProtocolScript(BaseScript):
         self.on_unload()
         self.parent = self.protocol = self.factory = None
 
-class FactoryScript(object):
+class FactoryScript(BaseScript):
     protocol_class = ProtocolScript
     commands = None
 

@@ -28,10 +28,9 @@ from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
-from cuwo.common import get_clock_string, parse_clock
+from cuwo.common import get_clock_string, parse_clock, parse_command
 
 import imp
-import shlex
 
 def call_handler(script, name, *arg, **kw):
     f = getattr(script, name, None)
@@ -94,7 +93,8 @@ class CubeWorldProtocol(Protocol):
             del self.factory.entities[self.entity_id]
         if self.entity_id is not None:
             self.factory.entity_ids.put_back(self.entity_id)
-        self.call_scripts('on_disconnect')
+        for script in self.scripts[:]:
+            script.unload()
 
     # packet methods
 
@@ -159,16 +159,8 @@ class CubeWorldProtocol(Protocol):
 
     def on_chat(self, message):
         if message.startswith('/'):
-            try:
-                splitted = shlex.split(message[1:])
-            except ValueError:
-                # shlex failed. let's just split per space
-                splitted = message.split(' ')
-            if splitted:
-                command = splitted.pop(0)
-            else:
-                command = ''
-            self.on_command(command, splitted)
+            command, args = parse_command(message[1:])
+            self.on_command(command, args)
             return False
         return self.call_scripts('on_chat', message)
 

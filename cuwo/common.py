@@ -16,6 +16,7 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 from cuwo import constants
+import shlex
 
 def get_hex_string(value):
     v = '0x'
@@ -48,3 +49,15 @@ def get_chunk(vec):
 def get_sector(vec):
     return (int(vec.x / constants.SECTOR_SCALE), 
             int(vec.y / constants.SECTOR_SCALE))
+
+def parse_command(message):
+    try:
+        args = shlex.split(message)
+    except ValueError:
+        # shlex failed. let's just split per space
+        args = message.split(' ')
+    if args:
+        command = args.pop(0)
+    else:
+        command = ''
+    return command, args
