@@ -15,8 +15,9 @@ there, and has features like
 Running
 =======
 
-On Windows, see the [quick-start guide](Quickstart) for a quick way to get
-started.
+On Windows, see the 
+[quick-start guide](https://github.com/matpow2/cuwo/wiki/Quickstart) for a 
+quick way to get started.
 
 On Linux/Mac OS X/FreeBSD/etc., make sure you have Python 2.7 and Twisted
 installed on your machine, then run run_server.sh. 
