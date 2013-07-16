@@ -165,7 +165,8 @@ class CubeWorldProtocol(Protocol):
     # handlers
 
     def on_join(self):
-        print 'Player %r joined' % self.entity_data.name
+        print 'Player %r joined (IP %s)' % (self.entity_data.name, 
+                                            self.address.host)
         for connection in self.factory.connections.values():
             if not connection.has_joined:
                 continue

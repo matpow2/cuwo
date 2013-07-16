@@ -29,7 +29,7 @@ COPY_FILES = {}
 REMOVE_EXTENSIONS = ['pyc', 'pyo']
 REMOVE_FILES = ['w9xpopen.exe', 'dummy']
 
-open('./dist/run.bat', 'wb').write('run.exe\npause\n')
+open('./dist/run.bat', 'wb').write('server.exe\npause\n')
 
 for name in SERVER_FILES:
     copy('../%s' % name, './dist/%s' % name)
