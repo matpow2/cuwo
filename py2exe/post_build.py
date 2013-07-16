@@ -21,7 +21,7 @@ def get_git_rev():
 git_rev = get_git_rev()
 config = open('../config.py', 'rU').read()
 open('./dist/config.py', 'wb').write(
-    config + '\n\n# Current revision\git_rev = %r\n' % git_rev)
+    config + '\n\n# Current revision\ngit_rev = %r\n' % git_rev)
 
 # copy files
 SERVER_FILES = ['scripts']
