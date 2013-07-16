@@ -104,7 +104,7 @@ class CubeWorldProtocol(Protocol):
     def on_packet(self, packet):
         handler = self.packet_handlers.get(packet.packet_id, None)
         if handler is None:
-            print 'Unhandled client packet: %s' % packet.packet_id
+            # print 'Unhandled client packet: %s' % packet.packet_id
             return
         handler(packet)
 
@@ -119,7 +119,6 @@ class CubeWorldProtocol(Protocol):
             self.disconnect()
             return
         self.entity_id = self.factory.entity_ids.pop()
-        self.entity_data = create_entity_data()
         self.factory.connections[(self.entity_id,)] = self
         join_packet.entity_id = self.entity_id
         self.send_packet(join_packet)
@@ -127,11 +126,11 @@ class CubeWorldProtocol(Protocol):
         self.send_packet(seed_packet)
 
     def on_entity_packet(self, packet):
-        if packet.entity_id != self.entity_id:
-            raise NotImplementedError()
+        if self.entity_data is None:
+            self.entity_data = create_entity_data()
+            self.factory.entities[self.entity_id] = self.entity_data
         packet.update_entity(self.entity_data)
         if not self.has_joined and self.entity_data.name:
-            self.factory.entities[self.entity_id] = self.entity_data
             self.on_join()
             self.has_joined = True
 
