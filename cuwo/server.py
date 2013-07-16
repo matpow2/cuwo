@@ -163,7 +163,7 @@ class CubeWorldProtocol(Protocol):
                 splitted = shlex.split(message[1:])
             except ValueError:
                 # shlex failed. let's just split per space
-                splitted = value.split(' ')
+                splitted = message.split(' ')
             if splitted:
                 command = splitted.pop(0)
             else:
