@@ -1,3 +1,7 @@
+"""
+Sends a welcome message to players
+"""
+
 from cuwo.script import FactoryScript, ProtocolScript, command
 from twisted.internet import reactor
 

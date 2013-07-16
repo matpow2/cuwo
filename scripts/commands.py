@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Default set of commands bundled with cuwo
+"""
+
 from cuwo.script import (FactoryScript, ProtocolScript, command, get_player,
     admin)
 from cuwo.common import get_chunk
@@ -38,7 +42,11 @@ def say(script, *args):
 
 @command
 def server(script):
-    return 'Server is running on %r' % platform.system()
+    msg = 'Server is running on %r' % platform.system()
+    revision = script.factory.git_rev
+    if revision is not None:
+        msg += ', revision %s' % revision
+    return msg
 
 @command
 def login(script, password):
@@ -54,6 +62,15 @@ def login(script, password):
 def kick(script, name):
     player = get_player(script.factory, name)
     player.kick()
+
+@command
+@admin
+def setclock(script, value):
+    try:
+        script.factory.set_clock(value)
+    except ValueError:
+        return 'Invalid clock specified'
+    return 'Clock set to %s' % value
 
 @command
 def whereis(script, name = None):

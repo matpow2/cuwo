@@ -15,8 +15,12 @@ there, and has features like
 Running
 =======
 
-See the [quick-start guide](https://github.com/matpow2/cuwo/wiki) for a 
+On Windows, see the 
+[quick-start guide](https://github.com/matpow2/cuwo/wiki/Quickstart) for a 
 quick way to get started.
+
+On Linux/Mac OS X/FreeBSD/etc., make sure you have Python 2.7 and Twisted
+installed on your machine, then run run_server.sh. 
 
 Status
 ======
@@ -37,7 +41,7 @@ FAQ
 
 Q. How do I pronounce 'cuwo'?
 
-A. It's pronounced the same way you would pronounce cu(be)wo(rld) :-)
+A. 'coo-woo'
 
 Q. What is the MITM server?
 

@@ -27,8 +27,15 @@ def get_hex_string(value):
         v += new_hex
     return v
 
-def is_bit_set(value, index):
-    return value & (1 << index)
+def is_bit_set(mask, index):
+    return mask & (1 << index)
+
+def set_bit(mask, index, value):
+    if value:
+        mask |= 1 << index
+    else:
+        mask &= ~(1 << offset)
+    return mask
 
 def get_clock_string(value):
     hour = (value * 24) / constants.MAX_TIME

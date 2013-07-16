@@ -192,12 +192,12 @@ class SoundAction(Loader):
 class PickupAction(Loader):
     def read(self, reader):
         self.entity_id = reader.read_uint64() # player who picked up
-        self.item = ItemData()
-        self.item.read(reader)
+        self.item_data = ItemData()
+        self.item_data.read(reader)
 
     def write(self, writer):
         writer.write_uint64(self.entity_id)
-        self.item.write(writer)
+        self.item_data.write(writer)
 
 class KillAction(Loader):
     def read(self, reader):
@@ -230,51 +230,13 @@ class DamageAction(Loader):
         writer.write_float(self.damage)
         writer.pad(4)
 
-HIT_NORMAL = 0
-HIT_BLOCK = 1
-HIT_MISS = 3
-HIT_ABSORB = 5
-
-class PlayerDamage(Loader):
-    def read(self, reader):
-        self.entity_id = reader.read_uint64()
-        self.target_id = reader.read_uint64()
-        self.damage = reader.read_float()
-        self.something1 = reader.read_uint8() # something with foot y offset?
-        reader.skip(3)
-        self.stun_time = reader.read_uint32()
-        self.padding_maybe = reader.read_uint32() # padding? copied but not used
-        if self.padding_maybe != 0:
-            raise NotImplementedError()
-        self.pos = reader.read_qvec3() # 32
-        self.hit_dir = reader.read_vec3()
-        self.something2 = reader.read_uint8() # bool
-        self.hit_type = reader.read_uint8() # 1 if block, 3 if miss, 5 if absorb
-        self.show_light = reader.read_uint8()
-        reader.skip(1)
-
-    def write(self, writer):
-        writer.write_uint64(self.entity_id)
-        writer.write_uint64(self.target_id)
-        writer.write_float(self.damage)
-        writer.write_uint8(self.something1)
-        writer.pad(3)
-        writer.write_uint32(self.stun_time)
-        writer.write_uint32(self.padding_maybe)
-        writer.write_qvec3(self.pos)
-        writer.write_vec3(self.hit_dir)
-        writer.write_uint8(self.something2)
-        writer.write_uint8(self.hit_type)
-        writer.write_uint8(self.show_light)
-        writer.pad(1)
-
-class ItemWorldData(Loader):
+class ChunkItemData(Loader):
     def read(self, reader):
         self.item_data = ItemData()
         self.item_data.read(reader)
         self.pos = reader.read_qvec3()
-        self.something = reader.read_float() # angle something
-        self.something2 = reader.read_float() # probably angle as well
+        self.rotation = reader.read_float() # angle something
+        self.scale = reader.read_float()
         self.something3 = reader.read_uint8()
         reader.skip(3)
         self.drop_time = reader.read_uint32() # drop time
@@ -284,19 +246,19 @@ class ItemWorldData(Loader):
     def write(self, writer):
         self.item_data.write(writer)
         writer.write_qvec3(self.pos)
-        writer.write_float(self.something)
-        writer.write_float(self.something2)
+        writer.write_float(self.rotation)
+        writer.write_float(self.scale)
         writer.write_uint8(self.something3)
         writer.pad(3)
         writer.write_uint32(self.drop_time)
         writer.write_uint32(self.something5)
         writer.write_int32(self.something6)
 
-class ItemList(Loader):
+class ChunkItems(Loader):
     def read(self, reader):
         self.chunk_x = reader.read_int32()
         self.chunk_y = reader.read_int32()
-        self.items = read_list(reader, ItemWorldData)
+        self.items = read_list(reader, ChunkItemData)
 
     def write(self, writer):
         writer.write_int32(self.chunk_x)
@@ -350,7 +312,7 @@ class ServerUpdate(Packet):
         self.sound_actions = []
         self.shoot_actions = []
         self.items_6 = []
-        self.item_list = []
+        self.chunk_items = []
         self.items_8 = []
         self.pickups = []
         self.kill_actions = []
@@ -364,7 +326,7 @@ class ServerUpdate(Packet):
         reader = ByteReader(decompressed_data)
 
         self.items_1 = read_list(reader, Packet4Struct1)
-        self.player_hits = read_list(reader, PlayerDamage)
+        self.player_hits = read_list(reader, HitPacket)
 
         self.items_3 = []
         for _ in xrange(reader.read_uint32()):
@@ -377,7 +339,7 @@ class ServerUpdate(Packet):
         for _ in xrange(reader.read_uint32()):
             self.items_6.append(reader.read(88))
 
-        self.item_list = read_list(reader, ItemList)
+        self.chunk_items = read_list(reader, ChunkItems)
 
         self.items_8 = []
         for _ in xrange(reader.read_uint32()):
@@ -407,7 +369,7 @@ class ServerUpdate(Packet):
             del v['sound_actions']
             del v['shoot_actions']
             # del v['player_hits']
-            del v['item_list']
+            del v['chunk_items']
             for k, v in v.iteritems():
                 if not v:
                     continue
@@ -433,7 +395,7 @@ class ServerUpdate(Packet):
         for item in self.items_6:
             data.write(item)
 
-        write_list(data, self.item_list)
+        write_list(data, self.chunk_items)
 
         data.write_uint32(len(self.items_8))
         for item in self.items_8:
@@ -474,61 +436,62 @@ INTERACT_EXAMINE = 8
 
 class InteractPacket(Packet):
     def read(self, reader):
-        self.equipment = ItemData()
-        self.equipment.read(reader)
+        self.item_data = ItemData()
+        self.item_data.read(reader)
         self.chunk_x = reader.read_int32()
         self.chunk_y = reader.read_int32()
-        self.something3 = reader.read_int32()
+        # index of item in ChunkItems
+        self.item_index = reader.read_int32()
         #
         self.something4 = reader.read_uint32()
         self.interact_type = reader.read_uint8()
         self.something6 = reader.read_uint8()
         self.something7 = reader.read_uint16()
-        # print vars(self)
 
     def write(self, writer):
-        self.equipment.write(writer)
+        self.item_data.write(writer)
         writer.write_int32(self.chunk_x)
         writer.write_int32(self.chunk_y)
-        writer.write_int32(self.something3)
+        writer.write_int32(self.item_index)
         writer.write_uint32(self.something4)
         writer.write_uint8(self.interact_type)
         writer.write_uint8(self.something6)
         writer.write_uint16(self.something7)
 
+HIT_NORMAL = 0
+HIT_BLOCK = 1
+HIT_MISS = 3
+HIT_ABSORB = 5
+
 class HitPacket(Packet):
     def read(self, reader):
-        self.attacker_entity = reader.read_uint64()
-        self.target_entity = reader.read_uint64()
+        self.entity_id = reader.read_uint64()
+        self.target_id = reader.read_uint64()
         self.damage = reader.read_float()
         self.critical = reader.read_uint8()
         reader.skip(3)
         self.stun_duration = reader.read_uint32()
-        self.something8 = reader.read_uint32()
-        self.hit_pos = reader.read_qvec3()
-        self.something15 = reader.read_uint32()
-        self.something16 = reader.read_uint32()
-        self.something17 = reader.read_uint32()
+        self.something8 = reader.read_uint32() # padding maybe?
+        self.pos = reader.read_qvec3()
+        self.hit_dir = reader.read_vec3()
         self.skill_hit = reader.read_uint8()
-        self.evading = reader.read_uint8()
-        self.something20 = reader.read_uint8()
+        self.hit_type = reader.read_uint8()
+        self.show_light = reader.read_uint8()
         reader.skip(1)
 
     def write(self, writer):
-        writer.write_uint64(self.attacker_entity)
-        writer.write_uint64(self.target_entity)
+        writer.write_uint64(self.entity_id)
+        writer.write_uint64(self.target_id)
         writer.write_float(self.damage)
         writer.write_uint8(self.critical)
         writer.pad(3)
         writer.write_uint32(self.stun_duration)
         writer.write_uint32(self.something8)
-        writer.write_qvec3(self.hit_pos)
-        writer.write_uint32(self.something15)
-        writer.write_uint32(self.something16)
-        writer.write_uint32(self.something17)
+        writer.write_qvec3(self.pos)
+        self.hit_dir = writer.write_vec3(self.hit_dir)
         writer.write_uint8(self.skill_hit)
-        writer.write_uint8(self.evading)
-        writer.write_uint8(self.something20)
+        writer.write_uint8(self.hit_type)
+        writer.write_uint8(self.show_light)
         writer.pad(1)
 
 class Unknown8(Packet):
