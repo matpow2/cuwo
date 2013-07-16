@@ -33,6 +33,8 @@ from cuwo.common import get_clock_string, parse_clock, parse_command
 
 import collections
 import imp
+import os
+import sys
 
 def call_handler(script, name, *arg, **kw):
     f = getattr(script, name, None)
@@ -294,6 +296,7 @@ class CubeWorldFactory(Factory):
         except IOError:
             return None
         script = mod.get_class()(self)
+        print 'Loaded script %r' % name
         return script
 
     def call_scripts(self, name, *arg, **kw):
@@ -325,6 +328,12 @@ class CubeWorldFactory(Factory):
         return get_clock_string(self.get_time())
 
 def main():
+    # for py2exe
+    if hasattr(sys, 'frozen'):
+        path = os.path.dirname(
+            unicode(sys.executable, sys.getfilesystemencoding()))
+        sys.path.append(path)
+
     import config
     reactor.listenTCP(constants.SERVER_PORT, CubeWorldFactory(config))
     print 'cuwo running on port %s' % constants.SERVER_PORT
