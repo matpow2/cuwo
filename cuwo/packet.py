@@ -192,12 +192,12 @@ class SoundAction(Loader):
 class PickupAction(Loader):
     def read(self, reader):
         self.entity_id = reader.read_uint64() # player who picked up
-        self.item = ItemData()
-        self.item.read(reader)
+        self.item_data = ItemData()
+        self.item_data.read(reader)
 
     def write(self, writer):
         writer.write_uint64(self.entity_id)
-        self.item.write(writer)
+        self.item_data.write(writer)
 
 class KillAction(Loader):
     def read(self, reader):
@@ -268,13 +268,13 @@ class PlayerDamage(Loader):
         writer.write_uint8(self.show_light)
         writer.pad(1)
 
-class ItemWorldData(Loader):
+class ChunkItemData(Loader):
     def read(self, reader):
         self.item_data = ItemData()
         self.item_data.read(reader)
         self.pos = reader.read_qvec3()
-        self.something = reader.read_float() # angle something
-        self.something2 = reader.read_float() # probably angle as well
+        self.rotation = reader.read_float() # angle something
+        self.scale = reader.read_float()
         self.something3 = reader.read_uint8()
         reader.skip(3)
         self.drop_time = reader.read_uint32() # drop time
@@ -284,19 +284,19 @@ class ItemWorldData(Loader):
     def write(self, writer):
         self.item_data.write(writer)
         writer.write_qvec3(self.pos)
-        writer.write_float(self.something)
-        writer.write_float(self.something2)
+        writer.write_float(self.rotation)
+        writer.write_float(self.scale)
         writer.write_uint8(self.something3)
         writer.pad(3)
         writer.write_uint32(self.drop_time)
         writer.write_uint32(self.something5)
         writer.write_int32(self.something6)
 
-class ItemList(Loader):
+class ChunkItems(Loader):
     def read(self, reader):
         self.chunk_x = reader.read_int32()
         self.chunk_y = reader.read_int32()
-        self.items = read_list(reader, ItemWorldData)
+        self.items = read_list(reader, ChunkItemData)
 
     def write(self, writer):
         writer.write_int32(self.chunk_x)
@@ -350,7 +350,7 @@ class ServerUpdate(Packet):
         self.sound_actions = []
         self.shoot_actions = []
         self.items_6 = []
-        self.item_list = []
+        self.chunk_items = []
         self.items_8 = []
         self.pickups = []
         self.kill_actions = []
@@ -377,7 +377,7 @@ class ServerUpdate(Packet):
         for _ in xrange(reader.read_uint32()):
             self.items_6.append(reader.read(88))
 
-        self.item_list = read_list(reader, ItemList)
+        self.chunk_items = read_list(reader, ChunkItems)
 
         self.items_8 = []
         for _ in xrange(reader.read_uint32()):
@@ -407,7 +407,7 @@ class ServerUpdate(Packet):
             del v['sound_actions']
             del v['shoot_actions']
             # del v['player_hits']
-            del v['item_list']
+            del v['chunk_items']
             for k, v in v.iteritems():
                 if not v:
                     continue
@@ -433,7 +433,7 @@ class ServerUpdate(Packet):
         for item in self.items_6:
             data.write(item)
 
-        write_list(data, self.item_list)
+        write_list(data, self.chunk_items)
 
         data.write_uint32(len(self.items_8))
         for item in self.items_8:
@@ -474,23 +474,23 @@ INTERACT_EXAMINE = 8
 
 class InteractPacket(Packet):
     def read(self, reader):
-        self.equipment = ItemData()
-        self.equipment.read(reader)
+        self.item_data = ItemData()
+        self.item_data.read(reader)
         self.chunk_x = reader.read_int32()
         self.chunk_y = reader.read_int32()
-        self.something3 = reader.read_int32()
+        # index of item in ChunkItems
+        self.item_index = reader.read_int32()
         #
         self.something4 = reader.read_uint32()
         self.interact_type = reader.read_uint8()
         self.something6 = reader.read_uint8()
         self.something7 = reader.read_uint16()
-        # print vars(self)
 
     def write(self, writer):
-        self.equipment.write(writer)
+        self.item_data.write(writer)
         writer.write_int32(self.chunk_x)
         writer.write_int32(self.chunk_y)
-        writer.write_int32(self.something3)
+        writer.write_int32(self.item_index)
         writer.write_uint32(self.something4)
         writer.write_uint8(self.interact_type)
         writer.write_uint8(self.something6)
