@@ -230,44 +230,6 @@ class DamageAction(Loader):
         writer.write_float(self.damage)
         writer.pad(4)
 
-HIT_NORMAL = 0
-HIT_BLOCK = 1
-HIT_MISS = 3
-HIT_ABSORB = 5
-
-class PlayerDamage(Loader):
-    def read(self, reader):
-        self.entity_id = reader.read_uint64()
-        self.target_id = reader.read_uint64()
-        self.damage = reader.read_float()
-        self.something1 = reader.read_uint8() # something with foot y offset?
-        reader.skip(3)
-        self.stun_time = reader.read_uint32()
-        self.padding_maybe = reader.read_uint32() # padding? copied but not used
-        if self.padding_maybe != 0:
-            raise NotImplementedError()
-        self.pos = reader.read_qvec3() # 32
-        self.hit_dir = reader.read_vec3()
-        self.something2 = reader.read_uint8() # bool
-        self.hit_type = reader.read_uint8() # 1 if block, 3 if miss, 5 if absorb
-        self.show_light = reader.read_uint8()
-        reader.skip(1)
-
-    def write(self, writer):
-        writer.write_uint64(self.entity_id)
-        writer.write_uint64(self.target_id)
-        writer.write_float(self.damage)
-        writer.write_uint8(self.something1)
-        writer.pad(3)
-        writer.write_uint32(self.stun_time)
-        writer.write_uint32(self.padding_maybe)
-        writer.write_qvec3(self.pos)
-        writer.write_vec3(self.hit_dir)
-        writer.write_uint8(self.something2)
-        writer.write_uint8(self.hit_type)
-        writer.write_uint8(self.show_light)
-        writer.pad(1)
-
 class ChunkItemData(Loader):
     def read(self, reader):
         self.item_data = ItemData()
@@ -364,7 +326,7 @@ class ServerUpdate(Packet):
         reader = ByteReader(decompressed_data)
 
         self.items_1 = read_list(reader, Packet4Struct1)
-        self.player_hits = read_list(reader, PlayerDamage)
+        self.player_hits = read_list(reader, HitPacket)
 
         self.items_3 = []
         for _ in xrange(reader.read_uint32()):
@@ -496,39 +458,40 @@ class InteractPacket(Packet):
         writer.write_uint8(self.something6)
         writer.write_uint16(self.something7)
 
+HIT_NORMAL = 0
+HIT_BLOCK = 1
+HIT_MISS = 3
+HIT_ABSORB = 5
+
 class HitPacket(Packet):
     def read(self, reader):
-        self.attacker_entity = reader.read_uint64()
-        self.target_entity = reader.read_uint64()
+        self.entity_id = reader.read_uint64()
+        self.target_id = reader.read_uint64()
         self.damage = reader.read_float()
         self.critical = reader.read_uint8()
         reader.skip(3)
         self.stun_duration = reader.read_uint32()
-        self.something8 = reader.read_uint32()
-        self.hit_pos = reader.read_qvec3()
-        self.something15 = reader.read_uint32()
-        self.something16 = reader.read_uint32()
-        self.something17 = reader.read_uint32()
+        self.something8 = reader.read_uint32() # padding maybe?
+        self.pos = reader.read_qvec3()
+        self.hit_dir = reader.read_vec3()
         self.skill_hit = reader.read_uint8()
-        self.evading = reader.read_uint8()
-        self.something20 = reader.read_uint8()
+        self.hit_type = reader.read_uint8()
+        self.show_light = reader.read_uint8()
         reader.skip(1)
 
     def write(self, writer):
-        writer.write_uint64(self.attacker_entity)
-        writer.write_uint64(self.target_entity)
+        writer.write_uint64(self.entity_id)
+        writer.write_uint64(self.target_id)
         writer.write_float(self.damage)
         writer.write_uint8(self.critical)
         writer.pad(3)
         writer.write_uint32(self.stun_duration)
         writer.write_uint32(self.something8)
-        writer.write_qvec3(self.hit_pos)
-        writer.write_uint32(self.something15)
-        writer.write_uint32(self.something16)
-        writer.write_uint32(self.something17)
+        writer.write_qvec3(self.pos)
+        self.hit_dir = writer.write_vec3(self.hit_dir)
         writer.write_uint8(self.skill_hit)
-        writer.write_uint8(self.evading)
-        writer.write_uint8(self.something20)
+        writer.write_uint8(self.hit_type)
+        writer.write_uint8(self.show_light)
         writer.pad(1)
 
 class Unknown8(Packet):

@@ -26,7 +26,8 @@ from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
     CS_PACKETS, ClientVersion, JoinPacket, SeedData, EntityUpdate,
     ClientChatMessage, ServerChatMessage, create_entity_data, UpdateFinished,
     CurrentTime, ServerUpdate, ServerFull, ServerMismatch, INTERACT_DROP,
-    INTERACT_PICKUP, ChunkItemData, ChunkItems, InteractPacket, PickupAction)
+    INTERACT_PICKUP, ChunkItemData, ChunkItems, InteractPacket, PickupAction,
+    HitPacket)
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
@@ -72,7 +73,8 @@ class CubeWorldProtocol(Protocol):
             ClientVersion.packet_id : self.on_version_packet,
             EntityUpdate.packet_id : self.on_entity_packet,
             ClientChatMessage.packet_id : self.on_chat_packet,
-            InteractPacket.packet_id : self.on_interact_packet
+            InteractPacket.packet_id : self.on_interact_packet,
+            HitPacket.packet_id : self.on_hit_packet
         }
         
         self.scripts = []
@@ -161,6 +163,12 @@ class CubeWorldProtocol(Protocol):
             except IndexError:
                 return
             self.give_item(item)
+
+    def on_hit_packet(self, packet):
+        self.factory.update_packet.player_hits.append(packet)
+        target = self.factory.entities[packet.target_id]
+        if target.hp - packet.damage <= 0:
+            self.call_scripts('on_kill', target)
 
     # handlers
 
@@ -288,6 +296,8 @@ class CubeWorldFactory(Factory):
         self.items_changed = True
 
     def update(self):
+        self.call_scripts('update')
+
         # entity updates
         for entity_id, entity in self.entities.iteritems():
             entity_packet.set_entity(entity, entity_id)

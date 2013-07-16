@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Default set of commands bundled with cuwo
+"""
+
 from cuwo.script import (FactoryScript, ProtocolScript, command, get_player,
     admin)
 from cuwo.common import get_chunk

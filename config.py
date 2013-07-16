@@ -10,7 +10,8 @@ seed = 26879
 # Time speed modifier, 1.0 is default
 time_modifier = 1.0
 
-# List of scripts to run on the server on startup
+# List of scripts to run on the server on startup.
+# Consider turning on 'pvp', i.e. player versus player
 scripts = ['commands', 'welcome']
 
 # Passwords used for rights management. Keys are passwords, and values are

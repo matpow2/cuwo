@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+IRC client that can be used as a way to control the game server
+"""
+
 from twisted.words.protocols import irc
 from twisted.internet import reactor, protocol
 from cuwo.common import parse_command
