@@ -21,6 +21,7 @@ High-level byte read/writing and pack/unpacking from files and data
 
 from cStringIO import StringIO
 from cuwo.vector import Vector3
+from cuwo.exceptions import OutOfData
 import struct
 
 INT8 = struct.Struct('<b')
@@ -32,9 +33,6 @@ UINT32 = struct.Struct('<I')
 INT64 = struct.Struct('<q')
 UINT64 = struct.Struct('<Q')
 FLOAT = struct.Struct('<f')
-
-class OutOfData(struct.error):
-    pass
 
 class ByteWriter(object):
     def __init__(self, fp = None):

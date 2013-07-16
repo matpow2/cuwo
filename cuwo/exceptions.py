@@ -15,15 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-CLIENT_VERSION = 3
-SERVER_PORT = 12345
+import struct
 
-MAX_TIME = 24 * 60 * 60 * 1000
-NORMAL_TIME_SPEED = 10.0
-SLEEP_TIME_SPEED = 100.0
-UPDATE_FPS = 50
+class OutOfData(struct.error):
+    """
+    Raised when there is not enough data for the element being read.
+    """
 
-BLOCK_SCALE = 0xFFFF
-CHUNK_SCALE = 0xFFFFFF
-SECTOR_SCALE = 0x3FFFFFFF
-MAX_POS = 0xFFFFFFFFFF
+class InvalidData(Exception):
+    """
+    Raised when invalid data is received
+    """

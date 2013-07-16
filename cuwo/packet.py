@@ -25,7 +25,8 @@ from cuwo.entity import (EntityData, AppearanceData, ItemData,
     read_masked_data, write_masked_data, get_masked_size, SOUNDS)
 from cuwo.loader import Loader
 from cuwo.common import get_hex_string
-from bytes import ByteReader, ByteWriter, OutOfData
+from cuwo.bytes import ByteReader, ByteWriter
+from cuwo.exceptions import OutOfData
 import zlib
 
 def create_entity_data():
@@ -70,7 +71,7 @@ class ServerMismatch(Packet):
     def write(self, writer):
         writer.write_uint32(self.version)
 
-class ServerData(Packet):
+class JoinPacket(Packet):
     data = None
     def read(self, reader):
         if reader.read_uint32() != 0:
@@ -341,7 +342,22 @@ class Item13(Loader):
         writer.write_uint32(self.something12)
         writer.write_uint32(self.something13)
 
-class Unknown4(Packet):
+class ServerUpdate(Packet):
+    def reset(self):
+        self.items_1 = []
+        self.player_hits = []
+        self.items_3 = []
+        self.sound_actions = []
+        self.shoot_actions = []
+        self.items_6 = []
+        self.item_list = []
+        self.items_8 = []
+        self.pickups = []
+        self.kill_actions = []
+        self.damage_actions = []
+        self.items_12 = []
+        self.items_13 = []
+
     def read(self, reader):
         size = reader.read_uint32()
         decompressed_data = zlib.decompress(reader.read(size))
@@ -633,12 +649,12 @@ SC_PACKETS = {
     1 : MultipleEntityUpdate, # not used
     2 : UpdateFinished,
     3 : Unknown3, # not used
-    4 : Unknown4,
+    4 : ServerUpdate,
     5 : CurrentTime,
     10 : ServerChatMessage,
     18 : ServerFull,
     17 : ServerMismatch,
-    16 : ServerData,
+    16 : JoinPacket,
     15 : SeedData
 }
 

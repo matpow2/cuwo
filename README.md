@@ -1,8 +1,15 @@
 ![cuwo](http://mp2.dk/cuwo/logo.png)
 ====
 
-cuwo is an open server implementation for Cube World, and includes various
-utilities to manipulate its data.
+cuwo is an open server implementation for Cube World, written in Python.
+It currently has the best protocol coverage among all the server projects out
+there, and has features like
+
+* Cross-platform (Windows, Mac OS X, Linux, FreeBSD, etc.)
+* Scripting (see the minimal scripts/welcome.py example)
+* Advanced configuration
+* Commands (/kick, /say, /whereis, /etc.)
+* Rights management
 
 Running
 =======

@@ -21,8 +21,8 @@ from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from cuwo.packet import (PacketHandler, write_packet, ServerChatMessage,
-    CS_PACKETS, SC_PACKETS, EntityUpdate, create_entity_data, ServerData,
-    CurrentTime, ShootPacket, Unknown4, UpdateFinished)
+    CS_PACKETS, SC_PACKETS, EntityUpdate, create_entity_data, JoinPacket,
+    CurrentTime, ShootPacket)
 from cuwo import constants
 from cuwo.common import get_chunk
 
@@ -95,7 +95,7 @@ class CubeWorldProtocol(Protocol):
     def on_server_packet(self, packet):
         if packet.packet_id == EntityUpdate.packet_id:
             self.on_entity_update(packet)
-        elif packet.packet_id == ServerData.packet_id:
+        elif packet.packet_id == JoinPacket.packet_id:
             self.entity_id = packet.entity_id
         elif packet.packet_id == CurrentTime.packet_id:
             # I hate darkness

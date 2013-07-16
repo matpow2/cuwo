@@ -29,10 +29,17 @@ def get_hex_string(value):
 def is_bit_set(value, index):
     return value & (1 << index)
 
-def get_time_string(value):
+def get_clock_string(value):
     hour = (value * 24) / constants.MAX_TIME
     minute = ((value * 24 * 60) / constants.MAX_TIME) % 60
     return '%02d:%02d' % (hour, minute)
+
+def parse_clock(value):
+    h, m = value.split(':')
+    h = int(h)
+    m = int(m)
+    v = (h * constants.MAX_TIME) / 24 + (m * constants.MAX_TIME) / (24 * 60)
+    return v
 
 def get_chunk(vec):
     return (int(vec.x / constants.CHUNK_SCALE), 
