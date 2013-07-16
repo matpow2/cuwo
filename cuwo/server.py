@@ -149,9 +149,9 @@ class CubeWorldProtocol(Protocol):
         for connection in self.factory.connections.values():
             if not connection.has_joined:
                 continue
-            entity_update.set_entity(connection.entity_data,
+            entity_packet.set_entity(connection.entity_data,
                                      connection.entity_id)
-            self.send_packet(entity_update)
+            self.send_packet(entity_packet)
         self.call_scripts('on_join')
 
     def on_command(self, command, parameters):
