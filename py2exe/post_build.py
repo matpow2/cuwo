@@ -21,7 +21,7 @@ def get_git_rev():
 git_rev = get_git_rev()
 config = open('../config.py', 'rU').read()
 open('./dist/config.py', 'wb').write(
-    config + '\n\n# Current revision\git_rev = %r\n' % git_rev)
+    config + '\n\n# Current revision\ngit_rev = %r\n' % git_rev)
 
 # copy files
 SERVER_FILES = ['scripts']
@@ -29,7 +29,7 @@ COPY_FILES = {}
 REMOVE_EXTENSIONS = ['pyc', 'pyo']
 REMOVE_FILES = ['w9xpopen.exe', 'dummy']
 
-open('./dist/run.bat', 'wb').write('run.exe\npause\n')
+open('./dist/run.bat', 'wb').write('server.exe\npause\n')
 
 for name in SERVER_FILES:
     copy('../%s' % name, './dist/%s' % name)

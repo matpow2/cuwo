@@ -18,6 +18,8 @@
 from cuwo.loader import Loader
 from cuwo.common import is_bit_set
 
+FLAGS_1_HOSTILE = 0x20
+
 class ItemUpgrade(Loader):
     def read(self, reader):
         self.x = reader.read_int8()
@@ -243,7 +245,7 @@ class EntityData(Loader):
         self.skills = []
         for _ in xrange(11):
             self.skills.append(reader.read_uint32())
-        self.ice_block_four = reader.read_uint32()
+        self.mana_cubes = reader.read_uint32()
         self.name = reader.read_string(16)
     
     def write(self, writer):
@@ -326,7 +328,7 @@ class EntityData(Loader):
             item.write(writer)
         for item in self.skills:
             writer.write_uint32(item)
-        writer.write_uint32(self.ice_block_four)
+        writer.write_uint32(self.mana_cubes)
         writer.write_string(self.name, 16)
     
 def read_masked_data(entity, reader):
@@ -452,7 +454,7 @@ def read_masked_data(entity, reader):
         for _ in xrange(11):
             entity.skills.append(reader.read_uint32())
     if is_bit_set(mask, 47):
-        entity.ice_block_four = reader.read_uint32()
+        entity.mana_cubes = reader.read_uint32()
 
 def get_masked_size(mask):
     size = 0
@@ -627,7 +629,7 @@ def write_masked_data(entity, writer):
     writer.write_string(entity.name, 16)
     for item in entity.skills:
         writer.write_uint32(item)
-    writer.write_uint32(entity.ice_block_four)
+    writer.write_uint32(entity.mana_cubes)
 
 SOUNDS = {
     0 : 'hit',

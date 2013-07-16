@@ -25,11 +25,13 @@ from twisted.internet.task import LoopingCall
 from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
     CS_PACKETS, ClientVersion, JoinPacket, SeedData, EntityUpdate,
     ClientChatMessage, ServerChatMessage, create_entity_data, UpdateFinished,
-    CurrentTime, ServerUpdate, ServerFull, ServerMismatch)
+    CurrentTime, ServerUpdate, ServerFull, ServerMismatch, INTERACT_DROP,
+    INTERACT_PICKUP, ChunkItemData, ChunkItems, InteractPacket, PickupAction,
+    HitPacket)
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
-from cuwo.common import get_clock_string, parse_clock, parse_command
+from cuwo.common import get_clock_string, parse_clock, parse_command, get_chunk
 
 import collections
 import imp
@@ -70,7 +72,9 @@ class CubeWorldProtocol(Protocol):
         self.packet_handlers = {
             ClientVersion.packet_id : self.on_version_packet,
             EntityUpdate.packet_id : self.on_entity_packet,
-            ClientChatMessage.packet_id : self.on_chat_packet
+            ClientChatMessage.packet_id : self.on_chat_packet,
+            InteractPacket.packet_id : self.on_interact_packet,
+            HitPacket.packet_id : self.on_hit_packet
         }
         
         self.scripts = []
@@ -146,10 +150,36 @@ class CubeWorldProtocol(Protocol):
         chat_packet.value = message
         self.factory.broadcast_packet(chat_packet)
 
+    def on_interact_packet(self, packet):
+        interact_type = packet.interact_type
+        if interact_type == INTERACT_DROP:
+            pos = self.get_position().copy()
+            pos.z -= constants.BLOCK_SCALE
+            self.factory.drop_item(packet.item_data, pos)
+        elif interact_type == INTERACT_PICKUP:
+            chunk = (packet.chunk_x, packet.chunk_y)
+            try:
+                item = self.factory.remove_item(chunk, packet.item_index)
+            except IndexError:
+                return
+            self.give_item(item)
+
+    def on_hit_packet(self, packet):
+        self.factory.update_packet.player_hits.append(packet)
+        try:
+            target = self.factory.entities[packet.target_id]
+        except KeyError:
+            return
+        if target.hp <= 0:
+            return
+        if target.hp - packet.damage <= 0:
+            self.call_scripts('on_kill', target)
+
     # handlers
 
     def on_join(self):
-        print 'Player %r joined' % self.entity_data.name
+        print 'Player %r joined (IP %s)' % (self.entity_data.name, 
+                                            self.address.host)
         for connection in self.factory.connections.values():
             if not connection.has_joined:
                 continue
@@ -175,6 +205,12 @@ class CubeWorldProtocol(Protocol):
         packet.entity_id = 0
         packet.value = value
         self.send_packet(packet)
+
+    def give_item(self, item):
+        action = PickupAction()
+        action.entity_id = self.entity_id
+        action.item_data = item
+        self.factory.update_packet.pickups.append(action)
 
     def send_lines(self, lines):
         current_time = 0
@@ -208,15 +244,17 @@ class CubeWorldProtocol(Protocol):
         return self.entity_data.name
 
 class CubeWorldFactory(Factory):
+    items_changed = False
     def __init__(self, config):
         self.config = config
 
         # game-related
         self.update_packet = ServerUpdate()
         self.update_packet.reset()
+
         self.connections = MultikeyDict()
 
-        self.items = []
+        self.chunk_items = collections.defaultdict(list)
         self.entities = {}
         self.entity_ids = IDPool(1)
 
@@ -237,14 +275,34 @@ class CubeWorldFactory(Factory):
         # time
         self.extra_elapsed_time = 0.0
         self.start_time = reactor.seconds()
-        self.set_time('12:00')
+        self.set_clock('12:00')
 
     def buildProtocol(self, addr):
         # return None here to refuse the connection.
         # will use this later to hardban e.g. DoS
         return CubeWorldProtocol(self, addr)
 
+    def remove_item(self, chunk, index):
+        items = self.chunk_items[chunk]
+        ret = items.pop(index)
+        self.items_changed = True
+        return ret.item_data
+
+    def drop_item(self, item_data, pos):
+        item = ChunkItemData()
+        item.drop_time = 750
+        # XXX provide sane values for these
+        item.scale = 0.1
+        item.rotation = 185.0
+        item.something3 = item.something5 = item.something6 = 0
+        item.pos = pos
+        item.item_data = item_data
+        self.chunk_items[get_chunk(pos)].append(item)
+        self.items_changed = True
+
     def update(self):
+        self.call_scripts('update')
+
         # entity updates
         for entity_id, entity in self.entities.iteritems():
             entity_packet.set_entity(entity, entity_id)
@@ -252,12 +310,22 @@ class CubeWorldFactory(Factory):
         self.broadcast_packet(update_finished_packet)
 
         # other updates
-        # chunk_items = collections.defaultdict(list)
-        # for item in self.items:
-        #     chunk_x, chunk_y = get_chunk(item.pos)
-        #     chunk_items[(chunk_x, chunk_y)].append
-        self.broadcast_packet(self.update_packet)
-        self.update_packet.reset()
+        update_packet = self.update_packet
+        if self.items_changed:
+            for chunk, items in self.chunk_items.iteritems():
+                item_list = ChunkItems()
+                item_list.chunk_x, item_list.chunk_y = chunk
+                item_list.items = items
+                update_packet.chunk_items.append(item_list)
+        self.broadcast_packet(update_packet)
+        update_packet.reset()
+
+        # reset drop times
+        if self.items_changed:
+            for items in self.chunk_items.values():
+                for item in items:
+                    item.drop_time = 0
+            self.items_changed = False
 
         # time update
         time_packet.time = self.get_time()
@@ -309,7 +377,7 @@ class CubeWorldFactory(Factory):
 
     # time methods
 
-    def set_time(self, value):
+    def set_clock(self, value):
         day = self.get_day()
         time = parse_clock(value)
         self.start_time = reactor.seconds()
