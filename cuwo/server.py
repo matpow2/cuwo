@@ -166,7 +166,12 @@ class CubeWorldProtocol(Protocol):
 
     def on_hit_packet(self, packet):
         self.factory.update_packet.player_hits.append(packet)
-        target = self.factory.entities[packet.target_id]
+        try:
+            target = self.factory.entities[packet.target_id]
+        except KeyError:
+            return
+        if target.hp <= 0:
+            return
         if target.hp - packet.damage <= 0:
             self.call_scripts('on_kill', target)
 
