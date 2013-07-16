@@ -68,6 +68,7 @@ class CubeWorldProtocol(Protocol):
         entity = self.entities[self.entity_id]
         print 'Info:'
         print 'Pos:', entity.x, entity.y, entity.z
+        print 'Chunk:', entity.chunk_x, entity.chunk_y, entity.chunk_z
 
     def send_chat(self, value):
         packet = ServerChatMessage()

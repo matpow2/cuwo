@@ -22,7 +22,7 @@ High-level byte read/writing and pack/unpacking from files and data
 from cStringIO import StringIO
 from cuwo.vector import Vector3
 from cuwo.exceptions import OutOfData
-import struct
+import math, struct
 
 INT8 = struct.Struct('<b')
 UINT8 = struct.Struct('<B')
@@ -85,6 +85,12 @@ class ByteWriter(object):
 
     def write_float(self, value):
         self.write_struct(FLOAT, value)
+
+    def write_fixed(self, value):
+        num = math.floor(value)
+        dec = (value - num) * 65535.0
+        self.write_uint16(dec)
+        self.write_uint16(num)
 
     def write_vec3(self, value):
         self.write_float(value.x)
@@ -178,6 +184,10 @@ class ByteReader(object):
 
     def read_float(self):
         return self.read_struct(FLOAT)
+
+    def read_fixed(self):
+        dec = self.read_uint16() / 65535.0
+        return dec + self.read_uint16()
 
     def read_vec3(self):
         x = self.read_float()
