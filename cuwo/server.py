@@ -21,6 +21,7 @@ from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
+
 from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
     CS_PACKETS, ClientVersion, JoinPacket, SeedData, EntityUpdate,
     ClientChatMessage, ServerChatMessage, create_entity_data, UpdateFinished,
@@ -30,7 +31,10 @@ from cuwo.vector import Vector3
 from cuwo import constants
 from cuwo.common import get_clock_string, parse_clock, parse_command
 
+import collections
 import imp
+import os
+import sys
 
 def call_handler(script, name, *arg, **kw):
     f = getattr(script, name, None)
@@ -212,6 +216,7 @@ class CubeWorldFactory(Factory):
         self.update_packet.reset()
         self.connections = MultikeyDict()
 
+        self.items = []
         self.entities = {}
         self.entity_ids = IDPool(1)
 
@@ -219,6 +224,8 @@ class CubeWorldFactory(Factory):
         self.update_loop.start(1.0 / constants.UPDATE_FPS, False)
 
         # server-related
+        self.git_rev = getattr(config, 'git_rev', None)
+
         self.passwords = {}
         for k, v in config.passwords.iteritems():
             self.passwords[k.lower()] = v
@@ -238,16 +245,24 @@ class CubeWorldFactory(Factory):
         return CubeWorldProtocol(self, addr)
 
     def update(self):
+        # entity updates
         for entity_id, entity in self.entities.iteritems():
             entity_packet.set_entity(entity, entity_id)
             self.broadcast_packet(entity_packet)
         self.broadcast_packet(update_finished_packet)
+
+        # other updates
+        # chunk_items = collections.defaultdict(list)
+        # for item in self.items:
+        #     chunk_x, chunk_y = get_chunk(item.pos)
+        #     chunk_items[(chunk_x, chunk_y)].append
         self.broadcast_packet(self.update_packet)
         self.update_packet.reset()
+
+        # time update
         time_packet.time = self.get_time()
         time_packet.day = self.get_day()
         self.broadcast_packet(time_packet)
-
 
     def send_chat(self, value):
         packet = ServerChatMessage()
@@ -283,6 +298,7 @@ class CubeWorldFactory(Factory):
             print '%s cannot load' % name
             return None
         script = mod.get_class()(self)
+        print 'Loaded script %r' % name
         return script
 
     def call_scripts(self, name, *arg, **kw):
@@ -314,6 +330,12 @@ class CubeWorldFactory(Factory):
         return get_clock_string(self.get_time())
 
 def main():
+    # for py2exe
+    if hasattr(sys, 'frozen'):
+        path = os.path.dirname(
+            unicode(sys.executable, sys.getfilesystemencoding()))
+        sys.path.append(path)
+
     import config
     reactor.listenTCP(constants.SERVER_PORT, CubeWorldFactory(config))
     print 'cuwo running on port %s' % constants.SERVER_PORT

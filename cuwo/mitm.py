@@ -22,7 +22,7 @@ from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from cuwo.packet import (PacketHandler, write_packet, ServerChatMessage,
     CS_PACKETS, SC_PACKETS, EntityUpdate, create_entity_data, JoinPacket,
-    CurrentTime, ShootPacket)
+    CurrentTime, ShootPacket, UpdateFinished)
 from cuwo import constants
 from cuwo.common import get_chunk
 
@@ -56,6 +56,7 @@ class CubeWorldProtocol(Protocol):
         self.entities = {}
         self.relay_packets = []
         self.print_stats()
+        self.times = []
 
     def print_stats(self):
         if self.disconnected:
