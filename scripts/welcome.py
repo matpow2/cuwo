@@ -5,6 +5,7 @@ class WelcomeFactory(FactoryScript):
     protocol_class = None
 
     def on_load(self):
+        print 'wellcome'
         self.welcome = self.factory.format_lines(self.factory.config.welcome)
 
     def on_new_connection(self, protocol):

@@ -275,10 +275,12 @@ class CubeWorldFactory(Factory):
     # script methods
 
     def load_script(self, name):
-        path = './scripts/%s.py' % name
+        path = '../scripts/%s.py' % name
+        print name
         try:
             mod = imp.load_source(name, path)
         except IOError:
+            print '%s cannot load' % name
             return None
         script = mod.get_class()(self)
         return script

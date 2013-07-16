@@ -138,7 +138,7 @@ class IRCClientFactory(protocol.ClientFactory):
     def __init__(self, server, config):
         self.server = server
         self.nickname = config.irc_nickname
-        self.username = 'cuwo'
+        self.username = 'cuwo2'
         self.realname = config.server_name
         self.channel = config.irc_channel
         self.commandprefix = config.irc_commandprefix
