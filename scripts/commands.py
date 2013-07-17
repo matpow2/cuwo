@@ -82,3 +82,16 @@ def whereis(script, name = None):
         message = '%s is at %%s' % player.get_name()
     return message % (get_chunk(player.get_position()),)
 
+@command
+def tell(script, name = None, *args):
+    if name is None or len(args) <= 0:
+        script.protocol.send_chat('Usage: /tell <player> <message>')
+        return
+    player = get_player(script.factory, name)
+    if player is script.protocol:
+        script.protocol.send_chat('Cannot send private messages to yourself!')
+        return
+    message = '{0}->{1}: {2}'.format(script.protocol.get_name(), player.get_name(), ' '.join(args))
+    player.send_chat(message % player)
+    script.protocol.send_chat(message % player)
+
