@@ -3,7 +3,7 @@ from twisted.internet.protocol import Protocol, Factory
 from twisted.python import log
 from twisted.internet import reactor, protocol
 from cuwo.txws import WebSocketFactory
-from twisted.web import (server,static)
+from twisted.web import (resource,static)
 from twisted.web.server import Site
 from twisted.web.static import File
 import json
@@ -63,17 +63,20 @@ class WebScriptProtocol(ProtocolScript):
     def on_unload(self):
         self.parent.update_web("players")
 
+
 class WebScriptFactory(FactoryScript):
     protocol_class = WebScriptProtocol
 
     def on_load(self):
         self.connections = []
         config = self.factory.config
+
         root = File('../web')
         root.indexNames = ['index.html']
         root.putChild('css', static.File("../web/css"))
         root.putChild('js', static.File("../web/js"))
         root.putChild('img', static.File("../web/img"))
+
         reactor.listenTCP(config.web_port, Site(root))
         self.web_factory = WebFactory(self.factory)
         reactor.listenTCP(8081, WebSocketFactory(self.web_factory))
