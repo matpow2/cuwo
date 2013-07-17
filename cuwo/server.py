@@ -359,7 +359,6 @@ class CubeWorldFactory(Factory):
 
     def load_script(self, name):
         path = '../scripts/%s.py' % name
-        print 'Loading script %r' % name
         try:
             mod = imp.load_source(name, path)
         except IOError:

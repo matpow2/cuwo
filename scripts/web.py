@@ -17,23 +17,11 @@ class WebProtocol(Protocol):
 
     def dataReceived(self, data):
         data = json.loads(data)
-        print data
         if data['want'] == 'players':
-            list = [[], [], [], []]
-            for connection in self.factory.server.connections.values():
-                print connection.entity_data.name
-                list[0].append(connection.entity_data.name)
-                list[1].append(connection.entity_data.character_level)
-                list[2].append(connection.entity_data.class_type)
-                list[3].append(connection.entity_data.specialization)
-            print list
-            players = {'response': 'players', 'names': list[0], 'levels': list[1], 'klass': list[2],
-                       'specialz': list[3]}
-            print players
-            print json.dumps(players)
-            self.transport.write(json.dumps(players))
+            self.transport.write(self.factory.get_players())
 
-        self.transport.write(json.dumps({'response': "This shit got serious"}))
+        else:
+            self.transport.write(json.dumps({'response': "This shit got serious"}))
 
     def connectionLost(self, reason):
         self.factory.connections.remove(self)
@@ -44,37 +32,51 @@ class WebFactory(Factory):
         self.connections = []
         self.server = server
 
+    def get_players(self):
+        ##list = [names[],levels[],class[],[specializations[]]
+        list = [[], [], [], []]
+        for connection in self.server.connections.values():
+            list[0].append(connection.entity_data.name)
+            list[1].append(connection.entity_data.character_level)
+            list[2].append(connection.entity_data.class_type)
+            list[3].append(connection.entity_data.specialization)
+        players = {'response': 'players', 'names': list[0], 'levels': list[1], 'klass': list[2], 'specialz': list[3]}
+        return json.dumps(players)
+
     def buildProtocol(self, addr):
         return WebProtocol(self)
 
 
 class WebScriptProtocol(ProtocolScript):
+
     """
-    def on_join(self):
-        self.parent.send('* %s entered the game' % self.protocol.get_name())
-
-    def on_unload(self):
-        self.parent.send('* %s disconnected' % self.protocol.get_name())
-
     def on_chat(self, message):
         message = message.encode('ascii', 'replace')
         message = '<%s> %s' % (self.protocol.get_name(), message)
         self.parent.send(message)
     """
 
+    def on_join(self):
+        self.parent.update_web("players")
+
+    def on_unload(self):
+        self.parent.update_web("players")
 
 class WebScriptFactory(FactoryScript):
     protocol_class = WebScriptProtocol
 
     def on_load(self):
-        print 'Web Script Server'
         self.connections = []
-        reactor.listenTCP(8080, Site(File('../web')))
+        config = self.factory.config
+        reactor.listenTCP(config.web_port, Site(File('../web')))
         self.web_factory = WebFactory(self.factory)
         reactor.listenTCP(8081, WebSocketFactory(self.web_factory))
 
-    def on_unload(self):
-    #TODO implement unload
+    def update_web(self, entity):
+        if entity == "players":
+            for connection in self.web_factory.connections:
+                connection.transport.write(self.web_factory.get_players())
+            return
         pass
 
 
