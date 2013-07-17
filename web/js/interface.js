@@ -10,7 +10,7 @@ $(document).ready(function(){
         socket.onmessage = function (event) {
             var sedata = JSON.parse(event.data);
 
-            if(sedata.response=='players'){
+            if(sedata.response == 'players'){
 
                 for(var i= 0; i <  sedata.names.length; i++){
                     var j = PlayersArray.names.indexOf(sedata.names[i]);
