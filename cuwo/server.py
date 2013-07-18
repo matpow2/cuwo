@@ -263,6 +263,9 @@ class CubeWorldFactory(Factory):
 
         # server-related
         self.git_rev = getattr(config, 'git_rev', None)
+        os.chdir("./")
+        os.chdir("../")
+        self.current_dir = os.getcwd()
 
         self.passwords = {}
         for k, v in config.passwords.iteritems():
@@ -358,7 +361,7 @@ class CubeWorldFactory(Factory):
     # script methods
 
     def load_script(self, name):
-        path = '../scripts/%s.py' % name
+        path = self.current_dir + '/scripts/%s.py' % name
         try:
             mod = imp.load_source(name, path)
         except IOError:

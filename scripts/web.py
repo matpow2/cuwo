@@ -7,6 +7,7 @@ from twisted.web import (resource,static)
 from twisted.web.server import Site
 from twisted.web.static import File
 import json
+import os
 
 
 class WebProtocol(Protocol):
@@ -68,14 +69,14 @@ class WebScriptFactory(FactoryScript):
     protocol_class = WebScriptProtocol
 
     def on_load(self):
-        self.connections = []
         config = self.factory.config
+        path = self.factory.current_dir
 
-        root = File('../web')
+        root = File(path + '/web')
         root.indexNames = ['index.html']
-        root.putChild('css', static.File("../web/css"))
-        root.putChild('js', static.File("../web/js"))
-        root.putChild('img', static.File("../web/img"))
+        root.putChild('css', static.File(path + "/web/css"))
+        root.putChild('js', static.File(path + "/web/js"))
+        root.putChild('img', static.File(path + "/web/img"))
 
         reactor.listenTCP(config.web_port, Site(root))
         self.web_factory = WebFactory(self.factory)

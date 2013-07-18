@@ -1,6 +1,6 @@
 $(document).ready(function(){
-    var socket = new WebSocket("ws://localhost:8081");
-    var ClassArray = {"0":"Warrior","1":"Rogue","2":"Ranger","3":"Mage"};
+    var socket = new WebSocket("ws://"+window.location.hostname+":8081");
+    var ClassArray = {"1":"Warrior","2":"Ranger","3":"Mage","4":"Rogue"};
     var PlayersArray ={"names":[],"levels":[],"klass":[], "specialz":[]};
 
     socket.onopen = function(){
@@ -9,7 +9,6 @@ $(document).ready(function(){
 
         socket.onmessage = function (event) {
             var sedata = JSON.parse(event.data);
-
             if(sedata.response == 'players'){
 
                 for(var i= 0; i <  sedata.names.length; i++){
