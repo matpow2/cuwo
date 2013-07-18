@@ -95,7 +95,7 @@ class CubeWorldConnection(Protocol):
         except KeyError:
             pass
         if self.has_joined:
-            print 'Player %r left' % self.name
+            print 'Player %s left' % self.name
         if self.entity_data is not None:
             del self.server.entities[self.entity_id]
         if self.entity_id is not None:
@@ -179,7 +179,7 @@ class CubeWorldConnection(Protocol):
     # handlers
 
     def on_join(self):
-        print 'Player %r joined (IP %s)' % (self.name, self.address.host)
+        print 'Player %s joined (IP %s)' % (self.name, self.address.host)
         for connection in self.server.connections.values():
             if not connection.has_joined:
                 continue
