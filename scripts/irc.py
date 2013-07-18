@@ -37,6 +37,9 @@ def channel(func):
 
 MAX_IRC_CHAT_SIZE = 50
 
+def encode_irc(value):
+    return value.encode('ascii', 'replace')
+
 class IRCBot(irc.IRCClient):
     ops = None
     voices = None
@@ -129,10 +132,10 @@ class IRCBot(irc.IRCClient):
         self.userLeft(kickee, channel)
     
     def send(self, msg):
-        self.msg(self.factory.channel, msg)
+        self.msg(self.factory.channel, encode_irc(msg))
     
     def me(self, msg):
-        self.describe(self.factory.channel, msg)
+        self.describe(self.factory.channel, encode_irc(msg))
 
 class IRCClientFactory(protocol.ClientFactory):
     lost_reconnect_delay = 20
@@ -168,14 +171,15 @@ class IRCClientFactory(protocol.ClientFactory):
 
 class IRCScriptProtocol(ConnectionScript):
     def on_join(self):
-        self.parent.send('* %s entered the game' % self.connection.name)
+        self.parent.send('* %s entered the game' % encode_irc(
+            self.connection.name))
 
     def on_unload(self):
-        self.parent.send('* %s disconnected' % self.connection.name)
+        self.parent.send('* %s disconnected' % encode_irc(
+            self.connection.name))
 
     def on_chat(self, message):
-        message = message.encode('ascii', 'replace')
-        message = '<%s> %s' % (self.connection.name, message)
+        message = encode_irc('<%s> %s' % (self.connection.name, message))
         self.parent.send(message)
 
 class IRCScriptFactory(ServerScript):
@@ -217,7 +221,7 @@ def who(bot):
         return
     formatted_names = []
     for connection in server.connections.values():
-        name = '\x0302%s #%s' % (connection.name, connection.entity_id)
+        name = '\x0302%s #%s' % (encode_irc(connection.name), connection.entity_id)
         formatted_names.append(name)
     noun = 'player' if player_count == 1 else 'players'
     msg = 'has %s %s connected: ' % (player_count, noun)
