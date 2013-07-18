@@ -23,14 +23,14 @@ class InvalidPlayer(Exception):
 class InsufficientRights(Exception):
     pass
 
-def get_player(factory, value):
+def get_player(server, value):
     ret = None
     try:
         if value.startswith('#'):
             value = int(value[1:])
-            ret = factory.connections[value]
+            ret = server.connections[value]
         else:
-            connections = factory.connections
+            connections = server.connections
             try:
                 ret = connections[value]
             except KeyError:
@@ -49,7 +49,7 @@ def get_player(factory, value):
 
 def restrict(func, *user_types):
     def new_func(script, *arg, **kw):
-        if script.protocol.rights.isdisjoint(user_types):
+        if script.connection.rights.isdisjoint(user_types):
             raise InsufficientRights()
         return func(script, *arg, **kw)
     new_func.__module__ = func.__module__
@@ -78,12 +78,12 @@ class BaseScript(object):
     def on_unload(self):
         pass
 
-class ProtocolScript(BaseScript):
-    def __init__(self, parent, protocol):
+class ConnectionScript(BaseScript):
+    def __init__(self, parent, connection):
         self.parent = parent
-        self.factory = parent.factory
-        self.protocol = protocol
-        protocol.scripts.append(self)
+        self.server = parent.server
+        self.connection = connection
+        connection.scripts.append(self)
         parent.scripts.append(self)
         self.on_load()
 
@@ -107,48 +107,48 @@ class ProtocolScript(BaseScript):
             import traceback
             traceback.print_exc()
         if ret is not None:
-            self.protocol.send_chat(ret)
+            self.connection.send_chat(ret)
         return False
 
     def unload(self):
         if self.parent is None:
             return
-        self.protocol.scripts.remove(self)
+        self.connection.scripts.remove(self)
         self.parent.scripts.remove(self)
         self.on_unload()
-        self.parent = self.protocol = self.factory = None
+        self.parent = self.connection = self.server = None
 
-class FactoryScript(BaseScript):
-    protocol_class = ProtocolScript
+class ServerScript(BaseScript):
+    connection_class = ConnectionScript
     commands = None
 
-    def __init__(self, factory):
-        self.factory = factory
-        factory.scripts.append(self)
+    def __init__(self, server):
+        self.server = server
+        server.scripts.append(self)
         self.scripts = []
         self.on_load()
-        for protocol in factory.connections:
-            self.on_existing_connection(protocol)
+        for connection in server.connections:
+            self.on_existing_connection(connection)
 
-    def on_new_connection(self, protocol):
-        if self.protocol_class is None:
+    def on_new_connection(self, connection):
+        if self.connection_class is None:
             return
-        self.protocol_class(self, protocol)
+        self.connection_class(self, connection)
 
-    def on_existing_connection(self, protocol):
-        if self.protocol_class is None:
+    def on_existing_connection(self, connection):
+        if self.connection_class is None:
             return
-        self.protocol_class(self, protocol)
+        self.connection_class(self, connection)
 
     def unload(self):
-        if self.factory is None:
+        if self.server is None:
             return
-        self.on_stop()
-        self.factory.scripts.remove(self)
+        self.on_unload()
+        self.server.scripts.remove(self)
         for script in self.scripts[:]:
             script.unload()
         self.scripts = None
-        self.factory = None
+        self.server = None
 
 # decorators for commands
 def command(func, klass = None, level = None):

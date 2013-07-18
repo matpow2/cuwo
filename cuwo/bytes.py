@@ -53,6 +53,9 @@ class ByteWriter(object):
         value += (size - len(value)) * '\x00'
         self.write(value)
 
+    def write_ascii(self, value, size):
+        self.write_string(value.encode('ascii', 'ignore'), size)
+
     def pad(self, size):
         self.write('\x00' * size)
 
@@ -139,6 +142,9 @@ class ByteReader(object):
 
     def read_string(self, size):
         return self.read(size).split('\x00')[0]
+
+    def read_ascii(self, size):
+        return self.read_string(size).decode('ascii', 'ignore')
 
     def skip(self, size):
         self.seek(self.tell() + size)

@@ -50,7 +50,7 @@ time_packet = CurrentTime()
 mismatch_packet = ServerMismatch()
 server_full_packet = ServerFull()
 
-class CubeWorldProtocol(Protocol):
+class CubeWorldConnection(Protocol):
     """
     Protocol used for players
     """
@@ -59,9 +59,9 @@ class CubeWorldProtocol(Protocol):
     entity_data = None
     disconnected = False
 
-    def __init__(self, factory, addr):
+    def __init__(self, server, addr):
         self.address = addr
-        self.factory = factory
+        self.server = server
 
     # connection methods
 
@@ -75,7 +75,7 @@ class CubeWorldProtocol(Protocol):
         }
         
         self.scripts = []
-        self.factory.call_scripts('on_new_connection', self)
+        self.server.call_scripts('on_new_connection', self)
         self.packet_handler = PacketHandler(CS_PACKETS, self.on_packet)
         self.rights = AttributeSet()
 
@@ -84,20 +84,22 @@ class CubeWorldProtocol(Protocol):
 
     def disconnect(self):
         self.transport.loseConnection()
-        self.connectionLost('Kicked by server')
+        self.connectionLost(None)
 
     def connectionLost(self, reason):
         if self.disconnected:
             return
         self.disconnected = True
         try:
-            del self.factory.connections[self]
+            del self.server.connections[self]
         except KeyError:
             pass
+        if self.has_joined:
+            print 'Player %r left' % self.name
         if self.entity_data is not None:
-            del self.factory.entities[self.entity_id]
+            del self.server.entities[self.entity_id]
         if self.entity_id is not None:
-            self.factory.entity_ids.put_back(self.entity_id)
+            self.server.entity_ids.put_back(self.entity_id)
         for script in self.scripts[:]:
             script.unload()
 
@@ -119,21 +121,21 @@ class CubeWorldProtocol(Protocol):
             self.send_packet(mismatch_packet)
             self.disconnect()
             return
-        if len(self.factory.connections) >= self.factory.config.max_players:
+        if len(self.server.connections) >= self.server.config.max_players:
             self.send_packet(server_full_packet)
             self.disconnect()
             return
-        self.entity_id = self.factory.entity_ids.pop()
-        self.factory.connections[(self.entity_id,)] = self
+        self.entity_id = self.server.entity_ids.pop()
+        self.server.connections[(self.entity_id,)] = self
         join_packet.entity_id = self.entity_id
         self.send_packet(join_packet)
-        seed_packet.seed = self.factory.config.seed
+        seed_packet.seed = self.server.config.seed
         self.send_packet(seed_packet)
 
     def on_entity_packet(self, packet):
         if self.entity_data is None:
             self.entity_data = create_entity_data()
-            self.factory.entities[self.entity_id] = self.entity_data
+            self.server.entities[self.entity_id] = self.entity_data
         packet.update_entity(self.entity_data)
         if not self.has_joined and self.entity_data.name:
             self.on_join()
@@ -145,28 +147,29 @@ class CubeWorldProtocol(Protocol):
             return
         chat_packet.entity_id = self.entity_id
         chat_packet.value = message
-        self.factory.broadcast_packet(chat_packet)
+        self.server.broadcast_packet(chat_packet)
+        print '%s: %s' % (self.name, message)
 
     def on_interact_packet(self, packet):
         interact_type = packet.interact_type
         if interact_type == INTERACT_DROP:
             pos = self.position.copy()
             pos.z -= constants.BLOCK_SCALE
-            self.factory.drop_item(packet.item_data, pos)
+            self.server.drop_item(packet.item_data, pos)
         elif interact_type == INTERACT_PICKUP:
             chunk = (packet.chunk_x, packet.chunk_y)
             try:
-                item = self.factory.remove_item(chunk, packet.item_index)
+                item = self.server.remove_item(chunk, packet.item_index)
             except IndexError:
                 return
             self.give_item(item)
 
     def on_hit_packet(self, packet):
         try:
-            target = self.factory.entities[packet.target_id]
+            target = self.server.entities[packet.target_id]
         except KeyError:
             return
-        self.factory.update_packet.player_hits.append(packet)
+        self.server.update_packet.player_hits.append(packet)
         if target.hp <= 0:
             return
         target.hp -= packet.damage
@@ -176,9 +179,8 @@ class CubeWorldProtocol(Protocol):
     # handlers
 
     def on_join(self):
-        print 'Player %r joined (IP %s)' % (self.entity_data.name, 
-                                            self.address.host)
-        for connection in self.factory.connections.values():
+        print 'Player %r joined (IP %s)' % (self.name, self.address.host)
+        for connection in self.server.connections.values():
             if not connection.has_joined:
                 continue
             entity_packet.set_entity(connection.entity_data,
@@ -194,7 +196,7 @@ class CubeWorldProtocol(Protocol):
             command, args = parse_command(message[1:])
             self.on_command(command, args)
             return False
-        return self.call_scripts('on_chat', message)
+        self.call_scripts('on_chat', message)
 
     # other methods
 
@@ -208,7 +210,7 @@ class CubeWorldProtocol(Protocol):
         action = PickupAction()
         action.entity_id = self.entity_id
         action.item_data = item
-        self.factory.update_packet.pickups.append(action)
+        self.server.update_packet.pickups.append(action)
 
     def send_lines(self, lines):
         current_time = 0
@@ -219,7 +221,7 @@ class CubeWorldProtocol(Protocol):
     def kick(self):
         self.send_chat('You have been kicked')
         self.disconnect()
-        self.factory.send_chat('%s has been kicked' % self.name)
+        self.server.send_chat('%s has been kicked' % self.name)
 
     def call_scripts(self, name, *arg, **kw):
         return call_scripts(self.scripts, name, *arg, **kw)
@@ -268,7 +270,7 @@ class BanProtocol(Protocol):
         if self.disconnect_call.active():
             self.disconnect_call.cancel()
 
-class CubeWorldFactory(Factory):
+class CubeWorldServer(Factory):
     items_changed = False
     def __init__(self, config):
         self.config = config
@@ -308,7 +310,7 @@ class CubeWorldFactory(Factory):
         message = self.call_scripts('on_connection_attempt', addr)
         if message is not None:
             return BanProtocol(message)
-        return CubeWorldProtocol(self, addr)
+        return CubeWorldConnection(self, addr)
 
     def remove_item(self, chunk, index):
         items = self.chunk_items[chunk]
@@ -445,7 +447,7 @@ def main():
         sys.path.append(path)
 
     import config
-    reactor.listenTCP(constants.SERVER_PORT, CubeWorldFactory(config))
+    reactor.listenTCP(constants.SERVER_PORT, CubeWorldServer(config))
     print 'cuwo running on port %s' % constants.SERVER_PORT
     reactor.run()
 

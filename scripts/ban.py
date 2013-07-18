@@ -19,7 +19,7 @@
 Ban management
 """
 
-from cuwo.script import (FactoryScript, ProtocolScript, command, admin,
+from cuwo.script import (ServerScript, ConnectionScript, command, admin,
     get_player)
 from twisted.internet import reactor
 
@@ -29,24 +29,24 @@ DEFAULT_REASON = 'No reason specified'
 
 DATA_NAME = 'banlist'
 
-class BanFactory(FactoryScript):
+class BanServer(ServerScript):
     def on_load(self):
-        self.ban_entries = self.factory.load_data(DATA_NAME, {})
+        self.ban_entries = self.server.load_data(DATA_NAME, {})
 
     def save_bans(self):
-        self.factory.save_data(DATA_NAME, self.ban_entries)
+        self.server.save_data(DATA_NAME, self.ban_entries)
 
     def ban(self, ip, reason):
         self.ban_entries[ip] = reason
         self.save_bans()
-        for connection in self.factory.connections.values().copy():
+        for connection in self.server.connections.values().copy():
             if connection.address.host != ip:
                 continue
             name = connection.name
             if name is not None:
                 connection.send_chat(SELF_BANNED.format(reason = reason))
             connection.disconnect()
-            self.factory.send_chat(PLAYER_BANNED.format(name = name, 
+            self.server.send_chat(PLAYER_BANNED.format(name = name, 
                                                         reason = reason))
 
     def on_connection_attempt(self, addr):
@@ -57,11 +57,11 @@ class BanFactory(FactoryScript):
         return SELF_BANNED.format(reason = reason)
 
 def get_class():
-    return BanFactory
+    return BanServer
 
 @command
 @admin
 def ban(script, name, *args):
-    player = get_player(script.factory, name)
+    player = get_player(script.server, name)
     reason = ' '.join(args) or DEFAULT_REASON
     script.parent.ban(player.address.host, reason)

@@ -22,7 +22,7 @@ IRC client that can be used as a way to control the game server
 from twisted.words.protocols import irc
 from twisted.internet import reactor, protocol
 from cuwo.common import parse_command
-from cuwo.script import FactoryScript, ProtocolScript
+from cuwo.script import ServerScript, ConnectionScript
 
 import random
 import string
@@ -42,8 +42,8 @@ class IRCBot(irc.IRCClient):
     voices = None
     commands = {}
     
-    def __init__(self, factory, server_factory):
-        self.server_factory = server_factory
+    def __init__(self, factory, server):
+        self.server = server
         self.factory = factory
         self.nickname = factory.nickname
 
@@ -108,7 +108,7 @@ class IRCBot(irc.IRCClient):
                 message = ("<%s> %s" % (name, msg))
                 message = message[:MAX_IRC_CHAT_SIZE]
                 print message
-                self.server_factory.send_chat(message)
+                self.server.send_chat(message)
 
     def handle_command(self, name, command):
         command, args = parse_command(command)
@@ -166,24 +166,24 @@ class IRCClientFactory(protocol.ClientFactory):
         self.bot = IRCBot(self, self.server)
         return self.bot
 
-class IRCScriptProtocol(ProtocolScript):
+class IRCScriptProtocol(ConnectionScript):
     def on_join(self):
-        self.parent.send('* %s entered the game' % self.protocol.name)
+        self.parent.send('* %s entered the game' % self.connection.name)
 
     def on_unload(self):
-        self.parent.send('* %s disconnected' % self.protocol.name)
+        self.parent.send('* %s disconnected' % self.connection.name)
 
     def on_chat(self, message):
         message = message.encode('ascii', 'replace')
-        message = '<%s> %s' % (self.protocol.name, message)
+        message = '<%s> %s' % (self.connection.name, message)
         self.parent.send(message)
 
-class IRCScriptFactory(FactoryScript):
-    protocol_class = IRCScriptProtocol
+class IRCScriptFactory(ServerScript):
+    connection_class = IRCScriptProtocol
     
     def on_load(self):
-        config = self.factory.config
-        self.client_factory = IRCClientFactory(self.factory, config)
+        config = self.server.config
+        self.client_factory = IRCClientFactory(self.server, config)
         reactor.connectTCP(config.irc_server, config.irc_port,
             self.client_factory)
 
@@ -210,13 +210,13 @@ def irc(func):
 
 @irc
 def who(bot):
-    factory = bot.server_factory
-    player_count = len(factory.connections)
+    server = bot.server
+    player_count = len(server.connections)
     if player_count == 0:
         bot.me('has no players connected')
         return
     formatted_names = []
-    for connection in factory.connections.values():
+    for connection in server.connections.values():
         name = '\x0302%s #%s' % (connection.name, connection.entity_id)
         formatted_names.append(name)
     noun = 'player' if player_count == 1 else 'players'

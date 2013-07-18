@@ -246,7 +246,7 @@ class EntityData(Loader):
         for _ in xrange(11):
             self.skills.append(reader.read_uint32())
         self.mana_cubes = reader.read_uint32()
-        self.name = reader.read_string(16)
+        self.name = reader.read_ascii(16)
     
     def write(self, writer):
         writer.write_int64(self.x)
@@ -329,7 +329,7 @@ class EntityData(Loader):
         for item in self.skills:
             writer.write_uint32(item)
         writer.write_uint32(self.mana_cubes)
-        writer.write_string(self.name, 16)
+        writer.write_ascii(self.name, 16)
     
 def read_masked_data(entity, reader):
     mask = reader.read_uint64()
@@ -448,7 +448,7 @@ def read_masked_data(entity, reader):
         for item in entity.equipment:
             item.read(reader)
     if is_bit_set(mask, 45):
-        entity.name = reader.read_string(16)
+        entity.name = reader.read_ascii(16)
     if is_bit_set(mask, 46):
         entity.skills = []
         for _ in xrange(11):
@@ -626,7 +626,7 @@ def write_masked_data(entity, writer):
     entity.item_data.write(writer)
     for item in entity.equipment:
         item.write(writer)
-    writer.write_string(entity.name, 16)
+    writer.write_ascii(entity.name, 16)
     for item in entity.skills:
         writer.write_uint32(item)
     writer.write_uint32(entity.mana_cubes)

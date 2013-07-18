@@ -16,7 +16,9 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 from cuwo import constants
+
 import shlex
+import os
 
 def get_hex_string(value):
     v = '0x'
@@ -68,3 +70,17 @@ def parse_command(message):
     else:
         command = ''
     return command, args
+
+def create_path(path):
+    if path:
+        try:
+            os.makedirs(os.path.dirname(path))
+        except OSError:
+            pass
+
+def create_file_path(path):
+    create_path(os.path.dirname(filename))
+
+def open_create(filename, mode):
+    create_file_path(filename)
+    return open(filename, mode)
