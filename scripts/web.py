@@ -51,13 +51,6 @@ class WebFactory(Factory):
 
 class WebScriptProtocol(ProtocolScript):
 
-    """
-    def on_chat(self, message):
-        message = message.encode('ascii', 'replace')
-        message = '<%s> %s' % (self.protocol.get_name(), message)
-        self.parent.send(message)
-    """
-
     def on_join(self):
         self.parent.update_web("players")
 
@@ -70,13 +63,12 @@ class WebScriptFactory(FactoryScript):
 
     def on_load(self):
         config = self.factory.config
-        path = self.factory.current_dir
 
-        root = File(path + '/web')
+        root = File('./web')
         root.indexNames = ['index.html']
-        root.putChild('css', static.File(path + "/web/css"))
-        root.putChild('js', static.File(path + "/web/js"))
-        root.putChild('img', static.File(path + "/web/img"))
+        root.putChild('css', static.File("./web/css"))
+        root.putChild('js', static.File("./web/js"))
+        root.putChild('img', static.File("./web/img"))
 
         reactor.listenTCP(config.web_port, Site(root))
         self.web_factory = WebFactory(self.factory)
