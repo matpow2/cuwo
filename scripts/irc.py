@@ -221,7 +221,8 @@ def who(bot):
         return
     formatted_names = []
     for connection in server.connections.values():
-        name = '\x0302%s #%s' % (encode_irc(connection.name), connection.entity_id)
+        name = '\x0302%s #%s' % (encode_irc(connection.name), 
+                                 connection.entity_id)
         formatted_names.append(name)
     noun = 'player' if player_count == 1 else 'players'
     msg = 'has %s %s connected: ' % (player_count, noun)
