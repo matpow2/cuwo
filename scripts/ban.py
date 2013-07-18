@@ -46,8 +46,9 @@ class BanServer(ServerScript):
             if name is not None:
                 connection.send_chat(SELF_BANNED.format(reason = reason))
             connection.disconnect()
-            self.server.send_chat(PLAYER_BANNED.format(name = name, 
-                                                        reason = reason))
+            message = PLAYER_BANNED.format(name = name, reason = reason)
+            print message
+            self.server.send_chat(message)
 
     def on_connection_attempt(self, addr):
         try:
