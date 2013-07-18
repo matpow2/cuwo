@@ -78,3 +78,9 @@ def whereis(script, name = None):
         message = '%s is at %%s' % player.name
     return message % (get_chunk(player.position),)
 
+@command
+def pm(script, name, *args):
+    player = get_player(script.server, name)
+    message = '%s (PM): %s' % (script.connection.name, player.name)
+    player.send_chat(message)
+    return 'PM sent'
