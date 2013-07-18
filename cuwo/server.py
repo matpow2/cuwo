@@ -32,19 +32,13 @@ from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
 from cuwo.common import get_clock_string, parse_clock, parse_command, get_chunk
+from cuwo.script import call_scripts
 
 import collections
 import imp
 import os
 import sys
-
-def call_handler(script, name, *arg, **kw):
-    f = getattr(script, name, None)
-    if f is None:
-        return
-    ret = f(*arg, **kw)
-    if ret is False:
-        return False
+import pprint
 
 # initialize packet instances for sending
 join_packet = JoinPacket()
@@ -57,6 +51,9 @@ mismatch_packet = ServerMismatch()
 server_full_packet = ServerFull()
 
 class CubeWorldProtocol(Protocol):
+    """
+    Protocol used for players
+    """
     has_joined = False
     entity_id = None
     entity_data = None
@@ -153,7 +150,7 @@ class CubeWorldProtocol(Protocol):
     def on_interact_packet(self, packet):
         interact_type = packet.interact_type
         if interact_type == INTERACT_DROP:
-            pos = self.get_position().copy()
+            pos = self.position.copy()
             pos.z -= constants.BLOCK_SCALE
             self.factory.drop_item(packet.item_data, pos)
         elif interact_type == INTERACT_PICKUP:
@@ -165,14 +162,15 @@ class CubeWorldProtocol(Protocol):
             self.give_item(item)
 
     def on_hit_packet(self, packet):
-        self.factory.update_packet.player_hits.append(packet)
         try:
             target = self.factory.entities[packet.target_id]
         except KeyError:
             return
+        self.factory.update_packet.player_hits.append(packet)
         if target.hp <= 0:
             return
-        if target.hp - packet.damage <= 0:
+        target.hp -= packet.damage
+        if target.hp <= 0:
             self.call_scripts('on_kill', target)
 
     # handlers
@@ -221,27 +219,54 @@ class CubeWorldProtocol(Protocol):
     def kick(self):
         self.send_chat('You have been kicked')
         self.disconnect()
-        self.factory.send_chat('%s has been kicked' % self.get_name())
+        self.factory.send_chat('%s has been kicked' % self.name)
 
     def call_scripts(self, name, *arg, **kw):
-        for script in self.scripts:
-            if call_handler(script, name, *arg, **kw) is False:
-                return False
-        return True
+        return call_scripts(self.scripts, name, *arg, **kw)
 
     # convienience methods
 
-    def get_position(self):
+    @property
+    def position(self):
         if self.entity_data is None:
             return None
         return Vector3(self.entity_data.x, 
                        self.entity_data.y,
                        self.entity_data.z)
 
-    def get_name(self):
+    @property
+    def name(self):
         if self.entity_data is None:
             return None
         return self.entity_data.name
+
+class BanProtocol(Protocol):
+    """
+    Protocol used for banned players.
+    Ignores data from client and only sends JoinPacket/ServerChatMessage
+    """
+
+    def __init__(self, message = None):
+        self.message = message
+
+    def send_packet(self, packet):
+        self.transport.write(write_packet(packet))
+
+    def connectionMade(self):
+        join_packet.entity_id = 1
+        self.send_packet(join_packet)
+        self.disconnect_call = reactor.callLater(0.1, self.disconnect)
+
+    def disconnect(self):
+        if self.message is not None:
+            chat_packet.entity_id = 0
+            chat_packet.value = self.message
+        self.send_packet(chat_packet)
+        self.transport.loseConnection()
+
+    def connectionLost(self, reason):
+        if self.disconnect_call.active():
+            self.disconnect_call.cancel()
 
 class CubeWorldFactory(Factory):
     items_changed = False
@@ -280,6 +305,9 @@ class CubeWorldFactory(Factory):
     def buildProtocol(self, addr):
         # return None here to refuse the connection.
         # will use this later to hardban e.g. DoS
+        message = self.call_scripts('on_connection_attempt', addr)
+        if message is not None:
+            return BanProtocol(message)
         return CubeWorldProtocol(self, addr)
 
     def remove_item(self, chunk, index):
@@ -368,10 +396,24 @@ class CubeWorldFactory(Factory):
         return script
 
     def call_scripts(self, name, *arg, **kw):
-        for script in self.scripts:
-            if call_handler(script, name, *arg, **kw) is False:
-                return False
-        return True
+        return call_scripts(self.scripts, name, *arg, **kw)
+
+    # data store methods
+
+    def load_data(self, name, default = None):
+        path = './%s.dat' % name
+        try:
+            with open(path, 'rU') as fp:
+                data = fp.read()
+        except IOError:
+            return default
+        return eval(data)
+
+    def save_data(self, name, value):
+        path = './%s.dat' % name
+        data = pprint.pformat(value, width = 1)
+        with open(path, 'w') as fp:
+            fp.write(data)
 
     # time methods
 

@@ -59,7 +59,19 @@ def restrict(func, *user_types):
 def admin(func):
     return restrict(func, 'admin')
 
+def call_scripts(scripts, name, *arg, **kw):
+    for script in scripts:
+        ret = script.call(name, *arg, **kw)
+        if ret is not None:
+            return ret
+
 class BaseScript(object):
+    def call(self, name, *arg, **kw):
+        f = getattr(self, name, None)
+        if f is None:
+            return
+        return f(*arg, **kw)
+
     def on_load(self):
         pass
 

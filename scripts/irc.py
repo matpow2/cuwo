@@ -168,14 +168,14 @@ class IRCClientFactory(protocol.ClientFactory):
 
 class IRCScriptProtocol(ProtocolScript):
     def on_join(self):
-        self.parent.send('* %s entered the game' % self.protocol.get_name())
+        self.parent.send('* %s entered the game' % self.protocol.name)
 
     def on_unload(self):
-        self.parent.send('* %s disconnected' % self.protocol.get_name())
+        self.parent.send('* %s disconnected' % self.protocol.name)
 
     def on_chat(self, message):
         message = message.encode('ascii', 'replace')
-        message = '<%s> %s' % (self.protocol.get_name(), message)
+        message = '<%s> %s' % (self.protocol.name, message)
         self.parent.send(message)
 
 class IRCScriptFactory(FactoryScript):
@@ -217,7 +217,7 @@ def who(bot):
         return
     formatted_names = []
     for connection in factory.connections.values():
-        name = '\x0302%s #%s' % (connection.get_name(), connection.entity_id)
+        name = '\x0302%s #%s' % (connection.name, connection.entity_id)
         formatted_names.append(name)
     noun = 'player' if player_count == 1 else 'players'
     msg = 'has %s %s connected: ' % (player_count, noun)

@@ -79,6 +79,6 @@ def whereis(script, name = None):
         message = 'You are at %s'
     else:
         player = get_player(script.factory, name)
-        message = '%s is at %%s' % player.get_name()
-    return message % (get_chunk(player.get_position()),)
+        message = '%s is at %%s' % player.name
+    return message % (get_chunk(player.position),)
 

@@ -13,7 +13,7 @@ setup(
             'optimize' : 2,
             'bundle_files' : 1,
             'includes' : ['zope.interface', 'twisted.web.resource'],
-            'packages' : ['cuwo', 'twisted.words'],
+            'packages' : ['cuwo', 'twisted.words', 'encodings'],
             'excludes' : ['config'],
             'dll_excludes': ["mswsock.dll", "powrprof.dll"]
         }}

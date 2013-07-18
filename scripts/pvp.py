@@ -24,7 +24,7 @@ from cuwo.entity import FLAGS_1_HOSTILE
 
 class VersusProtocol(ProtocolScript):
     def on_kill(self, target):
-        self.factory.send_chat('%s killed %s!' % (self.protocol.get_name(),
+        self.factory.send_chat('%s killed %s!' % (self.protocol.name,
                                                   target.name))
 
 class VersusFactory(FactoryScript):
