@@ -1,5 +1,5 @@
 $(document).ready(function(){
-    var socket = new WebSocket("ws://"+window.location.hostname+":8081");
+    var socket = new WebSocket("ws://"+window.location.hostname+":"+server_port);
     var ClassArray = {"1":"Warrior","2":"Ranger","3":"Mage","4":"Rogue"};
     var PlayersArray ={"names":[],"levels":[],"klass":[], "specialz":[]};
 

@@ -64,15 +64,17 @@ class WebScriptFactory(FactoryScript):
     def on_load(self):
         config = self.factory.config
 
+        f = open('./web/js/init.js', 'w')
+        f.write('var server_port = "%s"' % config.web_port2)
         root = File('./web')
         root.indexNames = ['index.html']
         root.putChild('css', static.File("./web/css"))
         root.putChild('js', static.File("./web/js"))
         root.putChild('img', static.File("./web/img"))
 
-        reactor.listenTCP(config.web_port, Site(root))
+        reactor.listenTCP(config.web_port1, Site(root))
         self.web_factory = WebFactory(self.factory)
-        reactor.listenTCP(8081, WebSocketFactory(self.web_factory))
+        reactor.listenTCP(config.web_port2, WebSocketFactory(self.web_factory))
 
     def update_web(self, entity):
         if entity == "players":
