@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*- 
+
 # Global server name
 server_name = 'cuwo server'
 
