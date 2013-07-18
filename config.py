@@ -12,7 +12,7 @@ time_modifier = 1.0
 
 # List of scripts to run on the server on startup.
 # Consider turning on 'pvp', i.e. player versus player
-scripts = ['commands', 'welcome', 'ban']
+scripts = ['commands', 'welcome', 'ban','web']
 
 # Passwords used for rights management. Keys are passwords, and values are
 # a list of user types under that password. Right now, only 'admin' is defined,
@@ -34,3 +34,9 @@ irc_channel = '#cuwo.bots'
 irc_password = None
 irc_commandprefix = '.'
 irc_chatprefix = '#'
+
+irc_chatprefix = '#'
+
+#Web interface variables (enable by adding 'web' to script list)
+web_port1 = 8008
+web_port2 = 5470
