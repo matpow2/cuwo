@@ -169,7 +169,7 @@ class IRCClientFactory(protocol.ClientFactory):
         self.bot = IRCBot(self, self.server)
         return self.bot
 
-class IRCScriptProtocol(ConnectionScript):
+class IRCScriptConnection(ConnectionScript):
     def on_join(self):
         self.parent.send('* %s entered the game' % encode_irc(
             self.connection.name))
@@ -182,8 +182,8 @@ class IRCScriptProtocol(ConnectionScript):
         message = encode_irc('<%s> %s' % (self.connection.name, message))
         self.parent.send(message)
 
-class IRCScriptFactory(ServerScript):
-    connection_class = IRCScriptProtocol
+class IRCScriptServer(ServerScript):
+    connection_class = IRCScriptConnection
     
     def on_load(self):
         config = self.server.config
@@ -206,7 +206,7 @@ class IRCScriptFactory(ServerScript):
         self.client_factory.bot.me(*arg, **kw)
 
 def get_class():
-    return IRCScriptFactory
+    return IRCScriptServer
 
 def irc(func):
     IRCBot.commands[func.func_name] = func
