@@ -29,6 +29,10 @@ def get_hex_string(value):
         v += new_hex
     return v
 
+def to_hex(somestring):
+    hexline = "".join(('%02X ' % ord(c)) for c in somestring)
+    return "\n".join(hexline[i:min(i+48, len(hexline))] for i in range(0, len(hexline), 48))
+
 def is_bit_set(mask, index):
     return mask & (1 << index)
 

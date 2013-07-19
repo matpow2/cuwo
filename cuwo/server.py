@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+import cuwo.pypy
 from cuwo.twistedreactor import install_reactor
 install_reactor()
 from twisted.internet.protocol import Factory, Protocol
@@ -31,7 +32,7 @@ from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
-from cuwo.common import get_clock_string, parse_clock, parse_command, get_chunk
+from cuwo.common import get_clock_string, parse_clock, parse_command, get_chunk, is_bit_set
 from cuwo.script import call_scripts
 
 import collections
@@ -138,9 +139,17 @@ class CubeWorldConnection(Protocol):
             self.entity_data = create_entity_data()
             self.server.entities[self.entity_id] = self.entity_data
         packet.update_entity(self.entity_data)
-        if not self.has_joined and self.entity_data.name:
-            self.on_join()
-            self.has_joined = True
+        if self.entity_data.name:
+            if not self.has_joined:
+                self.on_join()
+                self.has_joined = True
+            else:
+                if is_bit_set(self.entity_data.last_update_mask, 33):
+                    self.call_scripts('on_level_update')   
+                if is_bit_set(self.entity_data.last_update_mask, 44):
+                    self.call_scripts('on_equipment_update')
+                if is_bit_set(self.entity_data.last_update_mask, 46):
+                    self.call_scripts('on_skill_update')
 
     def on_chat_packet(self, packet):
         message = packet.value
@@ -184,13 +193,15 @@ class CubeWorldConnection(Protocol):
 
     def on_join(self):
         print 'Player %s joined (IP %s)' % (self.name, self.address.host)
-        for connection in self.server.connections.values():
-            if not connection.has_joined:
-                continue
-            entity_packet.set_entity(connection.entity_data,
-                                     connection.entity_id)
-            self.send_packet(entity_packet)
-        self.call_scripts('on_join')
+        
+        if self.call_scripts('on_join'):
+            for connection in self.server.connections.values():
+                if not connection.has_joined:
+                    continue
+                entity_packet.set_entity(connection.entity_data,
+                                         connection.entity_id)
+                self.send_packet(entity_packet)
+        
 
     def on_command(self, command, parameters):
         self.call_scripts('on_command', command, parameters)
