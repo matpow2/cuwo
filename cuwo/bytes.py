@@ -33,6 +33,7 @@ UINT32 = struct.Struct('<I')
 INT64 = struct.Struct('<q')
 UINT64 = struct.Struct('<Q')
 FLOAT = struct.Struct('<f')
+DOUBLE = struct.Struct('<d')
 
 class ByteWriter(object):
     def __init__(self, fp = None):
@@ -85,6 +86,8 @@ class ByteWriter(object):
 
     def write_uint64(self, value):
         self.write_struct(UINT64, value)
+    def write_double(self, value):
+        self.write_struct(DOUBLE, value)
 
     def write_float(self, value):
         self.write_struct(FLOAT, value)
@@ -184,6 +187,9 @@ class ByteReader(object):
 
     def read_float(self):
         return self.read_struct(FLOAT)
+
+    def read_double(self):
+        return self.read_struct(DOUBLE)
 
     def read_vec3(self):
         x = self.read_float()

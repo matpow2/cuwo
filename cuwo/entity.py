@@ -175,6 +175,7 @@ class EntityData(Loader):
         pass
     
     def read(self, reader):
+        self.last_update_mask = 0x0000FFFFFFFFFFFF
         self.x = reader.read_int64()
         self.y = reader.read_int64()
         self.z = reader.read_int64()
@@ -227,7 +228,7 @@ class EntityData(Loader):
         self.not_used7 = reader.read_uint8()
         self.not_used8 = reader.read_uint8()
         reader.skip(2)
-        self.character_level = reader.read_uint32()
+        self.level = reader.read_uint32()
         self.current_xp = reader.read_uint32()
         self.parent_owner = reader.read_uint64()
         self.unknown_or_not_used1 = reader.read_uint32()
@@ -315,7 +316,7 @@ class EntityData(Loader):
         writer.write_uint8(self.not_used7)
         writer.write_uint8(self.not_used8)
         writer.pad(2)
-        writer.write_uint32(self.character_level)
+        writer.write_uint32(self.level)
         writer.write_uint32(self.current_xp)
         writer.write_uint64(self.parent_owner)
         writer.write_uint32(self.unknown_or_not_used1)
@@ -348,6 +349,8 @@ class EntityData(Loader):
     
 def read_masked_data(entity, reader):
     mask = reader.read_uint64()
+    entity.last_update_mask = mask
+    
     if is_bit_set(mask, 0):
         entity.x = reader.read_int64()
         entity.y = reader.read_int64()
@@ -428,7 +431,7 @@ def read_masked_data(entity, reader):
     if is_bit_set(mask, 32):
         entity.not_used8 = reader.read_uint8()
     if is_bit_set(mask, 33):
-        entity.character_level = reader.read_uint32()
+        entity.level = reader.read_uint32()
     if is_bit_set(mask, 34):
         entity.current_xp = reader.read_uint32()
     if is_bit_set(mask, 35):
@@ -618,7 +621,7 @@ def write_masked_data(entity, writer):
     writer.write_float(entity.resi_multiplier)
     writer.write_uint8(entity.not_used7)
     writer.write_uint8(entity.not_used8)
-    writer.write_uint32(entity.character_level)
+    writer.write_uint32(entity.level)
     writer.write_uint32(entity.current_xp)
     writer.write_uint64(entity.parent_owner)
     writer.write_uint32(entity.unknown_or_not_used1)
