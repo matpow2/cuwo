@@ -27,7 +27,7 @@ from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
     ClientChatMessage, ServerChatMessage, create_entity_data, UpdateFinished,
     CurrentTime, ServerUpdate, ServerFull, ServerMismatch, INTERACT_DROP,
     INTERACT_PICKUP, ChunkItemData, ChunkItems, InteractPacket, PickupAction,
-    HitPacket)
+    HitPacket, ShootPacket)
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
@@ -71,7 +71,8 @@ class CubeWorldConnection(Protocol):
             EntityUpdate.packet_id : self.on_entity_packet,
             ClientChatMessage.packet_id : self.on_chat_packet,
             InteractPacket.packet_id : self.on_interact_packet,
-            HitPacket.packet_id : self.on_hit_packet
+            HitPacket.packet_id : self.on_hit_packet,
+            ShootPacket.packet_id : self.on_shoot_packet
         }
         
         self.scripts = []
@@ -175,6 +176,9 @@ class CubeWorldConnection(Protocol):
         target.hp -= packet.damage
         if target.hp <= 0:
             self.call_scripts('on_kill', target)
+
+    def on_shoot_packet(self, packet):
+        self.server.update_packet.shoot_actions.append(packet)
 
     # handlers
 
