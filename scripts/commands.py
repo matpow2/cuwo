@@ -22,6 +22,8 @@ Default set of commands bundled with cuwo
 from cuwo.script import (ServerScript, ConnectionScript, command, get_player,
     admin)
 from cuwo.common import get_chunk
+from cuwo.packet import (HitPacket, HIT_NORMAL)
+from cuwo.vector import Vector3
 import platform
 
 class CommandServer(ServerScript):
@@ -84,3 +86,24 @@ def pm(script, name, *args):
     message = ' '.join(args)
     player.send_chat('%s (PM): %s' % (script.connection.name, message))
     return 'PM sent'
+    
+@command
+@admin
+def kill(script, name):
+    player = get_player(script.server, name)
+	packet = HitPacket()
+	packet.entity_id = player.entity_id
+	packet.target_id = player.entity_id
+	packet.hit_type = HIT_NORMAL
+	packet.damage = player.entity_data.hp + 1000.0
+	packet.critical = 1
+	packet.stun_duration = 0
+	packet.something8 = 0
+	packet.pos = player.position
+	packet.hit_dir = Vector3()
+	packet.skill_hit = 0
+	packet.show_light = 0
+	script.server.update_packet.player_hits.append(packet)
+	message = '%s was killed' % player.name
+	print message
+	script.server.send_chat(message)
