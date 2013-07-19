@@ -96,7 +96,7 @@ def kill(script, name):
     print message
     script.server.send_chat(message)
 
-def damage_player(player, damage, stun_duration):
+def damage_player(script, player, damage, stun_duration):
     packet = HitPacket()
     packet.entity_id = player.entity_id
     packet.target_id = player.entity_id
