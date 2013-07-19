@@ -86,7 +86,7 @@ def pm(script, name, *args):
     message = ' '.join(args)
     player.send_chat('%s (PM): %s' % (script.connection.name, message))
     return 'PM sent'
-    
+
 @command
 @admin
 def kill(script, name):
@@ -105,5 +105,27 @@ def kill(script, name):
     packet.show_light = 0
     script.server.update_packet.player_hits.append(packet)
     message = '%s was killed' % player.name
+    print message
+    script.server.send_chat(message)
+
+
+@command
+@admin
+def stun(script, name, stun_duration):
+    player = get_player(script.server, name)
+    packet = HitPacket()
+    packet.entity_id = player.entity_id
+    packet.target_id = player.entity_id
+    packet.hit_type = HIT_NORMAL
+    packet.damage = 0
+    packet.critical = 1
+    packet.stun_duration = int(stun_duration)*1000
+    packet.something8 = 0
+    packet.pos = player.position
+    packet.hit_dir = Vector3()
+    packet.skill_hit = 0
+    packet.show_light = 0
+    script.server.update_packet.player_hits.append(packet)
+    message = '%s was stunned' % player.name
     print message
     script.server.send_chat(message)
