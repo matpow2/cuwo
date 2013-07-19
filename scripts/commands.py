@@ -83,10 +83,9 @@ def whereis(script, name = None):
 @command
 def pm(script, name, *args):
     player = get_player(script.server, name)
-    message = ' '.join(args)
+    message = ' '.join(args)    
     player.send_chat('%s (PM): %s' % (script.connection.name, message))
-    return 'PM sent'
-    
+    return 'PM sent'    
 @command
 @admin
 def kill(script, name):
