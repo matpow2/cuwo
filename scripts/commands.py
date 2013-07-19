@@ -96,6 +96,15 @@ def kill(script, name):
     print message
     script.server.send_chat(message)
 
+@command
+@admin
+def stun(script, name, stun_duration):
+    player = get_player(script.server, name)
+    damage_player(script, 0, stun_duration)
+    message = '%s was stunned' % player.name
+    print message
+    script.server.send_chat(message)
+
 def damage_player(script, player, damage, stun_duration):
     packet = HitPacket()
     packet.entity_id = player.entity_id
