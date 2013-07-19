@@ -124,6 +124,7 @@ class ByteReader(object):
         return data
 
     def open_editor(self):
+        print 'Opening editor ...'
         if raw_input('Open editor? y/n ').strip().lower() != 'y':
             return False
         import tempfile
@@ -132,7 +133,6 @@ class ByteReader(object):
         fp.write(self.fp.getvalue())
         fp.close()
         name = fp.name
-
         try:
             subprocess.Popen(['010editor', '%s@%s' % (name, self.tell())])
         except IOError:

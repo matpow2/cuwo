@@ -1,41 +1,64 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 from cuwo.loader import Loader
 from cuwo.common import is_bit_set
+from cuwo.vector import Vector3
 
 FLAGS_1_HOSTILE = 0x20
 
+
 class ItemUpgrade(Loader):
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.z = 0
+        self.material = 0
+        self.level = 0
+
     def read(self, reader):
         self.x = reader.read_int8()
         self.y = reader.read_int8()
         self.z = reader.read_int8()
         self.material = reader.read_int8()
         self.level = reader.read_uint32()
-    
+
     def write(self, writer):
         writer.write_int8(self.x)
         writer.write_int8(self.y)
         writer.write_int8(self.z)
         writer.write_int8(self.material)
         writer.write_uint32(self.level)
-    
+
 class ItemData(Loader):
+    def __init__(self):
+        self.type = 0
+        self.sub_type = 0
+        self.modifier = 0
+        self.minus_modifier = 0
+        self.rarity = 0
+        self.material = 0
+        self.flags = 0
+        self.level = 0
+        self.items = []
+        for _ in xrange(32):
+            self.items.append(ItemUpgrade())
+        self.upgrade_count = 0
+
     def read(self, reader):
         self.type = reader.read_uint8()
         self.sub_type = reader.read_uint8()
@@ -54,7 +77,7 @@ class ItemData(Loader):
             new_item.read(reader)
             self.items.append(new_item)
         self.upgrade_count = reader.read_uint32()
-    
+
     def write(self, writer):
         writer.write_uint8(self.type)
         writer.write_uint8(self.sub_type)
@@ -70,8 +93,50 @@ class ItemData(Loader):
         for item in self.items:
             item.write(writer)
         writer.write_uint32(self.upgrade_count)
-    
+
 class AppearanceData(Loader):
+    def __init__(self):
+        self.not_used_1 = 0
+        self.not_used_2 = 0
+        self.hair_red = 255
+        self.hair_green = 255
+        self.hair_blue = 255
+        self.movement_flags = 0
+        self.entity_flags = 0
+        self.scale = 1
+        self.bounding_radius = 0
+        self.bounding_height = 0
+        self.head_model = 65535
+        self.hair_model = 65535
+        self.hand_model = 65535
+        self.foot_model = 65535
+        self.body_model = 65535
+        self.back_model = 65535
+        self.shoulder_model = 65535
+        self.wing_model = 65535
+        self.head_scale = 1
+        self.body_scale = 1
+        self.hand_scale = 1
+        self.foot_scale = 1
+        self.shoulder_scale = 1
+        self.weapon_scale = 1
+        self.back_scale = 1
+        self.unknown = 1
+        self.wing_scale = 1
+        self.body_pitch = 0
+        self.arm_pitch = 0
+        self.arm_roll = 0
+        self.arm_yaw = 0
+        self.feet_pitch = 0
+        self.wing_pitch = 0
+        self.back_pitch = 0
+        self.body_offset = Vector3(0, 0, 0)
+        self.head_offset = Vector3(0, 0, 0)
+        self.hand_offset = Vector3(0, 0, 0)
+        self.foot_offset = Vector3(0, 0, 0)
+        self.back_offset = Vector3(0, 0, 0)
+        self.wing_offset = Vector3(0, 0, 0)
+
     def read(self, reader):
         self.not_used_1 = reader.read_uint8()
         self.not_used_2 = reader.read_uint8()
@@ -114,7 +179,7 @@ class AppearanceData(Loader):
         self.foot_offset = reader.read_vec3()
         self.back_offset = reader.read_vec3()
         self.wing_offset = reader.read_vec3()
-    
+
     def write(self, writer):
         writer.write_uint8(self.not_used_1)
         writer.write_uint8(self.not_used_2)
@@ -157,8 +222,86 @@ class AppearanceData(Loader):
         writer.write_vec3(self.foot_offset)
         writer.write_vec3(self.back_offset)
         writer.write_vec3(self.wing_offset)
-    
+
 class EntityData(Loader):
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.z = 0
+        self.body_roll = 0
+        self.body_pitch = 0
+        self.body_yaw = 0
+        self.velocity = Vector3(0, 0, 0)
+        self.accel = Vector3(0, 0, 0)
+        self.extra_vel = Vector3(0, 0, 0)
+        self.look_pitch = 0
+        self.physics_flags = 0
+        self.speed_flags = 0
+        self.entity_type = 0
+        self.current_mode = 0
+        self.last_shoot_time = 0
+        self.hit_counter = 0
+        self.last_hit_time = 0
+        self.appearance = AppearanceData()
+        self.flags_1 = 0
+        self.flags_2 = 0
+        self.roll_time = 0
+        self.stun_time = -5000
+        self.slowed_time = 0
+        self.make_blue_time = 0
+        self.speed_up_time = 0
+        self.show_patch_time = 0
+        self.class_type = 0
+        self.specialization = 0
+        self.charged_mp = 0
+        self.not_used_1 = 0
+        self.not_used_2 = 0
+        self.not_used_3 = 0
+        self.not_used_4 = 0
+        self.not_used_5 = 0
+        self.not_used_6 = 0
+        self.ray_hit = Vector3(0, 0, 0)
+        self.hp = 1
+        self.mp = 0
+        self.block_power = 0
+        self.max_hp_multiplier = 1
+        self.shoot_speed = 0
+        self.damage_multiplier = 1
+        self.armor_multiplier = 1
+        self.resi_multiplier = 1
+        self.not_used7 = 0
+        self.not_used8 = 0
+        self.character_level = 0
+        self.current_xp = 0
+        self.parent_owner = 0
+        self.unknown_or_not_used1 = 0
+        self.unknown_or_not_used2 = 0
+        self.unknown_or_not_used3 = 0
+        self.unknown_or_not_used4 = 0
+        self.unknown_or_not_used5 = 0
+        self.not_used11 = 0
+        self.not_used12 = 0
+        self.super_weird = 0
+        self.not_used13 = 0
+        self.not_used14 = 0
+        self.not_used15 = 0
+        self.not_used16 = 0
+        self.not_used17 = 0
+        self.not_used18 = 0
+        self.not_used19 = 0
+        self.not_used20 = 0
+        self.not_used21 = 0
+        self.not_used22 = 0
+        self.item_data = ItemData()
+        self.equipment = []
+        for _ in xrange(13):
+            self.equipment.append(ItemData())
+        self.skills = []
+        for _ in xrange(11):
+            self.skills.append(0)
+        self.ice_block_four = 0
+        self.name = ''
+
     def read(self, reader):
         self.x = reader.read_int64()
         self.y = reader.read_int64()
@@ -247,7 +390,7 @@ class EntityData(Loader):
             self.skills.append(reader.read_uint32())
         self.mana_cubes = reader.read_uint32()
         self.name = reader.read_ascii(16)
-    
+
     def write(self, writer):
         writer.write_int64(self.x)
         writer.write_int64(self.y)
@@ -330,7 +473,7 @@ class EntityData(Loader):
             writer.write_uint32(item)
         writer.write_uint32(self.mana_cubes)
         writer.write_ascii(self.name, 16)
-    
+
 def read_masked_data(entity, reader):
     mask = reader.read_uint64()
     if is_bit_set(mask, 0):

@@ -1,17 +1,17 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -21,21 +21,16 @@
 # definitions in your own work, it would be nice with a little notice of
 # where you got them from (i.e. cuwo) :-)
 
-from cuwo.entity import (EntityData, AppearanceData, ItemData, 
-    read_masked_data, write_masked_data, get_masked_size, SOUNDS)
+from cuwo.entity import (EntityData, AppearanceData, ItemData, read_masked_data, write_masked_data, get_masked_size, SOUNDS)
 from cuwo.loader import Loader
 from cuwo.common import get_hex_string
 from cuwo.bytes import ByteReader, ByteWriter
 from cuwo.exceptions import OutOfData
+from cuwo.vector import Vector3
 import zlib
 
 def create_entity_data():
     data = EntityData()
-    data.appearance = AppearanceData()
-    data.item_data = ItemData()
-    data.equipment = []
-    for _ in xrange(13):
-        data.equipment.append(ItemData())
     return data
 
 def read_list(reader, item_class):
@@ -77,7 +72,7 @@ class JoinPacket(Packet):
         if reader.read_uint32() != 0:
             raise NotImplementedError()
             return
-        self.entity_id = reader.read_uint64() # must be > 1 and < 10
+        self.entity_id = reader.read_uint64()
         self.data = EntityData()
         self.data.read(reader)
 
@@ -158,7 +153,7 @@ class Packet4Struct1(Loader):
         self.something2 = reader.read_uint32()
         self.something3 = reader.read_uint32()
         self.something4 = reader.read_uint8()
-        self.something5 = reader.read_uint8()
+        self.interact_type = reader.read_uint8()
         self.something6 = reader.read_uint8()
         self.something7 = reader.read_uint8()
         self.something8 = reader.read_uint32()
@@ -168,7 +163,7 @@ class Packet4Struct1(Loader):
         writer.write_uint32(self.something2)
         writer.write_uint32(self.something3)
         writer.write_uint8(self.something4)
-        writer.write_uint8(self.something5)
+        writer.write_uint8(self.interact_type)
         writer.write_uint8(self.something6)
         writer.write_uint8(self.something7)
         writer.write_uint32(self.something8)
@@ -494,7 +489,7 @@ class HitPacket(Packet):
         writer.write_uint8(self.show_light)
         writer.pad(1)
 
-class Unknown8(Packet):
+class StealthPacket(Packet):
     def read(self, reader):
         self.data = reader.read(40)
 
@@ -506,15 +501,14 @@ class ShootPacket(Packet):
         self.entity_id = reader.read_uint64()
         self.chunk_x = reader.read_int32()
         self.chunk_y = reader.read_int32()
-        self.something5 = reader.read_uint32()
+        self.interact_type = reader.read_uint32()
         reader.skip(4) # 8byte struct alignment
         self.pos = reader.read_qvec3()
         self.something13 = reader.read_uint32()
         self.something14 = reader.read_uint32()
         self.something15 = reader.read_uint32()
         self.velocity = reader.read_vec3()
-        self.something19 = reader.read_float() # rand() something, 
-                                               # probably damage multiplier
+        self.something19 = reader.read_float() # rand() something,
         self.something20 = reader.read_float()
         self.something21 = reader.read_float()
         self.something22 = reader.read_float() # used stamina? amount of stun?
@@ -531,7 +525,7 @@ class ShootPacket(Packet):
         writer.write_uint64(self.entity_id)
         writer.write_int32(self.chunk_x)
         writer.write_int32(self.chunk_y)
-        writer.write_uint32(self.something5)
+        writer.write_uint32(self.interact_type)
         writer.pad(4)
         writer.write_qvec3(self.pos)
         writer.write_uint32(self.something13)
@@ -599,7 +593,7 @@ CS_PACKETS = {
     0 : EntityUpdate,
     6 : InteractPacket,
     7 : HitPacket,
-    8 : Unknown8, # stealth
+    8 : StealthPacket,
     9 : ShootPacket,
     10 : ClientChatMessage,
     11 : ChunkDiscovered,

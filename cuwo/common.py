@@ -1,23 +1,24 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 from cuwo import constants
 
 import shlex
+import math
 import os
 
 def get_hex_string(value):
@@ -41,23 +42,33 @@ def set_bit(mask, index, value):
 
 def get_clock_string(value):
     hour = (value * 24) / constants.MAX_TIME
-    minute = ((value * 24 * 60) / constants.MAX_TIME) % 60
+    minute = ((value * 1440) / constants.MAX_TIME) % 60
     return '%02d:%02d' % (hour, minute)
 
 def parse_clock(value):
     h, m = value.split(':')
     h = int(h)
     m = int(m)
-    v = (h * constants.MAX_TIME) / 24 + (m * constants.MAX_TIME) / (24 * 60)
+    v = (h * constants.MAX_TIME) / 24 + (m * constants.MAX_TIME) / 1440
     return v
 
 def get_chunk(vec):
-    return (int(vec.x / constants.CHUNK_SCALE), 
-            int(vec.y / constants.CHUNK_SCALE))
+    return (int(vec.x / constants.CHUNK_SCALE), int(vec.y / constants.CHUNK_SCALE))
 
 def get_sector(vec):
-    return (int(vec.x / constants.SECTOR_SCALE), 
-            int(vec.y / constants.SECTOR_SCALE))
+    return (int(vec.x / constants.SECTOR_SCALE), int(vec.y / constants.SECTOR_SCALE))
+
+def get_needed_xp(level):
+    return math.floor((1050 * level - 50) / (level + 19))
+
+def get_needed_total_xp(level):
+    return math.floor(50 * (21 * (level - 1) + 400 * math.log(20) - 400 * math.log(19 + level)))
+
+def get_xp_from_to(levelFrom, levelTo):
+    return math.floor(50 * (21 * (levelTo - levelFrom) + 400 * math.log(19 + levelFrom) - 400 * math.log(19 + levelTo)))
+
+def get_power_level(level):
+    return math.floor(100 - 99 * ((1 + 0.0536) / (1 + 0.0536 * level)))
 
 def parse_command(message):
     try:
@@ -74,6 +85,7 @@ def parse_command(message):
 def create_path(path):
     if path:
         try:
+            print 'Creating directory structure: %s' % path
             os.makedirs(os.path.dirname(path))
         except OSError:
             pass
@@ -83,4 +95,5 @@ def create_file_path(path):
 
 def open_create(filename, mode):
     create_file_path(filename)
+    print 'Creating file: %s' % filename
     return open(filename, mode)
