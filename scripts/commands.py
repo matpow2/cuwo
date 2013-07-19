@@ -87,16 +87,6 @@ def pm(script, name, *args):
     player.send_chat('%s (PM): %s' % (script.connection.name, message))
     return 'PM sent'
 
-"""
-Punish players by command
-"""
-
-class PunishServer(ServerScript):
-    pass
-
-def get_class():
-    return PunishServer
-    
 @command
 @admin
 def kill(script, name):
