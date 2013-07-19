@@ -18,7 +18,9 @@
 from cuwo.loader import Loader
 from cuwo.common import is_bit_set
 
-class EquipmentExtra(Loader):
+FLAGS_1_HOSTILE = 0x20
+
+class ItemUpgrade(Loader):
     def read(self, reader):
         self.x = reader.read_int8()
         self.y = reader.read_int8()
@@ -33,7 +35,7 @@ class EquipmentExtra(Loader):
         writer.write_int8(self.material)
         writer.write_uint32(self.level)
     
-class EquipmentData(Loader):
+class ItemData(Loader):
     def read(self, reader):
         self.type = reader.read_uint8()
         self.sub_type = reader.read_uint8()
@@ -48,10 +50,10 @@ class EquipmentData(Loader):
         reader.skip(2)
         self.items = []
         for _ in xrange(32):
-            new_item = EquipmentExtra()
+            new_item = ItemUpgrade()
             new_item.read(reader)
             self.items.append(new_item)
-        self.upgrades = reader.read_uint32()
+        self.upgrade_count = reader.read_uint32()
     
     def write(self, writer):
         writer.write_uint8(self.type)
@@ -67,7 +69,7 @@ class EquipmentData(Loader):
         writer.pad(2)
         for item in self.items:
             item.write(writer)
-        writer.write_uint32(self.upgrades)
+        writer.write_uint32(self.upgrade_count)
     
 class AppearanceData(Loader):
     def read(self, reader):
@@ -212,8 +214,7 @@ class EntityData(Loader):
         reader.skip(2)
         self.character_level = reader.read_uint32()
         self.current_xp = reader.read_uint32()
-        self.not_used9 = reader.read_uint32()
-        self.not_used10 = reader.read_uint32()
+        self.parent_owner = reader.read_uint64()
         self.unknown_or_not_used1 = reader.read_uint32()
         self.unknown_or_not_used2 = reader.read_uint32()
         self.unknown_or_not_used3 = reader.read_uint8()
@@ -234,18 +235,18 @@ class EntityData(Loader):
         self.not_used20 = reader.read_uint32()
         self.not_used21 = reader.read_uint32()
         self.not_used22 = reader.read_uint32()
-        self.equipment_1 = EquipmentData()
-        self.equipment_1.read(reader)
+        self.item_data = ItemData()
+        self.item_data.read(reader)
         self.equipment = []
         for _ in xrange(13):
-            new_item = EquipmentData()
+            new_item = ItemData()
             new_item.read(reader)
             self.equipment.append(new_item)
         self.skills = []
         for _ in xrange(11):
             self.skills.append(reader.read_uint32())
-        self.ice_block_four = reader.read_uint32()
-        self.name = reader.read_string(16)
+        self.mana_cubes = reader.read_uint32()
+        self.name = reader.read_ascii(16)
     
     def write(self, writer):
         writer.write_int64(self.x)
@@ -301,8 +302,7 @@ class EntityData(Loader):
         writer.pad(2)
         writer.write_uint32(self.character_level)
         writer.write_uint32(self.current_xp)
-        writer.write_uint32(self.not_used9)
-        writer.write_uint32(self.not_used10)
+        writer.write_uint64(self.parent_owner)
         writer.write_uint32(self.unknown_or_not_used1)
         writer.write_uint32(self.unknown_or_not_used2)
         writer.write_uint8(self.unknown_or_not_used3)
@@ -323,13 +323,13 @@ class EntityData(Loader):
         writer.write_uint32(self.not_used20)
         writer.write_uint32(self.not_used21)
         writer.write_uint32(self.not_used22)
-        self.equipment_1.write(writer)
+        self.item_data.write(writer)
         for item in self.equipment:
             item.write(writer)
         for item in self.skills:
             writer.write_uint32(item)
-        writer.write_uint32(self.ice_block_four)
-        writer.write_string(self.name, 16)
+        writer.write_uint32(self.mana_cubes)
+        writer.write_ascii(self.name, 16)
     
 def read_masked_data(entity, reader):
     mask = reader.read_uint64()
@@ -417,8 +417,7 @@ def read_masked_data(entity, reader):
     if is_bit_set(mask, 34):
         entity.current_xp = reader.read_uint32()
     if is_bit_set(mask, 35):
-        entity.not_used9 = reader.read_uint32()
-        entity.not_used10 = reader.read_uint32()
+        entity.parent_owner = reader.read_uint64()
     if is_bit_set(mask, 36):
         entity.unknown_or_not_used1 = reader.read_uint32()
         entity.unknown_or_not_used2 = reader.read_uint32()
@@ -444,18 +443,117 @@ def read_masked_data(entity, reader):
     if is_bit_set(mask, 42):
         entity.not_used19 = reader.read_uint8()
     if is_bit_set(mask, 43):
-        entity.equipment_1.read(reader)
+        entity.item_data.read(reader)
     if is_bit_set(mask, 44):
         for item in entity.equipment:
             item.read(reader)
     if is_bit_set(mask, 45):
-        entity.name = reader.read_string(16)
+        entity.name = reader.read_ascii(16)
     if is_bit_set(mask, 46):
         entity.skills = []
         for _ in xrange(11):
             entity.skills.append(reader.read_uint32())
     if is_bit_set(mask, 47):
-        entity.ice_block_four = reader.read_uint32()
+        entity.mana_cubes = reader.read_uint32()
+
+def get_masked_size(mask):
+    size = 0
+    if is_bit_set(mask, 0):
+        size += 24
+    if is_bit_set(mask, 1):
+        size += 12
+    if is_bit_set(mask, 2):
+        size += 12
+    if is_bit_set(mask, 3):
+        size += 12
+    if is_bit_set(mask, 4):
+        size += 12
+    if is_bit_set(mask, 5):
+        size += 4
+    if is_bit_set(mask, 6):
+        size += 4
+    if is_bit_set(mask, 7):
+        size += 1
+    if is_bit_set(mask, 8):
+        size += 4
+    if is_bit_set(mask, 9):
+        size += 1
+    if is_bit_set(mask, 10):
+        size += 4
+    if is_bit_set(mask, 11):
+        size += 4
+    if is_bit_set(mask, 12):
+        size += 4
+    if is_bit_set(mask, 13):
+        size += 172
+    if is_bit_set(mask, 14):
+        size += 2
+    if is_bit_set(mask, 15):
+        size += 4
+    if is_bit_set(mask, 16):
+        size += 4
+    if is_bit_set(mask, 17):
+        size += 4
+    if is_bit_set(mask, 18):
+        size += 4
+    if is_bit_set(mask, 19):
+        size += 4
+    if is_bit_set(mask, 20):
+        size += 4
+    if is_bit_set(mask, 21):
+        size += 1
+    if is_bit_set(mask, 22):
+        size += 1
+    if is_bit_set(mask, 23):
+        size += 4
+    if is_bit_set(mask, 24):
+        size += 12
+    if is_bit_set(mask, 25):
+        size += 12
+    if is_bit_set(mask, 26):
+        size += 12
+    if is_bit_set(mask, 27):
+        size += 4
+    if is_bit_set(mask, 28):
+        size += 4
+    if is_bit_set(mask, 29):
+        size += 4
+    if is_bit_set(mask, 30):
+        size += 20
+    if is_bit_set(mask, 31):
+        size += 1
+    if is_bit_set(mask, 32):
+        size += 1
+    if is_bit_set(mask, 33):
+        size += 4
+    if is_bit_set(mask, 34):
+        size += 4
+    if is_bit_set(mask, 35):
+        size += 8
+    if is_bit_set(mask, 36):
+        size += 8
+    if is_bit_set(mask, 37):
+        size += 1
+    if is_bit_set(mask, 38):
+        size += 4
+    if is_bit_set(mask, 39):
+        size += 12
+    if is_bit_set(mask, 40):
+        size += 24
+    if is_bit_set(mask, 41):
+        size += 12
+    if is_bit_set(mask, 42):
+        size += 1
+    if is_bit_set(mask, 43):
+        size += 280
+    if is_bit_set(mask, 44):
+        size += 3640
+    if is_bit_set(mask, 45):
+        size += 16
+    if is_bit_set(mask, 46):
+        size += 44
+    if is_bit_set(mask, 47):
+        size += 4
 
 def write_masked_data(entity, writer):
     writer.write_uint64(0x0000FFFFFFFFFFFF)
@@ -507,8 +605,7 @@ def write_masked_data(entity, writer):
     writer.write_uint8(entity.not_used8)
     writer.write_uint32(entity.character_level)
     writer.write_uint32(entity.current_xp)
-    writer.write_uint32(entity.not_used9)
-    writer.write_uint32(entity.not_used10)
+    writer.write_uint64(entity.parent_owner)
     writer.write_uint32(entity.unknown_or_not_used1)
     writer.write_uint32(entity.unknown_or_not_used2)
     writer.write_uint8(entity.unknown_or_not_used3)
@@ -526,10 +623,114 @@ def write_masked_data(entity, writer):
     writer.write_uint32(entity.not_used21)
     writer.write_uint32(entity.not_used22)
     writer.write_uint8(entity.not_used19)
-    entity.equipment_1.write(writer)
+    entity.item_data.write(writer)
     for item in entity.equipment:
         item.write(writer)
-    writer.write_string(entity.name, 16)
+    writer.write_ascii(entity.name, 16)
     for item in entity.skills:
         writer.write_uint32(item)
-    writer.write_uint32(entity.ice_block_four)
+    writer.write_uint32(entity.mana_cubes)
+
+SOUNDS = {
+    0 : 'hit',
+    1 : 'blade1',
+    2 : 'blade2',
+    3 : 'long-blade1',
+    4 : 'long-blade2',
+    5 : 'hit1',
+    6 : 'hit2',
+    7 : 'punch1',
+    8 : 'punch2',
+    9 : 'hit-arrow',
+    10 : 'hit-arrow-critical',
+    11 : 'smash1',
+    12 : 'slam-ground',
+    13 : 'smash-hit2',
+    14 : 'smash-jump',
+    15 : 'swing',
+    16 : 'shield-swing',
+    17 : 'swing-slow',
+    18 : 'swing-slow2',
+    19 : 'arrow-destroy',
+    20 : 'blade1',
+    21 : 'punch2',
+    22 : 'salvo2',
+    23 : 'sword-hit03',
+    24 : 'block',
+    25 : 'shield-slam',
+    26 : 'roll',
+    27 : 'destroy2',
+    28 : 'cry',
+    29 : 'levelup2',
+    30 : 'missioncomplete',
+    31 : 'water-splash01',
+    32 : 'step2',
+    33 : 'step-water',
+    34 : 'step-water2',
+    35 : 'step-water3',
+    36 : 'channel2',
+    37 : 'channel-hit',
+    38 : 'fireball',
+    39 : 'fire-hit',
+    40 : 'magic02',
+    41 : 'watersplash',
+    42 : 'watersplash-hit',
+    43 : 'lich-scream',
+    44 : 'drink2',
+    45 : 'pickup',
+    46 : 'disenchant2',
+    47 : 'upgrade2',
+    48 : 'swirl',
+    49 : 'human-voice01',
+    50 : 'human-voice02',
+    51 : 'gate',
+    52 : 'spike-trap',
+    53 : 'fire-trap',
+    54 : 'lever',
+    55 : 'charge2',
+    56 : 'magic02',
+    57 : 'drop',
+    58 : 'drop-coin',
+    59 : 'drop-item',
+    60 : 'male-groan',
+    61 : 'female-groan',
+    62 : 'male-groan',
+    63 : 'female-groan',
+    64 : 'goblin-male-groan',
+    65 : 'goblin-female-groan',
+    66 : 'lizard-male-groan',
+    67 : 'lizard-female-groan',
+    68 : 'dwarf-male-groan',
+    69 : 'dwarf-female-groan',
+    70 : 'orc-male-groan',
+    71 : 'orc-female-groan',
+    72 : 'undead-male-groan',
+    73 : 'undead-female-groan',
+    74 : 'frogman-male-groan',
+    75 : 'frogman-female-groan',
+    76 : 'monster-groan',
+    77 : 'troll-groan',
+    78 : 'mole-groan',
+    79 : 'slime-groan',
+    80 : 'zombie-groan',
+    81 : 'Explosion',
+    82 : 'punch2',
+    83 : 'menu-open2',
+    84 : 'menu-close2',
+    85 : 'menu-select',
+    86 : 'menu-tab',
+    87 : 'menu-grab-item',
+    88 : 'menu-drop-item',
+    89 : 'craft',
+    90 : 'craft-proc',
+    91 : 'absorb',
+    92 : 'manashield',
+    93 : 'bulwark',
+    94 : 'bird1',
+    95 : 'bird2',
+    96 : 'bird3',
+    97 : 'cricket1',
+    98 : 'cricket2',
+    99 : 'owl1',
+    100 : 'owl2'
+}

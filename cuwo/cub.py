@@ -32,3 +32,15 @@ class CubModel(object):
                     if r == 0 and g == 0 and b == 0:
                         continue
                     self.blocks[(x, y, z)] = (r, g, b)
+
+    def write(self, writer):
+        writer.write_uint32(self.x_size)
+        writer.write_uint32(self.y_size)
+        writer.write_uint32(self.z_size)
+        for z in xrange(self.z_size):
+            for y in xrange(self.y_size):
+                for x in xrange(self.x_size):
+                    r, g, b = self.blocks.get((x, y, z), (0, 0, 0))
+                    writer.write_uint8(r)
+                    writer.write_uint8(g)
+                    writer.write_uint8(b)

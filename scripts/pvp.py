@@ -16,20 +16,26 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Sends a welcome message to players
+Player versus player mode!
 """
 
-from cuwo.script import ServerScript, ConnectionScript, command
-from twisted.internet import reactor
+from cuwo.script import ServerScript, ConnectionScript
+from cuwo.entity import FLAGS_1_HOSTILE
 
-class WelcomeServer(ServerScript):
-    connection_class = None
+class VersusConnection(ConnectionScript):
+    def on_kill(self, target):
+        self.server.send_chat('%s killed %s!' % (self.connection.name,
+                                                  target.name))
 
-    def on_load(self):
-        self.welcome = self.server.format_lines(self.server.config.welcome)
-
-    def on_new_connection(self, connection):
-        reactor.callLater(10, connection.send_lines, self.welcome)
+class VersusServer(ServerScript):
+    connection_class = VersusConnection
+    
+    def update(self):
+        for connection in self.server.connections.values():
+            if not connection.has_joined:
+                continue
+            data = connection.entity_data
+            data.flags_1 |= FLAGS_1_HOSTILE
 
 def get_class():
-    return WelcomeServer
+    return VersusServer
