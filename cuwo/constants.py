@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev 2013.
+# Copyright (c) Mathias Kaerlev, Somer Hayter and Julien Kross 2013.
 #
 # This file is part of cuwo.
 #
@@ -14,6 +14,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# These constants are used without getting modified
+# while the server is running.
+
+# Most of these are for configuration reasons but
+# some can cause players clients crashing
+
 
 CLIENT_VERSION = 3
 
@@ -59,11 +67,13 @@ PLAYER_RACES = ['Unknown','Humans','Elves','Dwarves','Goblins','Lizardmen','Orcs
 LEVEL_MIN = 1
 LEVEL_MAX = 10000
 
+
+# You can disable races you do not want of your server
 FORBIDDEN_RACES = []
 
 
 FORBIDDEN_ITEMS = []
-
+#
 FORBIDDEN_ITEMS_USE = []
 # Forbid item possession (e.g. when you have them in your inventory)
 FORBIDDEN_ITEMS_POSSESSION = []
