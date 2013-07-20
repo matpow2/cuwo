@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev 2013.
+# Copyright (c) Mathias Kaerlev, Somer Hayter and Julien Kross 2013.
 #
 # This file is part of cuwo.
 #
@@ -33,12 +33,13 @@ from cuwo.vector import Vector3
 from cuwo import constants
 from cuwo.common import get_clock_string, parse_clock, parse_command, get_chunk
 from cuwo.script import call_scripts
+from cuwo import database
 
 import collections
 import imp
 import os
 import sys
-import pprint
+import json
 import random
 
 # initialize packet instances for sending
@@ -59,6 +60,9 @@ class CubeWorldConnection(Protocol):
     entity_id = None
     entity_data = None
     disconnected = False
+
+    time_last_packet = -1
+    time_disconnected = -1
 
     def __init__(self, server, addr):
         self.address = addr
@@ -82,9 +86,12 @@ class CubeWorldConnection(Protocol):
         self.rights = AttributeSet()
 
     def dataReceived(self, data):
+        self.time_last_packet = self.server.last_secondly_check
         self.packet_handler.feed(data)
+        self.do_anticheat_actions()
 
     def disconnect(self):
+        self.time_disconnected = self.server.last_secondly_check
         self.transport.loseConnection()
         self.connectionLost(None)
 
@@ -102,13 +109,13 @@ class CubeWorldConnection(Protocol):
                     del self.server.entities[self.entity_id]
                 except:
                     pass
-                finally:
+                else:
                     self.server.entity_ids.put_back(self.entity_id)
             for script in self.scripts[:]:
                 script.unload()
             if self.has_joined:
                 self.has_joined = False
-                print 'Player %s [%s] left the game' % (self.name, self.address.host)
+                print '[INFO] Player %s [%s] left the game' % (self.name, self.address.host)
                 self.server.send_chat('<<< %s left the game' % self.name)
 
     # packet methods
@@ -128,12 +135,12 @@ class CubeWorldConnection(Protocol):
             mismatch_packet.version = constants.CLIENT_VERSION
             self.send_packet(mismatch_packet)
             self.disconnect()
-            print 'Player %s [%s] has an invalid client version (%s != %s)' % (self.name, self.address.host, packet.version, constants.CLIENT_VERSION)
+            print '[INFO] Player %s [%s] is using an incompatible client version (%s != %s)' % (self.name, self.address.host, packet.version, constants.CLIENT_VERSION)
             return
         if len(self.server.connections) >= self.server.config.max_players:
             self.send_packet(server_full_packet)
             self.disconnect()
-            print 'Player %s [%s] tried to join full server' % (self.name, self.address.host)
+            print '[INFO] Player %s [%s] tried to join full server' % (self.name, self.address.host)
             return
         self.entity_id = self.server.entity_ids.pop()
         self.server.connections[(self.entity_id,)] = self
@@ -147,11 +154,9 @@ class CubeWorldConnection(Protocol):
             self.entity_data = create_entity_data()
         self.server.entities[self.entity_id] = self.entity_data;
         packet.update_entity(self.entity_data)
-        if self.entity_data.entity_type >= 0 and self.entity_data.entity_type <= constants.ENTITY_TYPE_PLAYER_MAX_ID and self.entity_data.name:
+        if self.entity_data.entity_type >= 1 and self.entity_data.entity_type <= constants.ENTITY_TYPE_PLAYER_MAX_ID and self.entity_data.name:
             if self.has_joined != True:
                 self.on_join()
-        else:
-            print 'Non-Player-Character entity %s join' % self.entity_data.entity_type
 
     def on_chat_packet(self, packet):
         message = packet.value
@@ -166,21 +171,19 @@ class CubeWorldConnection(Protocol):
         interact_type = packet.interact_type
         if interact_type == INTERACT_DROP:
             pos = self.position.copy()
-            pos.y += 10
             pos.z -= constants.BLOCK_SCALE
             self.server.drop_item(packet.item_data, pos)
-            print 'Player %s dropped item at (%r,%r,%r)' % (self.name, pos.x, pos.y, pos.z)
-            return
+            print '[DEBUG] Player %s dropped item #%s at (%r,%r,%r)' % (self.name, self.entity_id, pos.x, pos.y, pos.z)
         elif interact_type == INTERACT_PICKUP:
             chunk = (packet.chunk_x, packet.chunk_y)
             try:
                 item = self.server.remove_item(chunk, packet.item_index)
                 self.give_item(item)
-                print 'Player %s picked up item #%s at chunk (%s,%s)' % (self.name, packet.item_index, packet.chunk_x, packet.chunk_y)
+                print '[DEBUG] Player %s picked up item #%s at chunk (%r,%r)' % (self.name, packet.item_index, packet.chunk_x, packet.chunk_y)
             except KeyError:
-                print 'Exception while %s tried to interact with #%s at chunk (%s,%s)' % (self.name, packet.item_index, packet.chunk_x, packet.chunk_y)
-                return
-        print 'Player %s interacted with unimplemented type %s, packet index %s at pos (%s,%s)' % (self.name, interact_type, packet.item_index, packet.chunk_x, packet.chunk_y)
+                print '[DEBUG] Exception while %s tried to interact with #%s at chunk (%r,%r)' % (self.name, packet.item_index, packet.chunk_x, packet.chunk_y)
+        else:
+            print '[DEBUG] Player %s interacted with unimplemented type %s, id %s, packet index %s at pos (%r,%r)' % (self.name, interact_type, self.entity_id, packet.item_index, packet.chunk_x, packet.chunk_y)
 
     def on_hit_packet(self, packet):
         try:
@@ -190,11 +193,11 @@ class CubeWorldConnection(Protocol):
         self.server.update_packet.player_hits.append(packet)
         if packet.damage <= 0:
             return
-        if packet.damage > 1000:
-            packet.damage = 1000
-        if target.hp < 0:
+        if target.hp <= 0:
             target.hp = 0
             return
+        if packet.damage > 1000:
+            packet.damage = 1000
         if target.hp > packet.damage:
             target.hp -= packet.damage
         else:
@@ -204,21 +207,41 @@ class CubeWorldConnection(Protocol):
     def on_shoot_packet(self, packet):
         self.server.update_packet.shoot_actions.append(packet)
 
+    def do_anticheat_actions(self):
+        if not self.has_joined:
+            print '[ANTICHEAT] Kicked Player %s because it seems like he never joined the server!' % self.entity_data.name
+            self.kick('Kicked by the Server')
+            return
+        if self.entity_data.entity_typee < ENTITY_TYPE_PLAYER_MIN_ID or self.entity_data.entity_type > constants.ENTITY_TYPE_PLAYER_MAX_ID:
+            print '[ANTICHEAT] Player %s tried to join with invalid entity type id: %s!' % (self.entity_data.name, self.entity_data.entity_type)
+            self.kick('Invalid entity type submitted')
+            return
+        if (self.entity_data.class_type < 0 or self.entity_data.class_type > 4):
+            self.kick('Invalid character class submitted')
+            print '[ANTICHEAT] Player %s tried to join with an invalid character class! Kicked.' % self.entity_data.name
+            return
+        if (self.entity_data.character_level < 1 or self.entity_data.character_level > 3000):
+            self.kick('Abnormal level submitted')
+            print '[ANTICHEAT] Player %s tried to join with an abnormal character level! Kicked.' % self.entity_data.name
+            return
+        if (self.entity_data.hp > 10000):
+            self.kick('Abnormal health points submitted')
+            print '[ANTICHEAT] Player %s tried to join with an abnormal health points! Kicked.' % self.entity_data.name
+            return
+        if (commons.get_needed_total_xp(self.entity_data.character_level) > self.entity_data.current_xp):
+            self.kick('Invalid character level')
+            print '[ANTICHEAT] Player %s tried to join with character level higher than total xp needed for it! Kicked.' % self.entity_data.name
+            return
 
     # handlers
 
     def on_join(self):
-        if self.has_joined or self.entity_data.entity_type > constants.ENTITY_TYPE_PLAYER_MAX_ID or not self.entity_data.name:
+        if self.has_joined:
             return
         self.has_joined = True
-        if (self.entity_data.class_type < 1 or self.entity_data.class_type > 4) or (self.entity_data.character_level < 1 or self.entity_data.character_level > 3000) or (self.entity_data.hp < 0 or self.entity_data.hp > 10000):
-            self.kick('Inacceptable data submitted')
-            return
         acwcstr = ['Unknown','Warrior','Ranger','Mage','Rogue']
-        print 'Player %s (IP: %s, ID: %s, class: %s, level: %s) joined the game' % (self.entity_data.name, self.address.host, self.entity_id, acwcstr[self.entity_data.class_type], self.entity_data.character_level)
+        print '>>> Player %s (IP: %s, ID: %s, class: %s, level: %s) joined the game' % (self.entity_data.name, self.address.host, self.entity_id, acwcstr[self.entity_data.class_type], self.entity_data.character_level)
         for connection in self.server.connections.values():
-            if not connection.has_joined:
-                continue
             entity_packet.set_entity(connection.entity_data, connection.entity_id)
             self.send_packet(entity_packet)
         self.call_scripts('on_join')
@@ -321,6 +344,8 @@ class CubeWorldServer(Factory):
     items_changed = False
     last_secondly_check = -1
     next_items_autoremoval = -1
+    ticks_since_last_second = -1
+    ticks_per_second = -1
 
     def __init__(self, config):
         self.config = config
@@ -331,10 +356,10 @@ class CubeWorldServer(Factory):
 
         self.connections = MultikeyDict()
 
-        self.chunk_items = collections.defaultdict(list)
-
         self.entities = {}
         self.entity_ids = IDPool(1)
+
+        self.chunk_items = collections.defaultdict(list)
 
         self.update_loop = LoopingCall(self.update)
         self.update_loop.start(1.0 / constants.UPDATE_FPS, False)
@@ -366,8 +391,6 @@ class CubeWorldServer(Factory):
     def remove_item(self, chunk, index):
         try:
             items = self.chunk_items[chunk]
-            if len(items) <= 0:
-                return None
             ret = items.pop(index)
             self.items_changed = True
             return ret
@@ -399,26 +422,20 @@ class CubeWorldServer(Factory):
         self.call_scripts('update')
 
         # secondly check
-        secondly_check = False
         uxtime = int(reactor.seconds())
-        if uxtime != self.last_secondly_check:
+        if uxtime == self.last_secondly_check:
+            secondly_check = False
+            self.ticks_since_last_second += 1
+        else:
+            if uxtime > self.last_secondly_check:
+                self.ticks_per_second = self.ticks_since_last_second / (uxtime - self.last_secondly_check)
+                self.ticks_since_last_second = 0
+                print '[DEBUG] TPS: %r' % self.ticks_per_second
             self.last_secondly_check = uxtime
             secondly_check = True
 
         # entity updates
         for entity_id, entity in self.entities.iteritems():
-            if entity.x > constants.MAX_POS:
-                entity.x = constants.MAX_POS
-            elif entity.x < -constants.MAX_POS:
-                entity.x = -constants.MAX_POS
-            if entity.y > constants.MAX_POS:
-                entity.y = constants.MAX_POS
-            elif entity.y < -constants.MAX_POS:
-                entity.y = -constants.MAX_POS
-            if entity.z > constants.MAX_POS:
-                entity.z = constants.MAX_POS
-            elif entity.z < -constants.MAX_POS:
-                entity.z = -constants.MAX_POS
             entity_packet.set_entity(entity, entity_id)
             self.broadcast_packet(entity_packet)
         self.broadcast_packet(update_finished_packet)
@@ -426,13 +443,14 @@ class CubeWorldServer(Factory):
         # other updates
         update_packet = self.update_packet
 
+        # item updates
         if self.last_secondly_check >= self.next_items_autoremoval:
             self.next_items_autoremoval = self.last_secondly_check + 3600
             min_drop_time = self.last_secondly_check - constants.MAX_ITEM_LIFETIME
             for chunk, items in self.chunk_items.iteritems():
                 new_chunk_items = []
                 for item in items:
-                    if item.drop_time >= min_drop_time:
+                    if item.drop_time < min_drop_time:
                         new_chunk_items.append(item)
                         if (item.drop_time + constants.MAX_ITEM_LIFETIME) < self.next_items_autoremoval:
                             self.next_items_autoremoval = item.drop_time + constants.MAX_ITEM_LIFETIME
@@ -452,11 +470,7 @@ class CubeWorldServer(Factory):
         update_packet.reset()
 
         if secondly_check:
-            # time update
-            time_packet.time = self.get_time()
-            time_packet.day = self.get_day()
-            self.extra_elapsed_time = 0.0
-            self.broadcast_packet(time_packet)
+            self.broadcast_time()
 
     def send_chat(self, value):
         packet = ServerChatMessage()
@@ -468,6 +482,11 @@ class CubeWorldServer(Factory):
         data = write_packet(packet)
         for connection in self.connections.values():
             connection.transport.write(data)
+
+    def broadcast_time(self):
+        time_packet.time = self.get_time()
+        time_packet.day = self.get_day()
+        self.broadcast_packet(time_packet)
 
     # line/string formatting options based on config
 
@@ -501,23 +520,29 @@ class CubeWorldServer(Factory):
     # data store methods
 
     def load_data(self, name, default = None):
-        path = './data/%s' % name
         try:
-            with open(path, 'rU') as fp:
-                data = fp.read()
-        except IOError:
-            return default
-        return eval(data)
+            return database.load_data(name, default)
+            #path = './data/%s' % name
+            #try:
+            #    with open(path, 'rb') as fp:
+            #        return json.load(fp)
+        except:
+            print '[ERROR] Could not load data of key %s' % name
+        return default
 
     def save_data(self, name, value):
-        path = './data/%s' % name
         try:
-            create_file_path(path)
-            data = pprint.pformat(value, width = 1)
-            with open(path, 'w') as fp:
-                fp.write(data)
-        except IOError:
-            print 'Error while saving to %s' % name
+            return database.save_data(name, value)
+            # move to database instead of files ... later
+            #path = './data/%s' % name
+            #try:
+            #    create_file_path(path)
+            #    data = pprint.pformat(value, width = 1)
+            #    with open(path, 'wb') as fp:
+            #        fp.write(data)
+        except:
+            print '[ERROR] Could not save data of key %s' % name
+        return False
 
     # time methods
 

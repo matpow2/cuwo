@@ -1,23 +1,23 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 High-level byte read/writing and pack/unpacking from files and data
-""" 
+"""
 
 from cStringIO import StringIO
 from cuwo.vector import Vector3
@@ -122,23 +122,6 @@ class ByteReader(object):
         if len(data) < size:
             raise OutOfData()
         return data
-
-    def open_editor(self):
-        print 'Opening editor ...'
-        if raw_input('Open editor? y/n ').strip().lower() != 'y':
-            return False
-        import tempfile
-        import subprocess
-        fp = tempfile.NamedTemporaryFile('wb', delete = False)
-        fp.write(self.fp.getvalue())
-        fp.close()
-        name = fp.name
-        try:
-            subprocess.Popen(['010editor', '%s@%s' % (name, self.tell())])
-        except IOError:
-            pass
-        raw_input('Press enter to continue...')
-        return True
 
     def read_string(self, size):
         return self.read(size).split('\x00')[0]

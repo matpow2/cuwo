@@ -19,8 +19,7 @@
 Ban management
 """
 
-from cuwo.script import (ServerScript, ConnectionScript, command, admin,
-    get_player)
+from cuwo.script import (ServerScript, ConnectionScript, command, admin, get_player)
 from twisted.internet import reactor
 
 SELF_BANNED = 'You are banned: {reason}'

@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev 2013.
+# Copyright (c) Mathias Kaerlev, Somer Hayter and Julien Kross 2013.
 #
 # This file is part of cuwo.
 #
@@ -53,10 +53,10 @@ def parse_clock(value):
     return v
 
 def get_chunk(vec):
-    return (int(vec.x / constants.CHUNK_SCALE), int(vec.y / constants.CHUNK_SCALE))
+    return (math.floor(vec.x / constants.CHUNK_SCALE), math.floor(vec.y / constants.CHUNK_SCALE))
 
 def get_sector(vec):
-    return (int(vec.x / constants.SECTOR_SCALE), int(vec.y / constants.SECTOR_SCALE))
+    return (math.floor(vec.x / constants.SECTOR_SCALE), math.floor(vec.y / constants.SECTOR_SCALE))
 
 def get_needed_xp(level):
     return math.floor((1050 * level - 50) / (level + 19))
@@ -74,7 +74,6 @@ def parse_command(message):
     try:
         args = shlex.split(message)
     except ValueError:
-        # shlex failed. let's just split per space
         args = message.split(' ')
     if args:
         command = args.pop(0)
@@ -85,15 +84,17 @@ def parse_command(message):
 def create_path(path):
     if path:
         try:
-            print 'Creating directory structure: %s' % path
+            print '[INFO] Creating directory structure to %s' % path
             os.makedirs(os.path.dirname(path))
+            return True
         except OSError:
-            pass
+            print '[ERROR] Could not create directory structure to %s' % path
+    return False
 
 def create_file_path(path):
-    create_path(os.path.dirname(filename))
+    return create_path(os.path.dirname(filename))
 
 def open_create(filename, mode):
-    create_file_path(filename)
-    print 'Creating file: %s' % filename
+    if create_file_path(filename):
+        print 'Creating file: %s' % filename
     return open(filename, mode)

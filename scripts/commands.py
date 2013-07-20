@@ -19,8 +19,7 @@
 Default set of commands bundled with cuwo
 """
 
-from cuwo.script import (ServerScript, ConnectionScript, command, get_player,
-    admin)
+from cuwo.script import (ServerScript, ConnectionScript, command, get_player, admin)
 from cuwo.common import get_chunk
 import platform
 
@@ -37,50 +36,96 @@ def say(script, *args):
     script.connection.send_chat(message)
 
 @command
-def server(script):
-    msg = 'Server is running on %r' % platform.system()
-    revision = script.server.git_rev
-    if revision is not None:
-        msg += ', revision %s' % revision
-    return msg
-
-@command
-def login(script, password):
-    password = password.lower()
-    user_types = script.server.passwords.get(password, [])
-    if not user_types:
-        return 'Invalid password'
-    script.connection.rights.update(user_types)
-    return 'Logged in as %s' % (', '.join(user_types))
-
-@command
 @admin
 def kick(script, name):
-    player = get_player(script.server, name)
-    player.kick()
+    try:
+        player = get_player(script.server, name)
+        player.kick('Kicked by an Admin')
+        return '[SUCCESS] Kicked %s' % name
+    except:
+        return '[EXCEPTION] Player could not be kicked!'
 
 @command
 @admin
 def setclock(script, value):
     try:
         script.server.set_clock(value)
+        return '[SUCCESS] Time set to %s' % value
     except ValueError:
-        return 'Invalid clock specified'
-    return 'Clock set to %s' % value
+        return '[EXCEPTION] Invalid value!'
+
+@admin
+@command
+def spawnmob(script, value):
+    try:
+        entity = script.server.create_entity(value)
+    except ValueError:
+        return '[ERROR] Invalid value!'
+    entity.position(script.connection.position())
+
+@command
+def spawn(script, name = None):
+    if name is None:
+        player = script.connection
+    else:
+        player = get_player(script.server, name)
+    except ValueError:
+        return '[ERROR] Invalid value!'
+    player.entity_data.position.x = 0
+    player.entity_data.position.y = 0
+
+@command
+def help(script):
+    return 'Player Commands: /spawn, /list, /whereis <player>, /tell <player> <message>'
+
+@command
+def list(script):
+    plrs = []
+    for connection in script.server.connections.values():
+        plrs.append(connection.entity_data.name)
+    message = '[INFO] Online: %s' % (', '.join(plrs))
+    return message
+
+@command
+def login(script, password):
+    password = password.lower()
+    user_types = script.server.passwords.get(password, [])
+    if not user_types:
+        return '[ERROR] Invalid password!'
+    script.connection.rights.update(user_types)
+    return '[SUCCESS] Logged in as %s' % (', '.join(user_types))
+
+@command
+def whois(script, name = None):
+    if name is None:
+        player = script.connection
+    else:
+        player = get_player(script.server, name)
+    acwcstr = ['Unknown','Warrior','Ranger','Mage','Rogue']
+    if player.entity_data.class_type >= 0 and player.entity_data.class_type <= 4:
+        return '[INFO] %s is %s class level %s' % (player.name, acwcstr[player.entity_data.class_type], player.entity_data.character_level)
 
 @command
 def whereis(script, name = None):
     if name is None:
         player = script.connection
-        message = 'You are at %s'
+        message = '[INFO] You are at %s'
     else:
         player = get_player(script.server, name)
-        message = '%s is at %%s' % player.name
+        message = '[INFO] %s is at %%s' % player.name
     return message % (get_chunk(player.position),)
 
 @command
-def pm(script, name, *args):
-    player = get_player(script.server, name)
-    message = ' '.join(args)
-    player.send_chat('%s (PM): %s' % (script.connection.name, message))
-    return 'PM sent'
+def tell(script, name = None, *args):
+    if not name:
+        return '[INFO] /tell <player> <message>'
+    try:
+        player = get_player(script.server, name)
+        if player is script.connection:
+            return '[ERROR] You can not tell messages back to yourself!'
+        message = '[PM] {0} -> {1}: {2}'.format(script.connection.name, player.name, ' '.join(args))
+        player.send_chat(message % player)
+        return message % player
+    except:
+        pass
+    return '[EXCEPTION] Could not tell'

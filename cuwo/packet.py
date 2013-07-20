@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev 2013.
+# Copyright (c) Mathias Kaerlev, Somer Hayter and Julien Kross 2013.
 #
 # This file is part of cuwo.
 #

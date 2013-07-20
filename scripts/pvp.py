@@ -24,8 +24,7 @@ from cuwo.entity import FLAGS_1_HOSTILE
 
 class VersusConnection(ConnectionScript):
     def on_kill(self, target):
-        self.server.send_chat('%s killed %s!' % (self.connection.name,
-                                                  target.name))
+        self.server.send_chat('%s killed %s!' % (self.connection.name, target.name))
 
 class VersusServer(ServerScript):
     connection_class = VersusConnection
