@@ -157,14 +157,14 @@ class IRCClientFactory(protocol.ClientFactory):
         print "Connecting to IRC server..."
 
     def clientConnectionLost(self, connector, reason):
-        print ("Lost connection to IRC server (%s), "
-               "reconnecting in %s seconds") % (
-               reason, self.lost_reconnect_delay)
+        print "Lost connection to IRC server (%s), " \
+              "reconnecting in %s seconds" % (reason,
+                                              self.lost_reconnect_delay)
         reactor.callLater(self.lost_reconnect_delay, connector.connect)
 
     def clientConnectionFailed(self, connector, reason):
-        print "Could not connect to IRC server (%s), retrying in %s seconds" % (
-            reason, self.failed_reconnect_delay)
+        print "Could not connect to IRC server (%s), " \
+              "retrying in %s seconds" % (reason, self.failed_reconnect_delay)
         reactor.callLater(self.failed_reconnect_delay, connector.connect)
 
     def buildProtocol(self, address):
