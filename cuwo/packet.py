@@ -207,7 +207,7 @@ class SoundAction(Loader):
 
 class PickupAction(Loader):
     def read(self, reader):
-        self.entity_id = reader.read_uint64() # player who picked up
+        self.entity_id = reader.read_uint64()  # player who picked up
         self.item_data = ItemData()
         self.item_data.read(reader)
 
