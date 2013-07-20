@@ -32,7 +32,8 @@ from cuwo.packet import (PacketHandler, write_packet, CS_PACKETS,
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
-from cuwo.common import get_clock_string, parse_clock, parse_command, get_chunk
+from cuwo.common import (get_clock_string, parse_clock, parse_command,
+                         get_chunk, filter_string)
 from cuwo.script import call_scripts
 
 import collections
@@ -85,9 +86,9 @@ class CubeWorldConnection(Protocol):
     def dataReceived(self, data):
         self.packet_handler.feed(data)
 
-    def disconnect(self):
+    def disconnect(self, reason=None):
         self.transport.loseConnection()
-        self.connectionLost(None)
+        self.connectionLost(reason)
 
     def connectionLost(self, reason):
         if self.disconnected:
@@ -145,7 +146,9 @@ class CubeWorldConnection(Protocol):
             self.has_joined = True
 
     def on_chat_packet(self, packet):
-        message = packet.value
+        message = filter_string(packet.value).strip()
+        if not message:
+            return
         if self.on_chat(message) is False:
             return
         chat_packet.entity_id = self.entity_id

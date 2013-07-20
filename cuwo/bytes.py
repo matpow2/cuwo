@@ -19,10 +19,11 @@
 High-level byte read/writing and pack/unpacking from files and data
 """
 
-from cStringIO import StringIO
 from cuwo.vector import Vector3
 from cuwo.exceptions import OutOfData
+from cuwo.common import filter_string
 import struct
+from cStringIO import StringIO
 
 INT8 = struct.Struct('<b')
 UINT8 = struct.Struct('<B')
@@ -34,6 +35,7 @@ INT64 = struct.Struct('<q')
 UINT64 = struct.Struct('<Q')
 FLOAT = struct.Struct('<f')
 DOUBLE = struct.Struct('<d')
+
 
 
 class ByteWriter(object):
@@ -147,10 +149,14 @@ class ByteReader(object):
         return True
 
     def read_string(self, size):
-        return self.read(size).split('\x00')[0]
+        value = self.read(size)
+        end = value.find('\x00')
+        if end == -1:
+            return value
+        return value[:end]
 
     def read_ascii(self, size):
-        return self.read_string(size).decode('ascii', 'ignore')
+        return filter_string(self.read_string(size))
 
     def skip(self, size):
         self.seek(self.tell() + size)

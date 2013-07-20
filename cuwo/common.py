@@ -21,6 +21,20 @@ import shlex
 import os
 
 
+CHAR_FILTER = set([10, 13] + range(32, 127))
+
+def filter_string(value):
+    # Cube World only displays characters between 32-126 (and \r\n which both
+    # produce newlines) in-game, so in case the user sent a bogus message, we
+    # need to filter out those characters and replace with spaces
+    new = u''
+    for c in value:
+        if ord(c) not in CHAR_FILTER:
+            c = u' '
+        new += c
+    return new
+
+
 def get_hex_string(value):
     v = '0x'
     for c in value:
@@ -39,7 +53,7 @@ def set_bit(mask, index, value):
     if value:
         mask |= 1 << index
     else:
-        mask &= ~(1 << offset)
+        mask &= ~(1 << index)
     return mask
 
 
