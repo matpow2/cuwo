@@ -138,7 +138,7 @@ class CubeWorldConnection(Protocol):
             self.entity_data = create_entity_data()
             self.server.entities[self.entity_id] = self.entity_data
         packet.update_entity(self.entity_data)
-        if not self.has_joined and self.entity_data.name:
+        if not self.has_joined and getattr(self.entity_data, 'name', None):
             self.on_join()
             self.has_joined = True
 
