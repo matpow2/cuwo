@@ -1,17 +1,17 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -19,15 +19,15 @@ from cuwo.twistedreactor import install_reactor
 install_reactor()
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
-from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
 
-from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
-    CS_PACKETS, ClientVersion, JoinPacket, SeedData, EntityUpdate,
-    ClientChatMessage, ServerChatMessage, create_entity_data, UpdateFinished,
-    CurrentTime, ServerUpdate, ServerFull, ServerMismatch, INTERACT_DROP,
-    INTERACT_PICKUP, ChunkItemData, ChunkItems, InteractPacket, PickupAction,
-    HitPacket, ShootPacket)
+from cuwo.packet import (PacketHandler, write_packet, CS_PACKETS, ClientVersion,
+                         JoinPacket, SeedData, EntityUpdate, ClientChatMessage,
+                         ServerChatMessage, create_entity_data, UpdateFinished,
+                         CurrentTime, ServerUpdate, ServerFull, ServerMismatch,
+                         INTERACT_DROP, INTERACT_PICKUP, ChunkItemData,
+                         ChunkItems, InteractPacket, PickupAction,
+                         HitPacket, ShootPacket)
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
@@ -50,6 +50,7 @@ time_packet = CurrentTime()
 mismatch_packet = ServerMismatch()
 server_full_packet = ServerFull()
 
+
 class CubeWorldConnection(Protocol):
     """
     Protocol used for players
@@ -67,14 +68,14 @@ class CubeWorldConnection(Protocol):
 
     def connectionMade(self):
         self.packet_handlers = {
-            ClientVersion.packet_id : self.on_version_packet,
-            EntityUpdate.packet_id : self.on_entity_packet,
-            ClientChatMessage.packet_id : self.on_chat_packet,
-            InteractPacket.packet_id : self.on_interact_packet,
-            HitPacket.packet_id : self.on_hit_packet,
-            ShootPacket.packet_id : self.on_shoot_packet
+            ClientVersion.packet_id: self.on_version_packet,
+            EntityUpdate.packet_id: self.on_entity_packet,
+            ClientChatMessage.packet_id: self.on_chat_packet,
+            InteractPacket.packet_id: self.on_interact_packet,
+            HitPacket.packet_id: self.on_hit_packet,
+            ShootPacket.packet_id: self.on_shoot_packet
         }
-        
+
         self.scripts = []
         self.server.call_scripts('on_new_connection', self)
         self.packet_handler = PacketHandler(CS_PACKETS, self.on_packet)
@@ -236,7 +237,7 @@ class CubeWorldConnection(Protocol):
     def position(self):
         if self.entity_data is None:
             return None
-        return Vector3(self.entity_data.x, 
+        return Vector3(self.entity_data.x,
                        self.entity_data.y,
                        self.entity_data.z)
 
@@ -246,13 +247,14 @@ class CubeWorldConnection(Protocol):
             return None
         return self.entity_data.name
 
+
 class BanProtocol(Protocol):
     """
     Protocol used for banned players.
     Ignores data from client and only sends JoinPacket/ServerChatMessage
     """
 
-    def __init__(self, message = None):
+    def __init__(self, message=None):
         self.message = message
 
     def send_packet(self, packet):
@@ -274,8 +276,10 @@ class BanProtocol(Protocol):
         if self.disconnect_call.active():
             self.disconnect_call.cancel()
 
+
 class CubeWorldServer(Factory):
     items_changed = False
+
     def __init__(self, config):
         self.config = config
 
@@ -380,7 +384,7 @@ class CubeWorldServer(Factory):
     # line/string formatting options based on config
 
     def format(self, value):
-        format_dict = {'server_name' : self.config.server_name}
+        format_dict = {'server_name': self.config.server_name}
         return value % format_dict
 
     def format_lines(self, value):
@@ -406,7 +410,7 @@ class CubeWorldServer(Factory):
 
     # data store methods
 
-    def load_data(self, name, default = None):
+    def load_data(self, name, default=None):
         path = './%s.dat' % name
         try:
             with open(path, 'rU') as fp:
@@ -417,7 +421,7 @@ class CubeWorldServer(Factory):
 
     def save_data(self, name, value):
         path = './%s.dat' % name
-        data = pprint.pformat(value, width = 1)
+        data = pprint.pformat(value, width=1)
         with open(path, 'w') as fp:
             fp.write(data)
 
@@ -442,6 +446,7 @@ class CubeWorldServer(Factory):
 
     def get_clock(self):
         return get_clock_string(self.get_time())
+
 
 def main():
     # for py2exe

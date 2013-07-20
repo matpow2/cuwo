@@ -1,23 +1,23 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 High-level byte read/writing and pack/unpacking from files and data
-""" 
+"""
 
 from cStringIO import StringIO
 from cuwo.vector import Vector3
@@ -33,9 +33,11 @@ UINT32 = struct.Struct('<I')
 INT64 = struct.Struct('<q')
 UINT64 = struct.Struct('<Q')
 FLOAT = struct.Struct('<f')
+DOUBLE = struct.Struct('<d')
+
 
 class ByteWriter(object):
-    def __init__(self, fp = None):
+    def __init__(self, fp=None):
         if fp is None:
             fp = StringIO()
         self.fp = fp
@@ -89,6 +91,9 @@ class ByteWriter(object):
     def write_float(self, value):
         self.write_struct(FLOAT, value)
 
+    def write_double(self, value):
+        self.write_struct(DOUBLE, value)
+
     def write_vec3(self, value):
         self.write_float(value.x)
         self.write_float(value.y)
@@ -104,8 +109,9 @@ class ByteWriter(object):
         self.write_int64(value.y)
         self.write_int64(value.z)
 
+
 class ByteReader(object):
-    def __init__(self, data = None, fp = None):
+    def __init__(self, data=None, fp=None):
         if data is not None:
             fp = StringIO(data)
         if fp is None:
@@ -115,7 +121,7 @@ class ByteReader(object):
         self.close = fp.close
         self.tell = fp.tell
 
-    def read(self, size = None):
+    def read(self, size=None):
         if size is None:
             return self.fp.read()
         data = self.fp.read(size)
@@ -128,7 +134,7 @@ class ByteReader(object):
             return False
         import tempfile
         import subprocess
-        fp = tempfile.NamedTemporaryFile('wb', delete = False)
+        fp = tempfile.NamedTemporaryFile('wb', delete=False)
         fp.write(self.fp.getvalue())
         fp.close()
         name = fp.name
@@ -184,6 +190,9 @@ class ByteReader(object):
 
     def read_float(self):
         return self.read_struct(FLOAT)
+
+    def read_double(self):
+        return self.read_struct(DOUBLE)
 
     def read_vec3(self):
         x = self.read_float()

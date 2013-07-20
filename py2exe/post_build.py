@@ -5,16 +5,18 @@ import os
 import shutil
 import subprocess
 
+
 def copy(src, dst):
     if os.path.isfile(src):
         shutil.copyfile(src, dst)
     else:
         shutil.copytree(src, dst)
 
+
 def get_git_rev():
     pipe = subprocess.Popen(
         ["git", "rev-parse", "--short", "HEAD"],
-        stdout=subprocess.PIPE, shell = True)
+        stdout=subprocess.PIPE, shell=True)
     return pipe.stdout.read().replace('\n', '')
 
 # write config

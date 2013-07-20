@@ -1,24 +1,24 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-from bytes import ByteReader
 
 def read_string(reader):
     return reader.read(reader.read_uint8())
+
 
 def write_string(writer, value):
     writer.write_uint8(len(value))
@@ -27,8 +27,9 @@ def write_string(writer, value):
 MAGIC = 'QBCL\x20'
 VERSION = '1.02'
 
+
 class QubicleModel(object):
-    def __init__(self, reader = None):
+    def __init__(self, reader=None):
         self.blocks = {}
         if reader is None:
             self.x_size = self.y_size = self.z_size = 0
@@ -49,7 +50,7 @@ class QubicleModel(object):
         while rle_count:
             value = reader.read_uint32()
             rle_count -= 1
-            if value == 2: # repetition
+            if value == 2:  # repetition
                 times = reader.read_uint32()
                 color = reader.read_uint32()
                 rle_count -= 2
@@ -90,8 +91,9 @@ class QubicleModel(object):
                     c2 = r | (g << 8) | (b << 16) | (0x7F << 24)
                     writer.write_uint32(c2)
 
+
 class QubicleFile(object):
-    def __init__(self, reader = None):
+    def __init__(self, reader=None):
         self.models = []
         if reader is None:
             return
