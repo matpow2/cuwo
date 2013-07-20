@@ -118,12 +118,12 @@ class EntityUpdate(Packet):
     def update_entity(self, entity):
         reader = ByteReader(self.data)
         reader.skip(8)
-        read_masked_data(entity, reader)
+        return read_masked_data(entity, reader)
 
-    def set_entity(self, entity, entity_id):
+    def set_entity(self, entity, entity_id, mask=None):
         writer = ByteWriter()
         writer.write_uint64(entity_id)
-        write_masked_data(entity, writer)
+        write_masked_data(entity, writer, mask)
         self.data = writer.get()
 
     def write(self, writer):

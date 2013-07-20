@@ -157,8 +157,9 @@ class IRCClientFactory(protocol.ClientFactory):
         print "Connecting to IRC server..."
 
     def clientConnectionLost(self, connector, reason):
-        print "Lost connection to IRC server (%s), reconnecting in %s seconds" % (
-            reason, self.lost_reconnect_delay)
+        print ("Lost connection to IRC server (%s), "
+               "reconnecting in %s seconds") % (
+               reason, self.lost_reconnect_delay)
         reactor.callLater(self.lost_reconnect_delay, connector.connect)
 
     def clientConnectionFailed(self, connector, reason):
@@ -177,6 +178,8 @@ class IRCScriptConnection(ConnectionScript):
             self.connection.name))
 
     def on_unload(self):
+        if not self.connection.has_joined:
+            return
         self.parent.send('* %s disconnected' % encode_irc(
             self.connection.name))
 

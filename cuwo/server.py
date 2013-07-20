@@ -139,7 +139,7 @@ class CubeWorldConnection(Protocol):
         if self.entity_data is None:
             self.entity_data = create_entity_data()
             self.server.entities[self.entity_id] = self.entity_data
-        packet.update_entity(self.entity_data)
+        self.entity_data.mask |= packet.update_entity(self.entity_data)
         if not self.has_joined and getattr(self.entity_data, 'name', None):
             self.on_join()
             self.has_joined = True
@@ -344,7 +344,8 @@ class CubeWorldServer(Factory):
 
         # entity updates
         for entity_id, entity in self.entities.iteritems():
-            entity_packet.set_entity(entity, entity_id)
+            entity_packet.set_entity(entity, entity_id, entity.mask)
+            entity.mask = 0
             self.broadcast_packet(entity_packet)
         self.broadcast_packet(update_finished_packet)
 

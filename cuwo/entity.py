@@ -162,6 +162,8 @@ class AppearanceData(Loader):
 FLAGS_1_HOSTILE = 0x20
 
 class EntityData(Loader):
+    mask = 0
+
     def read(self, reader):
         self.x = reader.read_int64()
         self.y = reader.read_int64()
@@ -460,6 +462,8 @@ def read_masked_data(entity, reader):
     if is_bit_set(mask, 47):
         entity.mana_cubes = reader.read_uint32()
 
+    return mask
+
 
 def get_masked_size(mask):
     size = 0
@@ -559,81 +563,133 @@ def get_masked_size(mask):
         size += 44
     if is_bit_set(mask, 47):
         size += 4
+    return size
 
 
-def write_masked_data(entity, writer):
-    writer.write_uint64(0x0000FFFFFFFFFFFF)
-    writer.write_int64(entity.x)
-    writer.write_int64(entity.y)
-    writer.write_int64(entity.z)
-    writer.write_float(entity.body_roll)
-    writer.write_float(entity.body_pitch)
-    writer.write_float(entity.body_yaw)
-    writer.write_vec3(entity.velocity)
-    writer.write_vec3(entity.accel)
-    writer.write_vec3(entity.extra_vel)
-    writer.write_float(entity.look_pitch)
-    writer.write_uint32(entity.physics_flags)
-    writer.write_uint8(entity.speed_flags)
-    writer.write_uint32(entity.entity_type)
-    writer.write_uint8(entity.current_mode)
-    writer.write_uint32(entity.last_shoot_time)
-    writer.write_uint32(entity.hit_counter)
-    writer.write_uint32(entity.last_hit_time)
-    entity.appearance.write(writer)
-    writer.write_uint8(entity.flags_1)
-    writer.write_uint8(entity.flags_2)
-    writer.write_uint32(entity.roll_time)
-    writer.write_int32(entity.stun_time)
-    writer.write_uint32(entity.slowed_time)
-    writer.write_uint32(entity.make_blue_time)
-    writer.write_uint32(entity.speed_up_time)
-    writer.write_float(entity.show_patch_time)
-    writer.write_uint8(entity.class_type)
-    writer.write_uint8(entity.specialization)
-    writer.write_float(entity.charged_mp)
-    writer.write_uint32(entity.not_used_1)
-    writer.write_uint32(entity.not_used_2)
-    writer.write_uint32(entity.not_used_3)
-    writer.write_uint32(entity.not_used_4)
-    writer.write_uint32(entity.not_used_5)
-    writer.write_uint32(entity.not_used_6)
-    writer.write_vec3(entity.ray_hit)
-    writer.write_float(entity.hp)
-    writer.write_float(entity.mp)
-    writer.write_float(entity.block_power)
-    writer.write_float(entity.max_hp_multiplier)
-    writer.write_float(entity.shoot_speed)
-    writer.write_float(entity.damage_multiplier)
-    writer.write_float(entity.armor_multiplier)
-    writer.write_float(entity.resi_multiplier)
-    writer.write_uint8(entity.not_used7)
-    writer.write_uint8(entity.not_used8)
-    writer.write_uint32(entity.character_level)
-    writer.write_uint32(entity.current_xp)
-    writer.write_uint64(entity.parent_owner)
-    writer.write_uint32(entity.unknown_or_not_used1)
-    writer.write_uint32(entity.unknown_or_not_used2)
-    writer.write_uint8(entity.unknown_or_not_used3)
-    writer.write_uint32(entity.unknown_or_not_used4)
-    writer.write_uint32(entity.unknown_or_not_used5)
-    writer.write_uint32(entity.not_used11)
-    writer.write_uint32(entity.not_used12)
-    writer.write_uint32(entity.not_used13)
-    writer.write_uint32(entity.not_used14)
-    writer.write_uint32(entity.not_used15)
-    writer.write_uint32(entity.not_used16)
-    writer.write_uint32(entity.not_used17)
-    writer.write_uint32(entity.not_used18)
-    writer.write_uint32(entity.not_used20)
-    writer.write_uint32(entity.not_used21)
-    writer.write_uint32(entity.not_used22)
-    writer.write_uint8(entity.not_used19)
-    entity.item_data.write(writer)
-    for item in entity.equipment:
-        item.write(writer)
-    writer.write_ascii(entity.name, 16)
-    for item in entity.skills:
-        writer.write_uint32(item)
-    writer.write_uint32(entity.mana_cubes)
+def write_masked_data(entity, writer, mask=None):
+    if mask is None:
+        mask = 0x0000FFFFFFFFFFFF
+
+    writer.write_uint64(mask)
+    if is_bit_set(mask, 0):
+        writer.write_int64(entity.x)
+        writer.write_int64(entity.y)
+        writer.write_int64(entity.z)
+    if is_bit_set(mask, 1):
+        writer.write_float(entity.body_roll)
+        writer.write_float(entity.body_pitch)
+        writer.write_float(entity.body_yaw)
+    if is_bit_set(mask, 2):
+        writer.write_vec3(entity.velocity)
+    if is_bit_set(mask, 3):
+        writer.write_vec3(entity.accel)
+    if is_bit_set(mask, 4):
+        writer.write_vec3(entity.extra_vel)
+    if is_bit_set(mask, 5):
+        writer.write_float(entity.look_pitch)
+    if is_bit_set(mask, 6):
+        writer.write_uint32(entity.physics_flags)
+    if is_bit_set(mask, 7):
+        writer.write_uint8(entity.speed_flags)
+    if is_bit_set(mask, 8):
+        writer.write_uint32(entity.entity_type)
+    if is_bit_set(mask, 9):
+        writer.write_uint8(entity.current_mode)
+    if is_bit_set(mask, 10):
+        writer.write_uint32(entity.last_shoot_time)
+    if is_bit_set(mask, 11):
+        writer.write_uint32(entity.hit_counter)
+    if is_bit_set(mask, 12):
+        writer.write_uint32(entity.last_hit_time)
+    if is_bit_set(mask, 13):
+        entity.appearance.write(writer)
+    if is_bit_set(mask, 14):
+        writer.write_uint8(entity.flags_1)
+        writer.write_uint8(entity.flags_2)
+    if is_bit_set(mask, 15):
+        writer.write_uint32(entity.roll_time)
+    if is_bit_set(mask, 16):
+        writer.write_int32(entity.stun_time)
+    if is_bit_set(mask, 17):
+        writer.write_uint32(entity.slowed_time)
+    if is_bit_set(mask, 18):
+        writer.write_uint32(entity.make_blue_time)
+    if is_bit_set(mask, 19):
+        writer.write_uint32(entity.speed_up_time)
+    if is_bit_set(mask, 20):
+        writer.write_float(entity.show_patch_time)
+    if is_bit_set(mask, 21):
+        writer.write_uint8(entity.class_type)
+    if is_bit_set(mask, 22):
+        writer.write_uint8(entity.specialization)
+    if is_bit_set(mask, 23):
+        writer.write_float(entity.charged_mp)
+    if is_bit_set(mask, 24):
+        writer.write_uint32(entity.not_used_1)
+        writer.write_uint32(entity.not_used_2)
+        writer.write_uint32(entity.not_used_3)
+    if is_bit_set(mask, 25):
+        writer.write_uint32(entity.not_used_4)
+        writer.write_uint32(entity.not_used_5)
+        writer.write_uint32(entity.not_used_6)
+    if is_bit_set(mask, 26):
+        writer.write_vec3(entity.ray_hit)
+    if is_bit_set(mask, 27):
+        writer.write_float(entity.hp)
+    if is_bit_set(mask, 28):
+        writer.write_float(entity.mp)
+    if is_bit_set(mask, 29):
+        writer.write_float(entity.block_power)
+    if is_bit_set(mask, 30):
+        writer.write_float(entity.max_hp_multiplier)
+        writer.write_float(entity.shoot_speed)
+        writer.write_float(entity.damage_multiplier)
+        writer.write_float(entity.armor_multiplier)
+        writer.write_float(entity.resi_multiplier)
+    if is_bit_set(mask, 31):
+        writer.write_uint8(entity.not_used7)
+    if is_bit_set(mask, 32):
+        writer.write_uint8(entity.not_used8)
+    if is_bit_set(mask, 33):
+        writer.write_uint32(entity.character_level)
+    if is_bit_set(mask, 34):
+        writer.write_uint32(entity.current_xp)
+    if is_bit_set(mask, 35):
+        writer.write_uint64(entity.parent_owner)
+    if is_bit_set(mask, 36):
+        writer.write_uint32(entity.unknown_or_not_used1)
+        writer.write_uint32(entity.unknown_or_not_used2)
+    if is_bit_set(mask, 37):
+        writer.write_uint8(entity.unknown_or_not_used3)
+    if is_bit_set(mask, 38):
+        writer.write_uint32(entity.unknown_or_not_used4)
+    if is_bit_set(mask, 39):
+        writer.write_uint32(entity.unknown_or_not_used5)
+        writer.write_uint32(entity.not_used11)
+        writer.write_uint32(entity.not_used12)
+    if is_bit_set(mask, 40):
+        writer.write_uint32(entity.not_used13)
+        writer.write_uint32(entity.not_used14)
+        writer.write_uint32(entity.not_used15)
+        writer.write_uint32(entity.not_used16)
+        writer.write_uint32(entity.not_used17)
+        writer.write_uint32(entity.not_used18)
+    if is_bit_set(mask, 41):
+        writer.write_uint32(entity.not_used20)
+        writer.write_uint32(entity.not_used21)
+        writer.write_uint32(entity.not_used22)
+    if is_bit_set(mask, 42):
+        writer.write_uint8(entity.not_used19)
+    if is_bit_set(mask, 43):
+        entity.item_data.write(writer)
+    if is_bit_set(mask, 44):
+        for item in entity.equipment:
+            item.write(writer)
+    if is_bit_set(mask, 45):
+        writer.write_ascii(entity.name, 16)
+    if is_bit_set(mask, 46):
+        for item in entity.skills:
+            writer.write_uint32(item)
+    if is_bit_set(mask, 47):
+        writer.write_uint32(entity.mana_cubes)
 
