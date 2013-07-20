@@ -31,7 +31,7 @@ from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
-from cuwo.common import get_clock_string, parse_clock, parse_command, get_chunk
+from cuwo.common import get_clock_string, parse_clock, parse_command, get_chunk, get_needed_total_xp, get_power_level
 from cuwo.script import call_scripts
 from cuwo import database
 
@@ -88,7 +88,6 @@ class CubeWorldConnection(Protocol):
     def dataReceived(self, data):
         self.time_last_packet = self.server.last_secondly_check
         self.packet_handler.feed(data)
-        self.do_anticheat_actions()
 
     def disconnect(self):
         self.time_disconnected = self.server.last_secondly_check
@@ -152,11 +151,12 @@ class CubeWorldConnection(Protocol):
     def on_entity_packet(self, packet):
         if self.entity_data is None:
             self.entity_data = create_entity_data()
-        self.server.entities[self.entity_id] = self.entity_data;
+            self.server.entities[self.entity_id] = self.entity_data;
         packet.update_entity(self.entity_data)
-        if self.entity_data.entity_type >= 1 and self.entity_data.entity_type <= constants.ENTITY_TYPE_PLAYER_MAX_ID and self.entity_data.name:
+        if self.entity_data.entity_type >= constants.ENTITY_TYPE_PLAYER_MIN_ID and self.entity_data.entity_type <= constants.ENTITY_TYPE_PLAYER_MAX_ID and self.entity_data.name:
             if self.has_joined != True:
                 self.on_join()
+
 
     def on_chat_packet(self, packet):
         message = packet.value
@@ -208,35 +208,35 @@ class CubeWorldConnection(Protocol):
         self.server.update_packet.shoot_actions.append(packet)
 
     def do_anticheat_actions(self):
-        if not self.has_joined:
-            print '[ANTICHEAT] Kicked Player %s because it seems like he never joined the server!' % self.entity_data.name
-            self.kick('Kicked by the Server')
-            return
-        if self.entity_data.entity_typee < ENTITY_TYPE_PLAYER_MIN_ID or self.entity_data.entity_type > constants.ENTITY_TYPE_PLAYER_MAX_ID:
+        if self.entity_data.entity_type < constants.ENTITY_TYPE_PLAYER_MIN_ID or self.entity_data.entity_type > constants.ENTITY_TYPE_PLAYER_MAX_ID:
             print '[ANTICHEAT] Player %s tried to join with invalid entity type id: %s!' % (self.entity_data.name, self.entity_data.entity_type)
             self.kick('Invalid entity type submitted')
-            return
-        if (self.entity_data.class_type < 0 or self.entity_data.class_type > 4):
+            return True
+        if self.entity_data.class_type < 0 or self.entity_data.class_type > 4:
             self.kick('Invalid character class submitted')
             print '[ANTICHEAT] Player %s tried to join with an invalid character class! Kicked.' % self.entity_data.name
-            return
-        if (self.entity_data.character_level < 1 or self.entity_data.character_level > 3000):
+            return True
+        if self.entity_data.character_level < 1 or self.entity_data.character_level > 3000:
             self.kick('Abnormal level submitted')
             print '[ANTICHEAT] Player %s tried to join with an abnormal character level! Kicked.' % self.entity_data.name
-            return
-        if (self.entity_data.hp > 10000):
+            return True
+        if self.entity_data.hp > 10000:
             self.kick('Abnormal health points submitted')
             print '[ANTICHEAT] Player %s tried to join with an abnormal health points! Kicked.' % self.entity_data.name
-            return
-        if (commons.get_needed_total_xp(self.entity_data.character_level) > self.entity_data.current_xp):
+            return True
+        if get_needed_total_xp(self.entity_data.character_level) > self.entity_data.current_xp:
             self.kick('Invalid character level')
             print '[ANTICHEAT] Player %s tried to join with character level higher than total xp needed for it! Kicked.' % self.entity_data.name
-            return
+            return True
+        return False
 
     # handlers
 
     def on_join(self):
         if self.has_joined:
+            return
+        # we dont want cheaters being able joining the server
+        if self.do_anticheat_actions():
             return
         self.has_joined = True
         acwcstr = ['Unknown','Warrior','Ranger','Mage','Rogue']
@@ -428,9 +428,10 @@ class CubeWorldServer(Factory):
             self.ticks_since_last_second += 1
         else:
             if uxtime > self.last_secondly_check:
-                self.ticks_per_second = self.ticks_since_last_second / (uxtime - self.last_secondly_check)
+                self.ticks_per_second = (self.ticks_per_second + (self.ticks_since_last_second / (uxtime - self.last_secondly_check))) / 2
                 self.ticks_since_last_second = 0
-                print '[DEBUG] TPS: %r' % self.ticks_per_second
+                if self.ticks_per_second < 25:
+                    print "[WARNING] TPS are as low as %s" % self.ticks_per_second
             self.last_secondly_check = uxtime
             secondly_check = True
 
@@ -470,6 +471,8 @@ class CubeWorldServer(Factory):
         update_packet.reset()
 
         if secondly_check:
+            for connection in self.connections.values():
+                connection.do_anticheat_actions()
             self.broadcast_time()
 
     def send_chat(self, value):
