@@ -459,7 +459,11 @@ def main():
     import config
     reactor.listenTCP(constants.SERVER_PORT, CubeWorldServer(config))
     print 'cuwo running on port %s' % constants.SERVER_PORT
-    reactor.run()
+    if config.profile_file is None:
+        reactor.run()
+    else:
+        import cProfile
+        cProfile.run('reactor.run()', filename=config.profile_file)
 
 if __name__ == '__main__':
     main()

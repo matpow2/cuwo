@@ -36,3 +36,6 @@ irc_channel = '#cuwo.bots'
 irc_password = None
 irc_commandprefix = '.'
 irc_chatprefix = '#'
+
+# Profile file. Set to something other than None to enable.
+profile_file = None
