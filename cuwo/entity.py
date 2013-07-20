@@ -17,7 +17,6 @@
 
 from cuwo.loader import Loader
 from cuwo.common import is_bit_set
-from cuwo.vector import Vector3
 
 FLAGS_1_HOSTILE = 0x20
 
@@ -29,13 +28,19 @@ class ItemUpgrade(Loader):
         self.z = 0
         self.material = 0
         self.level = 0
+        self.changed = False
+        # change index set by server
+        self.change_index = -1
 
     def read(self, reader):
+        self.change_index += 1
         self.x = reader.read_int8()
         self.y = reader.read_int8()
         self.z = reader.read_int8()
         self.material = reader.read_int8()
         self.level = reader.read_uint32()
+        # it could be changed means it has changed
+        self.changed = True
 
     def write(self, writer):
         writer.write_int8(self.x)
@@ -58,6 +63,11 @@ class ItemData(Loader):
         for _ in xrange(32):
             self.items.append(ItemUpgrade())
         self.upgrade_count = 0
+        self.changed = False
+        # change index set by server
+        self.change_index = -1
+        # double linked and set by the server
+        self.chunk = None
 
     def read(self, reader):
         self.type = reader.read_uint8()
@@ -77,6 +87,8 @@ class ItemData(Loader):
             new_item.read(reader)
             self.items.append(new_item)
         self.upgrade_count = reader.read_uint32()
+        # it could be changed means it has changed
+        self.changed = True
 
     def write(self, writer):
         writer.write_uint8(self.type)
@@ -136,6 +148,9 @@ class AppearanceData(Loader):
         self.foot_offset = Vector3(0, 0, 0)
         self.back_offset = Vector3(0, 0, 0)
         self.wing_offset = Vector3(0, 0, 0)
+        self.changed = False
+        # change index set by server
+        self.change_index = -1
 
     def read(self, reader):
         self.not_used_1 = reader.read_uint8()
@@ -179,6 +194,8 @@ class AppearanceData(Loader):
         self.foot_offset = reader.read_vec3()
         self.back_offset = reader.read_vec3()
         self.wing_offset = reader.read_vec3()
+        # it could be changed means it has changed
+        self.changed = True
 
     def write(self, writer):
         writer.write_uint8(self.not_used_1)
@@ -301,6 +318,11 @@ class EntityData(Loader):
             self.skills.append(0)
         self.ice_block_four = 0
         self.name = ''
+        self.changed = False
+        # change index set by server
+        self.change_index = -1
+        # double linked and set by the server
+        self.chunk = None
 
     def read(self, reader):
         self.x = reader.read_int64()
@@ -390,6 +412,8 @@ class EntityData(Loader):
             self.skills.append(reader.read_uint32())
         self.mana_cubes = reader.read_uint32()
         self.name = reader.read_ascii(16)
+        # it could be changed means it has changed
+        self.changed = True
 
     def write(self, writer):
         writer.write_int64(self.x)
@@ -598,6 +622,7 @@ def read_masked_data(entity, reader):
             entity.skills.append(reader.read_uint32())
     if is_bit_set(mask, 47):
         entity.mana_cubes = reader.read_uint32()
+    entity.changed = True
 
 def get_masked_size(mask):
     size = 0

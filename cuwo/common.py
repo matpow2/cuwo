@@ -70,6 +70,12 @@ def get_xp_from_to(levelFrom, levelTo):
 def get_power_level(level):
     return math.floor(100 - 99 * ((1 + 0.0536) / (1 + 0.0536 * level)))
 
+def get_player_race_str(race_id):
+    return constants.PLAYER_RACES[race_id]
+
+def get_player_class_str(class_id):
+    return constants.PLAYER_CLASSES[class_id]
+
 def parse_command(message):
     try:
         args = shlex.split(message)
