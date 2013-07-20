@@ -22,8 +22,8 @@
 # where you got them from (i.e. cuwo) :-)
 
 from cuwo.entity import (EntityData, AppearanceData, ItemData,
-                         read_masked_data, write_masked_data, get_masked_size,
-                         SOUNDS)
+                         read_masked_data, write_masked_data, get_masked_size)
+from cuwo.sounds import SOUNDS
 from cuwo.loader import Loader
 from cuwo.bytes import ByteReader, ByteWriter
 from cuwo.exceptions import OutOfData
@@ -81,6 +81,7 @@ class ServerMismatch(Packet):
 
 class JoinPacket(Packet):
     data = None
+
     def read(self, reader):
         if reader.read_uint32() != 0:
             raise NotImplementedError()
@@ -458,7 +459,6 @@ INTERACT_PICKUP = 5
 INTERACT_DROP = 6
 INTERACT_EXAMINE = 8
 
-
 class InteractPacket(Packet):
     def read(self, reader):
         self.item_data = ItemData()
@@ -483,11 +483,11 @@ class InteractPacket(Packet):
         writer.write_uint8(self.something6)
         writer.write_uint16(self.something7)
 
+
 HIT_NORMAL = 0
 HIT_BLOCK = 1
 HIT_MISS = 3
 HIT_ABSORB = 5
-
 
 class HitPacket(Packet):
     def read(self, reader):
@@ -579,8 +579,8 @@ class ShootPacket(Packet):
         writer.write_uint32(self.something27)
         writer.write_uint32(self.something28)
 
-ENCODING = 'utf_16_le'
 
+ENCODING = 'utf_16_le'
 
 class ServerChatMessage(Packet):
     def read(self, reader):
