@@ -19,11 +19,12 @@ def get_git_rev():
         stdout=subprocess.PIPE, shell=True)
     return pipe.stdout.read().replace('\n', '')
 
+
 # write config
 git_rev = get_git_rev()
 config = open('../config.py', 'rU').read()
 open('./dist/config.py', 'wb').write(
-    config + '\n\n# Current revision\ngit_rev = %r\n' % git_rev)
+    config + '\n# Current revision\ngit_rev = %r\n' % git_rev)
 
 # copy files
 SERVER_FILES = ['scripts']
