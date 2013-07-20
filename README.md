@@ -52,7 +52,9 @@ A. The MITM server sits between your client and server, and can manipulate
 Special thanks
 ==============
 
-Sarcen - help with some protocol variables
+Favorlock - scripting and commands
+
+Sarcen - help with some protocol variables, scripting
 
 Somer - help with some protocol variables
 
