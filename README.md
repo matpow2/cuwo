@@ -53,20 +53,21 @@ There is also a working Cube World/Qubicle model converter. Find it in the
 FAQ
 ===
 
-Q. How do I pronounce 'cuwo'?
+* **Q.** How do I pronounce 'cuwo'?
 
-A. 'coo-woo'
+* **A.** 'coo-woo' (no, not 'kew-woh')
 
-Q. I am not a programmer, and I can't reverse-engineer anything. How do I help?
+* **Q.** I am not a programmer, and I can't reverse-engineer anything. How do
+         I help?
 
-A. We need people who can create end-user documentation as well! Have a look
-   around, and see if anything is missing in the wiki.
+* **A.** We need people who can create end-user documentation as well! Have a
+         look around, and see if anything is missing in the wiki.
 
-Q. What is a MITM server?
+* **Q.** What is a MITM server?
 
-A. A MITM server sits between your client and server, and can manipulate
-   and inject packets. It's not really useful for the normal user, so use the
-   real cuwo server instead.
+* **A.** A MITM server sits between your client and server, and can manipulate
+         and inject packets. It's not really useful for the normal user, so
+         use the regular cuwo server instead.
 
 Special thanks
 ==============
