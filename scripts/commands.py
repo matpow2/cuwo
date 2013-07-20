@@ -86,7 +86,7 @@ def pm(script, name, *args):
     message = ' '.join(args)
     player.send_chat('%s (PM): %s' % (script.connection.name, message))
     return 'PM sent'
-    
+
 @command
 @admin
 def kill(script, name):

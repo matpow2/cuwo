@@ -4,12 +4,12 @@ import sys
 def install_reactor():
     pass
 
-if sys.platform == 'linux2':
-    try:
+try:
+    if sys.platform == 'linux2':
         from twisted.internet import epollreactor
         install_reactor = epollreactor.install
-    except ImportError:
-        print '(dependencies missing for epoll, using normal reactor)'
-elif sys.platform == 'win32' and not has_pypy:
-    from twisted.internet import iocpreactor
-    install_reactor = iocpreactor.install
+    elif sys.platform == 'win32' and not has_pypy:
+        from twisted.internet import iocpreactor
+        install_reactor = iocpreactor.install
+except ImportError:
+    pass
