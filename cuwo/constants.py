@@ -16,64 +16,47 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 
-# These constants are used without getting modified
-# while the server is running.
+# These constants are used without getting modified while the server is running
+# and they are not intended to be changed very often by server administrators
+# For general configuration please feel free to edit the config.py in the
+# servers root folder as you like
 
-# Most of these are for configuration reasons but
-# some can cause players clients crashing
-
-
+# Version of clients that should be able to join
 CLIENT_VERSION = 3
 
-# Not really changable for clients yet
+# Not really changable clientside yet
 SERVER_PORT = 12345
 
-# Speed of time goes by
+# Time goes by this speed
 MAX_TIME = 86400000.0
 NORMAL_TIME_SPEED = 10.0
 SLEEP_TIME_SPEED = 100.0
 
- # 25 is enough and more could affect traffic and/or cpu load negative
+# Client norecv packet timeout
+CLIENT_RECV_TIMEOUT = 3
+
+# 25 is enough and more could result in more traffic and/or cpu load
 UPDATE_FPS = 25
 
-# Default lifetime of items in seconds before they despawn (-1 means they will not despawn until restart)
-MAX_ITEM_LIFETIME = 60
-# Maximum amount of items per chunk (-1 means unlimited but is not recommended)
-MAX_ITEMS_PER_CHUNK = 100
+# Client antispam cooldown in seconds
+ANTISPAM_LIMIT_CHAT = 1
+# Burst means how many messages are acceptable within the limit
+ANTISPAM_BURST_CHAT = 3
 
-# USE ANTI CHEATING SYSTEM
-ANTICHEAT_SYSTEM_ENABLED = True
-
-# USE ANTI GRIEFING SYSTEM (not used nor implemented yet)
-ANTIGRIEF_SYSTEM_ENABLED = True
-
-
+# Scalings
 BLOCK_SCALE = 0xFFFF
 CHUNK_SCALE = 0xFFFFFF
 SECTOR_SCALE = 0x3FFFFFFF
 
+# Max entity coordinate
 MAX_POS = 0xFFFFFFFFFF
 
+# Entity types valid for players
 ENTITY_TYPE_PLAYER_MIN_ID = 1
 ENTITY_TYPE_PLAYER_MAX_ID = 16
 
-# Human readable class names
+# Human readable class names ordered by class id
 PLAYER_CLASSES = ['Unknown','Warrior','Ranger','Mage','Rogue']
 
-# Human readable race names
+# Human readable race names ordered by race id
 PLAYER_RACES = ['Unknown','Humans','Elves','Dwarves','Goblins','Lizardmen','Orcs','Undeads','Frogmen']
-
-# Min/Max level to be able to join
-LEVEL_MIN = 1
-LEVEL_MAX = 10000
-
-
-# You can disable races you do not want of your server
-FORBIDDEN_RACES = []
-
-
-FORBIDDEN_ITEMS = []
-#
-FORBIDDEN_ITEMS_USE = []
-# Forbid item possession (e.g. when you have them in your inventory)
-FORBIDDEN_ITEMS_POSSESSION = []
