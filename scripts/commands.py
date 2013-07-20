@@ -91,7 +91,7 @@ def pm(script, name, *args):
 @admin
 def kill(script, name):
     player = get_player(script.server, name)
-    damage_player(player, player.entity_data.hp + 100.0, 0)
+    damage_player(script, player, player.entity_data.hp + 100.0, 0)
     message = '%s was killed' % player.name
     print message
     script.server.send_chat(message)
@@ -100,7 +100,7 @@ def kill(script, name):
 @admin
 def stun(script, name, stun_duration):
     player = get_player(script.server, name)
-    damage_player(script, 0, stun_duration)
+    damage_player(script,player, 0, stun_duration)
     message = '%s was stunned' % player.name
     print message
     script.server.send_chat(message)
