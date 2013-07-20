@@ -1,17 +1,17 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -22,26 +22,26 @@ from cuwo.common import is_bit_set
 class ItemUpgrade(Loader):
     def reset(self):
         pass
-    
+
     def read(self, reader):
         self.x = reader.read_int8()
         self.y = reader.read_int8()
         self.z = reader.read_int8()
         self.material = reader.read_int8()
         self.level = reader.read_uint32()
-    
+
     def write(self, writer):
         writer.write_int8(self.x)
         writer.write_int8(self.y)
         writer.write_int8(self.z)
         writer.write_int8(self.material)
         writer.write_uint32(self.level)
-    
+
 
 class ItemData(Loader):
     def reset(self):
         pass
-    
+
     def read(self, reader):
         self.type = reader.read_uint8()
         self.sub_type = reader.read_uint8()
@@ -60,7 +60,7 @@ class ItemData(Loader):
             new_item.read(reader)
             self.items.append(new_item)
         self.upgrade_count = reader.read_uint32()
-    
+
     def write(self, writer):
         writer.write_uint8(self.type)
         writer.write_uint8(self.sub_type)
@@ -76,12 +76,12 @@ class ItemData(Loader):
         for item in self.items:
             item.write(writer)
         writer.write_uint32(self.upgrade_count)
-    
+
 
 class AppearanceData(Loader):
     def reset(self):
         pass
-    
+
     def read(self, reader):
         self.not_used_1 = reader.read_uint8()
         self.not_used_2 = reader.read_uint8()
@@ -124,7 +124,7 @@ class AppearanceData(Loader):
         self.foot_offset = reader.read_vec3()
         self.back_offset = reader.read_vec3()
         self.wing_offset = reader.read_vec3()
-    
+
     def write(self, writer):
         writer.write_uint8(self.not_used_1)
         writer.write_uint8(self.not_used_2)
@@ -167,14 +167,16 @@ class AppearanceData(Loader):
         writer.write_vec3(self.foot_offset)
         writer.write_vec3(self.back_offset)
         writer.write_vec3(self.wing_offset)
-    
+
 FLAGS_1_HOSTILE = 0x20
+
 
 class EntityData(Loader):
     def reset(self):
         pass
-    
+
     def read(self, reader):
+        self.last_update_mask = 0x0000FFFFFFFFFFFF
         self.x = reader.read_int64()
         self.y = reader.read_int64()
         self.z = reader.read_int64()
@@ -227,7 +229,7 @@ class EntityData(Loader):
         self.not_used7 = reader.read_uint8()
         self.not_used8 = reader.read_uint8()
         reader.skip(2)
-        self.character_level = reader.read_uint32()
+        self.level = reader.read_uint32()
         self.current_xp = reader.read_uint32()
         self.parent_owner = reader.read_uint64()
         self.unknown_or_not_used1 = reader.read_uint32()
@@ -262,7 +264,7 @@ class EntityData(Loader):
             self.skills.append(reader.read_uint32())
         self.mana_cubes = reader.read_uint32()
         self.name = reader.read_ascii(16)
-    
+
     def write(self, writer):
         writer.write_int64(self.x)
         writer.write_int64(self.y)
@@ -315,7 +317,7 @@ class EntityData(Loader):
         writer.write_uint8(self.not_used7)
         writer.write_uint8(self.not_used8)
         writer.pad(2)
-        writer.write_uint32(self.character_level)
+        writer.write_uint32(self.level)
         writer.write_uint32(self.current_xp)
         writer.write_uint64(self.parent_owner)
         writer.write_uint32(self.unknown_or_not_used1)
@@ -345,9 +347,12 @@ class EntityData(Loader):
             writer.write_uint32(item)
         writer.write_uint32(self.mana_cubes)
         writer.write_ascii(self.name, 16)
-    
+
+
 def read_masked_data(entity, reader):
     mask = reader.read_uint64()
+    entity.last_update_mask = mask
+
     if is_bit_set(mask, 0):
         entity.x = reader.read_int64()
         entity.y = reader.read_int64()
@@ -428,7 +433,7 @@ def read_masked_data(entity, reader):
     if is_bit_set(mask, 32):
         entity.not_used8 = reader.read_uint8()
     if is_bit_set(mask, 33):
-        entity.character_level = reader.read_uint32()
+        entity.level = reader.read_uint32()
     if is_bit_set(mask, 34):
         entity.current_xp = reader.read_uint32()
     if is_bit_set(mask, 35):
@@ -470,6 +475,7 @@ def read_masked_data(entity, reader):
             entity.skills.append(reader.read_uint32())
     if is_bit_set(mask, 47):
         entity.mana_cubes = reader.read_uint32()
+
 
 def get_masked_size(mask):
     size = 0
@@ -570,6 +576,7 @@ def get_masked_size(mask):
     if is_bit_set(mask, 47):
         size += 4
 
+
 def write_masked_data(entity, writer):
     writer.write_uint64(0x0000FFFFFFFFFFFF)
     writer.write_int64(entity.x)
@@ -618,7 +625,7 @@ def write_masked_data(entity, writer):
     writer.write_float(entity.resi_multiplier)
     writer.write_uint8(entity.not_used7)
     writer.write_uint8(entity.not_used8)
-    writer.write_uint32(entity.character_level)
+    writer.write_uint32(entity.level)
     writer.write_uint32(entity.current_xp)
     writer.write_uint64(entity.parent_owner)
     writer.write_uint32(entity.unknown_or_not_used1)

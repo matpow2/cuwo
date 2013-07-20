@@ -175,8 +175,9 @@ class IRCScriptConnection(ConnectionScript):
             self.connection.name))
 
     def on_unload(self):
-        self.parent.send('* %s disconnected' % encode_irc(
-            self.connection.name))
+        if not self.connection.name is None:
+            self.parent.send('* %s disconnected' % encode_irc(
+                self.connection.name))
 
     def on_chat(self, message):
         message = encode_irc('<%s> %s' % (self.connection.name, message))

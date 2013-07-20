@@ -14,7 +14,7 @@ time_modifier = 1.0
 
 # List of scripts to run on the server on startup.
 # Consider turning on 'pvp', i.e. player versus player
-scripts = ['commands', 'welcome', 'ban']
+scripts = ['commands', 'welcome', 'ban', 'anticheat']
 
 # Passwords used for rights management. Keys are passwords, and values are
 # a list of user types under that password. Right now, only 'admin' is defined,

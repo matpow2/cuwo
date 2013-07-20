@@ -1,20 +1,21 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+import cuwo.pypy
 from cuwo.twistedreactor import install_reactor
 install_reactor()
 from twisted.internet.protocol import Factory, Protocol
@@ -31,7 +32,8 @@ from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
-from cuwo.common import get_clock_string, parse_clock, parse_command, get_chunk
+from cuwo.common import (get_clock_string, parse_clock, parse_command,
+                         get_chunk, is_bit_set)
 from cuwo.script import call_scripts
 
 import collections
@@ -50,6 +52,7 @@ time_packet = CurrentTime()
 mismatch_packet = ServerMismatch()
 server_full_packet = ServerFull()
 
+
 class CubeWorldConnection(Protocol):
     """
     Protocol used for players
@@ -67,14 +70,14 @@ class CubeWorldConnection(Protocol):
 
     def connectionMade(self):
         self.packet_handlers = {
-            ClientVersion.packet_id : self.on_version_packet,
-            EntityUpdate.packet_id : self.on_entity_packet,
-            ClientChatMessage.packet_id : self.on_chat_packet,
-            InteractPacket.packet_id : self.on_interact_packet,
-            HitPacket.packet_id : self.on_hit_packet,
-            ShootPacket.packet_id : self.on_shoot_packet
+            ClientVersion.packet_id: self.on_version_packet,
+            EntityUpdate.packet_id: self.on_entity_packet,
+            ClientChatMessage.packet_id: self.on_chat_packet,
+            InteractPacket.packet_id: self.on_interact_packet,
+            HitPacket.packet_id: self.on_hit_packet,
+            ShootPacket.packet_id: self.on_shoot_packet
         }
-        
+
         self.scripts = []
         self.server.call_scripts('on_new_connection', self)
         self.packet_handler = PacketHandler(CS_PACKETS, self.on_packet)
@@ -138,9 +141,17 @@ class CubeWorldConnection(Protocol):
             self.entity_data = create_entity_data()
             self.server.entities[self.entity_id] = self.entity_data
         packet.update_entity(self.entity_data)
-        if not self.has_joined and self.entity_data.name:
-            self.on_join()
-            self.has_joined = True
+        if self.entity_data.name:
+            if not self.has_joined:
+                self.on_join()
+                self.has_joined = True
+            else:
+                if is_bit_set(self.entity_data.last_update_mask, 33):
+                    self.call_scripts('on_level_update')
+                if is_bit_set(self.entity_data.last_update_mask, 44):
+                    self.call_scripts('on_equipment_update')
+                if is_bit_set(self.entity_data.last_update_mask, 46):
+                    self.call_scripts('on_skill_update')
 
     def on_chat_packet(self, packet):
         message = packet.value
@@ -184,13 +195,14 @@ class CubeWorldConnection(Protocol):
 
     def on_join(self):
         print 'Player %s joined (IP %s)' % (self.name, self.address.host)
-        for connection in self.server.connections.values():
-            if not connection.has_joined:
-                continue
-            entity_packet.set_entity(connection.entity_data,
-                                     connection.entity_id)
-            self.send_packet(entity_packet)
-        self.call_scripts('on_join')
+
+        if self.call_scripts('on_join') is True:
+            for connection in self.server.connections.values():
+                if not connection.has_joined:
+                    continue
+                entity_packet.set_entity(connection.entity_data,
+                                         connection.entity_id)
+                self.send_packet(entity_packet)
 
     def on_command(self, command, parameters):
         self.call_scripts('on_command', command, parameters)
@@ -236,7 +248,7 @@ class CubeWorldConnection(Protocol):
     def position(self):
         if self.entity_data is None:
             return None
-        return Vector3(self.entity_data.x, 
+        return Vector3(self.entity_data.x,
                        self.entity_data.y,
                        self.entity_data.z)
 
@@ -246,13 +258,14 @@ class CubeWorldConnection(Protocol):
             return None
         return self.entity_data.name
 
+
 class BanProtocol(Protocol):
     """
     Protocol used for banned players.
     Ignores data from client and only sends JoinPacket/ServerChatMessage
     """
 
-    def __init__(self, message = None):
+    def __init__(self, message=None):
         self.message = message
 
     def send_packet(self, packet):
@@ -274,8 +287,10 @@ class BanProtocol(Protocol):
         if self.disconnect_call.active():
             self.disconnect_call.cancel()
 
+
 class CubeWorldServer(Factory):
     items_changed = False
+
     def __init__(self, config):
         self.config = config
 
@@ -380,7 +395,7 @@ class CubeWorldServer(Factory):
     # line/string formatting options based on config
 
     def format(self, value):
-        format_dict = {'server_name' : self.config.server_name}
+        format_dict = {'server_name': self.config.server_name}
         return value % format_dict
 
     def format_lines(self, value):
@@ -406,7 +421,7 @@ class CubeWorldServer(Factory):
 
     # data store methods
 
-    def load_data(self, name, default = None):
+    def load_data(self, name, default=None):
         path = './%s.dat' % name
         try:
             with open(path, 'rU') as fp:
@@ -417,7 +432,7 @@ class CubeWorldServer(Factory):
 
     def save_data(self, name, value):
         path = './%s.dat' % name
-        data = pprint.pformat(value, width = 1)
+        data = pprint.pformat(value, width=1)
         with open(path, 'w') as fp:
             fp.write(data)
 
@@ -442,6 +457,7 @@ class CubeWorldServer(Factory):
 
     def get_clock(self):
         return get_clock_string(self.get_time())
+
 
 def main():
     # for py2exe
