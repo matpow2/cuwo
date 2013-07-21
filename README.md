@@ -6,7 +6,7 @@ It currently has the best protocol coverage among all the server projects out
 there, and has features like
 
 * Cross-platform support (Windows, Mac OS X, Linux, FreeBSD, what have you)
-* Console logging
+* File/console logging
 * MOTD message
 * Scripting (see the minimal welcome.py example)
 * Advanced configuration
