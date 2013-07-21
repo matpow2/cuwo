@@ -14,7 +14,7 @@ time_modifier = 1.0
 
 # List of scripts to run on the server on startup.
 # Consider turning on 'pvp', i.e. player versus player
-scripts = ['commands', 'welcome', 'ban']
+scripts = ['log', 'commands', 'welcome', 'ban']
 
 # Passwords used for rights management. Keys are passwords, and values are
 # a list of user types under that password. Right now, only 'admin' is defined,
@@ -27,6 +27,10 @@ passwords = {
 # replacing %(server_name)s with the server name defined in this file.
 welcome = ["Welcome to %(server_name)s!",
            "(server powered by cuwo)"]
+
+# Logging variables
+log_name = './logs/log.txt'
+rotate_daily = True
 
 # Profile file. Set to something other than None to enable.
 profile_file = None
