@@ -161,7 +161,6 @@ def whowhere(bot):
     if player_count == 0:        
         return ('no players connected') #not really possible
     formatted_names = []
-    player_positions = []
     for connection in server.connections.values():
         player = get_player(bot.server, connection.name)
         name = '%s #%s %s' % (connection.name,
