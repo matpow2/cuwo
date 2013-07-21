@@ -100,7 +100,7 @@ def parse_command(message):
 def create_path(path):
     if path:
         try:
-            os.makedirs(os.path.dirname(path))
+            os.makedirs(path)
         except OSError:
             pass
 

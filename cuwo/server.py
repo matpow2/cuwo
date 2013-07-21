@@ -36,6 +36,7 @@ from cuwo import constants
 from cuwo.common import (get_clock_string, parse_clock, parse_command,
                          get_chunk, filter_string, is_bit_set)
 from cuwo.script import call_scripts
+from cuwo.config import ConfigObject
 
 import collections
 import imp
@@ -126,15 +127,16 @@ class CubeWorldConnection(Protocol):
             self.send_packet(mismatch_packet)
             self.disconnect()
             return
-        if len(self.server.connections) >= self.server.config.max_players:
+        server = self.server
+        if len(server.connections) >= server.config.base.max_players:
             self.send_packet(server_full_packet)
             self.disconnect()
             return
-        self.entity_id = self.server.entity_ids.pop()
-        self.server.connections[(self.entity_id,)] = self
+        self.entity_id = server.entity_ids.pop()
+        server.connections[(self.entity_id,)] = self
         join_packet.entity_id = self.entity_id
         self.send_packet(join_packet)
-        seed_packet.seed = self.server.config.seed
+        seed_packet.seed = server.config.base.seed
         self.send_packet(seed_packet)
 
     def on_entity_packet(self, packet):
@@ -307,6 +309,7 @@ class CubeWorldServer(Factory):
 
     def __init__(self, config):
         self.config = config
+        base = config.base
 
         # game-related
         self.update_packet = ServerUpdate()
@@ -322,14 +325,14 @@ class CubeWorldServer(Factory):
         self.update_loop.start(1.0 / constants.UPDATE_FPS, False)
 
         # server-related
-        self.git_rev = getattr(config, 'git_rev', None)
+        self.git_rev = base.get('git_rev', None)
 
         self.passwords = {}
-        for k, v in config.passwords.iteritems():
+        for k, v in base.passwords.iteritems():
             self.passwords[k.lower()] = v
 
         self.scripts = []
-        for script in config.scripts:
+        for script in base.scripts:
             self.load_script(script)
 
         # time
@@ -410,7 +413,7 @@ class CubeWorldServer(Factory):
     # line/string formatting options based on config
 
     def format(self, value):
-        format_dict = {'server_name': self.config.server_name}
+        format_dict = {'server_name': self.config.base.server_name}
         return value % format_dict
 
     def format_lines(self, value):
@@ -461,7 +464,7 @@ class CubeWorldServer(Factory):
 
     def get_elapsed_time(self):
         dt = reactor.seconds() - self.start_time
-        dt *= self.config.time_modifier * constants.NORMAL_TIME_SPEED
+        dt *= self.config.base.time_modifier * constants.NORMAL_TIME_SPEED
         return dt * 1000 + self.extra_elapsed_time
 
     def get_time(self):
@@ -481,14 +484,15 @@ def main():
             unicode(sys.executable, sys.getfilesystemencoding()))
         sys.path.append(path)
 
-    import config
+    config = ConfigObject('./config')
+
     reactor.listenTCP(constants.SERVER_PORT, CubeWorldServer(config))
     print 'cuwo running on port %s' % constants.SERVER_PORT
-    if config.profile_file is None:
+    if config.base.profile_file is None:
         reactor.run()
     else:
         import cProfile
-        cProfile.run('reactor.run()', filename=config.profile_file)
+        cProfile.run('reactor.run()', filename=config.base.profile_file)
 
 if __name__ == '__main__':
     main()

@@ -45,7 +45,7 @@ class ItemData(Loader):
         self.material = reader.read_uint8()
         self.flags = reader.read_uint8()
         reader.skip(1)
-        self.level = reader.read_uint16()
+        self.level = reader.read_int16()
         reader.skip(2)
         self.items = []
         for _ in xrange(32):
@@ -64,7 +64,7 @@ class ItemData(Loader):
         writer.write_uint8(self.material)
         writer.write_uint8(self.flags)
         writer.pad(1)
-        writer.write_uint16(self.level)
+        writer.write_int16(self.level)
         writer.pad(2)
         for item in self.items:
             item.write(writer)
@@ -217,7 +217,7 @@ class EntityData(Loader):
         self.not_used7 = reader.read_uint8()
         self.not_used8 = reader.read_uint8()
         reader.skip(2)
-        self.character_level = reader.read_uint32()
+        self.level = reader.read_uint32()
         self.current_xp = reader.read_uint32()
         self.parent_owner = reader.read_uint64()
         self.unknown_or_not_used1 = reader.read_uint32()
@@ -305,7 +305,7 @@ class EntityData(Loader):
         writer.write_uint8(self.not_used7)
         writer.write_uint8(self.not_used8)
         writer.pad(2)
-        writer.write_uint32(self.character_level)
+        writer.write_uint32(self.level)
         writer.write_uint32(self.current_xp)
         writer.write_uint64(self.parent_owner)
         writer.write_uint32(self.unknown_or_not_used1)
@@ -419,7 +419,7 @@ def read_masked_data(entity, reader):
     if is_bit_set(mask, 32):
         entity.not_used8 = reader.read_uint8()
     if is_bit_set(mask, 33):
-        entity.character_level = reader.read_uint32()
+        entity.level = reader.read_uint32()
     if is_bit_set(mask, 34):
         entity.current_xp = reader.read_uint32()
     if is_bit_set(mask, 35):
@@ -651,7 +651,7 @@ def write_masked_data(entity, writer, mask=None):
     if is_bit_set(mask, 32):
         writer.write_uint8(entity.not_used8)
     if is_bit_set(mask, 33):
-        writer.write_uint32(entity.character_level)
+        writer.write_uint32(entity.level)
     if is_bit_set(mask, 34):
         writer.write_uint32(entity.current_xp)
     if is_bit_set(mask, 35):
