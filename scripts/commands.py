@@ -116,7 +116,7 @@ def damage_player(script, player, damage=0, stun_duration=0):
 @admin
 def kill(script, name):
     player = get_player(script.server, name)
-    damage_player(script, player, damange=player.entity_data.hp + 100.0)
+    damage_player(script, player, damage=player.entity_data.hp + 100.0)
     message = '%s was killed' % player.name
     print message
     script.server.send_chat(message)
