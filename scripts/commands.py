@@ -131,18 +131,21 @@ def stun(script, name, stun_duration=500):
     print message
     script.server.send_chat(message)
 
-#added who command
-#based on irc version
-#useful for players in games with more than 4 players
-@command
-def who(bot):
-    server = bot.server
+#used by who and whowhere commands
+def who_where(script, include_where):
+    server = script.server
     player_count = len(server.connections)
     if player_count == 0:        
         return ('no players connected') #not really possible
     formatted_names = []
     for connection in server.connections.values():
-        name = '%s #%s' % (connection.name,
+        if include_where:
+            player = get_player(script.server, connection.name)
+            name = '%s #%s %s' % (connection.name,
+                              connection.entity_id,
+                              get_chunk(player.position))
+        else:
+            name = '%s #%s' % (connection.name,
                                  connection.entity_id)
         formatted_names.append(name)
     noun = 'player' if player_count == 1 else 'players'
@@ -151,26 +154,20 @@ def who(bot):
     return msg
 
 
+#added who command
+#based on irc version
+#useful for players in games with more than 4 players
+@command
+def who(script):
+    return who_where(script, 0)
+
+
 #added whowhere
 #gives where info for every player in who
 #probably could also be a special case of whereis
 @command
-def whowhere(bot):
-    server = bot.server
-    player_count = len(server.connections)
-    if player_count == 0:        
-        return ('no players connected') #not really possible
-    formatted_names = []
-    for connection in server.connections.values():
-        player = get_player(bot.server, connection.name)
-        name = '%s #%s %s' % (connection.name,
-                              connection.entity_id,
-                              get_chunk(player.position))
-        formatted_names.append(name)
-    noun = 'player' if player_count == 1 else 'players'
-    msg = '%s %s connected: ' % (player_count, noun)
-    msg += ', '.join(formatted_names)
-    return msg
+def whowhere(script):
+    return who_where(script, 1)
 
 
 @command
