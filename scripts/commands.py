@@ -19,9 +19,7 @@
 Default set of commands bundled with cuwo
 """
 
-from cuwo.script import ServerScript, command, get_player, admin
-from cuwo.script import (ServerScript, ConnectionScript, command, get_player,
-                         admin)
+from cuwo.script import ServerScript, command, admin
 from cuwo.common import get_chunk
 from cuwo.packet import HitPacket, HIT_NORMAL
 from cuwo.vector import Vector3
@@ -65,7 +63,7 @@ def login(script, password):
 @command
 @admin
 def kick(script, name):
-    player = get_player(script.server, name)
+    player = script.get_player(name)
     player.kick()
 
 
@@ -97,18 +95,17 @@ def setclock(script, value):
 
 @command
 def whereis(script, name=None):
-    if name is None:
-        player = script.connection
+    player = script.get_player(name)
+    if player is script.connection:
         message = 'You are at %s'
     else:
-        player = get_player(script.server, name)
         message = '%s is at %%s' % player.name
     return message % (get_chunk(player.position),)
 
 
 @command
 def pm(script, name, *args):
-    player = get_player(script.server, name)
+    player = script.get_player(name)
     message = ' '.join(args)
     player.send_chat('%s (PM): %s' % (script.connection.name, message))
     return 'PM sent'
@@ -132,8 +129,8 @@ def damage_player(script, player, damage=0, stun_duration=0):
 
 @command
 @admin
-def kill(script, name):
-    player = get_player(script.server, name)
+def kill(script, name=None):
+    player = script.get_player(name)
     damage_player(script, player, damage=player.entity_data.hp + 100.0)
     message = '%s was killed' % player.name
     print message
@@ -143,8 +140,44 @@ def kill(script, name):
 @command
 @admin
 def stun(script, name, stun_duration=500):
-    player = get_player(script.server, name)
-    damage_player(script, player, stun_duration=stun_duration)
+    player = script.get_player(name)
+    damage_player(script, player, stun_duration=int(stun_duration))
     message = '%s was stunned' % player.name
     print message
     script.server.send_chat(message)
+
+
+@command
+@admin
+def heal(script, name=None, hp=1000):
+    player = script.get_player(name)
+    damage_player(script, player, damage=-int(hp))
+    message = '%s was healed' % player.name
+    return message
+
+
+def who_where(script, include_where):
+    server = script.server
+    player_count = len(server.connections)
+    if player_count == 0:
+        return 'No players connected'
+    formatted_names = []
+    for connection in server.connections.values():
+        name = '%s #%s' % (connection.name, connection.entity_id)
+        if include_where:
+            name += ' %s' % (get_chunk(connection.position),)
+        formatted_names.append(name)
+    noun = 'player' if player_count == 1 else 'players'
+    msg = '%s %s connected: ' % (player_count, noun)
+    msg += ', '.join(formatted_names)
+    return msg
+
+
+@command
+def who(script):
+    return who_where(script, False)
+
+
+@command
+def whowhere(script):
+    return who_where(script, True)
