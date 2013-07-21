@@ -195,7 +195,7 @@ class IRCScriptServer(ServerScript):
     def on_load(self):
         config = self.server.config
         self.client_factory = IRCClientFactory(self.server, config)
-        reactor.connectTCP(config.server, config.irc.port,
+        reactor.connectTCP(config.irc.server, config.irc.port,
                            self.client_factory)
 
     def on_unload(self):
