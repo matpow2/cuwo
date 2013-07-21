@@ -171,3 +171,17 @@ def whowhere(bot):
     msg = '%s %s connected: ' % (player_count, noun)
     msg += ', '.join(formatted_names)
     return msg
+
+
+@command
+@admin
+#added heal command
+#heals specified player or yourself if none specified for 10000hp
+def heal(script, name=None):
+    if name is None:
+        player = script.connection
+    else:
+        player = get_player(script.server, name)
+    damage_player(script, player, damage=(-10000)) #unsure how to get max hp
+    message = '%s was healed' % player.name
+    return message
