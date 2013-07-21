@@ -15,24 +15,28 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Sends a welcome message to players
-"""
-
-from cuwo.script import ServerScript
-from twisted.internet import reactor
+import os
+import glob
 
 
-class WelcomeServer(ServerScript):
-    connection_class = None
-
-    def on_load(self):
-        config = self.server.config.base
-        self.welcome = self.server.format_lines(config.welcome)
-
-    def on_new_connection(self, connection):
-        reactor.callLater(10, connection.send_lines, self.welcome)
+class ConfigDict(dict):
+    def __getattr__(self, name):
+        return self[name]
 
 
-def get_class():
-    return WelcomeServer
+class ConfigObject(object):
+    def __init__(self, directory):
+        self.directory = directory
+        self.reload()
+
+    def reload(self):
+        self.config_dict = {}
+        spec = os.path.join(self.directory, '*.py')
+        for path in glob.glob(spec):
+            name = os.path.splitext(os.path.basename(path))[0]
+            new_dict = ConfigDict()
+            execfile(path, {}, new_dict)
+            self.config_dict[name] = new_dict
+
+    def __getattr__(self, name):
+        return self.config_dict[name]

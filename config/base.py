@@ -28,14 +28,5 @@ passwords = {
 welcome = ["Welcome to %(server_name)s!",
            "(server powered by cuwo)"]
 
-# IRC script variables (enable by adding 'irc' to script list)
-irc_nickname = 'cuwobot'
-irc_server = 'irc.esper.net'
-irc_port = 6667
-irc_channel = '#cuwo.bots'
-irc_password = None
-irc_commandprefix = '.'
-irc_chatprefix = '#'
-
 # Profile file. Set to something other than None to enable.
 profile_file = None
