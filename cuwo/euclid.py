@@ -9,12 +9,12 @@
 # under the terms of the GNU Lesser General Public License as published by the
 # Free Software Foundation; either version 2.1 of the License, or (at your
 # option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
 # for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public License
 # along with this library; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
@@ -248,13 +248,13 @@ class Vector2:
         assert type(other) in (int, long, float)
         return Vector2(operator.truediv(other, self.x),
                        operator.truediv(other, self.y))
-    
+
     def __neg__(self):
         return Vector2(-self.x,
                         -self.y)
 
     __pos__ = __copy__
-    
+
     def __abs__(self):
         return math.sqrt(self.x ** 2 + \
                          self.y ** 2)
@@ -499,14 +499,14 @@ class Vector3:
         return Vector3(operator.truediv(other, self.x),
                        operator.truediv(other, self.y),
                        operator.truediv(other, self.z))
-    
+
     def __neg__(self):
         return Vector3(-self.x,
                         -self.y,
                         -self.z)
 
     __pos__ = __copy__
-    
+
     def __abs__(self):
         return math.sqrt(self.x ** 2 + \
                          self.y ** 2 + \
@@ -1086,7 +1086,7 @@ class Matrix4:
         self.i = -s
         return self    
     new_rotatey = classmethod(new_rotatey)
-    
+
     def new_rotatez(cls, angle):
         self = cls()
         s = math.sin(angle)
@@ -1163,7 +1163,7 @@ class Matrix4:
       m.d, m.h, m.l = eye.x, eye.y, eye.z
       return m
     new_look_at = classmethod(new_look_at)
-    
+
     def new_perspective(cls, fov_y, aspect, near, far):
         # from the gluPerspective man page
         f = 1 / math.tan(fov_y / 2)
@@ -1466,7 +1466,7 @@ class Quaternion:
         Q.z = c1 * s2 * c3 - s1 * c2 * s3
         return Q
     new_rotate_euler = classmethod(new_rotate_euler)
-    
+
     def new_rotate_matrix(cls, m):
       if m[0*4 + 0] + m[1*4 + 1] + m[2*4 + 2] > 0.00000001:
         t = m[0*4 + 0] + m[1*4 + 1] + m[2*4 + 2] + 1.0
@@ -1512,7 +1512,7 @@ class Quaternion:
           s*t
           )
     new_rotate_matrix = classmethod(new_rotate_matrix)
-    
+
     def new_interpolate(cls, q1, q2, t):
         assert isinstance(q1, Quaternion) and isinstance(q2, Quaternion)
         Q = cls()
@@ -1593,7 +1593,7 @@ class Geometry:
 
 def _intersect_point2_circle(P, C):
     return abs(P - C.c) <= C.r
-    
+
 def _intersect_line2_line2(A, B):
     d = B.v.y * A.v.x - B.v.x * A.v.y
     if d == 0:
@@ -1723,7 +1723,7 @@ class Point2(Vector2, Geometry):
 
     def _connect_point2(self, other):
         return LineSegment2(other, self)
-    
+
     def _connect_line2(self, other):
         c = _connect_point2_line2(self, other)
         if c:
@@ -2005,7 +2005,7 @@ def _connect_plane_plane(A, B):
 
 def _intersect_point3_sphere(P, S):
     return abs(P - S.c) <= S.r
-    
+
 def _intersect_line3_sphere(L, S):
     a = L.v.magnitude_squared()
     b = 2 * (L.v.x * (L.p.x - S.c.x) + \

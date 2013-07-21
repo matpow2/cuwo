@@ -1,28 +1,29 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 High-level byte read/writing and pack/unpacking from files and data
-""" 
+"""
 
-from cStringIO import StringIO
 from cuwo.vector import Vector3
 from cuwo.exceptions import OutOfData
+from cuwo.common import filter_string
 import struct
+from cStringIO import StringIO
 
 INT8 = struct.Struct('<b')
 UINT8 = struct.Struct('<B')
@@ -35,8 +36,10 @@ UINT64 = struct.Struct('<Q')
 FLOAT = struct.Struct('<f')
 DOUBLE = struct.Struct('<d')
 
+
+
 class ByteWriter(object):
-    def __init__(self, fp = None):
+    def __init__(self, fp=None):
         if fp is None:
             fp = StringIO()
         self.fp = fp
@@ -86,11 +89,12 @@ class ByteWriter(object):
 
     def write_uint64(self, value):
         self.write_struct(UINT64, value)
-    def write_double(self, value):
-        self.write_struct(DOUBLE, value)
 
     def write_float(self, value):
         self.write_struct(FLOAT, value)
+
+    def write_double(self, value):
+        self.write_struct(DOUBLE, value)
 
     def write_vec3(self, value):
         self.write_float(value.x)
@@ -107,8 +111,9 @@ class ByteWriter(object):
         self.write_int64(value.y)
         self.write_int64(value.z)
 
+
 class ByteReader(object):
-    def __init__(self, data = None, fp = None):
+    def __init__(self, data=None, fp=None):
         if data is not None:
             fp = StringIO(data)
         if fp is None:
@@ -118,7 +123,7 @@ class ByteReader(object):
         self.close = fp.close
         self.tell = fp.tell
 
-    def read(self, size = None):
+    def read(self, size=None):
         if size is None:
             return self.fp.read()
         data = self.fp.read(size)
@@ -131,7 +136,7 @@ class ByteReader(object):
             return False
         import tempfile
         import subprocess
-        fp = tempfile.NamedTemporaryFile('wb', delete = False)
+        fp = tempfile.NamedTemporaryFile('wb', delete=False)
         fp.write(self.fp.getvalue())
         fp.close()
         name = fp.name
@@ -144,10 +149,14 @@ class ByteReader(object):
         return True
 
     def read_string(self, size):
-        return self.read(size).split('\x00')[0]
+        value = self.read(size)
+        end = value.find('\x00')
+        if end == -1:
+            return value
+        return value[:end]
 
     def read_ascii(self, size):
-        return self.read_string(size).decode('ascii', 'ignore')
+        return filter_string(self.read_string(size))
 
     def skip(self, size):
         self.seek(self.tell() + size)

@@ -324,7 +324,7 @@ def is_item_illegal(item):
 
 def is_equiped_illegal(item, entity_data, in_slotindex):
 
-    if calc_power_level(item.level) > calc_power_level(entity_data.level):
+    if calc_power_level(item.level) > calc_power_level(entity_data.character_level):
         log("item level too high for character", LOG_LEVEL_VERBOSE)
         return True
 
@@ -379,7 +379,7 @@ def has_illegal_skills(entity_data):
 
         total_skillpoints = total_skillpoints + item
 
-    if total_skillpoints > (entity_data.level - 1) * 2:
+    if total_skillpoints > (entity_data.character_level - 1) * 2:
         log("spend more skills then are available",
             LOG_LEVEL_VERBOSE)
         return True
@@ -426,4 +426,4 @@ def has_illegal_class(entity_data):
 
 
 def has_illegal_level(entity_data):
-    return entity_data.level > LEGAL_LEVEL
+    return entity_data.character_level > LEGAL_LEVEL

@@ -1,27 +1,30 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 
+
 class InvalidPlayer(Exception):
     pass
 
+
 class InsufficientRights(Exception):
     pass
+
 
 def get_player(server, value):
     ret = None
@@ -47,6 +50,7 @@ def get_player(server, value):
         raise InvalidPlayer()
     return ret
 
+
 def restrict(func, *user_types):
     def new_func(script, *arg, **kw):
         if script.connection.rights.isdisjoint(user_types):
@@ -56,14 +60,17 @@ def restrict(func, *user_types):
     new_func.func_name = func.func_name
     return new_func
 
+
 def admin(func):
     return restrict(func, 'admin')
+
 
 def call_scripts(scripts, name, *arg, **kw):
     for script in scripts:
         ret = script.call(name, *arg, **kw)
         if ret is not None:
             return ret
+
 
 class BaseScript(object):
     def call(self, name, *arg, **kw):
@@ -77,6 +84,7 @@ class BaseScript(object):
 
     def on_unload(self):
         pass
+
 
 class ConnectionScript(BaseScript):
     def __init__(self, parent, connection):
@@ -103,7 +111,7 @@ class ConnectionScript(BaseScript):
             ret = 'Invalid player specified'
         except InsufficientRights:
             ret = 'Insufficient rights'
-        except Exception, e:
+        except Exception:
             import traceback
             traceback.print_exc()
         if ret is not None:
@@ -117,6 +125,7 @@ class ConnectionScript(BaseScript):
         self.parent.scripts.remove(self)
         self.on_unload()
         self.parent = self.connection = self.server = None
+
 
 class ServerScript(BaseScript):
     connection_class = ConnectionScript
@@ -150,8 +159,9 @@ class ServerScript(BaseScript):
         self.scripts = None
         self.server = None
 
+
 # decorators for commands
-def command(func, klass = None, level = None):
+def command(func, klass=None, level=None):
     if klass is None:
         klass = sys.modules[func.__module__].get_class()
     if klass.commands is None:

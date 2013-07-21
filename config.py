@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 # Global server name
 server_name = 'cuwo server'
@@ -18,9 +18,9 @@ scripts = ['commands', 'welcome', 'ban', 'anticheat']
 
 # Passwords used for rights management. Keys are passwords, and values are
 # a list of user types under that password. Right now, only 'admin' is defined,
-# but scripts can restrict their usage depending on the user type 
+# but scripts can restrict their usage depending on the user type
 passwords = {
-    'PASSWORDREPLACEME' : ['admin']
+    'PASSWORDREPLACEME': ['admin']
 }
 
 # Used by the welcome.py script. Sends a small welcome message to users,
@@ -36,3 +36,6 @@ irc_channel = '#cuwo.bots'
 irc_password = None
 irc_commandprefix = '.'
 irc_chatprefix = '#'
+
+# Profile file. Set to something other than None to enable.
+profile_file = None

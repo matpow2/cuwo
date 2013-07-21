@@ -1,21 +1,23 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys, argparse
+import os
+import sys
+import argparse
 cmd_folder = os.path.realpath(os.path.abspath('.'))
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
@@ -25,11 +27,13 @@ from cuwo.qmo import QubicleFile, QubicleModel
 from cuwo.cub import CubModel
 import os
 
+
 def switch_axes(x, y, z):
     return x, z, y
 
+
 def to_qmo(in_file, out_file):
-    cub = CubModel(ByteReader(fp = open(in_file, 'rb')))
+    cub = CubModel(ByteReader(fp=open(in_file, 'rb')))
     qmo_file = QubicleFile()
     qmo_model = QubicleModel()
     x_size, y_size, z_size = switch_axes(cub.x_size, cub.y_size, cub.z_size)
@@ -44,13 +48,14 @@ def to_qmo(in_file, out_file):
         x2, y2, z2 = switch_axes(x, y, z)
         qmo_model.blocks[x2, y2, z2] = v
     qmo_file.models.append(qmo_model)
-    qmo_file.write(ByteWriter(fp = open(out_file, 'wb')))
+    qmo_file.write(ByteWriter(fp=open(out_file, 'wb')))
+
 
 def to_cub(in_file, out_file):
-    qmo_file = QubicleFile(ByteReader(fp = open(in_file, 'rb')))
+    qmo_file = QubicleFile(ByteReader(fp=open(in_file, 'rb')))
     qmo_model = qmo_file.models[0]
     cub = CubModel()
-    x_size, y_size, z_size = switch_axes(qmo_model.x_size, 
+    x_size, y_size, z_size = switch_axes(qmo_model.x_size,
                                          qmo_model.y_size,
                                          qmo_model.z_size)
     cub.x_size = x_size
@@ -60,13 +65,14 @@ def to_cub(in_file, out_file):
         x, y, z = k
         x2, y2, z2 = switch_axes(x, y, z)
         cub.blocks[x2, y2, z2] = v
-    cub.write(ByteWriter(fp = open(out_file, 'wb')))
+    cub.write(ByteWriter(fp=open(out_file, 'wb')))
+
 
 def main():
     parser = argparse.ArgumentParser(
         description='Convert between cub and qmo files')
-    parser.add_argument('files', metavar='FILE', nargs='+', 
-        help='path to file to convert')
+    parser.add_argument('files', metavar='FILE', nargs='+',
+                        help='path to file to convert')
 
     for path in parser.parse_args().files:
         print "Converting %r" % path

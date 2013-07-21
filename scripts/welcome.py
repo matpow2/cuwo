@@ -19,8 +19,9 @@
 Sends a welcome message to players
 """
 
-from cuwo.script import ServerScript, ConnectionScript, command
+from cuwo.script import ServerScript
 from twisted.internet import reactor
+
 
 class WelcomeServer(ServerScript):
     connection_class = None
@@ -30,6 +31,7 @@ class WelcomeServer(ServerScript):
 
     def on_new_connection(self, connection):
         reactor.callLater(10, connection.send_lines, self.welcome)
+
 
 def get_class():
     return WelcomeServer

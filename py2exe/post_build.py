@@ -5,23 +5,26 @@ import os
 import shutil
 import subprocess
 
+
 def copy(src, dst):
     if os.path.isfile(src):
         shutil.copyfile(src, dst)
     else:
         shutil.copytree(src, dst)
 
+
 def get_git_rev():
     pipe = subprocess.Popen(
         ["git", "rev-parse", "--short", "HEAD"],
-        stdout=subprocess.PIPE, shell = True)
+        stdout=subprocess.PIPE, shell=True)
     return pipe.stdout.read().replace('\n', '')
+
 
 # write config
 git_rev = get_git_rev()
 config = open('../config.py', 'rU').read()
 open('./dist/config.py', 'wb').write(
-    config + '\n\n# Current revision\ngit_rev = %r\n' % git_rev)
+    config + '\n# Current revision\ngit_rev = %r\n' % git_rev)
 
 # copy files
 SERVER_FILES = ['scripts']

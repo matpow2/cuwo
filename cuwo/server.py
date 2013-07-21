@@ -20,20 +20,21 @@ from cuwo.twistedreactor import install_reactor
 install_reactor()
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
-from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.task import LoopingCall
 
-from cuwo.packet import (ServerChatMessage, PacketHandler, write_packet,
-    CS_PACKETS, ClientVersion, JoinPacket, SeedData, EntityUpdate,
-    ClientChatMessage, ServerChatMessage, create_entity_data, UpdateFinished,
-    CurrentTime, ServerUpdate, ServerFull, ServerMismatch, INTERACT_DROP,
-    INTERACT_PICKUP, ChunkItemData, ChunkItems, InteractPacket, PickupAction,
-    HitPacket, ShootPacket)
+from cuwo.packet import (PacketHandler, write_packet, CS_PACKETS,
+                         ClientVersion, JoinPacket, SeedData, EntityUpdate,
+                         ClientChatMessage, ServerChatMessage,
+                         create_entity_data, UpdateFinished, CurrentTime,
+                         ServerUpdate, ServerFull, ServerMismatch,
+                         INTERACT_DROP, INTERACT_PICKUP, ChunkItemData,
+                         ChunkItems, InteractPacket, PickupAction,
+                         HitPacket, ShootPacket)
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
 from cuwo.common import (get_clock_string, parse_clock, parse_command,
-                         get_chunk, is_bit_set)
+                         get_chunk, filter_string, is_bit_set)
 from cuwo.script import call_scripts
 
 import collections
@@ -86,9 +87,9 @@ class CubeWorldConnection(Protocol):
     def dataReceived(self, data):
         self.packet_handler.feed(data)
 
-    def disconnect(self):
+    def disconnect(self, reason=None):
         self.transport.loseConnection()
-        self.connectionLost(None)
+        self.connectionLost(reason)
 
     def connectionLost(self, reason):
         if self.disconnected:
@@ -140,28 +141,28 @@ class CubeWorldConnection(Protocol):
         if self.entity_data is None:
             self.entity_data = create_entity_data()
             self.server.entities[self.entity_id] = self.entity_data
-        packet.update_entity(self.entity_data)
-        if self.entity_data.name:
-            if not self.has_joined:
-                self.on_join()
-                self.has_joined = True
-            else:
-                if is_bit_set(self.entity_data.last_update_mask, 9):
-                    self.call_scripts('on_mode_update')
-                if is_bit_set(self.entity_data.last_update_mask, 21):
-                    self.call_scripts('on_class_update')
-                if is_bit_set(self.entity_data.last_update_mask, 33):
-                    self.call_scripts('on_level_update')
-                if is_bit_set(self.entity_data.last_update_mask, 44):
-                    self.call_scripts('on_equipment_update')
-                if is_bit_set(self.entity_data.last_update_mask, 45):
-                    self.call_scripts('on_name_update')
-                if is_bit_set(self.entity_data.last_update_mask, 46):
-                    self.call_scripts('on_skill_update')
-
+        self.entity_data.mask |= packet.update_entity(self.entity_data)
+        if not self.has_joined and getattr(self.entity_data, 'name', None):
+            self.on_join()
+            self.has_joined = True
+        else:
+            if is_bit_set(self.entity_data.mask, 9):
+                self.call_scripts('on_mode_update')
+            if is_bit_set(self.entity_data.mask, 21):
+                self.call_scripts('on_class_update')
+            if is_bit_set(self.entity_data.mask, 33):
+                self.call_scripts('on_level_update')
+            if is_bit_set(self.entity_data.mask, 44):
+                self.call_scripts('on_equipment_update')
+            if is_bit_set(self.entity_data.mask, 45):
+                self.call_scripts('on_name_update')
+            if is_bit_set(self.entity_data.mask, 46):
+                self.call_scripts('on_skill_update')
 
     def on_chat_packet(self, packet):
-        message = packet.value
+        message = filter_string(packet.value).strip()
+        if not message:
+            return
         if self.on_chat(message) is False:
             return
         chat_packet.entity_id = self.entity_id
@@ -361,7 +362,8 @@ class CubeWorldServer(Factory):
 
         # entity updates
         for entity_id, entity in self.entities.iteritems():
-            entity_packet.set_entity(entity, entity_id)
+            entity_packet.set_entity(entity, entity_id, entity.mask)
+            entity.mask = 0
             self.broadcast_packet(entity_packet)
         self.broadcast_packet(update_finished_packet)
 
@@ -476,7 +478,11 @@ def main():
     import config
     reactor.listenTCP(constants.SERVER_PORT, CubeWorldServer(config))
     print 'cuwo running on port %s' % constants.SERVER_PORT
-    reactor.run()
+    if config.profile_file is None:
+        reactor.run()
+    else:
+        import cProfile
+        cProfile.run('reactor.run()', filename=config.profile_file)
 
 if __name__ == '__main__':
     main()
