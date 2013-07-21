@@ -95,6 +95,11 @@ class ConnectionScript(BaseScript):
         parent.scripts.append(self)
         self.on_load()
 
+    def get_player(self, name=None):
+        if name is None:
+            return self.connection
+        return get_player(self.server, name)
+
     def on_disconnect(self):
         self.unload()
 
