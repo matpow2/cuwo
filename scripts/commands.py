@@ -130,3 +130,44 @@ def stun(script, name, stun_duration=500):
     message = '%s was stunned' % player.name
     print message
     script.server.send_chat(message)
+
+#added who command
+#based on irc version
+#useful for players in games with more than 4 players
+@command
+def who(bot):
+    server = bot.server
+    player_count = len(server.connections)
+    if player_count == 0:        
+        return ('no players connected') #not really possible
+    formatted_names = []
+    for connection in server.connections.values():
+        name = '%s #%s' % (connection.name,
+                                 connection.entity_id)
+        formatted_names.append(name)
+    noun = 'player' if player_count == 1 else 'players'
+    msg = '%s %s connected: ' % (player_count, noun)
+    msg += ', '.join(formatted_names)
+    return msg
+
+
+#added whowhere
+#gives where info for every player in who
+#probably could also be a special case of whereis
+@command
+def whowhere(bot):
+    server = bot.server
+    player_count = len(server.connections)
+    if player_count == 0:        
+        return ('no players connected') #not really possible
+    formatted_names = []
+    player_positions = []
+    for connection in server.connections.values():
+        player = get_player(bot.server, connection.name)
+        name = '%s #%s %s' % (connection.name,
+                                 connection.entity_id, get_chunk(player.position))
+        formatted_names.append(name)
+    noun = 'player' if player_count == 1 else 'players'
+    msg = '%s %s connected: ' % (player_count, noun)
+    msg += ', '.join(formatted_names)
+    return msg
