@@ -82,6 +82,9 @@ def get_sector(vec):
 
 
 def parse_command(message):
+    if isinstance(message, unicode):
+        # due to shlex unicode problems
+        message = message.encode('utf-8')
     try:
         args = shlex.split(message)
     except ValueError:
@@ -91,7 +94,7 @@ def parse_command(message):
         command = args.pop(0)
     else:
         command = ''
-    return command, args
+    return command.decode('utf-8'), [arg.decode('utf-8') for arg in args]
 
 
 def create_path(path):
