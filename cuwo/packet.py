@@ -674,6 +674,7 @@ for table in (CS_PACKETS, SC_PACKETS):
 
 class PacketHandler(object):
     data = ''
+    last_packet_id = None
 
     def __init__(self, table, callback):
         self.table = table
@@ -690,5 +691,9 @@ class PacketHandler(object):
                 packet = read_packet(reader, self.table)
             except OutOfData:
                 break
+            except KeyError, e:
+                print 'Last packet ID:', self.last_packet_id
+                raise e
+            self.last_packet_id = packet.packet_id
             self.callback(packet)
         self.data = self.data[pos:]
