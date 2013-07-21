@@ -471,7 +471,8 @@ def get_class():
 
 
 def calc_power_level(level):
-    return 0
+    return int(((1.0 - (1.0 / (((float(level) - 1.0) * 0.05)
+                + 1.0))) * 100.0) + 1.0)
 
 
 def remove_cheater(connection, reason):
@@ -510,6 +511,12 @@ def has_illegal_items(entity_data):
 
 
 def is_item_illegal(item):
+    # Negative item levels... almost as bad as rarity 255
+    if item.level < 0:
+        log("negative item level: level = {level}"
+            .format(level=item.level), LOG_LEVEL_VERBOSE)
+        return True
+
     # Rarity is what makes the items truely broken and overpowered,
     # A rarity of 255 will make even a lvl 1 weapon do 2 billion damage.
     if item.rarity > LEGAL_RARITY:
@@ -556,9 +563,15 @@ def is_item_illegal(item):
 
 def is_equiped_illegal(item, entity_data, in_slotindex):
 
-    if (calc_power_level(item.level) >
-            calc_power_level(entity_data.character_level)):
-        log("item level too high for character", LOG_LEVEL_VERBOSE)
+    power_item = calc_power_level(item.level)
+    power_char = calc_power_level(entity_data.character_level)
+    if power_item > power_char:
+        log("item level too high for character " +
+            "item: lv{level1}=pw{power1} character: lv{level2}=pw{power2}"
+            .format(level1=item.level,
+                    power1=power_item,
+                    level2=entity_data.character_level,
+                    power2=power_char), LOG_LEVEL_VERBOSE)
         return True
 
     if not item.type in LEGAL_ITEMSLOTS:
@@ -582,6 +595,16 @@ def is_equiped_illegal(item, entity_data, in_slotindex):
             return True
 
         if entity_data.equipment[7].sub_type in TWOHANDED_WEAPONS:
+            log("Wielding 2 twohanders", LOG_LEVEL_VERBOSE)
+            return True
+
+    if in_slotindex == 7 and item.type in TWOHANDED_WEAPONS:
+
+        if ALLOW_DUALWIELD_BUG is False and entity_data.equipment[6].type != 0:
+            log("Dual wield bug active", LOG_LEVEL_VERBOSE)
+            return True
+
+        if entity_data.equipment[6].sub_type in TWOHANDED_WEAPONS:
             log("Wielding 2 twohanders", LOG_LEVEL_VERBOSE)
             return True
 
