@@ -145,13 +145,14 @@ class IRCClientFactory(protocol.ClientFactory):
 
     def __init__(self, server, config):
         self.server = server
-        self.nickname = config.nickname
+        irc = config.irc
+        self.nickname = irc.nickname
         self.username = 'cuwo'
-        self.realname = config.server_name
-        self.channel = config.channel
-        self.commandprefix = config.commandprefix
-        self.chatprefix = config.chatprefix
-        self.password = config.password
+        self.realname = config.base.server_name
+        self.channel = irc.channel
+        self.commandprefix = irc.commandprefix
+        self.chatprefix = irc.chatprefix
+        self.password = irc.password
 
     def startedConnecting(self, connector):
         print "Connecting to IRC server..."
@@ -192,9 +193,9 @@ class IRCScriptServer(ServerScript):
     connection_class = IRCScriptConnection
 
     def on_load(self):
-        config = self.server.config.irc
+        config = self.server.config
         self.client_factory = IRCClientFactory(self.server, config)
-        reactor.connectTCP(config.server, config.port,
+        reactor.connectTCP(config.server, config.irc.port,
                            self.client_factory)
 
     def on_unload(self):
