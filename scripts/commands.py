@@ -164,7 +164,8 @@ def whowhere(bot):
     for connection in server.connections.values():
         player = get_player(bot.server, connection.name)
         name = '%s #%s %s' % (connection.name,
-                                 connection.entity_id, get_chunk(player.position))
+                              connection.entity_id,
+                              get_chunk(player.position))
         formatted_names.append(name)
     noun = 'player' if player_count == 1 else 'players'
     msg = '%s %s connected: ' % (player_count, noun)
