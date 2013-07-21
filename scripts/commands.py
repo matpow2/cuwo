@@ -125,7 +125,7 @@ def kill(script, name=None):
 @admin
 def stun(script, name, stun_duration=500):
     player = script.get_player(name)
-    damage_player(script, player, stun_duration=stun_duration)
+    damage_player(script, player, stun_duration=int(stun_duration))
     message = '%s was stunned' % player.name
     print message
     script.server.send_chat(message)
@@ -135,7 +135,7 @@ def stun(script, name, stun_duration=500):
 @admin
 def heal(script, name=None, hp=1000):
     player = script.get_player(name)
-    damage_player(script, player, damage=-hp)
+    damage_player(script, player, damage=-int(hp))
     message = '%s was healed' % player.name
     return message
 
