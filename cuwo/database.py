@@ -25,15 +25,15 @@ from cuwo import constants
 def getDatabaseConnection():
     try:
         dbcon = sqldb.connect('cuwo.db')
-        self.createDatabaseStructure()
         return dbcon
     except sqldb.Error, e:
         print '[DATABASE ERROR] %s' % e.args[0]
     return None
 
-def createDatabaseStructure():
+def createDatabaseStructure(dbcon=None):
     try:
-        dbcon = getDatabaseConnection()
+        if not dbcon:
+            dbcon = getDatabaseConnection()
         dbcur = dbcon.cursor()
         dbcur.executescript("""
             CREATE TABLE IF NOT EXISTS players(id INTEGER PRIMARY KEY AUTO_INCREMENT, ingame_name VARCHAR(100) NOT NULL, login_pass VARCHAR(100) DEFAULT NULL, last_ip VARCHAR(100) DEFAULT NULL, last_online UNSIGNED BIG INT DEFAULT NULL, online_seconds UNSIGNED BIG INT DEFAULT NULL);
@@ -53,7 +53,7 @@ def save_data(dataKey, dataValue):
     try:
         dbcon = getDatabaseConnection()
         dbcur = dbcon.cursor()
-        dbcur.execute("INSERT INSERT OR REPLACE INTO server_kv_data (data_key, data_value) VALUES ('?', '?')", dataKey, dataValue)
+        dbcur.execute("INSERT INSERT OR REPLACE INTO server_kv_data (data_key, data_value) VALUES ('?', ?)", dataKey, dataValue)
         dbcon.commit()
         return True
     except sqldb.Error, e:

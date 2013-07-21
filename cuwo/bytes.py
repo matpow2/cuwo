@@ -19,10 +19,12 @@
 High-level byte read/writing and pack/unpacking from files and data
 """
 
-from cStringIO import StringIO
 from cuwo.vector import Vector3
 from cuwo.exceptions import OutOfData
+from cuwo.common import filter_string
 import struct
+from cStringIO import StringIO
+
 
 INT8 = struct.Struct('<b')
 UINT8 = struct.Struct('<B')
@@ -35,8 +37,9 @@ UINT64 = struct.Struct('<Q')
 FLOAT = struct.Struct('<f')
 DOUBLE = struct.Struct('<d')
 
+
 class ByteWriter(object):
-    def __init__(self, fp = None):
+    def __init__(self, fp=None):
         if fp is None:
             fp = StringIO()
         self.fp = fp
@@ -108,8 +111,9 @@ class ByteWriter(object):
         self.write_int64(value.y)
         self.write_int64(value.z)
 
+
 class ByteReader(object):
-    def __init__(self, data = None, fp = None):
+    def __init__(self, data=None, fp=None):
         if data is not None:
             fp = StringIO(data)
         if fp is None:
@@ -119,7 +123,7 @@ class ByteReader(object):
         self.close = fp.close
         self.tell = fp.tell
 
-    def read(self, size = None):
+    def read(self, size=None):
         if size is None:
             return self.fp.read()
         data = self.fp.read(size)
@@ -128,10 +132,14 @@ class ByteReader(object):
         return data
 
     def read_string(self, size):
-        return self.read(size).split('\x00')[0]
+        value = self.read(size)
+        end = value.find('\x00')
+        if end == -1:
+            return value
+        return value[:end]
 
     def read_ascii(self, size):
-        return self.read_string(size).decode('ascii', 'ignore')
+        return filter_string(self.read_string(size))
 
     def skip(self, size):
         self.seek(self.tell() + size)

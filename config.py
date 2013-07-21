@@ -17,11 +17,11 @@ max_players = 20
 # AutoSleep mode
 # Server pauses e.g. entities, calculation and limits functionality/speed
 # for decreased ressource use when nobody is online
-inactivity_sleep_auto = False
+inactivity_auto_sleep = False
 
 # Min/Max level to be able to join
-level_min = 1
-level_max = 2000
+join_level_min = 1
+join_level_max = 2000
 
 # Forbid some things if you want
 forbid_races = []
@@ -70,5 +70,8 @@ welcome = ["Welcome to %(server_name)s!",
            "Player Commands: /help, /list, /spawn, /tell <player> <message>, /whois <player>, /whereis <player>",
            "This message and many other things can be changed as you want in the config.py file."]
 
-#Web interface variables (enable by adding 'web' to script list)
+# Web interface variables (enable by adding 'web' to script list)
 web_port = 8081
+
+# Profile file. Set to something other than None to enable.
+profile_file = None

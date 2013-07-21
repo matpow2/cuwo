@@ -15,8 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+
+
 class CubModel(object):
-    def __init__(self, reader = None):
+    def __init__(self, reader=None):
         self.blocks = {}
         if reader is None:
             return
@@ -32,6 +34,7 @@ class CubModel(object):
                     if r == 0 and g == 0 and b == 0:
                         continue
                     self.blocks[(x, y, z)] = (r, g, b)
+
 
     def write(self, writer):
         writer.write_uint32(self.x_size)

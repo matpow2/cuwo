@@ -21,6 +21,20 @@ import shlex
 import math
 import os
 
+
+def filter_string(value):
+    # Cube World only displays characters between 32-126 (and \r\n which both
+    # produce newlines) in-game, so in case the user sent a bogus message, we
+    # need to filter out those characters and replace with spaces
+    new = u''
+    for c in value:
+        o = ord(c)
+        if o < 10 or (o > 13 and o < 32) or o > 255:
+            c = u' '
+        new += c
+    return new
+
+
 def get_hex_string(value):
     v = '0x'
     for c in value:
@@ -30,20 +44,24 @@ def get_hex_string(value):
         v += new_hex
     return v
 
+
 def is_bit_set(mask, index):
     return mask & (1 << index)
+
 
 def set_bit(mask, index, value):
     if value:
         mask |= 1 << index
     else:
-        mask &= ~(1 << offset)
+        mask &= ~(1 << index)
     return mask
+
 
 def get_clock_string(value):
     hour = (value * 24) / constants.MAX_TIME
     minute = ((value * 1440) / constants.MAX_TIME) % 60
     return '%02d:%02d' % (hour, minute)
+
 
 def parse_clock(value):
     h, m = value.split(':')
@@ -52,40 +70,53 @@ def parse_clock(value):
     v = (h * constants.MAX_TIME) / 24 + (m * constants.MAX_TIME) / 1440
     return v
 
+
 def get_chunk(vec):
-    return (math.floor(vec.x / constants.CHUNK_SCALE), math.floor(vec.y / constants.CHUNK_SCALE))
+    return (math.floor(vec.x / constants.CHUNK_SCALE),
+            math.floor(vec.y / constants.CHUNK_SCALE))
+
 
 def get_sector(vec):
-    return (math.floor(vec.x / constants.SECTOR_SCALE), math.floor(vec.y / constants.SECTOR_SCALE))
+    return (math.floor(vec.x / constants.SECTOR_SCALE),
+            math.floor(vec.y / constants.SECTOR_SCALE))
+
 
 def get_needed_xp(level):
     return math.floor((1050 * level - 50) / (level + 19))
 
+
 def get_needed_total_xp(level):
     return math.floor(50 * (21 * (level - 1) + 400 * math.log(20) - 400 * math.log(19 + level)))
+
 
 def get_xp_from_to(levelFrom, levelTo):
     return math.floor(50 * (21 * (levelTo - levelFrom) + 400 * math.log(19 + levelFrom) - 400 * math.log(19 + levelTo)))
 
+
 def get_power_level(level):
     return math.floor(100 - 99 * ((1 + 0.0536) / (1 + 0.0536 * level)))
+
 
 def get_player_race_str(race_id):
     return constants.PLAYER_RACES[race_id]
 
+
 def get_player_class_str(class_id):
     return constants.PLAYER_CLASSES[class_id]
 
+
 def parse_command(message):
-    try:
-        args = shlex.split(message)
-    except ValueError:
-        args = message.split(' ')
-    if args:
-        command = args.pop(0)
-    else:
-        command = ''
+    command = ''
+    args = []
+    if message:
+        try:
+            args = shlex.split(message)
+        except ValueError:
+            args = message.split(' ')
+        if args:
+            command = args.pop(0)
     return command, args
+
 
 def create_path(path):
     if path:
@@ -97,8 +128,10 @@ def create_path(path):
             print '[ERROR] Could not create directory structure to %s' % path
     return False
 
+
 def create_file_path(path):
     return create_path(os.path.dirname(filename))
+
 
 def open_create(filename, mode):
     if create_file_path(filename):
