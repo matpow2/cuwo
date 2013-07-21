@@ -28,6 +28,9 @@ LOG_LEVEL_NONE = 0
 
 LOG_LEVEL = LOG_LEVEL_VERBOSE
 
+# Regex name filter, anyone that does not match this will be removed.
+# currently all keys normally on a keyboard. cubeworld really isnt picky.
+NAME_FILTER = "^[a-zA-Z0-9_!@#$%\^&*()\[\]|:;'.,/\-+ <>\\\"{}~`=?]{2,16}$"
 # If we allow the dual wield bug (equiping a 2h and a 1h at the same time)
 ALLOW_DUALWIELD_BUG = True
 # Max allowed level
@@ -35,6 +38,8 @@ ALLOW_DUALWIELD_BUG = True
 LEGAL_LEVEL = 1000
 # Highest level rarity level, 4 is gold
 LEGAL_RARITY = 4
+
+LEGAL_CLASSES = (1, 2, 3, 4)
 
 TWOHANDED_WEAPONS = (5, 6, 7, 10, 11, 15, 16, 17)
 
@@ -79,7 +84,7 @@ LEGAL_ITEMS = dict({
     (19, 19): (0, ),
     (19, 22): (0, ),
     (19, 23): (0, ),
-    (19, 25): (0,),
+    (19, 25): (0, ),
     (19, 26): (0, ),
     (19, 27): (0, ),
     (19, 33): (0, ),
@@ -138,13 +143,54 @@ LEGAL_ITEMSLOTS = dict({
     24: (10, ),
 })
 
+ARMOR_IDS = (4, 5, 6, 7)
+
+CLASS_WEAPONS = dict({
+    1: (0, 1, 2, 13, 15, 16, 17),    # Warrior
+    2: (6, 7, 8),                    # Ranger
+    3: (10, 11, 12),                 # Mage
+    4: (3, 4, 5)                     # Rogue
+})
+
+CLASS_ARMOR = dict({
+    1: (1, ),                       # Warrior
+    2: (26, ),                      # Ranger
+    3: (25, ),                      # Mage
+    4: (27, )                       # Rogue
+})
+
+COMMON_ABILITIES = (11,     # Unarmed\One handed mouse 2
+                    63,     # Unarmed\One handed mouse 2 wind up
+                    80,     # Drink potion
+                    81,     # Eat
+                    82,     # Present pet food
+                    83,     # Sit
+                    84,     # Sleep
+                    106,    # Call pet
+                    107)    # Sailing
+
+CLASS_ABILITIES = dict({
+    1: (6, 7, 1, 2, 57, 58, 67),
+    2: (6, 7, 21, 22, 23, 24, 26, 25, 27, 55),
+    3: (41, 42),
+    4: (6, 7, ),
+})
+
 from cuwo.script import (ServerScript,
                          ConnectionScript, command, admin,
                          get_player)
+import re
 
 
 class AntiCheatConnection(ConnectionScript):
     def on_join(self):
+
+        if not self.on_name_update():
+            return False
+
+        if not self.on_class_update():
+            return False
+
         if not self.on_equipment_update():
             return False
 
@@ -158,11 +204,16 @@ class AntiCheatConnection(ConnectionScript):
 
         return True
 
+    def on_name_update(self):
+        if has_illegal_name(self.connection.entity_data):
+            remove_cheater(self.connection, 'illegal character name')
+            return False
+        return True
+
     def on_equipment_update(self):
         if has_illegal_items(self.connection.entity_data):
             remove_cheater(self.connection, 'illegal items are equiped')
             return False
-
         return True
 
     def on_level_update(self):
@@ -179,13 +230,28 @@ class AntiCheatConnection(ConnectionScript):
 
         return True
 
+    def on_mode_update(self):
+        if has_illegal_mode(self.connection.entity_data):
+            remove_cheater(self.connection, 'illegal character mode (ability)')
+            return False
+
+        return True
+
+    def on_class_update(self):
+        if has_illegal_class(self.connection.entity_data):
+            remove_cheater(self.connection, 'illegal character class')
+            return False
+
+        return True
+
 
 class AntiCheatServer(ServerScript):
     connection_class = AntiCheatConnection
 
 
 def log(message, loglevel=LOG_LEVEL_DEFAULT):
-    print CUWO_ANTICHEAT + " - " + message
+    if LOG_LEVEL >= loglevel:
+        print CUWO_ANTICHEAT + " - " + message
 
 
 def get_class():
@@ -205,6 +271,15 @@ def remove_cheater(connection, reason):
                          format(name=CUWO_ANTICHEAT,
                                 reason=reason))
     connection.disconnect()
+
+
+def has_illegal_name(entity_data):
+    if re.search(NAME_FILTER, entity_data.name) is None:
+        log("character name does not meet requirements: {name}".format(
+            name=entity_data.name), LOG_LEVEL_VERBOSE)
+        return True
+
+    return False
 
 
 def has_illegal_items(entity_data):
@@ -277,6 +352,20 @@ def is_equiped_illegal(item, entity_data, in_slotindex):
             log("Wielding 2 twohanders", LOG_LEVEL_VERBOSE)
             return True
 
+    if (item.type == 3 and
+            not item.sub_type in CLASS_WEAPONS[entity_data.class_type]):
+        log("weapon not allowed for class subtype={subtype} class={classid}"
+            .format(subtype=item.sub_type,
+                    classid=entity_data.class_type), LOG_LEVEL_VERBOSE)
+        return True
+
+    if (item.type in ARMOR_IDS and
+            not item.material in CLASS_ARMOR[entity_data.class_type]):
+        log("armor not allowed for class material={material} class={classid}"
+            .format(material=item.material,
+                    classid=entity_data.class_type), LOG_LEVEL_VERBOSE)
+        return True
+
     return False
 
 
@@ -311,15 +400,28 @@ def has_illegal_skills(entity_data):
         return True
 
     if entity_data.skills[7] > 0 and entity_data.skills[6] < 5:
-        log("skill 2 without enough prerequisite points",
+        log("skill 2 learned without enough prerequisite points",
             LOG_LEVEL_VERBOSE)
         return True
 
     if entity_data.skills[8] > 0 and entity_data.skills[7] < 5:
-        log("skill 3 without enough prerequisite points",
+        log("skill 3 learned without enough prerequisite points",
             LOG_LEVEL_VERBOSE)
         return True
 
+    return False
+
+
+def has_illegal_mode(entity_data):
+    return False
+
+
+def has_illegal_class(entity_data):
+    if not entity_data.class_type in LEGAL_CLASSES:
+        log("invalid character class {classid}"
+            .format(classid=entity_data.class_type),
+            LOG_LEVEL_VERBOSE)
+        return True
     return False
 
 

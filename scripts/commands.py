@@ -20,23 +20,27 @@ Default set of commands bundled with cuwo
 """
 
 from cuwo.script import (ServerScript, ConnectionScript, command, get_player,
-    admin)
+                         admin)
 from cuwo.common import get_chunk
 from cuwo.packet import (HitPacket, HIT_NORMAL)
 from cuwo.vector import Vector3
 import platform
 
+
 class CommandServer(ServerScript):
     pass
 
+
 def get_class():
     return CommandServer
+
 
 @command
 @admin
 def say(script, *args):
     message = ' '.join(args)
     script.connection.send_chat(message)
+
 
 @command
 def server(script):
@@ -45,6 +49,7 @@ def server(script):
     if revision is not None:
         msg += ', revision %s' % revision
     return msg
+
 
 @command
 def login(script, password):
@@ -55,11 +60,29 @@ def login(script, password):
     script.connection.rights.update(user_types)
     return 'Logged in as %s' % (', '.join(user_types))
 
+
 @command
 @admin
 def kick(script, name):
     player = get_player(script.server, name)
     player.kick()
+
+
+@command
+def players(script):
+    players = "{count} Players online: ".format(
+        count=len(script.server.connections))
+
+    for connection in script.server.connections.itervalues():
+        name = connection.name
+        if name is None:
+            name = "unknown"
+
+        players = players + "{name}(#{id}) ".format(
+            name=name, id=connection.entity_id)
+
+    return players
+
 
 @command
 @admin
@@ -70,8 +93,9 @@ def setclock(script, value):
         return 'Invalid clock specified'
     return 'Clock set to %s' % value
 
+
 @command
-def whereis(script, name = None):
+def whereis(script, name=None):
     if name is None:
         player = script.connection
         message = 'You are at %s'
@@ -80,12 +104,14 @@ def whereis(script, name = None):
         message = '%s is at %%s' % player.name
     return message % (get_chunk(player.position),)
 
+
 @command
 def pm(script, name, *args):
     player = get_player(script.server, name)
     message = ' '.join(args)
     player.send_chat('%s (PM): %s' % (script.connection.name, message))
     return 'PM sent'
+
 
 @command
 @admin

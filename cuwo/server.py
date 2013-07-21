@@ -146,12 +146,19 @@ class CubeWorldConnection(Protocol):
                 self.on_join()
                 self.has_joined = True
             else:
+                if is_bit_set(self.entity_data.last_update_mask, 9):
+                    self.call_scripts('on_mode_update')
+                if is_bit_set(self.entity_data.last_update_mask, 21):
+                    self.call_scripts('on_class_update')
                 if is_bit_set(self.entity_data.last_update_mask, 33):
                     self.call_scripts('on_level_update')
                 if is_bit_set(self.entity_data.last_update_mask, 44):
                     self.call_scripts('on_equipment_update')
+                if is_bit_set(self.entity_data.last_update_mask, 45):
+                    self.call_scripts('on_name_update')
                 if is_bit_set(self.entity_data.last_update_mask, 46):
                     self.call_scripts('on_skill_update')
+
 
     def on_chat_packet(self, packet):
         message = packet.value
