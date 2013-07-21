@@ -68,6 +68,22 @@ def kick(script, name):
 
 
 @command
+def players(script):
+    players = "{count} Players online: ".format(
+        count=len(script.server.connections))
+
+    for connection in script.server.connections.itervalues():
+        name = connection.name
+        if name is None:
+            name = "unknown"
+
+        players = players + "{name}(#{id}) ".format(
+            name=name, id=connection.entity_id)
+
+    return players
+
+
+@command
 @admin
 def setclock(script, value):
     try:

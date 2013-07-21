@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+import cuwo.pypy
 from cuwo.twistedreactor import install_reactor
 install_reactor()
 from twisted.internet.protocol import Factory, Protocol
@@ -33,7 +34,7 @@ from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
 from cuwo.common import (get_clock_string, parse_clock, parse_command,
-                         get_chunk, filter_string)
+                         get_chunk, filter_string, is_bit_set)
 from cuwo.script import call_scripts
 from cuwo.config import ConfigObject
 
@@ -146,6 +147,22 @@ class CubeWorldConnection(Protocol):
         if not self.has_joined and getattr(self.entity_data, 'name', None):
             self.on_join()
             self.has_joined = True
+        else:
+            if is_bit_set(self.entity_data.mask, 9):
+                self.call_scripts('on_mode_update')
+            if is_bit_set(self.entity_data.mask, 21):
+                self.call_scripts('on_class_update')
+            if is_bit_set(self.entity_data.mask, 30):
+                self.call_scripts('on_multiplier_update')
+            if is_bit_set(self.entity_data.mask, 33):
+                self.call_scripts('on_level_update')
+            if is_bit_set(self.entity_data.mask, 44):
+                self.call_scripts('on_equipment_update')
+            if is_bit_set(self.entity_data.mask, 45):
+                self.call_scripts('on_name_update')
+            if is_bit_set(self.entity_data.mask, 46):
+                self.call_scripts('on_skill_update')
+
 
     def on_chat_packet(self, packet):
         message = filter_string(packet.value).strip()
@@ -163,7 +180,10 @@ class CubeWorldConnection(Protocol):
         if interact_type == INTERACT_DROP:
             pos = self.position.copy()
             pos.z -= constants.BLOCK_SCALE
-            self.server.drop_item(packet.item_data, pos)
+            item = packet.item_data
+
+            if not self.call_scripts('on_drop', item, pos) is False:
+                self.server.drop_item(item, pos)
         elif interact_type == INTERACT_PICKUP:
             chunk = (packet.chunk_x, packet.chunk_y)
             try:
@@ -191,13 +211,14 @@ class CubeWorldConnection(Protocol):
 
     def on_join(self):
         print 'Player %s joined (IP %s)' % (self.name, self.address.host)
-        for connection in self.server.connections.values():
-            if not connection.has_joined:
-                continue
-            entity_packet.set_entity(connection.entity_data,
-                                     connection.entity_id)
-            self.send_packet(entity_packet)
-        self.call_scripts('on_join')
+
+        if self.call_scripts('on_join') is True:
+            for connection in self.server.connections.values():
+                if not connection.has_joined:
+                    continue
+                entity_packet.set_entity(connection.entity_data,
+                                         connection.entity_id)
+                self.send_packet(entity_packet)
 
     def on_command(self, command, parameters):
         self.call_scripts('on_command', command, parameters)
