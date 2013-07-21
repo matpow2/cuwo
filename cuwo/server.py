@@ -150,6 +150,8 @@ class CubeWorldConnection(Protocol):
                 self.call_scripts('on_mode_update')
             if is_bit_set(self.entity_data.mask, 21):
                 self.call_scripts('on_class_update')
+            if is_bit_set(self.entity_data.mask, 30):
+                self.call_scripts('on_multiplier_update')
             if is_bit_set(self.entity_data.mask, 33):
                 self.call_scripts('on_level_update')
             if is_bit_set(self.entity_data.mask, 44):
@@ -158,6 +160,7 @@ class CubeWorldConnection(Protocol):
                 self.call_scripts('on_name_update')
             if is_bit_set(self.entity_data.mask, 46):
                 self.call_scripts('on_skill_update')
+
 
     def on_chat_packet(self, packet):
         message = filter_string(packet.value).strip()
@@ -175,7 +178,10 @@ class CubeWorldConnection(Protocol):
         if interact_type == INTERACT_DROP:
             pos = self.position.copy()
             pos.z -= constants.BLOCK_SCALE
-            self.server.drop_item(packet.item_data, pos)
+            item = packet.item_data
+
+            if not self.call_scripts('on_drop', item, pos) is False:
+                self.server.drop_item(item, pos)
         elif interact_type == INTERACT_PICKUP:
             chunk = (packet.chunk_x, packet.chunk_y)
             try:

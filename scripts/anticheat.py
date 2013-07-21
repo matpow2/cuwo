@@ -43,7 +43,19 @@ LEGAL_CLASSES = (1, 2, 3, 4)
 
 TWOHANDED_WEAPONS = (5, 6, 7, 10, 11, 15, 16, 17)
 
+LEGAL_RECIPE_ITEMS = (3, 4, 5, 6, 7, 8)
+
 LEGAL_ITEMS = dict({
+    # Consumables
+    (1, 1): (0, ),
+    (1, 2): (0, ),
+
+    (1, 4): (0, ),
+    (1, 5): (0, ),
+    (1, 6): (0, ),
+    (1, 7): (0, ),
+    (1, 8): (0, ),
+    (1, 9): (0, ),
     # Weapons
     (3, 0): (1, ),   # 1h swords only iron
     (3, 1): (1, ),   # axes only iron
@@ -76,59 +88,51 @@ LEGAL_ITEMS = dict({
     (7, 0): (1, 25, 26, 27),
     (8, 0): (11, 12),  # rings, gold and silver
     (9, 0): (11, 12),  # amulets, gold and silver
+    (11, 0): (1, 11, 12, 13, 14, 15, 16),
+    (11, 1): (2, ),
+    (11, 2): (19, ),   # I've only ever seen parrot feathers, are there others?
+    (11, 5): (21, ),
+    (11, 6): (0, ),
+    (11, 9): (26, 27),
+    (11, 11): (27, ),
+    (11, 12): (24, ),
+
+    (11, 14): (128, 129, 130, 131),
+    (11, 15): (0, ),
+    (11, 16): (0, ),
+    (11, 17): (0, ),
+    (11, 18): (0, ),
+    (11, 19): (9, ),
+    (11, 20): (0, ),
+    (11, 21): (0, ),
+    (11, 22): (0, ),
+    (11, 23): (0, ),
+    (11, 24): (0, ),
+
+    (11, 26): (0, ),
+    (11, 27): (0, ),
+
+    (14, 0): (0, ),    # leftovers
+    (18, 0): (0, ),    # candle
+    (18, 1): (0, ),    # candle
     (23, 0): (2, ),    # wood hanglider
     (23, 1): (2, ),    # wood boat
     (24, 0): (1, ),    # lamp, iron
+})
 
-    # pets
-    (19, 19): (0, ),
-    (19, 22): (0, ),
-    (19, 23): (0, ),
-    (19, 25): (0, ),
-    (19, 26): (0, ),
-    (19, 27): (0, ),
-    (19, 33): (0, ),
-    (19, 34): (0, ),
-    (19, 35): (0, ),
-    (19, 36): (0, ),
-    (19, 37): (0, ),
-    (19, 38): (0, ),
-    (19, 39): (0, ),
-    (19, 40): (0, ),
-    (19, 40): (0, ),
-    (19, 50): (0, ),
-    (19, 53): (0, ),
-    (19, 55): (0, ),
-    (19, 56): (0, ),
-    (19, 57): (0, ),
-    (19, 58): (0, ),
-    (19, 59): (0, ),
-    (19, 60): (0, ),
-    (19, 61): (0, ),
-    (19, 62): (0, ),
-    (19, 63): (0, ),
-    (19, 64): (0, ),
-    (19, 65): (0, ),
-    (19, 66): (0, ),
-    (19, 67): (0, ),
-    (19, 74): (0, ),
-    (19, 75): (0, ),
-    (19, 86): (0, ),
-    (19, 87): (0, ),
-    (19, 88): (0, ),
-    (19, 90): (0, ),
-    (19, 91): (0, ),
-    (19, 92): (0, ),
-    (19, 93): (0, ),
-    (19, 98): (0, ),
-    (19, 99): (0, ),
-    (19, 102): (0, ),
-    (19, 103): (0, ),
-    (19, 104): (0, ),
-    (19, 105): (0, ),
-    (19, 106): (0, ),
-    (19, 151): (0, ),
-    })
+LEGAL_PETS = (19, 22, 23, 25, 26, 27, 30, 33, 34, 35, 36, 37, 38, 39, 40, 50,
+              53, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 74, 75,
+              86, 87, 88, 90, 91, 92, 93, 98, 99, 102, 103, 104, 105, 106, 151)
+
+
+def generate_pets():
+    for pet in LEGAL_PETS:
+        LEGAL_ITEMS[(19, pet)] = (0, )
+        LEGAL_ITEMS[(20, pet)] = (0, )
+
+
+# generate pets and petfood in the legal item list based on legal pets
+generate_pets()
 
 LEGAL_ITEMSLOTS = dict({
     3: (6, 7),
@@ -145,40 +149,222 @@ LEGAL_ITEMSLOTS = dict({
 
 ARMOR_IDS = (4, 5, 6, 7)
 
+CLASS_WARRIOR = 1
+CLASS_RANGER = 2
+CLASS_MAGE = 3
+CLASS_ROGUE = 4
+
 CLASS_WEAPONS = dict({
-    1: (0, 1, 2, 13, 15, 16, 17),    # Warrior
-    2: (6, 7, 8),                    # Ranger
-    3: (10, 11, 12),                 # Mage
-    4: (3, 4, 5)                     # Rogue
+    CLASS_WARRIOR: (0, 1, 2, 13, 15, 16, 17),  # Warrior
+    CLASS_RANGER: (6, 7, 8),                   # Ranger
+    CLASS_MAGE: (10, 11, 12),                  # Mage
+    CLASS_ROGUE: (3, 4, 5)                     # Rogue
 })
 
 CLASS_ARMOR = dict({
-    1: (1, ),                       # Warrior
-    2: (26, ),                      # Ranger
-    3: (25, ),                      # Mage
-    4: (27, )                       # Rogue
+    CLASS_WARRIOR: (1, ),                      # Warrior
+    CLASS_RANGER: (26, ),                      # Ranger
+    CLASS_MAGE: (25, ),                        # Mage
+    CLASS_ROGUE: (27, )                        # Rogue
 })
 
-COMMON_ABILITIES = (11,     # Unarmed\One handed mouse 2
-                    63,     # Unarmed\One handed mouse 2 wind up
-                    80,     # Drink potion
-                    81,     # Eat
-                    82,     # Present pet food
-                    83,     # Sit
-                    84,     # Sleep
-                    106,    # Call pet
-                    107)    # Sailing
+ALL_BUT_MAGE = (CLASS_ROGUE, CLASS_RANGER, CLASS_WARRIOR)
 
-CLASS_ABILITIES = dict({
-    1: (6, 7, 1, 2, 57, 58, 67),
-    2: (6, 7, 21, 22, 23, 24, 26, 25, 27, 55),
-    3: (41, 42),
-    4: (6, 7, ),
+ABILITIES = dict({
+    # One handed
+    1: {'class': (CLASS_WARRIOR, ),
+        'weapon': (0, 1, 2)},
+    2: {'class': (CLASS_WARRIOR, ),
+        'weapon': (0, 1, 2)},
+    68: {'class': (CLASS_WARRIOR, ),
+         'weapon': (0, 1, 2)},
+
+    # Mouse 2 Longsword skill
+    5: {'class': (CLASS_ROGUE, ),
+        'weapon': (5, )},
+
+    # Mouse 1 Unarmed\fist skills
+    6: {'class': ALL_BUT_MAGE,
+        'weapon': (-1, 4)},
+    7: {'class': ALL_BUT_MAGE,
+        'weapon': (-1, 4)},
+
+    # Shield skills
+    8: {'class': (CLASS_WARRIOR, ),
+        'weapon': (13, )},
+    9: {'class': (CLASS_WARRIOR, ),
+        'weapon': (13, )},
+    10: {'class': (CLASS_WARRIOR, ),
+         'weapon': (13, )},
+
+    # Mouse 2 Unarmed skills
+    11: {'weapon': (-1, 0, 1, 2)},
+    63: {'weapon': (-1, 0, 1, 2)},
+
+    # Fist skill
+    20: {'class': (CLASS_ROGUE, ),
+         'weapon': (4, )},
+
+    # Mouse 1 Longsword skills
+    13: {'class': (CLASS_ROGUE, ),
+         'weapon': (5, )},
+    14: {'class': (CLASS_ROGUE, ),
+         'weapon': (5, )},
+
+    # Dagger skills
+    17: {'class': (CLASS_ROGUE, ),
+         'weapon': (3, )},
+    18: {'class': (CLASS_ROGUE, ),
+         'weapon': (3, )},
+    19: {'class': (CLASS_ROGUE, ),
+         'weapon': (3, )},
+
+    # Ranger skill 2 (Retreat)
+    21: {'class': (CLASS_RANGER, ), },
+
+    # Bow and crossbow basic attack
+    22: {'class': (CLASS_RANGER, ),
+         'weapon': (6, 7)},
+
+    # Crossbow skills
+    23: {'class': (CLASS_RANGER, ),
+         'weapon': (7, )},
+    24: {'class': (CLASS_RANGER, ),
+         'weapon': (7, )},
+
+    # Bow skills
+    25: {'class': (CLASS_RANGER, ),
+         'weapon': (6, )},
+    55: {'class': (CLASS_RANGER, ),
+         'weapon': (6, )},
+
+    # Boomerang skills
+    26: {'class': (CLASS_RANGER, ),
+         'weapon': (8, )},
+    27: {'class': (CLASS_RANGER, ),
+         'weapon': (8, )},
+
+    # Fire Staff skills
+    30: {'class': (CLASS_MAGE, ),
+         'spec': 0,
+         'weapon': (10, )},
+    31: {'class': (CLASS_MAGE, ),
+         'spec': 0,
+         'weapon': (10, )},
+
+    # Water Staff skills
+    32: {'class': (CLASS_MAGE, ),
+         'spec': 1,
+         'weapon': (10, )},
+    33: {'class': (CLASS_MAGE, ),
+         'spec': 1,
+         'weapon': (10, )},
+
+    # Water Mage skill 1 (heal)
+    34: {'class': (CLASS_MAGE, ),
+         'spec': 1},
+
+    # Fire Bracelet\unarmed skills
+    37: {'class': (CLASS_MAGE, ),
+         'spec': 0,
+         'weapon': (12, -1)},
+    39: {'class': (CLASS_MAGE, ),
+         'spec': 0,
+         'weapon': (12, -1)},
+    40: {'class': (CLASS_MAGE, ),
+         'spec': 0,
+         'weapon': (12, -1)},
+
+    # Fire Wand skills
+    38: {'class': (CLASS_MAGE, ),
+         'spec': 0,
+         'weapon': (11, )},
+    46: {'class': (CLASS_MAGE, ),
+         'spec': 0,
+         'weapon': (11, )},
+
+    # Water Bracelet\Unarmed skills
+    41: {'class': (CLASS_MAGE, ),
+         'spec': 1,
+         'weapon': (12, -1)},
+    42: {'class': (CLASS_MAGE, ),
+         'spec': 1,
+         'weapon': (12, -1)},
+    43: {'class': (CLASS_MAGE, ),
+         'spec': 1,
+         'weapon': (12, -1)},
+
+    # Water Wand skills
+    44: {'class': (CLASS_MAGE, ),
+         'spec': 1,
+         'weapon': (11, )},
+    45: {'class': (CLASS_MAGE, ),
+         'spec': 1,
+         'weapon': (11, )},
+
+    # Rogue skill 1 (Charge)
+    48: {'class': (CLASS_ROGUE, ), },
+
+    # Mage skill 3 (Teleport)
+    49: {'class': (CLASS_MAGE, ), },
+
+    # Warrior skill 1 (Slam)
+    54: {'class': (CLASS_WARRIOR, ), },
+
+    # Two handed skills
+    57: {'class': (CLASS_WARRIOR, ),
+         'weapon': (15, 16, 17)},
+    58: {'class': (CLASS_WARRIOR, ),
+         'weapon': (15, 16, 17)},
+    59: {'class': (CLASS_WARRIOR, ),
+         'weapon': (15, 16, 17)},
+    60: {'class': (CLASS_WARRIOR, ),
+         'weapon': (15, 16, 17)},
+    61: {'class': (CLASS_WARRIOR, ),
+         'weapon': (15, 16, 17)},
+    67: {'class': (CLASS_WARRIOR, ),
+         'weapon': (15, 16, 17)},
+
+    # Rogue Skill 2 (Stealth)
+    79: {'class': (CLASS_ROGUE, ), },
+
+    # Mage Skill 1 (Fire Explosion)
+    88: {'class': (CLASS_MAGE, ),
+         'spec': 0},
+
+    # Warrior Skill 2 (Spinning blade attack)
+    86: {'class': (CLASS_WARRIOR, ), },
+
+    # Rogue Skill 3 (Ninja stars)
+    96: {'class': (CLASS_ROGUE, ),
+         'spec': 1},
+
+    # Warrior Skill 3 (Bulwark)
+    101: {'class': (CLASS_WARRIOR, ),
+          'spec': 1},
+
+    # Mage Skill 2 (Mana shield)
+    103: {'class': (CLASS_MAGE, ), },
+
+    # Shield
+    104: {'class': (CLASS_WARRIOR, ),
+          'weapon': (13, )},
+
+
+    # Generic
+    80: {},     # Drink potion
+    81: {},     # Eat
+    82: {},     # Present pet food
+    83: {},     # Sit
+    84: {},     # Sleep
+    106: {},    # Ride pet
+    107: {}     # Sailing
 })
 
 from cuwo.script import (ServerScript,
                          ConnectionScript, command, admin,
                          get_player)
+from cuwo.packet import ServerUpdate, PickupAction
 import re
 
 
@@ -198,6 +384,9 @@ class AntiCheatConnection(ConnectionScript):
             return False
 
         if not self.on_skill_update():
+            return False
+
+        if not self.on_multiplier_update():
             return False
 
         self.connection.send_chat(WELCOME_MESSAGE.format(name=CUWO_ANTICHEAT))
@@ -240,6 +429,29 @@ class AntiCheatConnection(ConnectionScript):
     def on_class_update(self):
         if has_illegal_class(self.connection.entity_data):
             remove_cheater(self.connection, 'illegal character class')
+            return False
+
+        return True
+
+    def on_multiplier_update(self):
+        if has_illegal_multiplier(self.connection.entity_data):
+            remove_cheater(self.connection, 'illegal attribute multiplier')
+            return False
+
+        return True
+
+    def on_drop(self, item, pos):
+        if is_item_illegal(item):
+            pack = ServerUpdate()
+            pack.reset()
+            action = PickupAction()
+            action.entity_id = self.connection.entity_id
+            action.item_data = item
+            pack.pickups.append(action)
+
+            self.connection.send_packet(pack)
+
+            remove_cheater(self.connection, 'illegal item dropped')
             return False
 
         return True
@@ -305,6 +517,26 @@ def is_item_illegal(item):
             rarity=item.rarity), LOG_LEVEL_VERBOSE)
         return True
 
+    # Item type 2 is a recipe they are handled differently.
+    # minus modifier is the item type of the crafted item
+    if item.type == 2:
+        if not item.minus_modifier in LEGAL_RECIPE_ITEMS:
+            log("invalid recipe:type={type} subtype={subtype} material={mat}"
+                .format(type=item.minus_modifier,
+                        subtype=item.sub_type,
+                        mat=item.material), LOG_LEVEL_VERBOSE)
+            return True
+
+        if not (item.material in
+                LEGAL_ITEMS[(item.minus_modifier, item.sub_type)]):
+            log("invalid recipe:type={type} subtype={subtype} material={mat}"
+                .format(type=item.minus_modifier,
+                        subtype=item.sub_type,
+                        mat=item.material), LOG_LEVEL_VERBOSE)
+            return True
+
+        return False
+
     if not (item.type, item.sub_type) in LEGAL_ITEMS:
         log("invalid item:type={type} subtype={subtype} material={material}"
             .format(type=item.type,
@@ -324,7 +556,8 @@ def is_item_illegal(item):
 
 def is_equiped_illegal(item, entity_data, in_slotindex):
 
-    if calc_power_level(item.level) > calc_power_level(entity_data.character_level):
+    if (calc_power_level(item.level) >
+            calc_power_level(entity_data.character_level)):
         log("item level too high for character", LOG_LEVEL_VERBOSE)
         return True
 
@@ -413,6 +646,56 @@ def has_illegal_skills(entity_data):
 
 
 def has_illegal_mode(entity_data):
+
+    mode = entity_data.current_mode
+
+    if mode == 0:
+        return False
+
+    if not mode in ABILITIES:
+        log("invalid ability or mode: mode={mode}"
+            .format(mode=mode),
+            LOG_LEVEL_VERBOSE)
+        return True
+
+    if 'class' in ABILITIES[mode]:
+        if not entity_data.class_type in ABILITIES[mode]['class']:
+            log("ability or mode not allowed for class:" +
+                "mode={mode} class={classid}"
+                .format(mode=mode,
+                        classid=entity_data.class_type),
+                LOG_LEVEL_VERBOSE)
+            return True
+
+    if 'spec' in ABILITIES[mode]:
+        if entity_data.specialization != ABILITIES[mode]['spec']:
+            log("ability or mode not allowed for class spec:" +
+                "mode={mode} class={classid} spec={spec}"
+                .format(mode=mode,
+                        classid=entity_data.class_type,
+                        spec=entity_data.specialization),
+                LOG_LEVEL_VERBOSE)
+            return True
+
+    if 'weapon' in ABILITIES[mode]:
+        weap1 = entity_data.equipment[6].sub_type
+        weap2 = entity_data.equipment[7].sub_type
+
+        if entity_data.equipment[6].type == 0:
+            weap1 = -1  # Treating unarmed as -1
+        if entity_data.equipment[7].type == 0:
+            weap2 = -1  # Treating unarmed as -1
+
+        if (not weap1 in ABILITIES[mode]['weapon'] and
+                not weap2 in ABILITIES[mode]['weapon']):
+            log("ability or mode not allowed for weapon:" +
+                "mode={mode} weapon1={weap1} weapon2={weap2}"
+                .format(mode=mode,
+                        weap1=weap1,
+                        weap2=weap2),
+                LOG_LEVEL_VERBOSE)
+            return True
+
     return False
 
 
@@ -427,3 +710,37 @@ def has_illegal_class(entity_data):
 
 def has_illegal_level(entity_data):
     return entity_data.character_level > LEGAL_LEVEL
+
+
+def has_illegal_multiplier(entity_data):
+    if entity_data.max_hp_multiplier != 100:
+        log("invalid max hp multiplier for mult={mult}"
+            .format(mult=entity_data.max_hp_multiplier),
+            LOG_LEVEL_VERBOSE)
+        return True
+
+    if entity_data.shoot_speed != 1:
+        log("invalid attack speed multiplier for mult={mult}"
+            .format(mult=entity_data.shoot_speed),
+            LOG_LEVEL_VERBOSE)
+        return True
+
+    if entity_data.damage_multiplier != 1:
+        log("invalid max damage multiplier for mult={mult}"
+            .format(mult=entity_data.damage_multiplier),
+            LOG_LEVEL_VERBOSE)
+        return True
+
+    if entity_data.armor_multiplier != 1:
+        log("invalid max armor multiplier for mult={mult}"
+            .format(mult=entity_data.armor_multiplier),
+            LOG_LEVEL_VERBOSE)
+        return True
+
+    if entity_data.resi_multiplier != 1:
+        log("invalid max resi multiplier for mult={mult}"
+            .format(mult=entity_data.resi_multiplier),
+            LOG_LEVEL_VERBOSE)
+        return True
+
+    return False
