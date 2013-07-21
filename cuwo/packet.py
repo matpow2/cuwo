@@ -117,10 +117,11 @@ class EntityUpdate(Packet):
         reader.skip(8)
         return read_masked_data(entity, reader)
 
-    def set_entity(self, entity, entity_id):
+    def set_entity(self, entity, entity_id, mask=None):
         writer = ByteWriter()
         writer.write_uint64(entity_id)
         write_masked_data(entity, writer)
+        write_masked_data(entity, writer, mask)
         self.data = writer.get()
 
     def write(self, writer):
@@ -708,5 +709,9 @@ class PacketHandler(object):
                 packet = read_packet(reader, self.table)
             except OutOfData:
                 break
+            except KeyError, e:
+                print 'Last packet ID:', self.last_packet_id
+                raise e
+            self.last_packet_id = packet.packet_id
             self.callback(packet)
         self.data = self.data[pos:]

@@ -57,6 +57,10 @@ def set_bit(mask, index, value):
     return mask
 
 
+def get_bool_bitfield(mask):
+    return [True if digit=='1' else False for digit in bin(mask)[2:]]
+
+
 def get_clock_string(value):
     hour = (value * 24) / constants.MAX_TIME
     minute = ((value * 1440) / constants.MAX_TIME) % 60
@@ -106,16 +110,16 @@ def get_player_class_str(class_id):
 
 
 def parse_command(message):
-    command = ''
-    args = []
-    if message:
-        try:
-            args = shlex.split(message)
-        except ValueError:
-            args = message.split(' ')
-        if args:
-            command = args.pop(0)
-    return command, args
+    if isinstance(message, unicode):
+        # due to shlex unicode problems
+        message = message.encode('utf-8')
+    try:
+        args = shlex.split(message)
+    except ValueError:
+        args = message.split(' ')
+    if args:
+        command = args.pop(0)
+    return command.decode('utf-8'), [arg.decode('utf-8') for arg in args]
 
 
 def create_path(path):

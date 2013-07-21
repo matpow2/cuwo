@@ -1,17 +1,17 @@
 # Copyright (c) Mathias Kaerlev 2013.
 #
 # This file is part of cuwo.
-# 
+#
 # cuwo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # cuwo is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -21,10 +21,10 @@ from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from cuwo.packet import (PacketHandler, write_packet, ServerChatMessage,
-    CS_PACKETS, SC_PACKETS, EntityUpdate, create_entity_data, JoinPacket,
-    CurrentTime, ShootPacket, UpdateFinished)
+                         CS_PACKETS, SC_PACKETS, EntityUpdate,
+                         create_entity_data, JoinPacket, CurrentTime)
 from cuwo import constants
-from cuwo.common import get_chunk
+
 
 class RelayClient(Protocol):
     def __init__(self, protocol):
@@ -33,12 +33,14 @@ class RelayClient(Protocol):
     def dataReceived(self, data):
         self.protocol.serverDataReceived(data)
 
+
 class RelayFactory(Factory):
     def __init__(self, protocol):
         self.protocol = protocol
 
     def buildProtocol(self, addr):
         return RelayClient(self.protocol)
+
 
 class CubeWorldProtocol(Protocol):
     relay_client = None
@@ -129,12 +131,14 @@ class CubeWorldProtocol(Protocol):
     def dataReceived(self, data):
         self.client_handler.feed(data)
 
+
 class CubeWorldServer(Factory):
     def __init__(self):
         print 'cuwo (mitm) running on port 12345'
 
     def buildProtocol(self, addr):
         return CubeWorldProtocol(self)
+
 
 def main():
     reactor.listenTCP(12345, CubeWorldServer())
