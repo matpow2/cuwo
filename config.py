@@ -89,7 +89,7 @@ help_players = ["=== PLAYER COMMANDS HELP ===",
                 "/register <password> - use this to get an unique id when joining the first time",
                 "/login <id> <password> - login after joining using your numeric id you got on registering and the right password",
                 "/spawn - teleports you to the spawn point",
-                "/list - shows you who currently is online",
+                "/list - shows you who currently is online and also their classes/levels",
                 "/whereis <player> - tells you who is where (coordinates)",
                 "/tell <player> <message> - allows you to send a private message to the given player"]
 

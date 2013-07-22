@@ -106,7 +106,7 @@ def spawn(script):
 
 @command
 def help(script):
-    return PLAYER_COMMANDS_HELP
+    script.connection.send_lines(self.server.config.help_players)
 
 
 @command
