@@ -175,17 +175,17 @@ class IRCClientFactory(protocol.ClientFactory):
 
 class IRCScriptConnection(ConnectionScript):
     def on_join(self):
-        self.parent.send('* 6%s1 entered the game' % encode_irc(
+        self.parent.send('* \x036%s\x031\x17 entered the game' % encode_irc(
             self.connection.name))
 
     def on_unload(self):
         if not self.connection.has_joined:
             return
-        self.parent.send('* 6%s1 disconnected' % encode_irc(
+        self.parent.send('* \x036%s\x031\x17 disconnected' % encode_irc(
             self.connection.name))
 
     def on_chat(self, message):
-        message = encode_irc('<6%s1> %s' % (self.connection.name, message))
+        message = encode_irc('<\x036%s\x031\x17> %s' % (self.connection.name, message))
         self.parent.send(message)
 
 
