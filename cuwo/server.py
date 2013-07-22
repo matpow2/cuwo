@@ -68,6 +68,10 @@ class CubeWorldConnection(Protocol):
     disconnected = False
     change_index = -1
 
+    last_health = -1
+    last_level = -1
+    last_xp = -1
+
     # used for anti chat spamming
     time_last_chat    = -1
     chat_messages_burst = 0
@@ -169,44 +173,44 @@ class CubeWorldConnection(Protocol):
                 return
         if len(self.server.connections) >= self.server.config.max_players:
             res = self.call_scripts('on_join_full_server')
+            # For being able to allow joining by external scritps when server is full
             if not res:
                 self.send_packet(server_full_packet)
                 self.disconnect(None)
-                print '[INFO] Player %s (%s) [%s] tried to join full server'
+                print '[INFO] Player %s [%s] tried to join full server'
                       % (self.name,
-                         common.get_entity_type_level_str(self.entity_data)),
                          self.address.host)
-                return
-        self.entity_id = self.server.entity_ids.pop()
-        self.server.connections[(self.entity_id,)] = self
-        join_packet.entity_id = self.entity_id
-        self.send_packet(join_packet)
-        seed_packet.seed = self.server.config.seed
-        self.send_packet(seed_packet)
+            else:
+                self.entity_id = self.server.entity_ids.pop()
+                self.server.connections[(self.entity_id,)] = self
+                join_packet.entity_id = self.entity_id
+                self.send_packet(join_packet)
+                seed_packet.seed = self.server.config.seed
+                self.send_packet(seed_packet)
 
     def on_entity_packet(self, packet):
         if self.entity_data is None:
             self.entity_data = create_entity_data()
         self.server.entities[self.entity_id] = self.entity_data
-        self.entity_data.mask |= packet.update_entity(self.entity_data)
+        mask = self.entity_data.mask
+        mask |= packet.update_entity(self.entity_data)
         if self.entity_data.entity_type >= constants.ENTITY_TYPE_PLAYER_MIN_ID and self.entity_data.entity_type <= constants.ENTITY_TYPE_PLAYER_MAX_ID and getattr(self.entity_data, 'name', None):
             if self.connection_state == 0:
                 self.on_join()
-            else:
-                if is_bit_set(mask, 9):
-                    self.call_scripts('on_mode_update')
-                if is_bit_set(mask, 21):
-                    self.call_scripts('on_class_update')
-                if is_bit_set(mask, 33):
-                    self.call_scripts('on_level_update')
-                if is_bit_set(mask, 44):
-                    self.call_scripts('on_equipment_update')
-                if is_bit_set(mask, 45):
-                    self.call_scripts('on_name_update')
-                if is_bit_set(mask, 46):
-                    self.call_scripts('on_skill_update')
-        else:
-            print '[INFO] Invalid entity type for player with packet from %' % self.address.host
+        if is_bit_set(mask, 9):
+            self.call_scripts('on_mode_update')
+        if is_bit_set(mask, 21):
+            self.call_scripts('on_class_update')
+        if is_bit_set(mask, 30):
+            self.call_scripts('on_multiplier_update')
+        if is_bit_set(mask, 33):
+            self.call_scripts('on_level_update')
+        if is_bit_set(mask, 44):
+            self.call_scripts('on_equipment_update')
+        if is_bit_set(mask, 45):
+            self.call_scripts('on_name_update')
+        if is_bit_set(mask, 46):
+            self.call_scripts('on_skill_update')
 
     def on_chat_packet(self, packet):
         # Spammer stopped for a defined amount of seconds - reset spam score
@@ -242,15 +246,11 @@ class CubeWorldConnection(Protocol):
     def on_interact_packet(self, packet):
         interact_type = packet.interact_type
         if interact_type == INTERACT_DROP:
-            res = self.call_scripts('on_drop', packet.item_data)
-            if res is False:
-                return
             pos = self.position.copy()
             pos.z -= constants.BLOCK_SCALE
-            if self.server.drop_item(packet.item_data, self):
-                print '[DEBUG] Player %s dropped item #%s at (%r,%r,%r)' % (self.name, self.entity_id, pos.x, pos.y, pos.z)
-            else:
-                self.send_chat('[HINT] Items can not be dropped here.')
+            item = packet.item_data
+            if not self.call_scripts('on_drop', item, pos) is False:
+                self.server.drop_item(item, pos)
         elif interact_type == INTERACT_PICKUP:
             res = self.call_scripts('on_pickup')
             if res is False:
@@ -634,7 +634,7 @@ class CubeWorldServer(Factory):
             return None
 
 
-    def drop_item(self, item_data, pos):
+    def drop_item(self, item_data, pos, lifetime=None):
         try:
             chunk_items = self.chunk_items[get_chunk(pos)]
             if len(chunk_items) < constants.MAX_ITEMS_PER_CHUNK:
@@ -645,14 +645,17 @@ class CubeWorldServer(Factory):
                 item.something3 = item.something5 = item.something6 = 0
                 item.pos = pos
                 item.item_data = item_data
-                item.despawn_time = item.drop_time + constants.MAX_ITEM_LIFETIME
+                if lifetime is None:
+                    item.despawn_time = reactor.seconds() + constants.MAX_ITEM_LIFETIME
+                elif lifetime is not False:
+                    item.despawn_time = reactor.seconds() + lifetime
+                else:
+                    item.despawn_time = None
                 chunk_items.append(item)
                 if item.despawn_time < self.next_items_autoremoval:
                     self.next_items_autoremoval = item.despawn_time
                 self.items_changed = True
                 return True
-            else:
-                return False
         except KeyError:
             pass
         except IndexError:
@@ -691,23 +694,17 @@ class CubeWorldServer(Factory):
         update_packet = self.update_packet
 
         # item updates
-        if self.last_secondly_check >= self.next_items_autoremoval:
+        if uxtime >= self.next_items_autoremoval:
             self.next_items_autoremoval = self.last_secondly_check + 300
-            item_despawn_time = self.last_secondly_check - constants.MAX_ITEM_LIFETIME
             for chunk, items in self.chunk_items.iteritems():
                 new_chunk_items = []
                 for item in items:
-                    # items that stay forever
-                    if item.drop_time < 0:
+                    if not item.despawn_time or item.despawn_time > uxtime:
                         new_chunk_items.append(item)
                     else:
-                        if item.drop_time > item_despawn_time:
-                            new_chunk_items.append(item)
-                            item_lifetime = item.drop_time + constants.MAX_ITEM_LIFETIME
-                            if (item.drop_time + constants.MAX_ITEM_LIFETIME) < self.next_items_autoremoval:
-                                self.next_items_autoremoval = item.drop_time + constants.MAX_ITEM_LIFETIME
-                        else:
-                            self.items_changed = True
+                        if item.despawn_time < self.next_items_autoremoval:
+                            self.next_items_autoremoval = item.despawn_time
+                        self.items_changed = True
                 self.chunk_items[chunk] = new_chunk_items
 
         if self.items_changed:

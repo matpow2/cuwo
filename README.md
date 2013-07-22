@@ -12,6 +12,7 @@ there, and has features like
 * Scripting (see scripts in ./scripts directory)
 * Advanced configuration
 * Ban system
+* AntiSpam system with burst limit
 * Commands
     ... for players:
         * /register <password>
@@ -25,10 +26,14 @@ there, and has features like
         * /setclock <time>
         * /kill [player]
 * SQLite database for storing permanent data
-    * For faster access it is kept in memory
-    * Asynchronous database queries
-    * R*-Tree regions, region groups and triggers possible in near future
-    * Saves player data like ID, password hash (SHA224 with salt), (last) online time, last IP connected with
+    * For faster access it is currently kept in memory
+    * Asynchronous database queries for faster access/store
+    * Using the R*Tree algorithm allows you to have
+      millions of regions without performance issues
+    * 3D regions, region groups and even region/regiongroup
+    * triggers/events possible (on enter/leave region etc.)
+    * Saves player data like ID, password hash (SHA224 with salt),
+    * (last) online time, last IP connected with
     * Bans for both player IDs and IPs
     ... and more in future
 * Lower CPU requirements than normal server
@@ -89,6 +94,8 @@ FAQ
 Special thanks
 ==============
 
+matpow2 - main contributor and project starter
+
 Sarcen - help with some protocol variables, scripting
 
 Perl - protocol RE
@@ -98,6 +105,8 @@ Somer - help with some protocol variables
 Favorlock - scripting and commands
 
 Jakky89 - SQLite database integration, scripting, commands
+
+SLoW - scripting
 
 Kainzo - Testing
 

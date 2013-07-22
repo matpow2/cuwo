@@ -67,7 +67,7 @@ time_modifier = 1.0
 
 # List of scripts to run on the server on startup.
 # Consider turning on 'pvp', i.e. player versus player
-scripts = ['commands', 'welcome', 'pvp', 'ban', 'give']
+scripts = ['log', 'commands', 'welcome', 'pvp', 'ban']
 
 # Passwords used for rights management. Keys are passwords, and values are
 # a list of user types under that password. Right now, only 'admin' is defined,
@@ -96,5 +96,9 @@ help_players = ["=== PLAYER COMMANDS HELP ===",
 # Web interface variables (enable by adding 'web' to script list)
 web_port = 8081
 
+# Logging variables
+log_name = './cuwo.log'
+rotate_daily = True
+
 # Profile file. Set to something other than None to enable.
-profile_file = None
+profile_file = './localprofiler.log'

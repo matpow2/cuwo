@@ -698,19 +698,16 @@ class PacketHandler(object):
         self.callback = callback
 
     def feed(self, data):
-        self.data += data
-        reader = ByteReader(self.data)
-        while True:
-            pos = reader.tell()
-            if pos >= len(self.data):
-                break
-            try:
+        try:
+            self.data += data
+            reader = ByteReader(self.data)
+            while True:
+                pos = reader.tell()
+                if pos >= len(self.data):
+                    break
                 packet = read_packet(reader, self.table)
-            except OutOfData:
-                break
-            except KeyError, e:
-                print 'Last packet ID:', self.last_packet_id
-                raise e
-            self.last_packet_id = packet.packet_id
-            self.callback(packet)
-        self.data = self.data[pos:]
+                self.last_packet_id = packet.packet_id
+                self.callback(packet)
+            self.data = self.data[pos:]
+        except (OutOfData, KeyError):
+            pass
