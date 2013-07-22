@@ -36,7 +36,7 @@ rotate_daily = True
 profile_file = None
 
 # Max connections per IP to prevent DoS.
-max_connections_per_ip = 1
+max_connections_per_ip = 5
 
 # Connection handshake timeout time in seconds
 connection_timeout = 5.0

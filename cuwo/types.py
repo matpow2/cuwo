@@ -104,9 +104,18 @@ class MultikeyDict(dict):
             dict.__delitem__(self, key)
         self.value_set.remove(item.value)
 
+    def add(self, value):
+        self[(value,)] = value
+
+    def discard(self, value):
+        try:
+            del self[value]
+        except KeyError:
+            pass
+
     def __setitem__(self, keys, value):
-        keys = list(keys)
-        keys.append(value)
+        keys = set(keys)
+        keys.add(value)
         new_item = DictItem(keys, value)
         self.value_set.add(value)
         for key in keys:
@@ -118,7 +127,7 @@ class MultikeyDict(dict):
         return self[key] if key in self else default
 
     def clear(self):
-        dict.clear()
+        dict.clear(self)
         self.value_set.clear()
 
     def values(self):

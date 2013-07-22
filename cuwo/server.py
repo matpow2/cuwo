@@ -62,6 +62,7 @@ class CubeWorldConnection(Protocol):
     entity_id = None
     entity_data = None
     disconnected = False
+    scripts = None
 
     def __init__(self, server, addr):
         self.address = addr
@@ -70,6 +71,12 @@ class CubeWorldConnection(Protocol):
     # connection methods
 
     def connectionMade(self):
+        server = self.server
+        if len(server.connections) >= server.config.base.max_players:
+            self.send_packet(server_full_packet)
+            self.disconnect()
+            return
+
         self.packet_handlers = {
             ClientVersion.packet_id: self.on_version_packet,
             EntityUpdate.packet_id: self.on_entity_packet,
@@ -79,6 +86,7 @@ class CubeWorldConnection(Protocol):
             ShootPacket.packet_id: self.on_shoot_packet
         }
 
+        self.server.connections.add(self)
         self.scripts = []
         self.server.call_scripts('on_new_connection', self)
         self.packet_handler = PacketHandler(CS_PACKETS, self.on_packet)
@@ -95,18 +103,16 @@ class CubeWorldConnection(Protocol):
         if self.disconnected:
             return
         self.disconnected = True
-        try:
-            del self.server.connections[self]
-        except KeyError:
-            pass
+        self.server.connections.discard(self)
         if self.has_joined:
             print 'Player %s left' % self.name
         if self.entity_data is not None:
             del self.server.entities[self.entity_id]
         if self.entity_id is not None:
             self.server.entity_ids.put_back(self.entity_id)
-        for script in self.scripts[:]:
-            script.unload()
+        if self.scripts is not None:
+            for script in self.scripts[:]:
+                script.unload()
 
     # packet methods
 
@@ -127,11 +133,8 @@ class CubeWorldConnection(Protocol):
             self.disconnect()
             return
         server = self.server
-        if len(server.connections) >= server.config.base.max_players:
-            self.send_packet(server_full_packet)
-            self.disconnect()
-            return
         self.entity_id = server.entity_ids.pop()
+        del server.connections[self]  # remove previous entry
         server.connections[(self.entity_id,)] = self
         join_packet.entity_id = self.entity_id
         self.send_packet(join_packet)
