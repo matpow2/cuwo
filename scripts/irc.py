@@ -33,7 +33,7 @@ def channel(func):
         func(self, user, channel, *arg, **kw)
     return new_func
 
-MAX_IRC_CHAT_SIZE = 50
+MAX_IRC_CHAT_SIZE = 100
 
 
 def encode_irc(value):
@@ -64,7 +64,7 @@ class IRCBot(irc.IRCClient):
         new_user = params[0]
         if user in self.ops:
             self.ops.discard(user)
-            self.ops.add(new_user)
+            self.ops.add(new_user) 
         if user in self.voices:
             self.voices.discard(user)
             self.voices.add(new_user)
@@ -185,7 +185,7 @@ class IRCScriptConnection(ConnectionScript):
             self.connection.name))
 
     def on_chat(self, message):
-        message = encode_irc('<%s> %s' % (self.connection.name, message))
+        message = encode_irc('<6%s1> %s' % (self.connection.name, message))
         self.parent.send(message)
 
 
