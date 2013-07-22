@@ -738,8 +738,11 @@ def get_masked_size(mask):
 def write_masked_data(entity, writer, mask=None):
     if mask is None:
         mask = 0x0000FFFFFFFFFFFF
+<<<<<<< HEAD
     if mask <= 0:
         return
+=======
+>>>>>>> 97e4c57da3c67b51ae2b38e7b3cf50562c2fe675
     writer.write_uint64(mask)
     if is_bit_set(mask, 0):
         writer.write_int64(entity.x)
@@ -821,7 +824,11 @@ def write_masked_data(entity, writer, mask=None):
     if is_bit_set(mask, 32):
         writer.write_uint8(entity.not_used8)
     if is_bit_set(mask, 33):
+<<<<<<< HEAD
         writer.write_uint32(entity.level)
+=======
+        writer.write_uint32(entity.character_level)
+>>>>>>> 97e4c57da3c67b51ae2b38e7b3cf50562c2fe675
     if is_bit_set(mask, 34):
         writer.write_uint32(entity.current_xp)
     if is_bit_set(mask, 35):
