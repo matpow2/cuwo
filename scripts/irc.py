@@ -33,7 +33,7 @@ def channel(func):
         func(self, user, channel, *arg, **kw)
     return new_func
 
-MAX_IRC_CHAT_SIZE = 50
+MAX_IRC_CHAT_SIZE = 100
 
 
 def encode_irc(value):
@@ -175,17 +175,18 @@ class IRCClientFactory(protocol.ClientFactory):
 
 class IRCScriptConnection(ConnectionScript):
     def on_join(self):
-        self.parent.send('* %s entered the game' % encode_irc(
+        self.parent.send('* \x036%s\x031\x17 entered the game' % encode_irc(
             self.connection.name))
 
     def on_unload(self):
         if not self.connection.has_joined:
             return
-        self.parent.send('* %s disconnected' % encode_irc(
+        self.parent.send('* \x036%s\x031\x17 disconnected' % encode_irc(
             self.connection.name))
 
     def on_chat(self, message):
-        message = encode_irc('<%s> %s' % (self.connection.name, message))
+        message = encode_irc('<\x036%s\x031\x17> %s' % (
+            self.connection.name, message))
         self.parent.send(message)
 
 
