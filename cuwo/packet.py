@@ -120,10 +120,6 @@ class EntityUpdate(Packet):
     def set_entity(self, entity, entity_id, mask=None):
         writer = ByteWriter()
         writer.write_uint64(entity_id)
-<<<<<<< HEAD
-=======
-        write_masked_data(entity, writer)
->>>>>>> 97e4c57da3c67b51ae2b38e7b3cf50562c2fe675
         write_masked_data(entity, writer, mask)
         self.data = writer.get()
 
