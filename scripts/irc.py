@@ -64,7 +64,7 @@ class IRCBot(irc.IRCClient):
         new_user = params[0]
         if user in self.ops:
             self.ops.discard(user)
-            self.ops.add(new_user) 
+            self.ops.add(new_user)
         if user in self.voices:
             self.voices.discard(user)
             self.voices.add(new_user)
