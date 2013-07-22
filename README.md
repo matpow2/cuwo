@@ -80,6 +80,8 @@ Somer - help with some protocol variables
 
 Favorlock - scripting and commands
 
+SLoW - scripting
+
 Kainzo - Testing
 
 DRayX - encrypt.py and protocol RE
