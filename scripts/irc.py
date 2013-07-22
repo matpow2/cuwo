@@ -185,7 +185,7 @@ class IRCScriptConnection(ConnectionScript):
             self.connection.name))
 
     def on_chat(self, message):
-        message = encode_irc('<\x036%s\x031\x17> %s' % (
+        message = encode_irc('<\x036%s\x0F> %s' % (
             self.connection.name, message))
         self.parent.send(message)
 
