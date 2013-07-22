@@ -147,7 +147,8 @@ class ServerScript(BaseScript):
     def on_new_connection(self, connection):
         if self.connection_class is None:
             return
-        self.connection_class(self, connection)
+        script = self.connection_class(self, connection)
+        script.call('on_connect')
 
     def on_existing_connection(self, connection):
         if self.connection_class is None:

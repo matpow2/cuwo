@@ -190,7 +190,7 @@ class CubeWorldConnection(Protocol):
     # handlers
 
     def on_join(self):
-        print 'Player %s joined (IP %s)' % (self.name, self.address.host)
+        print 'Player %s joined' % self.name
         for connection in self.server.connections.values():
             if not connection.has_joined:
                 continue
@@ -322,9 +322,11 @@ class CubeWorldServer(Factory):
     def buildProtocol(self, addr):
         # return None here to refuse the connection.
         # will use this later to hardban e.g. DoS
-        message = self.call_scripts('on_connection_attempt', addr)
-        if message is not None:
-            return BanProtocol(message)
+        ret = self.call_scripts('on_connection_attempt', addr)
+        if ret is False:
+            return None
+        elif ret is not None:
+            return BanProtocol(ret)
         return CubeWorldConnection(self, addr)
 
     def remove_item(self, chunk, index):

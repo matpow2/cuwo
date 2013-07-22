@@ -14,7 +14,7 @@ time_modifier = 1.0
 
 # List of scripts to run on the server on startup.
 # Consider turning on 'pvp', i.e. player versus player
-scripts = ['log', 'commands', 'welcome', 'ban']
+scripts = ['log', 'commands', 'welcome', 'ban', 'ddos']
 
 # Passwords used for rights management. Keys are passwords, and values are
 # a list of user types under that password. Right now, only 'admin' is defined,
@@ -34,3 +34,9 @@ rotate_daily = True
 
 # Profile file. Set to something other than None to enable.
 profile_file = None
+
+# Max connections per IP to prevent DoS.
+max_connections_per_ip = 1
+
+# Connection handshake timeout time in seconds
+connection_timeout = 5.0
