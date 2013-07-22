@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev 2013.
+# Copyright (c) Mathias Kaerlev, Somer Hayter, sarcengm and Jakky89 2013.
 #
 # This file is part of cuwo.
 #
@@ -19,31 +19,49 @@
 Default set of commands bundled with cuwo
 """
 
-from cuwo.script import (ServerScript, ConnectionScript, command, get_player, admin)
+from cuwo.script import ServerScript, command, admin
 from cuwo.common import get_chunk
+from cuwo.packet import HitPacket, HIT_NORMAL
+import cuwo.database
+
 import platform
+
 
 class CommandServer(ServerScript):
     pass
 
+
 def get_class():
     return CommandServer
+
 
 @command
 @admin
 def say(script, *args):
     message = ' '.join(args)
-    script.connection.send_chat(message)
+    script.connection.server.send_chat(message)
+
 
 @command
 @admin
 def kick(script, name):
     try:
-        player = get_player(script.server, name)
-        player.kick('Kicked by an Admin')
-        return '[SUCCESS] Kicked %s' % name
+        player = script.get_player(name)
+        if player:
+            player.kick('Kicked by Admin')
+            return '[SUCCESS] Kicked %s' % name
     except:
-        return '[EXCEPTION] Player could not be kicked!'
+        pass
+    return '[ERROR] Player %s could not be kicked!' % name
+
+
+@command
+@admin
+def kill(script, name=None):
+    player = script.get_player(name)
+    player.kill(script.connection):
+    return None
+
 
 @command
 @admin
@@ -53,79 +71,99 @@ def setclock(script, value):
         return '[SUCCESS] Time set to %s' % value
     except ValueError:
         return '[EXCEPTION] Invalid value!'
+    return '[ERROR] Time could not be set!'
 
-@admin
+
 @command
+@admin
 def spawnmob(script, value):
     try:
-        entity = script.server.create_entity(value)
+        entity = script.server.create_entity_data(value)
     except ValueError:
         return '[ERROR] Invalid value!'
-    entity.position(script.connection.position())
+    except:
+        pass
+    if script.connection.position:
+        entity.position(script.connection.position.copy())
+    return '[ERROR] Could not spawn mob!'
+
 
 @command
-def spawn(script, name = None):
-    if name is None:
-        player = script.connection
-    else:
-        player = get_player(script.server, name)
-    except ValueError:
-        return '[ERROR] Invalid value!'
-    player.entity_data.position.x = 0
-    player.entity_data.position.y = 0
+@admin
+def heal(script, name=None, heal_amount=None):
+    player = script.get_player(name)
+    player.heal(amount, '[INFO] You have been healed by admin')
+    return 'Healed %s' % player.name
+
+
+@command
+def spawn(script):
+    player = script.get_player(name)
+    if player.teleport(0, 0, 0):
+        return '[INFO] Teleported to spawn.'
+    return '[ERROR] Could not teleport to spawn.'
+
 
 @command
 def help(script):
-    return 'Player Commands: /spawn, /list, /whereis <player>, /tell <player> <message>'
+    return PLAYER_COMMANDS_HELP
+
 
 @command
 def list(script):
+    plcount = len(script.server.connections)
+    if plcount <= 0:
+        return '[INFO] There are currently no players online.'
     plrs = []
-    for connection in script.server.connections.values():
-        plrs.append(connection.entity_data.name)
-    message = '[INFO] Online: %s' % (', '.join(plrs))
-    return message
+    for plcon in script.server.connections.values():
+        plrs.append('%s (%s)' % (plcon.entity_data.name, common.get_entity_type_level_str(plcon.entity_data))
+    return '[INFO] %s/%s players online: %s' % (plcount, config.max_players, ', '.join(plrs))
+
 
 @command
-def login(script, password):
-    password = password.lower()
-    user_types = script.server.passwords.get(password, [])
-    if not user_types:
-        return '[ERROR] Invalid password!'
-    script.connection.rights.update(user_types)
-    return '[SUCCESS] Logged in as %s' % (', '.join(user_types))
+def register(script, password)
+    if not password:
+        return '[INFO] Register with password to get your login id for future logins: /register <password>'
+    reg_id = database.register_player(script.server.db_con, script.connection.entity_data.name, password)
+    if reg_id:
+        return '[REGISTRATION] You have successfully been registered with the following ID: %s' % reg_id
+    return '[ERROR] Could not register!'
+
 
 @command
-def whois(script, name = None):
-    if name is None:
-        player = script.connection
+def login(script, id, password):
+    if not id or not password:
+        return '[INFO] Command to login with your id and password: /login <id> <password>'
+    user_types = script.server.passwords.get(id, [])
+    if user_types:
+        script.connection.rights.update(user_types)
+    login_res = database.login_player(script.server.db_con, script.connection.entity_data.name, id, password)
+    if not login_res:
+        return '[LOGIN] Login failed!'
     else:
-        player = get_player(script.server, name)
-    acwcstr = ['Unknown','Warrior','Ranger','Mage','Rogue']
-    if player.entity_data.class_type >= 0 and player.entity_data.class_type <= 4:
-        return '[INFO] %s is %s class level %s' % (player.name, acwcstr[player.entity_data.class_type], player.entity_data.character_level)
+        return '[LOGIN] Successfully logged in with ID %s' % id)
+    return '[ERROR] Invalid password!'
+
 
 @command
-def whereis(script, name = None):
-    if name is None:
-        player = script.connection
-        message = '[INFO] You are at %s'
-    else:
-        player = get_player(script.server, name)
-        message = '[INFO] %s is at %%s' % player.name
-    return message % (get_chunk(player.position),)
+def whois(script, name=None):
+    player = script.get_player(name)
+    if not player:
+        return '[ERROR] Could not get player by that name: %s' % name
+    return '[INFO] %s is %s' % (player.name, common.get_entity_type_level_str(player.entity_data))
+
 
 @command
-def tell(script, name = None, *args):
+def tell(script, name=None, *args):
     if not name:
-        return '[INFO] /tell <player> <message>'
+        return '[INFO] Command to tell something to a specific player: /tell <player> <message>'
     try:
-        player = get_player(script.server, name)
+        player = script.get_player(name)
         if player is script.connection:
             return '[ERROR] You can not tell messages back to yourself!'
-        message = '[PM] {0} -> {1}: {2}'.format(script.connection.name, player.name, ' '.join(args))
-        player.send_chat(message % player)
-        return message % player
+        message = '%s -> %s: %s' % (script.connection.entity_data.name, player.entity_data.name, ' '.join(args))
+        player.send_chat(message)
+        return message
     except:
         pass
-    return '[EXCEPTION] Could not tell'
+    return '[EXCEPTION] Could not tell message to %s!' % player.entity_data.name

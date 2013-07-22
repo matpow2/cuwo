@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev, Somer Hayter and Julien Kross 2013.
+# Copyright (c) Mathias Kaerlev, Somer Hayter, sarcengm and Jakky89 2013.
 #
 #
 # This file is part of cuwo.
@@ -34,6 +34,9 @@ CLIENT_VERSION = 3
 SERVER_PORT = 12345
 
 
+# Name of the SQLite database file to use
+DATABASE_NAME = 'cuwo.db'
+
 # Time constants
 MAX_TIME = 86400000.0
 NORMAL_TIME_SPEED = 10.0
@@ -63,16 +66,26 @@ MAX_POS = 0xFFFFFFFFFF
 ENTITY_TYPE_PLAYER_MIN_ID = 1
 ENTITY_TYPE_PLAYER_MAX_ID = 16
 
+
 # Entity classes valid for players
 ENTITY_CLASS_PLAYER_MIN_ID = 1
 ENTITY_CLASS_PLAYER_MAX_ID = 4
 
-# Needed e.g. for anti cheating system
+
+# Needed e.g. for itnegrated anti cheating system
 PLAYER_MAX_HEALTH = 300
 PLAYER_MAX_LEVEL = 3000
+
+
+# Maximum distance allowed to be able to hit target
+MAX_HIT_DISTANCE = 100
 
 # Human readable class names ordered by class id
 PLAYER_CLASSES = ['Unknown','Warrior','Ranger','Mage','Rogue']
 
+
 # Human readable race names ordered by race id
 PLAYER_RACES = ['Unknown','Humans','Elves','Dwarves','Goblins','Lizardmen','Orcs','Undeads','Frogmen']
+
+# Commands help provided to players
+PLAYER_COMMANDS_HELP = 'Player Commands: /register <password>, /login <id> <password>, /spawn, /list, /whereis <player>, /tell <player> <message>'

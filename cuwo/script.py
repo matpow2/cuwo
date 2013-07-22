@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev 2013.
+# Copyright (c) Mathias Kaerlev, Somer Hayter, sarcengm and Jakky89 2013.
 #
 # This file is part of cuwo.
 #
@@ -94,6 +94,11 @@ class ConnectionScript(BaseScript):
         connection.scripts.append(self)
         parent.scripts.append(self)
         self.on_load()
+
+    def get_player(self, name=None):
+        if name is None:
+            return self.connection
+        return get_player(self.server, name)
 
     def on_disconnect(self):
         self.unload()

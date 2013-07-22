@@ -2,11 +2,25 @@
 
 # Server id (maybe for future use to e.g. run multiple servers through multiplex proxy for (sub-)domain use)
 server_id = 0
+
 # Global server name
 server_name = 'a Server powered by cuwo'
+
 # World seed used for world generation (change if you want another landscape etc.)
 # When changing this, the old world and its data gets lost.
 seed = 1
+
+# Password salt
+# Change this to a random string value before starting cuwo the first time
+# Do not change when users already have registered or they will not be able to login anymore
+password_salt = 'cuwo'
+
+# Players have to register swhen joining the server for the first time
+# before being able to play and to get a login id (used for /login <id> <password>)
+register_players = False
+
+# Players need to login before being able to play
+logon_enabled = False
 
 # Enable/Disable auto update feature (not implemented yet)
 auto_update = True
@@ -69,6 +83,15 @@ welcome = ["Welcome to %(server_name)s!",
            "cuwo currently is in an early development state so not everything can work as expected yet.",
            "Player Commands: /help, /list, /spawn, /tell <player> <message>, /whois <player>, /whereis <player>",
            "This message and many other things can be changed as you want in the config.py file."]
+
+# Command help provided to players
+help_players = ["=== PLAYER COMMANDS HELP ===",
+                "/register <password> - use this to get an unique id when joining the first time",
+                "/login <id> <password> - login after joining using your numeric id you got on registering and the right password",
+                "/spawn - teleports you to the spawn point",
+                "/list - shows you who currently is online",
+                "/whereis <player> - tells you who is where (coordinates)",
+                "/tell <player> <message> - allows you to send a private message to the given player"]
 
 # Web interface variables (enable by adding 'web' to script list)
 web_port = 8081

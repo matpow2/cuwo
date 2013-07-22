@@ -13,9 +13,11 @@ key = [
     2984, 1993, 2984, 4895, 816583, 13
 ]
 
+
 def negate(data):
     for a in data:
         yield ~ord(a) & 0xFF
+
 
 def decode(data):
     data = bytearray(negate(data))
@@ -24,12 +26,14 @@ def decode(data):
         data[i], data[j] = data[j], data[i]
     return data
 
+
 def encode(data):
     data = bytearray(negate(data))
     for i in xrange(len(data)):
         j = (i + key[i % len(key)]) % len(data)
         data[i], data[j] = data[j], data[i]
     return data
+
 
 def extract(dbfile, dir):
     try:
@@ -42,6 +46,7 @@ def extract(dbfile, dir):
         with open(os.path.join(dir, row['key']), 'wb') as f:
             f.write(decode(row['value']))
 
+
 def pack(dbfile, dir):
     files = next(os.walk(dir))[2]
     with sqlite3.connect(dbfile) as conn:
@@ -49,8 +54,9 @@ def pack(dbfile, dir):
         for name in files:
             with open(os.path.join(dir, name), 'rb') as f:
                 data = encode(f.read())
-            conn.execute('INSERT INTO blobs(key, value) VALUES(?, ?)', 
+            conn.execute('INSERT INTO blobs(key, value) VALUES(?, ?)',
                          (name, data))
+
 
 def main():
     extract('data2.db', 'out2')

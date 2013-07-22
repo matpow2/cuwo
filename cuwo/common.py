@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev, Somer Hayter and Julien Kross 2013.
+# Copyright (c) Mathias Kaerlev, Somer Hayter, sarcengm and Jakky89 2013.
 #
 # This file is part of cuwo.
 #
@@ -18,6 +18,7 @@
 from cuwo import constants
 
 import shlex
+import hashlib
 import math
 import os
 
@@ -57,6 +58,10 @@ def set_bit(mask, index, value):
     return mask
 
 
+def get_bool_bitfield(mask):
+    return [True if digit=='1' else False for digit in bin(mask)[2:]]
+
+
 def get_clock_string(value):
     hour = (value * 24) / constants.MAX_TIME
     minute = ((value * 1440) / constants.MAX_TIME) % 60
@@ -89,7 +94,7 @@ def get_needed_total_xp(level):
     return math.floor(50 * (21 * (level - 1) + 400 * math.log(20) - 400 * math.log(19 + level)))
 
 
-def get_xp_from_to(levelFrom, levelTo):
+def get_xp_from_to_level(levelFrom, levelTo):
     return math.floor(50 * (21 * (levelTo - levelFrom) + 400 * math.log(19 + levelFrom) - 400 * math.log(19 + levelTo)))
 
 
@@ -105,24 +110,36 @@ def get_player_class_str(class_id):
     return constants.PLAYER_CLASSES[class_id]
 
 
+def get_entity_type_level_str(entity_data):
+    return '%s L%s' % (get_player_class_str(entity_data.class_type), entity_data.level)
+
+
+def get_distance_2d(x1, y1, x2, y2):
+    return math.sqrt( math.hypot(x1, x2) + math.hypot(y1, y2) )
+
+
+def get_distance_3d(x1, y1, z1, x2, y2, z2):
+    return math.sqrt( math.hypot(x1, x2) + math.hypot(y1, y2) + math.hypot(z1, z2) )
+
+
 def parse_command(message):
-    command = ''
-    args = []
-    if message:
-        try:
-            args = shlex.split(message)
-        except ValueError:
-            args = message.split(' ')
-        if args:
-            command = args.pop(0)
-    return command, args
+    if isinstance(message, unicode):
+        # due to shlex unicode problems
+        message = message.encode('utf-8')
+    try:
+        args = shlex.split(message)
+    except ValueError:
+        args = message.split(' ')
+    if args:
+        command = args.pop(0)
+    return command.decode('utf-8'), [arg.decode('utf-8') for arg in args]
 
 
 def create_path(path):
     if path:
         try:
             print '[INFO] Creating directory structure to %s' % path
-            os.makedirs(os.path.dirname(path))
+            os.makedirs(path)
             return True
         except OSError:
             print '[ERROR] Could not create directory structure to %s' % path
@@ -137,3 +154,11 @@ def open_create(filename, mode):
     if create_file_path(filename):
         print 'Creating file: %s' % filename
     return open(filename, mode)
+
+
+def sha224sum_bin(plain, salt=None):
+    sha_hash = hashlib.sha1()
+    sha_hash.update(plain)
+    if salt is not None:
+        sha_hash.update(salt)
+    return sha_hash.digest()
