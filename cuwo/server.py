@@ -287,6 +287,7 @@ class BanProtocol(Protocol):
 
 class CubeWorldServer(Factory):
     items_changed = False
+    exit_code = None
 
     def __init__(self, config):
         self.config = config
@@ -460,6 +461,12 @@ class CubeWorldServer(Factory):
     def get_clock(self):
         return get_clock_string(self.get_time())
 
+    # stop/restart
+
+    def stop(self, code=None):
+        self.exit_code = code
+        reactor.stop()
+
 
 def main():
     # for py2exe
@@ -469,14 +476,18 @@ def main():
         sys.path.append(path)
 
     config = ConfigObject('./config')
+    server = CubeWorldServer(config)
 
-    reactor.listenTCP(constants.SERVER_PORT, CubeWorldServer(config))
+    reactor.listenTCP(constants.SERVER_PORT, server)
     print 'cuwo running on port %s' % constants.SERVER_PORT
+
     if config.base.profile_file is None:
         reactor.run()
     else:
         import cProfile
         cProfile.run('reactor.run()', filename=config.base.profile_file)
+
+    sys.exit(server.exit_code)
 
 if __name__ == '__main__':
     main()
