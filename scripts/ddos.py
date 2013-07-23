@@ -47,7 +47,7 @@ class SaneServer(ServerScript):
     def on_connection_attempt(self, addr):
         host = addr.host
         max_count = self.server.config.base.max_connections_per_ip
-        for connection in self.server.connections.values():
+        for connection in self.server.connections:
             if connection.address.host != host:
                 continue
             max_count -= 1

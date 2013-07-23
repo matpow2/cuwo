@@ -28,17 +28,17 @@ class InsufficientRights(Exception):
 
 def get_player(server, value):
     ret = None
+    players = server.players
     try:
         if value.startswith('#'):
             value = int(value[1:])
-            ret = server.connections[value]
+            ret = players[value]
         else:
-            connections = server.connections
             try:
-                ret = connections[value]
+                ret = players[value]
             except KeyError:
                 value = value.lower()
-                for player in connections.values():
+                for player in players.values():
                     name = player.entity_data.name.lower()
                     if name == value:
                         return player

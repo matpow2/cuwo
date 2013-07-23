@@ -38,13 +38,15 @@ class BanServer(ServerScript):
     def ban(self, ip, reason):
         self.ban_entries[ip] = reason
         self.save_bans()
-        for connection in self.server.connections.values().copy():
+        for connection in self.server.connections.copy():
             if connection.address.host != ip:
                 continue
             name = connection.name
             if name is not None:
                 connection.send_chat(SELF_BANNED.format(reason=reason))
             connection.disconnect()
+            if name is None:
+                continue
             message = PLAYER_BANNED.format(name=name, reason=reason)
             print message
             self.server.send_chat(message)

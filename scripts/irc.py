@@ -226,16 +226,13 @@ def irc(func):
 @irc
 def who(bot):
     server = bot.server
-    player_count = len(server.connections)
+    player_count = len(server.players)
     if player_count == 0:
         bot.me('has no players connected')
         return
     formatted_names = []
-    for connection in server.connections.values():
-        if not connection.has_joined:
-            continue
-        name = '\x0302%s #%s' % (encode_irc(connection.name),
-                                 connection.entity_id)
+    for player in server.players.values():
+        name = '\x0302%s #%s' % (encode_irc(player.name), player.entity_id)
         formatted_names.append(name)
     noun = 'player' if player_count == 1 else 'players'
     msg = 'has %s %s connected: ' % (player_count, noun)

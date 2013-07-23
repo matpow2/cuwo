@@ -33,10 +33,8 @@ class VersusServer(ServerScript):
     connection_class = VersusConnection
 
     def update(self):
-        for connection in self.server.connections.values():
-            if not connection.has_joined:
-                continue
-            data = connection.entity_data
+        for player in self.server.players.values():
+            data = player.entity_data
             data.flags_1 |= FLAGS_1_HOSTILE
 
 

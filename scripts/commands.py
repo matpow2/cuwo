@@ -142,14 +142,14 @@ def heal(script, name=None, hp=1000):
 
 def who_where(script, include_where):
     server = script.server
-    player_count = len(server.connections)
+    player_count = len(server.players)
     if player_count == 0:
         return 'No players connected'
     formatted_names = []
-    for connection in server.connections.values():
-        name = '%s #%s' % (connection.name, connection.entity_id)
+    for player in server.players.values():
+        name = '%s #%s' % (player.name, player.entity_id)
         if include_where:
-            name += ' %s' % (get_chunk(connection.position),)
+            name += ' %s' % (get_chunk(player.position),)
         formatted_names.append(name)
     noun = 'player' if player_count == 1 else 'players'
     msg = '%s %s connected: ' % (player_count, noun)

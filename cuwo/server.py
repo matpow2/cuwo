@@ -86,7 +86,7 @@ class CubeWorldConnection(Protocol):
             ShootPacket.packet_id: self.on_shoot_packet
         }
 
-        self.server.connections.add(self)
+        server.connections.add(self)
         self.scripts = []
         self.server.call_scripts('on_new_connection', self)
         self.packet_handler = PacketHandler(CS_PACKETS, self.on_packet)
@@ -105,6 +105,7 @@ class CubeWorldConnection(Protocol):
         self.disconnected = True
         self.server.connections.discard(self)
         if self.has_joined:
+            del self.server.players[self]
             print 'Player %s left' % self.name
         if self.entity_data is not None:
             del self.server.entities[self.entity_id]
@@ -134,8 +135,6 @@ class CubeWorldConnection(Protocol):
             return
         server = self.server
         self.entity_id = server.entity_ids.pop()
-        del server.connections[self]  # remove previous entry
-        server.connections[(self.entity_id,)] = self
         join_packet.entity_id = self.entity_id
         self.send_packet(join_packet)
         seed_packet.seed = server.config.base.seed
@@ -194,12 +193,12 @@ class CubeWorldConnection(Protocol):
 
     def on_join(self):
         print 'Player %s joined' % self.name
-        for connection in self.server.connections.values():
-            if not connection.has_joined:
-                continue
-            entity_packet.set_entity(connection.entity_data,
-                                     connection.entity_id)
+        for player in self.server.players.values():
+            entity_packet.set_entity(player.entity_data, player.entity_id)
             self.send_packet(entity_packet)
+
+        self.server.players[(self.entity_id,)] = self
+
         self.call_scripts('on_join')
 
     def on_command(self, command, parameters):
@@ -297,7 +296,8 @@ class CubeWorldServer(Factory):
         self.update_packet = ServerUpdate()
         self.update_packet.reset()
 
-        self.connections = MultikeyDict()
+        self.connections = set()
+        self.players = MultikeyDict()
 
         self.chunk_items = collections.defaultdict(list)
         self.entities = {}
@@ -391,8 +391,8 @@ class CubeWorldServer(Factory):
 
     def broadcast_packet(self, packet):
         data = write_packet(packet)
-        for connection in self.connections.values():
-            connection.transport.write(data)
+        for player in self.players.values():
+            player.transport.write(data)
 
     # line/string formatting options based on config
 
