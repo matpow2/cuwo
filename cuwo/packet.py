@@ -627,6 +627,7 @@ class SectorDiscovered(Packet):
         writer.write_uint32(self.x)
         writer.write_uint32(self.y)
 
+
 CS_PACKETS = {
     0: EntityUpdate,
     6: InteractPacket,
@@ -666,6 +667,7 @@ def write_packet(packet):
     writer.write_uint32(packet.packet_id)
     packet.write(writer)
     return writer.get()
+
 
 for table in (CS_PACKETS, SC_PACKETS):
     for k, v in table.iteritems():

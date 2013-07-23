@@ -16,6 +16,7 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+from cuwo.types import AttributeSet
 
 
 class InvalidPlayer(Exception):
@@ -104,22 +105,10 @@ class ConnectionScript(BaseScript):
         self.unload()
 
     def on_command(self, name, args):
-        if self.parent.commands is None:
+        ret = self.parent.on_command(self, name, args)
+        if ret is None:
             return
-        f = self.parent.commands.get(name, None)
-        if f is None:
-            return
-        ret = None
-        try:
-            ret = f(self, *args)
-        except InvalidPlayer:
-            ret = 'Invalid player specified'
-        except InsufficientRights:
-            ret = 'Insufficient rights'
-        except Exception:
-            import traceback
-            traceback.print_exc()
-        if ret is not None:
+        if ret:
             self.connection.send_chat(ret)
         return False
 
@@ -164,6 +153,38 @@ class ServerScript(BaseScript):
             script.unload()
         self.scripts = None
         self.server = None
+
+    def on_command(self, user, name, args):
+        if self.commands is None:
+            return
+        f = self.commands.get(name, None)
+        if f is None:
+            return
+        try:
+            ret = f(user, *args) or ''
+        except InvalidPlayer:
+            ret = 'Invalid player specified'
+        except InsufficientRights:
+            ret = 'Insufficient rights'
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            ret = ''
+        return ret
+
+
+class ScriptInterface(object):
+    """
+    Used for external script interfaces that are not real connections
+    """
+
+    def __init__(self, server, *rights):
+        self.rights = AttributeSet(rights)
+        self.server = server
+        self.connection = self
+
+    def get_player(self, name):
+        return get_player(self.server, name)
 
 
 # decorators for commands

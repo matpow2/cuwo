@@ -22,7 +22,8 @@ IRC client that can be used as a way to control the game server
 from twisted.words.protocols import irc
 from twisted.internet import reactor, protocol
 from cuwo.common import parse_command
-from cuwo.script import ServerScript, ConnectionScript
+from cuwo.script import ServerScript, ConnectionScript, ScriptInterface
+from cuwo.types import AttributeSet
 
 
 def channel(func):
@@ -49,6 +50,7 @@ class IRCBot(irc.IRCClient):
         self.server = server
         self.factory = factory
         self.nickname = factory.nickname
+        self.interface = ScriptInterface(server, 'admin', 'irc')
 
     def signedOn(self):
         self.join(self.factory.channel, self.factory.password)
@@ -104,8 +106,9 @@ class IRCBot(irc.IRCClient):
             if msg.startswith(self.factory.commandprefix) and user in self.ops:
                 cmd = msg[len(self.factory.commandprefix):]
                 result = self.handle_command(name, cmd)
-                if result is not None:
-                    self.send("%s: %s" % (user, result))
+                if result is None:
+                    return
+                self.send("%s: %s" % (user, result))
             elif msg.startswith(self.factory.chatprefix):
                 msg = msg[len(self.factory.chatprefix):].strip()
                 message = ("<%s> %s" % (name, msg))
@@ -118,7 +121,11 @@ class IRCBot(irc.IRCClient):
         try:
             return self.commands[command](self, *args)
         except KeyError:
-            return 'Invalid command'
+            pass
+        ret = self.server.call_command(self.interface, command, args)
+        if ret is not None:
+            return ret
+        return 'Invalid command'
 
     @channel
     def userLeft(self, user, channel):
@@ -153,6 +160,7 @@ class IRCClientFactory(protocol.ClientFactory):
         self.commandprefix = irc.commandprefix
         self.chatprefix = irc.chatprefix
         self.password = irc.password
+        self.rights = irc.rights
 
     def startedConnecting(self, connector):
         print "Connecting to IRC server..."
@@ -225,6 +233,9 @@ def irc(func):
 
 @irc
 def who(bot):
+    """
+    Reimplemented here for the purpose of coloring the chat
+    """
     server = bot.server
     player_count = len(server.players)
     if player_count == 0:

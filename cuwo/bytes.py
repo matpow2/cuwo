@@ -37,7 +37,6 @@ FLOAT = struct.Struct('<f')
 DOUBLE = struct.Struct('<d')
 
 
-
 class ByteWriter(object):
     def __init__(self, fp=None):
         if fp is None:

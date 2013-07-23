@@ -147,7 +147,6 @@ class CubeWorldConnection(Protocol):
         self.entity_data.mask |= packet.update_entity(self.entity_data)
         if not self.has_joined and getattr(self.entity_data, 'name', None):
             self.on_join()
-            self.has_joined = True
 
     def on_chat_packet(self, packet):
         message = filter_string(packet.value).strip()
@@ -198,6 +197,7 @@ class CubeWorldConnection(Protocol):
             self.send_packet(entity_packet)
 
         self.server.players[(self.entity_id,)] = self
+        self.has_joined = True
 
         self.call_scripts('on_join')
 
@@ -421,6 +421,12 @@ class CubeWorldServer(Factory):
 
     def call_scripts(self, name, *arg, **kw):
         return call_scripts(self.scripts, name, *arg, **kw)
+
+    def call_command(self, user, name, args):
+        """
+        Calls a command from an external interface, e.g. IRC, console
+        """
+        return self.call_scripts('on_command', user, name, args)
 
     # data store methods
 

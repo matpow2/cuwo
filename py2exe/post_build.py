@@ -19,15 +19,8 @@ def get_git_rev():
         stdout=subprocess.PIPE, shell=True)
     return pipe.stdout.read().replace('\n', '')
 
-
-# write config
-git_rev = get_git_rev()
-config = open('../config.py', 'rU').read()
-open('./dist/config.py', 'wb').write(
-    config + '\n# Current revision\ngit_rev = %r\n' % git_rev)
-
 # copy files
-SERVER_FILES = ['scripts']
+SERVER_FILES = ['scripts', 'config']
 COPY_FILES = {}
 REMOVE_EXTENSIONS = ['pyc', 'pyo']
 REMOVE_FILES = ['w9xpopen.exe', 'dummy']
@@ -50,6 +43,13 @@ for root, sub, files in os.walk('./dist'):
                 if file.endswith(ext):
                     os.remove(path)
                     break
+
+# rewrite config
+git_rev = get_git_rev()
+config = open('./dist/config/base.py', 'rU').read()
+open('./dist/config/base.py', 'wb').write(
+    config + '\n# Current revision\ngit_rev = %r\n' % git_rev)
+
 
 filename = 'cuwo-%s.zip' % git_rev
 

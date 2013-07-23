@@ -8,3 +8,7 @@ channel = '#cuwo.bots'
 password = None
 commandprefix = '.'
 chatprefix = '#'
+
+# User types that the IRC bot has. The available commands from other scripts
+# are restricted by this list.
+rights = ['admin', 'irc']

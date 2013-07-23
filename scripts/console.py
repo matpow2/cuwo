@@ -23,7 +23,8 @@ import sys
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.task import LoopingCall
 from cuwo.common import parse_command
-from cuwo.script import ServerScript
+from cuwo.script import ServerScript, ScriptInterface
+from cuwo.types import AttributeSet
 
 stdout = sys.__stdout__
 
@@ -78,14 +79,18 @@ class ConsoleInput(LineReceiver):
 
     def __init__(self, server):
         self.server = server
+        self.interface = ScriptInterface(server, 'admin', 'console')
 
     def lineReceived(self, line):
         if line.startswith('/'):
             command, args = parse_command(line[1:])
             if command == 'stop':
                 self.server.stop()
-            else:
-                print 'Invalid command %s' % command
+                return
+            ret = self.server.call_command(self.interface, command, args)
+            if not ret:
+                return
+            self.sendLine(ret)
         else:
             self.server.send_chat(line)
 
