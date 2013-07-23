@@ -57,7 +57,7 @@ class IRCBot(irc.IRCClient):
         if channel.lower() == self.factory.channel:
             self.ops = set()
             self.voices = set()
-        print "Joined channel %s" % channel
+        print "* Joined channel %s" % channel
 
     def irc_NICK(self, prefix, params):
         user = prefix.split('!', 1)[0]
@@ -82,6 +82,7 @@ class IRCBot(irc.IRCClient):
         if channel.lower() == self.factory.channel:
             self.ops = None
             self.voices = None
+        print "* Left channel %s" % channel
 
     @channel
     def modeChanged(self, user, channel, set, modes, args):
@@ -95,6 +96,12 @@ class IRCBot(irc.IRCClient):
                 l.add(name)
             elif not set:
                 l.discard(name)
+        prefix = '@' if user in self.ops else '+'
+        name = prefix + user
+        list = ''.join(modes)
+        arg = ''.join(args)
+        rem  = '+' if set else '-'
+        print "[%s] %s set mode %s%s %s" % (channel, name, rem, list, arg)
 
     @channel
     def privmsg(self, user, channel, msg):
@@ -108,7 +115,7 @@ class IRCBot(irc.IRCClient):
                     self.send("%s: %s" % (user, result))
             elif msg.startswith(self.factory.chatprefix):
                 msg = msg[len(self.factory.chatprefix):].strip()
-                message = ("<%s> %s" % (name, msg))
+                message = ("[%s] <%s> %s" % (channel, name, msg))
                 message = message[:MAX_IRC_CHAT_SIZE]
                 print message
                 self.server.send_chat(message)
@@ -120,16 +127,23 @@ class IRCBot(irc.IRCClient):
         except KeyError:
             return 'Invalid command'
 
-    @channel
-    def userLeft(self, user, channel):
+    def discard(self, user):
         self.ops.discard(user)
         self.voices.discard(user)
 
+    @channel
+    def userLeft(self, user, channel):
+        self.discard(user)
+        print '[%s] * %s has left the channel' % (channel, user)
+
     def userQuit(self, user, message):
-        self.userLeft(user, self.factory.channel)
+        self.discard(user)
+        print '* %s has quit(reason: %s)' % (user, message)
 
     def userKicked(self, kickee, channel, kicker, message):
-        self.userLeft(kickee, channel)
+        self.discard(kickee)
+        print '[%s] * %s has kicked %s from the channel (reason: %s)' % (channel,
+        kicker, kickee, message)
 
     def send(self, msg):
         self.msg(self.factory.channel, encode_irc(msg))
