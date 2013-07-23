@@ -115,7 +115,7 @@ class IRCBot(irc.IRCClient):
                     self.send("%s: %s" % (user, result))
             elif msg.startswith(self.factory.chatprefix):
                 msg = msg[len(self.factory.chatprefix):].strip()
-                message = ("<%s> %s" % (channel, name, msg))
+                message = ("<%s> %s" % (name, msg))
                 message = message[:MAX_IRC_CHAT_SIZE]
                 print message
                 self.server.send_chat(message)
