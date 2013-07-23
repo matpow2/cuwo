@@ -24,7 +24,6 @@ from twisted.protocols.basic import LineReceiver
 from twisted.internet.task import LoopingCall
 from cuwo.common import parse_command
 from cuwo.script import ServerScript, ScriptInterface
-from cuwo.types import AttributeSet
 
 stdout = sys.__stdout__
 

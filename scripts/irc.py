@@ -23,7 +23,6 @@ from twisted.words.protocols import irc
 from twisted.internet import reactor, protocol
 from cuwo.common import parse_command
 from cuwo.script import ServerScript, ConnectionScript, ScriptInterface
-from cuwo.types import AttributeSet
 
 
 def channel(func):
