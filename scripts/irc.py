@@ -232,6 +232,8 @@ def who(bot):
         return
     formatted_names = []
     for connection in server.connections.values():
+        if not connection.has_joined:
+            continue
         name = '\x0302%s #%s' % (encode_irc(connection.name),
                                  connection.entity_id)
         formatted_names.append(name)
