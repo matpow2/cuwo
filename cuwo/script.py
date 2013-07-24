@@ -78,7 +78,7 @@ class ScriptManager(object):
     Manages scripts for either a server or connection
     """
     def __init__(self):
-        self.scripts = {}
+        self.scripts = collections.OrderedDict()
         self.cached_calls = {}
 
     def __getattr__(self, name):
