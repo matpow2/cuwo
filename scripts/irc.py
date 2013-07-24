@@ -184,7 +184,7 @@ class IRCClientFactory(protocol.ClientFactory):
 
 
 class IRCScriptConnection(ConnectionScript):
-    def on_join(self):
+    def on_join(self, event):
         self.parent.send('* %s entered the game' % encode_irc(
             self.connection.name))
 
