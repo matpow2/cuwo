@@ -18,6 +18,7 @@
 from cuwo.loader import Loader
 from cuwo.common import is_bit_set
 
+
 class ItemUpgrade(Loader):
     def read(self, reader):
         self.x = reader.read_int8()
@@ -160,6 +161,7 @@ class AppearanceData(Loader):
 
 
 FLAGS_1_HOSTILE = 0x20
+
 
 class EntityData(Loader):
     mask = 0
@@ -692,4 +694,3 @@ def write_masked_data(entity, writer, mask=None):
             writer.write_uint32(item)
     if is_bit_set(mask, 47):
         writer.write_uint32(entity.mana_cubes)
-

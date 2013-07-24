@@ -23,6 +23,7 @@ import os
 
 CHAR_FILTER = set([10, 13] + range(32, 127))
 
+
 def filter_string(value):
     # Cube World only displays characters between 32-126 (and \r\n which both
     # produce newlines) in-game, so in case the user sent a bogus message, we
