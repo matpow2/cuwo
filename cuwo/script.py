@@ -85,11 +85,11 @@ class ScriptManager(object):
         return self.scripts[name]
 
     def add(self, script):
-        self.scripts[script.__module__] = script
+        self.scripts[script.script_name] = script
         self.cached_calls.clear()
 
     def remove(self, script):
-        del self.scripts[script.__module__]
+        del self.scripts[script.script_name]
         self.cached_calls.clear()
 
     def unload(self):
@@ -103,7 +103,7 @@ class ScriptManager(object):
             handlers = []
             for script in self.scripts.values():
                 f = getattr(script, event_name, None)
-                if f is None:
+                if not f:
                     continue
                 handlers.append(f)
             self.cached_calls[event_name] = handlers
@@ -141,6 +141,8 @@ class BaseScript(object):
 
 class ConnectionScript(BaseScript):
     def __init__(self, parent, connection):
+        self.script_name = parent.script_name
+
         self.parent = parent
         self.server = parent.server
         self.connection = connection
@@ -152,7 +154,7 @@ class ConnectionScript(BaseScript):
         self.unload()
 
     def on_command(self, event):
-        ret = self.parent.on_command(event)
+        ret = self.parent.call_command(self, event.command, event.args)
         if ret is None:
             return
         if ret:
@@ -178,6 +180,8 @@ class ServerScript(BaseScript):
     commands = None
 
     def __init__(self, server):
+        self.script_name = self.__module__
+
         self.server = server
         server.scripts.add(self)
         self.children = []
@@ -213,7 +217,7 @@ class ServerScript(BaseScript):
         if self.commands is None:
             return
         f = self.commands.get(command, None)
-        if f is None:
+        if not f:
             return
         try:
             ret = f(user, *args) or ''
