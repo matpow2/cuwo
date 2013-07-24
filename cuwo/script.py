@@ -168,7 +168,7 @@ class ConnectionScript(BaseScript):
         if self.parent is None:
             return
         self.connection.scripts.remove(self)
-        self.parent.scripts.remove(self)
+        self.parent.children.remove(self)
         self.on_unload()
         self.parent = self.connection = self.server = None
 

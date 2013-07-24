@@ -220,7 +220,7 @@ class CubeWorldConnection(Protocol):
         event = self.scripts.call('on_chat', message=message)
         if event.result is False:
             return
-        return event.messsage
+        return event.message
 
     # other methods
 
