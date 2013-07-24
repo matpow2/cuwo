@@ -49,10 +49,12 @@ class IRCBot(irc.IRCClient):
         self.server = server
         self.factory = factory
         self.nickname = factory.nickname
+        self.password = factory.password
+        self.channel_password = factory.channel_password
         self.interface = ScriptInterface(server, 'admin', 'irc')
 
     def signedOn(self):
-        self.join(self.factory.channel, self.factory.password)
+        self.join(self.factory.channel, self.factory.channel_password)
 
     def joined(self, channel):
         if channel.lower() == self.factory.channel:
@@ -159,6 +161,7 @@ class IRCClientFactory(protocol.ClientFactory):
         self.commandprefix = irc.commandprefix
         self.chatprefix = irc.chatprefix
         self.password = irc.password
+        self.channel_password = irc.channel_password
         self.rights = irc.rights
 
     def startedConnecting(self, connector):

@@ -3,9 +3,10 @@
 # IRC script variables (enable by adding 'irc' to script list)
 nickname = 'cuwobot'
 server = 'irc.esper.net'
+password = None
 port = 6667
 channel = '#cuwo.bots'
-password = None
+channel_password = None
 commandprefix = '.'
 chatprefix = '#'
 
