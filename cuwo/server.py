@@ -149,7 +149,6 @@ class CubeWorldConnection(Protocol):
         if not self.has_joined and getattr(self.entity_data, 'name', None):
             self.on_join()
             return
-        
 
     def on_chat_packet(self, packet):
         message = filter_string(packet.value).strip()
@@ -169,7 +168,7 @@ class CubeWorldConnection(Protocol):
         if interact_type == INTERACT_DROP:
             pos = self.position.copy()
             pos.z -= constants.BLOCK_SCALE
-            if self.scripts.call('on_drop', item=item, 
+            if self.scripts.call('on_drop', item=item,
                                  pos=pos).result is False:
                 return
             self.server.drop_item(packet.item_data, pos)
