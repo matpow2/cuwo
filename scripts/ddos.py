@@ -26,11 +26,11 @@ from twisted.internet import reactor
 
 
 class SaneConnection(ConnectionScript):
-    def on_connect(self):
+    def on_connect(self, event):
         timeout = self.server.config.base.connection_timeout
         self.timeout_call = reactor.callLater(timeout, self.timeout)
 
-    def on_join(self):
+    def on_join(self, event):
         self.timeout_call.cancel()
 
     def timeout(self):
@@ -44,8 +44,8 @@ class SaneConnection(ConnectionScript):
 class SaneServer(ServerScript):
     connection_class = SaneConnection
 
-    def on_connection_attempt(self, addr):
-        host = addr.host
+    def on_connection_attempt(self, event):
+        host = event.address.host
         max_count = self.server.config.base.max_connections_per_ip
         for connection in self.server.connections:
             if connection.address.host != host:

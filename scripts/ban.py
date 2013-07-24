@@ -51,9 +51,9 @@ class BanServer(ServerScript):
             print message
             self.server.send_chat(message)
 
-    def on_connection_attempt(self, addr):
+    def on_connection_attempt(self, event):
         try:
-            reason = self.ban_entries[addr.host]
+            reason = self.ban_entries[event.address.host]
         except KeyError:
             return
         return SELF_BANNED.format(reason=reason)

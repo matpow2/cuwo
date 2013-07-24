@@ -191,9 +191,9 @@ class IRCScriptConnection(ConnectionScript):
         self.parent.send('* %s disconnected' % encode_irc(
             self.connection.name))
 
-    def on_chat(self, message):
+    def on_chat(self, event):
         message = encode_irc('<\x036%s\x0F> %s' % (
-            self.connection.name, message))
+            self.connection.name, event.message))
         self.parent.send(message)
 
 

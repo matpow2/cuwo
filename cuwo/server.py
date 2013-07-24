@@ -34,7 +34,7 @@ from cuwo.vector import Vector3
 from cuwo import constants
 from cuwo.common import (get_clock_string, parse_clock, parse_command,
                          get_chunk, filter_string)
-from cuwo.script import call_scripts
+from cuwo.script import ScriptManager
 from cuwo.config import ConfigObject
 
 import collections
@@ -86,11 +86,13 @@ class CubeWorldConnection(Protocol):
             ShootPacket.packet_id: self.on_shoot_packet
         }
 
-        server.connections.add(self)
-        self.scripts = []
-        self.server.call_scripts('on_new_connection', self)
         self.packet_handler = PacketHandler(CS_PACKETS, self.on_packet)
+
+        server.connections.add(self)
         self.rights = AttributeSet()
+
+        self.scripts = ScriptManager()
+        server.scripts.call('on_new_connection', connection=self)
 
     def dataReceived(self, data):
         self.packet_handler.feed(data)
@@ -112,8 +114,7 @@ class CubeWorldConnection(Protocol):
         if self.entity_id is not None:
             self.server.entity_ids.put_back(self.entity_id)
         if self.scripts is not None:
-            for script in self.scripts[:]:
-                script.unload()
+            self.scripts.unload()
 
     # packet methods
 
@@ -152,7 +153,8 @@ class CubeWorldConnection(Protocol):
         message = filter_string(packet.value).strip()
         if not message:
             return
-        if self.on_chat(message) is False:
+        message = self.on_chat(message)
+        if not message:
             return
         chat_packet.entity_id = self.entity_id
         chat_packet.value = message
@@ -183,7 +185,7 @@ class CubeWorldConnection(Protocol):
             return
         target.hp -= packet.damage
         if target.hp <= 0:
-            self.call_scripts('on_kill', target)
+            self.scripts.call('on_kill', target=target)
 
     def on_shoot_packet(self, packet):
         self.server.update_packet.shoot_actions.append(packet)
@@ -199,17 +201,20 @@ class CubeWorldConnection(Protocol):
         self.server.players[(self.entity_id,)] = self
         self.has_joined = True
 
-        self.call_scripts('on_join')
+        self.scripts.call('on_join')
 
     def on_command(self, command, parameters):
-        self.call_scripts('on_command', command, parameters)
+        self.scripts.call('on_command', command=command, args=parameters)
 
     def on_chat(self, message):
         if message.startswith('/'):
             command, args = parse_command(message[1:])
             self.on_command(command, args)
-            return False
-        self.call_scripts('on_chat', message)
+            return
+        event = self.scripts.call('on_chat', message=message)
+        if event.result is False:
+            return
+        return event.messsage
 
     # other methods
 
@@ -235,9 +240,6 @@ class CubeWorldConnection(Protocol):
         self.send_chat('You have been kicked')
         self.disconnect()
         self.server.send_chat('%s has been kicked' % self.name)
-
-    def call_scripts(self, name, *arg, **kw):
-        return call_scripts(self.scripts, name, *arg, **kw)
 
     # convienience methods
 
@@ -314,7 +316,7 @@ class CubeWorldServer(Factory):
         for k, v in base.passwords.iteritems():
             self.passwords[k.lower()] = v
 
-        self.scripts = []
+        self.scripts = ScriptManager()
         for script in base.scripts:
             self.load_script(script)
 
@@ -326,7 +328,7 @@ class CubeWorldServer(Factory):
     def buildProtocol(self, addr):
         # return None here to refuse the connection.
         # will use this later to hardban e.g. DoS
-        ret = self.call_scripts('on_connection_attempt', addr)
+        ret = self.scripts.call('on_connection_attempt', address=addr).result
         if ret is False:
             return None
         elif ret is not None:
@@ -352,7 +354,7 @@ class CubeWorldServer(Factory):
         self.items_changed = True
 
     def update(self):
-        self.call_scripts('update')
+        self.scripts.call('update')
 
         # entity updates
         for entity_id, entity in self.entities.iteritems():
@@ -419,14 +421,12 @@ class CubeWorldServer(Factory):
         print 'Loaded script %r' % name
         return script
 
-    def call_scripts(self, name, *arg, **kw):
-        return call_scripts(self.scripts, name, *arg, **kw)
-
-    def call_command(self, user, name, args):
+    def call_command(self, user, command, args):
         """
         Calls a command from an external interface, e.g. IRC, console
         """
-        return self.call_scripts('on_command', user, name, args)
+        return self.scripts.call('on_command', user=user, command=command,
+                                 args=args).result
 
     # data store methods
 

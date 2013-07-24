@@ -60,6 +60,15 @@ class AttributeSet(set):
             self.discard(name)
 
 
+class AttributeDict(dict):
+    """
+    dict with attribute access
+    """
+    def __init__(self, *args, **kw):
+        super(AttributeDict, self).__init__(*args, **kw)
+        self.__dict__ = self
+
+
 class DictItem(object):
     keys = None
     value = None
