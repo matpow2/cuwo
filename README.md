@@ -43,7 +43,7 @@ A lot is still to be implemented gameplay-wise. Most importantly, NPCs and mobs
 have not been implemented yet. We still need to rip out the terrain generator,
 and once that's done, NPCs and mobs should be completely doable.
 
-There is also a working MITM server that can inject packets. It's useful for
+There is also a working MITM proxy that can inject packets. It's useful for
 reverse-engineering the protocol and can be used as an alternative to a
 standalone server.
 
@@ -63,9 +63,9 @@ FAQ
 * **A.** We need people who can create end-user documentation as well! Have a
          look around, and see if anything is missing in the wiki.
 
-* **Q.** What is a MITM server?
+* **Q.** What is a MITM proxy?
 
-* **A.** A MITM server sits between your client and server, and can manipulate
+* **A.** A MITM proxy sits between your client and server, and can manipulate
          and inject packets. It's not really useful for the normal user, so
          use the regular cuwo server instead.
 

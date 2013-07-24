@@ -148,6 +148,8 @@ class CubeWorldConnection(Protocol):
         self.entity_data.mask |= packet.update_entity(self.entity_data)
         if not self.has_joined and getattr(self.entity_data, 'name', None):
             self.on_join()
+            return
+        
 
     def on_chat_packet(self, packet):
         message = filter_string(packet.value).strip()
@@ -163,9 +165,13 @@ class CubeWorldConnection(Protocol):
 
     def on_interact_packet(self, packet):
         interact_type = packet.interact_type
+        item = packet.item_data
         if interact_type == INTERACT_DROP:
             pos = self.position.copy()
             pos.z -= constants.BLOCK_SCALE
+            if self.scripts.call('on_drop', item=item, 
+                                 pos=pos).result is False:
+                return
             self.server.drop_item(packet.item_data, pos)
         elif interact_type == INTERACT_PICKUP:
             chunk = (packet.chunk_x, packet.chunk_y)
@@ -193,6 +199,9 @@ class CubeWorldConnection(Protocol):
     # handlers
 
     def on_join(self):
+        if self.scripts.call('on_join').result is False:
+            return
+
         print 'Player %s joined' % self.name
         for player in self.server.players.values():
             entity_packet.set_entity(player.entity_data, player.entity_id)
@@ -200,8 +209,6 @@ class CubeWorldConnection(Protocol):
 
         self.server.players[(self.entity_id,)] = self
         self.has_joined = True
-
-        self.scripts.call('on_join')
 
     def on_command(self, command, parameters):
         self.scripts.call('on_command', command=command, args=parameters)
