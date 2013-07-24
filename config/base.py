@@ -40,3 +40,9 @@ max_connections_per_ip = 5
 
 # Connection handshake timeout time in seconds
 connection_timeout = 5.0
+
+# Network interface to bind to. Leave empty for all IPv4 interfaces.
+network_interface = ''
+
+# Server port. Do not change this unless you have a modified client!
+port = 12345

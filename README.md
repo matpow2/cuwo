@@ -16,6 +16,7 @@ there, and has features like
 * IRC bot
 * PvP script
 * Lower CPU requirements than normal server
+* Support for 40+ players
 * ... and much more!
 
 Running

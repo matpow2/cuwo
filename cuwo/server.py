@@ -39,6 +39,7 @@ from cuwo.config import ConfigObject
 
 import collections
 import imp
+import zipimport
 import os
 import sys
 import pprint
@@ -331,6 +332,9 @@ class CubeWorldServer(Factory):
         self.start_time = reactor.seconds()
         self.set_clock('12:00')
 
+        # start listening
+        self.listen_tcp(base.port, self)
+
     def buildProtocol(self, addr):
         # return None here to refuse the connection.
         # will use this later to hardban e.g. DoS
@@ -417,11 +421,28 @@ class CubeWorldServer(Factory):
 
     # script methods
 
-    def load_script(self, name):
+    def load_script_source(self, name):
         path = './scripts/%s.py' % name
         try:
-            mod = imp.load_source(name, path)
+            return imp.load_source(name, path)
         except IOError:
+            pass
+
+    def load_script_zip(self, name):
+        path = './scripts/%s.zip' % name
+        try:
+            return zipimport.zipimporter(path).load_module(name)
+        except ImportError:
+            pass
+        except zipimport.ZipImportError:
+            pass
+
+    def load_script(self, name):
+        for f in (self.load_script_source, self.load_script_zip):
+            mod = f(name)
+            if mod:
+                break
+        else:
             return None
         script = mod.get_class()(self)
         print 'Loaded script %r' % name
@@ -479,6 +500,16 @@ class CubeWorldServer(Factory):
         self.exit_code = code
         reactor.stop()
 
+    # twisted wrappers
+
+    def listen_tcp(self, *arg, **kw):
+        interface = self.config.base.network_interface
+        return reactor.listenTCP(*arg, interface=interface, **kw)
+
+    def connect_tcp(self, *arg, **kw):
+        interface = self.config.base.network_interface
+        return reactor.connectTCP(*arg, bindAddress=(interface, 0), **kw)
+
 
 def main():
     # for py2exe
@@ -490,8 +521,7 @@ def main():
     config = ConfigObject('./config')
     server = CubeWorldServer(config)
 
-    reactor.listenTCP(constants.SERVER_PORT, server)
-    print 'cuwo running on port %s' % constants.SERVER_PORT
+    print 'cuwo running on port %s' % config.base.port
 
     if config.base.profile_file is None:
         reactor.run()
