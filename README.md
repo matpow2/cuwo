@@ -37,6 +37,7 @@ there, and has features like
     * Bans for both player IDs and IPs
     ... and more in future
 * Lower CPU requirements than normal server
+* Support for more players than you can get
 * ... and much more!
 
 Running

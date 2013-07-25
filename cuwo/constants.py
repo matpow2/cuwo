@@ -29,11 +29,6 @@
 # Version of clients that should be able to join
 CLIENT_VERSION = 3
 
-
-# Not really changable clientside yet
-SERVER_PORT = 12345
-
-
 # Name of the SQLite database file to use
 DATABASE_NAME = 'cuwo.db'
 
@@ -79,6 +74,11 @@ PLAYER_MAX_LEVEL = 3000
 
 # Maximum distance allowed to be able to hit target
 MAX_HIT_DISTANCE = 100
+
+CLASS_WARRIOR = 1
+CLASS_RANGER = 2
+CLASS_MAGE = 3
+CLASS_ROGUE = 4
 
 # Human readable class names ordered by class id
 PLAYER_CLASSES = ['Unknown','Warrior','Ranger','Mage','Rogue']

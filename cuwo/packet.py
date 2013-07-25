@@ -685,29 +685,29 @@ def write_packet(packet):
     return writer.get()
 
 
-for i in range(0, 17):
-    CS_PACKETS[i].packet_id = i
-    SC_PACKETS[i].packet_id = i
-
-
 class PacketHandler(object):
     data = ''
+    last_packet_id = None
 
     def __init__(self, table, callback):
         self.table = table
         self.callback = callback
 
     def feed(self, data):
-        try:
-            self.data += data
-            reader = ByteReader(self.data)
-            while True:
-                pos = reader.tell()
-                if pos >= len(self.data):
-                    break
+        self.data += data
+        reader = ByteReader(self.data)
+        while True:
+            pos = reader.tell()
+            if pos >= len(self.data):
+                break
+            try:
                 packet = read_packet(reader, self.table)
-                self.last_packet_id = packet.packet_id
-                self.callback(packet)
-            self.data = self.data[pos:]
-        except (OutOfData, KeyError):
-            pass
+            except OutOfData:
+                break
+            except KeyError, e:
+                print 'Last packet ID:', self.last_packet_id
+                raise e
+            self.last_packet_id = packet.packet_id
+            self.callback(packet)
+        self.data = self.data[pos:]
+

@@ -1,9 +1,6 @@
 from cuwo.script import (FactoryScript, ProtocolScript, command, get_player)
-from twisted.internet.protocol import Protocol, Factory
-from twisted.python import log
-from twisted.internet import reactor, protocol
-from twisted.web.server import Site
-from twisted.web.static import File
+from twisted.web import server, resource
+from twisted.internet import reactor
 import json
 
 

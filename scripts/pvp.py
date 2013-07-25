@@ -22,19 +22,23 @@ Player versus player mode!
 from cuwo.script import ServerScript, ConnectionScript
 from cuwo.entity import FLAGS_1_HOSTILE
 
+
 class VersusConnection(ConnectionScript):
-    def on_kill(self, target):
-        self.server.send_chat('%s killed %s!' % (self.connection.name, target.name))
+    def on_kill(self, event):
+        self.server.send_chat('%s killed %s!' % (self.connection.name,
+                                                 event.target.name))
+
 
 class VersusServer(ServerScript):
     connection_class = VersusConnection
-    
-    def update(self):
-        for connection in self.server.connections.values():
+
+    def update(self, event):
+        for player in self.server.players.values():
             if not connection.has_joined:
                 continue
             data = connection.entity_data
             data.flags_1 |= FLAGS_1_HOSTILE
+
 
 def get_class():
     return VersusServer

@@ -16,10 +16,10 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+import os.path
 import sqlite3 as sql_db
 
 from twisted.internet import reactor
-from cuwo import config
 from cuwo import common
 from cuwo import constants
 
@@ -45,8 +45,8 @@ def get_connection():
             return db_con
     except sql_db.Error, e:
         print '[DATABASE ERROR] Could not connect to database: %s' % e.args[0]
-    except:
-        print '[DATABASE ERROR] Could not connect to database!'
+    except Exception, e:
+        print '[DATABASE ERROR] Could not connect to database: %s' % e
     sys.exit(1)
     return None
 
@@ -62,6 +62,8 @@ def close_connection(db_con):
 
 def create_structure(db_con=None):
     try:
+        if os.path.isfile(constants.DATABASE_NAME):
+            return
         if not db_con:
             db_con = get_connection()
         db_cur = db_con.cursor()
@@ -69,6 +71,7 @@ def create_structure(db_con=None):
             CREATE TABLE IF NOT EXISTS players(id INTEGER PRIMARY KEY AUTOINCREMENT, ingame_name VARCHAR(100) NOT NULL, password_hash TINYBLOB, last_ip VARCHAR(100) DEFAULT NULL, last_online UNSIGNED BIG INT DEFAULT NULL, online_seconds UNSIGNED BIG INT DEFAULT NULL);
             CREATE TABLE IF NOT EXISTS player_permissions(player_id INTEGER, permission_type TINYINT(2), permission_node VARCHAR(100) NOT NULL);
             CREATE TABLE IF NOT EXISTS player_bans(player_id INTEGER, ip_address VARCHAR(100) NOT NULL UNIQUE, banned_by INTEGER DEFAULT NULL, banned_since UNSIGNED BIG INT NOT NULL, banned_until UNSIGNED BIG INT DEFAULT NULL, reason TEXT DEFAULT NULL);
+            CREATE TABLE IF NOT EXISTS player_inventories(player_id INTEGER, slot_index INTEGER, item_type INTEGER, item_subtype INTEGER DEFAULT NULL);
             CREATE TABLE IF NOT EXISTS kv_data(data_key VARCHAR(64) PRIMARY KEY, data_value BLOB DEFAULT NULL);
             CREATE VIRTUAL TABLE regions_3d USING rtree(id, min_x, max_x, min_y, max_y, min_z, max_z);
             CREATE TABLE IF NOT EXISTS regions_3d(id INTEGER PRIMARY KEY, min_x BIG INT, max_x BIG INT, min_y BIG INT, max_y BIG INT, min_z BIG INT, max_z BIG INT);

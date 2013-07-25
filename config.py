@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
-# Server id (maybe for future use to e.g. run multiple servers through multiplex proxy for (sub-)domain use)
-server_id = 0
-
 # Global server name
 server_name = 'a Server powered by cuwo'
+
+# Network interface to bind to. Leave empty for all IPv4 interfaces.
+network_interface = ''
+
+# Not really changable clientside yet
+port = 12345
 
 # World seed used for world generation (change if you want another landscape etc.)
 # When changing this, the old world and its data gets lost.
@@ -39,10 +42,8 @@ join_level_max = 2000
 
 # Forbid some things if you want
 forbid_races = []
-forbid_items_use = []
-forbid_items_possession = []
-# Here you can  forbid entity types like Mobs or other NPCs
-forbid_entity_types = []
+forbid_item_use = []
+forbid_item_possession = []
 
 # Default lifetime of items in seconds before they despawn (-1 means they will not despawn until restart)
 max_item_lifetime = 60
@@ -52,11 +53,17 @@ max_items_per_chunk = 100
 
 # Protections
 spam_protection = True
+
 grief_protection = True
+
 # Very basic but low-ressource cheat protections (maybe use an additional and more advanced anticheat script)
 cheat_protection = True
+
 # Denial of Service protection (better use hardware doing this job)
 protection_dos = True
+max_connections_per_ip = 5
+
+connection_timeout = 5.0
 
 # Enable/Disable auto kick on some things
 auto_kick_spam = True
@@ -67,7 +74,7 @@ time_modifier = 1.0
 
 # List of scripts to run on the server on startup.
 # Consider turning on 'pvp', i.e. player versus player
-scripts = ['log', 'commands', 'welcome', 'pvp', 'ban']
+scripts = ['config', 'log', 'commands', 'welcome', 'pvp', 'ban', 'console']
 
 # Passwords used for rights management. Keys are passwords, and values are
 # a list of user types under that password. Right now, only 'admin' is defined,
@@ -75,6 +82,8 @@ scripts = ['log', 'commands', 'welcome', 'pvp', 'ban']
 passwords = {
     'PASSWORDREPLACEME': ['admin']
 }
+
+name_filter = "^[a-zA-Z0-9_!@#$%\^&*()\[\]|:;'.,/\-+ <>\\\"{}~`=?]{2,16}$"
 
 # Used by the welcome.py script. Sends a small welcome message to users,
 # replacing %(server_name)s with the server name defined in this file.

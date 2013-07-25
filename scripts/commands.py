@@ -22,9 +22,12 @@ Default set of commands bundled with cuwo
 from cuwo.script import ServerScript, command, admin
 from cuwo.common import get_chunk
 from cuwo.packet import HitPacket, HIT_NORMAL
+from cuwo.vector import Vector3
+from twisted.internet import reactor
 import cuwo.database
 
 import platform
+import sys
 
 
 class CommandServer(ServerScript):
@@ -39,7 +42,7 @@ def get_class():
 @admin
 def say(script, *args):
     message = ' '.join(args)
-    script.connection.server.send_chat(message)
+    script.server.send_chat(message)
 
 
 @command
@@ -106,7 +109,7 @@ def spawn(script):
 
 @command
 def help(script):
-    script.connection.send_lines(self.server.config.help_players)
+    return PLAYER_COMMANDS_HELP
 
 
 @command
@@ -115,8 +118,8 @@ def list(script):
     if plcount <= 0:
         return '[INFO] There are currently no players online.'
     plrs = []
-    for plcon in script.server.connections.values():
-        plrs.append('%s (%s)' % (plcon.entity_data.name, common.get_entity_type_level_str(plcon.entity_data))
+     for player in server.players.values():
+        player.append('%s (%s)' % (player.entity_data.name, common.get_entity_type_level_str(player.entity_data))
     return '[INFO] %s/%s players online: %s' % (plcount, config.max_players, ', '.join(plrs))
 
 
@@ -167,3 +170,94 @@ def tell(script, name=None, *args):
     except:
         pass
     return '[EXCEPTION] Could not tell message to %s!' % player.entity_data.name
+
+
+class ExitAnnouncer:
+    first_tick = True
+    server = None
+    exit_code = 0
+    time_left = 0
+    action = 'shutting down'
+    message = "The server is {action} in {time} seconds."
+    message_long = ("The server is {action} in {time} seconds. "
+                    + " * {reason} *")
+
+    tick_step_sizes = (50*60, 30*60, 10*60, 5*60, 60, 30, 10, 5)
+
+    def exit_tick(self):
+        if self.time_left > 0:
+
+            tick_size = 1
+            for i in self.tick_step_sizes:
+                if self.time_left > i:
+                    tick_size = min(i, self.time_left - i)
+                    break
+
+            self.time_left = self.time_left - tick_size
+            reactor.callLater(tick_size, self.exit_tick)
+
+            announcement = ""
+
+            if ((self.first_tick or self.time_left >= 10)
+                    and not self.reason is None):
+
+                announcement = (self.message_long
+                                .format(action=self.action,
+                                        time=self.time_left+tick_size,
+                                        reason=self.reason))
+            else:
+                announcement = (self.message
+                                .format(action=self.action,
+                                        time=self.time_left+tick_size))
+
+            self.server.send_chat(announcement)
+            # irc send...
+            self.server.call_scripts('send', announcement)
+            print announcement
+        else:
+            self.server.stop(self.exit_code)
+
+        self.first_tick = False
+
+    def announce(self):
+        self.first_tick = True
+        self.exit_tick()
+
+@admin
+@command
+def restart(script, delay=10, *args):
+    try:
+        delay = int(delay)
+    except Exception:
+        return
+
+    reason = None
+    if len(args) > 0:
+        reason = ' '.join(args)
+
+    announcer = ExitAnnouncer()
+    announcer.server = script.server
+    announcer.action = 'restarting'
+    announcer.exit_code = 10
+    announcer.time_left = delay
+    announcer.reason = reason
+    announcer.announce()
+
+
+@admin
+@command
+def shutdown(script, delay=10, *args):
+    try:
+        delay = int(delay)
+    except Exception:
+        return
+
+    reason = None
+    if len(args) > 0:
+        reason = ' '.join(args)
+
+    announcer = ExitAnnouncer()
+    announcer.server = script.server
+    announcer.time_left = delay
+    announcer.reason = reason
+    announcer.announce()
