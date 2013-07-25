@@ -23,6 +23,7 @@ XXX should probably be merged with anticheat
 
 from cuwo.script import ServerScript, ConnectionScript
 from twisted.internet import reactor
+from cuwo import entity
 
 
 class SaneConnection(ConnectionScript):
@@ -30,8 +31,9 @@ class SaneConnection(ConnectionScript):
         timeout = self.server.config.base.connection_timeout
         self.timeout_call = reactor.callLater(timeout, self.timeout)
 
-    def on_join(self, event):
-        self.timeout_call.cancel()
+    def on_entity_update(self, event):
+        timeout = self.server.config.base.connection_timeout
+        self.timeout_call.reset(timeout)
 
     def timeout(self):
         if self.connection is None:

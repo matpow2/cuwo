@@ -127,7 +127,7 @@ class ByteReader(object):
             return self.fp.read()
         data = self.fp.read(size)
         if len(data) < size:
-            raise OutOfData()
+            raise OutOfData(self)
         return data
 
     def open_editor(self):
@@ -158,15 +158,16 @@ class ByteReader(object):
         return filter_string(self.read_string(size))
 
     def skip(self, size):
-        self.seek(self.tell() + size)
+        end_pos = self.tell() + size
+        self.seek(end_pos)
+        if end_pos != self.tell():
+            raise OutOfData(self)
 
     def rewind(self, size):
-        self.seek(self.tell() - size)
+        self.seek(-size, 1)
 
     def read_struct(self, format):
-        value = format.unpack(self.read(format.size))
-        if len(value) == 1:
-            return value[0]
+        value, = format.unpack(self.read(format.size))
         return value
 
     def read_int8(self):
