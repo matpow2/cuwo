@@ -27,13 +27,13 @@ def filter_string(value):
     # Cube World only displays characters between 32-126 (and \r\n which both
     # produce newlines) in-game, so in case the user sent a bogus message, we
     # need to filter out those characters and replace with spaces
-    new = u''
+    v = u''
     for c in value:
         o = ord(c)
-        if o < 10 or (o > 13 and o < 32) or o > 255:
+        if o < 10 or (o > 13 and o < 32) or o > 126:
             c = u' '
-        new += c
-    return new
+        v += c
+    return v
 
 
 def get_hex_string(value):

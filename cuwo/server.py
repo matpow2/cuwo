@@ -130,14 +130,14 @@ class CubeWorldConnection(Protocol):
         self.connectionLost(reason)
 
     def connectionLost(self, reason):
-        if self.connection_state == 0:
+        if self.connection_state <= 0:
             return
-        if self.connection_state == 3:
-            del self.server.players[self]
+        self.connection_state = -1
+        del self.server.players[self]
+        if self.connection_state > 0:
+            self.server.connections.discard(self)
             print '[INFO] Player %s left the game.' % self.name
-            self.server.send_chat('<<< %s left the game' % self.entity_id)
-        self.connection_state = 0
-        self.server.connections.discard(self)
+            self.server.send_chat('<<< %s left the game' % self.name)
         if self.entity_data is not None:
             del self.server.entities[self.entity_id]
         if self.entity_id is not None:
@@ -323,7 +323,6 @@ class CubeWorldConnection(Protocol):
     # handlers
 
     def on_join(self):
-        self.connection_state = 1
         # Call join script
         if self.scripts.call('on_join').result is False:
             return
@@ -332,6 +331,7 @@ class CubeWorldConnection(Protocol):
             return
         if not self.check_name():
             return
+        self.connection_state = 1
         if self.entity_data.level < config.join_level_min:
             print '[INFO] Level of player %s #%s (%s) [%s] is lower than minimum of %s' % (self.name, self.entity_id, common.get_entity_type_level_str(self.entity_data), self.address.host, config.join_level_min)
             self.kick('Your level has to be at least %s' % config.join_level_min)
@@ -340,13 +340,11 @@ class CubeWorldConnection(Protocol):
             print '[INFO] Level of player %s #%s (%s) [%s] is higher than maximum of %s' % (self.name, self.entity_id, common.get_entity_type_level_str(self.entity_data), self.address.host, config.join_level_max)
             self.kick('Your level has to be lower than %s' % config.join_level_max)
             return
-
         # we dont want cheaters being able joining the server
         if self.do_anticheat_actions():
             self.server.send_chat('[ANTICHEAT] Player %s (%s) has been kicked for cheating.' % (self.name,
                                                                                                 common.get_entity_type_level_str(self.entity_data)))
             return
-
         print '[INFO] Player %s #%s (%s) [%s] joined the game' % (self.name,
                                                                   common.get_entity_type_level_str(self.entity_data),
                                                                   self.entity_id,
@@ -362,9 +360,13 @@ class CubeWorldConnection(Protocol):
 
 
     def on_command(self, command, parameters):
+        if self.connection_state <= 0:
+            return
         self.scripts.call('on_command', command=command, args=parameters)
 
     def on_chat(self, message):
+        if self.connection_state <= 0:
+            return
         if message.startswith('/'):
             command, args = parse_command(message[1:])
             self.on_command(command, args)
@@ -594,6 +596,8 @@ class CubeWorldServer(Factory):
         self.start_time = reactor.seconds()
         self.set_clock('12:00')
 
+        reactor.listenTCP(config.port, self)
+
     def buildProtocol(self, addr):
         max_count = self.config.max_connections_per_ip
         for connection in self.connections:
@@ -623,30 +627,30 @@ class CubeWorldServer(Factory):
     def drop_item(self, item_data, pos, lifetime=None):
         try:
             chunk_items = self.chunk_items[get_chunk(pos)]
-            if len(chunk_items) < constants.MAX_ITEMS_PER_CHUNK:
-                item = ChunkItemData()
-                item.drop_time = 750 # ?
-                item.scale = 0.1
-                item.rotation = 185.0
-                item.something3 = item.something5 = item.something6 = 0
-                item.pos = pos
-                item.item_data = item_data
-                if lifetime is None:
-                    item.despawn_time = reactor.seconds() + constants.MAX_ITEM_LIFETIME
-                elif lifetime is not False:
-                    item.despawn_time = reactor.seconds() + lifetime
-                else:
-                    item.despawn_time = None
-                chunk_items.append(item)
-                if item.despawn_time < self.next_items_autoremoval:
-                    self.next_items_autoremoval = item.despawn_time
-                self.items_changed = True
-                return True
+            if len(chunk_items) > constants.MAX_ITEMS_PER_CHUNK:
+                return
+            item = ChunkItemData()
+            item.drop_time = 750 # ?
+            item.scale = 0.1
+            item.rotation = 185.0
+            item.something3 = item.something5 = item.something6 = 0
+            item.pos = pos
+            item.item_data = item_data
+            if lifetime is None:
+                item.despawn_time = reactor.seconds() + constants.MAX_ITEM_LIFETIME
+            elif lifetime is not False:
+                item.despawn_time = reactor.seconds() + lifetime
+            else:
+                item.despawn_time = None
+            chunk_items.append(item)
+            self.items_changed = True
+            if item.despawn_time < self.next_items_autoremoval:
+                self.next_items_autoremoval = item.despawn_time
+            return
         except KeyError:
             pass
         except IndexError:
             pass
-        return False
 
     def update(self):
         # secondly update check
@@ -664,14 +668,12 @@ class CubeWorldServer(Factory):
                     print '[WARNING] The amount of TPS is as low as %s' % self.ticks_per_second
             else:
                 print '[WARNING] Seems like the reactor time went backwards! Ignoring.'
-                update_seconds_delta = 0
 
         # entity updates
         for entity_id, entity in self.entities.iteritems():
-            if entity.mask > 0:
-                entity_packet.set_entity(entity, entity_id, entity.mask)
-                entity.mask = 0
-                self.broadcast_packet(entity_packet)
+            entity_packet.set_entity(entity, entity_id, entity.mask)
+            entity.mask = 0
+            self.broadcast_packet(entity_packet)
         self.broadcast_packet(update_finished_packet)
 
         # other updates
@@ -716,7 +718,7 @@ class CubeWorldServer(Factory):
                 else:
                     print '[WARNING] Connection timed out for Player %s (ID: %s)' % (player.entity_data.name, player.entity_id)
                     player.kick('Connection timed out')
-        self.broadcast_time()
+            self.broadcast_time()
 
     def send_chat(self, value):
         packet = ServerChatMessage()
@@ -726,7 +728,7 @@ class CubeWorldServer(Factory):
 
     def broadcast_packet(self, packet):
         data = write_packet(packet)
-        for player in self.players.values():
+        for player in self.players:
             player.transport.write(data)
 
     def broadcast_time(self):
@@ -843,7 +845,6 @@ def main():
 
     import config
     server = CubeWorldServer(config)
-    reactor.listenTCP(config.port, server)
     print '[INFO] Server is listening on port %s using cuwo %s' % (config.port, getattr(config, 'git_rev', None))
     if config.profile_file is None:
         reactor.run()
