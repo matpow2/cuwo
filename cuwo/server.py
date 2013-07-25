@@ -156,7 +156,7 @@ class CubeWorldConnection(Protocol):
         # XXX clean this up
         if entity.is_mode_set(mask):
             self.scripts.call('on_mode_update')
-        if entity.is_call_set(mask):
+        if entity.is_class_set(mask):
             self.scripts.call('on_class_update')
         if entity.is_name_set(mask):
             self.scripts.call('on_name_update')
