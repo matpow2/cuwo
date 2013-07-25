@@ -405,18 +405,6 @@ class CubeWorldConnection(Protocol):
             return
         return event.message
 
-    def on_equipment_update(self):
-        # TODO
-        return True
-
-    def on_level_update(self):
-        # TODO
-        return True
-
-    def on_skill_update(self):
-        # TODO
-        return True
-
 
     # other methods
 
@@ -658,42 +646,47 @@ class CubeWorldServer(Factory):
 
     def remove_item(self, chunk, index):
         try:
-            items = self.chunk_items[chunk]
-            ret = items.pop(index)
-            self.items_changed = True
-            return ret
+            ret = self.chunk_items[chunk].pop(index)
+            if ret:
+                self.items_changed = True
+                return ret
         except KeyError:
-            return None
+            pass
         except IndexError:
-            return None
+            pass
+        return None
 
     def drop_item(self, item_data, pos, lifetime=None):
+        cpos = common.get_chunk(pos)
         try:
-            chunk_items = self.chunk_items[get_chunk(pos)]
+            chunk_items = self.chunk_items[cpos]
             if len(chunk_items) > constants.MAX_ITEMS_PER_CHUNK:
-                return
-            item = ChunkItemData()
-            item.drop_time = 750 # ?
-            item.scale = 0.1
-            item.rotation = 185.0
-            item.something3 = item.something5 = item.something6 = 0
-            item.pos = pos
-            item.item_data = item_data
-            if lifetime is None:
-                item.despawn_time = reactor.seconds() + constants.MAX_ITEM_LIFETIME
-            elif lifetime is not False:
-                item.despawn_time = reactor.seconds() + lifetime
-            else:
-                item.despawn_time = None
-            chunk_items.append(item)
-            self.items_changed = True
-            if item.despawn_time < self.next_items_autoremoval:
-                self.next_items_autoremoval = item.despawn_time
-            return
+                print '[WARNING] To many items in chunk (%s,%s)!' % (cpos.x, cpos.y)
+                return False
         except KeyError:
             pass
         except IndexError:
             pass
+        if not chunk_items:
+            self.chunk_items[cpos] = []
+        item = ChunkItemData()
+        item.drop_time = 750 # ?
+        item.scale = 0.1
+        item.rotation = 185.0
+        item.something3 = item.something5 = item.something6 = 0
+        item.pos = pos
+        item.item_data = item_data
+        if lifetime is None:
+            item.despawn_time = reactor.seconds() + constants.MAX_ITEM_LIFETIME
+        elif lifetime is not False:
+            item.despawn_time = reactor.seconds() + lifetime
+        else:
+            item.despawn_time = None
+        chunk_items.append(item)
+        self.items_changed = True
+        if item.despawn_time < self.next_items_autoremoval:
+            self.next_items_autoremoval = item.despawn_time
+        return True
 
     def update(self):
         # secondly update check
