@@ -622,7 +622,7 @@ class CubeWorldServer(Factory):
 
     def buildProtocol(self, addr):
         max_count = self.config.max_connections_per_ip
-        for connection in self.server.connections:
+        for connection in self.connections:
             if connection.address.host == addr.host:
                 max_count -= 1
                 if max_count <= 0:
@@ -684,7 +684,7 @@ class CubeWorldServer(Factory):
             if update_seconds_delta > 0:
                 self.ticks_per_second = (self.ticks_per_second + (self.ticks_since_last_second / update_seconds_delta)) / 2
                 self.ticks_since_last_second = 0
-                if self.ticks_per_second < 25:
+                if self.ticks_per_second < 20:
                     print '[WARNING] The amount of TPS is as low as %s' % self.ticks_per_second
             else:
                 print '[WARNING] Seems like the reactor time went backwards! Ignoring.'
@@ -740,7 +740,7 @@ class CubeWorldServer(Factory):
                 else:
                     print '[WARNING] Connection timed out for Player %s (ID: %s)' % (player.entity_data.name, player.entity_id)
                     player.kick('Connection timed out')
-            self.broadcast_time()
+        self.broadcast_time()
 
     def send_chat(self, value):
         packet = ServerChatMessage()
@@ -874,7 +874,6 @@ def main():
     server = CubeWorldServer(config)
     reactor.listenTCP(config.port, server)
     msg = '[INFO] Server is listening on port %s' % config.port
-
     if server.git_rev:
         msg += ' with cuwo %s' % server.git_rev
     print msg
