@@ -169,7 +169,6 @@ class CubeWorldConnection(Protocol):
         if entity.is_skill_set(mask):
             self.scripts.call('on_skill_update')
 
-
     def on_chat_packet(self, packet):
         message = filter_string(packet.value).strip()
         if not message:
