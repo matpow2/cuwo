@@ -42,6 +42,7 @@ from cuwo.script import ScriptManager
 from cuwo import database
 from cuwo import entity
 
+import re
 import collections
 import imp
 import zipimport
@@ -94,13 +95,15 @@ class CubeWorldConnection(Protocol):
 
     def connectionMade(self):
         if len(self.server.connections) >= self.server.config.max_players:
-            res = self.call_scripts('on_join_full_server')
+            res = self.scripts.call('on_join_full_server')
             # For being able to allow joining by external scritps when server is full
             if not res:
                 self.send_packet(server_full_packet)
                 self.disconnect()
-                print '[INFO] Player %s [%s] tried to join full server' % (self.entity_data.name, self.address.host)
+                print '[INFO] %s tried to join full server' % self.address.host
                 return
+
+        print '[INFO] Processing connection from %s ...' % self.address.host
 
         self.packet_handlers = {
             ClientVersion.packet_id: self.on_version_packet,
@@ -113,11 +116,11 @@ class CubeWorldConnection(Protocol):
 
         self.packet_handler = PacketHandler(CS_PACKETS, self.on_packet)
 
-        server.connections.add(self)
+        self.server.connections.add(self)
         self.rights = AttributeSet()
 
         self.scripts = ScriptManager()
-        server.scripts.call('on_new_connection', connection=self)
+        self.server.scripts.call('on_new_connection', connection=self)
 
     def dataReceived(self, data):
         self.packet_handler.feed(data)
@@ -129,12 +132,12 @@ class CubeWorldConnection(Protocol):
     def connectionLost(self, reason):
         if self.connection_state == 0:
             return
-        self.connection_state = 0
-        self.server.connections.discard(self)
         if self.connection_state == 3:
             del self.server.players[self]
             print '[INFO] Player %s left the game.' % self.name
             self.server.send_chat('<<< %s left the game' % self.entity_id)
+        self.connection_state = 0
+        self.server.connections.discard(self)
         if self.entity_data is not None:
             del self.server.entities[self.entity_id]
         if self.entity_id is not None:
@@ -151,12 +154,8 @@ class CubeWorldConnection(Protocol):
     def on_packet(self, packet):
         handler = self.packet_handlers.get(packet.packet_id, None)
         if handler is None:
-            print '[WARNING] Unhandled client packet for player %s #%s [%s]' % (self.entity_data.name,
-                                                                                self.entity_id,
-                                                                                self.address.host,
-                                                                                packet.packet_id)
             return
-        # packets are normally sent at least once per second by the client
+        time_last_packet = reactor.seconds()
         handler(packet)
 
     def on_version_packet(self, packet):
@@ -164,13 +163,8 @@ class CubeWorldConnection(Protocol):
             mismatch_packet.version = constants.CLIENT_VERSION
             self.send_packet(mismatch_packet)
             self.disconnect(None)
-            print '[INFO] Player %s is using an incompatible client version (%s != %s)' % (self.entity_data.name,
-                                                                                           self.address.host,
-                                                                                            packet.version,
-                                                                                            constants.CLIENT_VERSION)
             return
         server = self.server
-        print '[INFO] Processing connection from %s ...' % self.address.host
         self.entity_id = server.entity_ids.pop()
         join_packet.entity_id = self.entity_id
         self.send_packet(join_packet)
@@ -180,59 +174,39 @@ class CubeWorldConnection(Protocol):
     def on_entity_packet(self, packet):
         if self.entity_data is None:
             self.entity_data = create_entity_data()
-        self.server.entities[self.entity_id] = self.entity_data
-        if self.entity_data.name:
-            oldname = self.entity_data.name
+            self.server.entities[self.entity_id] = self.entity_data
         mask = packet.update_entity(self.entity_data)
         self.entity_data.mask |= mask
         if self.entity_data.entity_type >= constants.ENTITY_TYPE_PLAYER_MIN_ID and self.entity_data.entity_type <= constants.ENTITY_TYPE_PLAYER_MAX_ID and getattr(self.entity_data, 'name', None):
             if self.connection_state == 0:
                 self.on_join()
                 return
-            if entity.is_mode_set(mask):
-                self.call_scripts('on_mode_update')
-            if entity.is_class_set(mask):
-                self.call_scripts('on_class_update')
-            if entity.is_multiplier_set(mask):
-                self.call_scripts('on_multiplier_update')
-            if entity.is_level_set(mask):
-                self.call_scripts('on_level_update')
-            if entity.is_equipment_set(mask):
-                self.call_scripts('on_equipment_update')
-            if entity.is_name_set(mask):
-                if check_name():
-                    if self.call_scripts('on_name_update') is False:
-                        self.kick('Name update error')
-                        return
-                    self.server.send_chat('[INFO] %s #%s changed his/her name to %s' % (oldname,
-                                                                                        self.entity_id,
-                                                                                        self.entity_data.name))
-            if entity.is_skill_set(mask):
-                self.call_scripts('on_skill_update')
-        else:
-            self.server.send_chat('Non-Human entity tried to join!')
+        if entity.is_mode_set(mask):
+            self.scripts.call('on_mode_update')
+        if entity.is_class_set(mask):
+            self.scripts.call('on_class_update')
+        if entity.is_multiplier_set(mask):
+            self.scripts.call('on_multiplier_update')
+        if entity.is_level_set(mask):
+            self.scripts.call('on_level_update')
+        if entity.is_equipment_set(mask):
+            self.scripts.call('on_equipment_update')
+        if entity.is_name_set(mask):
+            if self.check_name():
+                if self.scripts.call('on_name_update') is False:
+                    self.entity_data.name = oldname
+                    self.kick('Name update denied')
+                    return
+        if entity.is_skill_set(mask):
+            self.scripts.call('on_skill_update')
 
     def on_chat_packet(self, packet):
-        # Spammer stopped for a defined amount of seconds - reset spam score
-        if self.time_last_chat < (self.last_secondly_check - constants.ANTISPAM_LIMIT_CHAT):
+        if self.time_last_chat < (reactor.seconds() - constants.ANTISPAM_LIMIT_CHAT):
             self.chat_messages_burst = 0
-        # When spammer continues with spamming, antichat time also increases
-        self.time_last_chat = self.last_secondly_check
-        message = filter_string(packet.value).strip()
-        if not message:
-            return
-        message = self.on_chat(message)
-        if not message:
-            return
-        if self.chat_messages_burst < constants.ANTISPAM_BURST_CHAT:
-            chat_packet.entity_id = self.entity_id
-            chat_packet.value = message
-            self.server.broadcast_packet(chat_packet)
-            print '%s: %s' % (self.entity_data.name, message)
-        else:
-            res = self.call_scripts('on_spamming_chat')
+        elif self.chat_messages_burst >= constants.ANTISPAM_BURST_CHAT:
+            self.time_last_chat = reactor.seconds()
+            res = self.scripts.call('on_spamming_chat')
             if not res:
-                self.chat_messages_burst += 1
                 # As we do not want to spam back only do this when
                 # burst limit is reached for the first time
                 if self.chat_messages_burst == constants.ANTISPAM_BURST_CHAT:
@@ -240,9 +214,21 @@ class CubeWorldConnection(Protocol):
                         self.kick('Kicked for chat spamming')
                     else:
                         self.send_chat('[ANTISPAM] Please do not spam in chat!')
+                self.chat_messages_burst += 1
             else:
                 # When a script allowed spamming reset burst limit
                 self.chat_messages_burst = 0
+            return
+        message = filter_string(packet.value).strip()
+        if not message:
+            return
+        message = self.on_chat(message)
+        if not message:
+            return
+        chat_packet.entity_id = self.entity_id
+        chat_packet.value = message
+        self.server.broadcast_packet(chat_packet)
+        print '%s: %s' % (self.name, message)
 
     def on_interact_packet(self, packet):
         interact_type = packet.interact_type
@@ -254,7 +240,7 @@ class CubeWorldConnection(Protocol):
                 return
             self.server.drop_item(item, pos)
         elif interact_type == INTERACT_PICKUP:
-            res = self.call_scripts('on_pickup')
+            res = self.scripts.call('on_pickup')
             if res is False:
                 return
             chunk = (packet.chunk_x, packet.chunk_y)
@@ -277,10 +263,10 @@ class CubeWorldConnection(Protocol):
                                            target.entity_data.y,
                                            target.entity_data.z)
             if edist > constants.MAX_HIT_DISTANCE:
-                print '[ANTICHEAT] Player %s tried to attack target that is %s away!' % (self.entity_data.name, edist)
+                print '[ANTICHEAT] Player %s tried to attack target that is %s away!' % (self.name, edist)
                 self.kick('Range error')
                 return
-        res = self.call_scripts('on_hit', target, packet.damage)
+        res = self.scripts.call('on_hit', target, packet.damage)
         if res is False:
             return
         self.server.update_packet.player_hits.append(packet)
@@ -292,7 +278,7 @@ class CubeWorldConnection(Protocol):
         if packet.damage > 1000:
             packet.damage = 1000
         if target.hp > packet.damage:
-            res = self.call_scripts('on_damage', target, packet.damage)
+            res = self.scripts.call('on_damage', target, packet.damage)
             if res is False or res <= 0:
                 return
             target.hp -= packet.damage
@@ -309,26 +295,26 @@ class CubeWorldConnection(Protocol):
         if not constants.ANTICHEAT_SYSTEM_ENABLED:
             return False
         if self.entity_data.entity_type < constants.ENTITY_TYPE_PLAYER_MIN_ID or self.entity_data.entity_type > constants.ENTITY_TYPE_PLAYER_MAX_ID:
-            print '[ANTICHEAT] Player %s tried to join with invalid entity type id: %s!' % (self.entity_data.name, self.entity_data.entity_type)
+            print '[ANTICHEAT] Player %s tried to join with invalid entity type id: %s!' % (self.name, self.entity_data.entity_type)
             self.kick('Invalid entity type submitted')
             return True
         if self.entity_data.class_type < constants.ENTITY_CLASS_PLAYER_MIN_ID or self.entity_data.class_type > constants.ENTITY_CLASS_PLAYER_MAX_ID :
             self.kick('Invalid character class submitted')
-            print '[ANTICHEAT] Player %s tried to join with an invalid character class! Kicked.' % self.entity_data.name
+            print '[ANTICHEAT] Player %s tried to join with an invalid character class! Kicked.' % self.name
             return True
         if self.entity_data.hp > 1000:
             self.kick('Abnormal health points submitted')
-            print '[ANTICHEAT] Player %s tried to join with an abnormal health points! Kicked.' % self.entity_data.name
+            print '[ANTICHEAT] Player %s tried to join with an abnormal health points! Kicked.' % self.name
             return True
         if self.entity_data.level < 1 or self.entity_data.level > constants.PLAYER_MAX_LEVEL:
             self.kick('Abnormal level submitted')
-            print '[ANTICHEAT] Player %s tried to join with an abnormal character level! Kicked.' % self.entity_data.name
+            print '[ANTICHEAT] Player %s tried to join with an abnormal character level! Kicked.' % self.name
             return True
         # This seems to filter prevent cheaters from joining
         needed_xp = get_needed_total_xp(self.entity_data.level)
         if needed_xp > self.entity_data.current_xp:
             self.kick('Invalid character level')
-            print '[ANTICHEAT] Player %s tried to join with character level %s that is higher than total xp needed for it (%s/%s)! Kicked.' % (self.entity_data.name, self.entity_data.level, self.entity_data.current_xp, needed_xp)
+            print '[ANTICHEAT] Player %s tried to join with character level %s that is higher than total xp needed for it (%s/%s)! Kicked.' % (self.name, self.entity_data.level, self.entity_data.current_xp, needed_xp)
             return True
         #if self.entity_data.inventory...... in constants.FORBIDDEN_ITEMS_POSSESSION
         return False
@@ -344,28 +330,28 @@ class CubeWorldConnection(Protocol):
         if self.connection_state != 0:
             self.kick('Tried to join more than once!')
             return
-        if not check_name():
+        if not self.check_name():
             return
         if self.entity_data.level < config.join_level_min:
-            print '[INFO] Level of player %s #%s (%s) [%s] is lower than minimum of %s' % (self.entity_data.name, self.entity_id, common.get_entity_type_level_str(self.entity_data), self.address.host, config.join_level_min)
+            print '[INFO] Level of player %s #%s (%s) [%s] is lower than minimum of %s' % (self.name, self.entity_id, common.get_entity_type_level_str(self.entity_data), self.address.host, config.join_level_min)
             self.kick('Your level has to be at least %s' % config.join_level_min)
             return
         if self.entity_data.level > config.join_level_max:
-            print '[INFO] Level of player %s #%s (%s) [%s] is higher than maximum of %s' % (self.entity_data.name, self.entity_id, common.get_entity_type_level_str(self.entity_data), self.address.host, config.join_level_max)
+            print '[INFO] Level of player %s #%s (%s) [%s] is higher than maximum of %s' % (self.name, self.entity_id, common.get_entity_type_level_str(self.entity_data), self.address.host, config.join_level_max)
             self.kick('Your level has to be lower than %s' % config.join_level_max)
             return
 
         # we dont want cheaters being able joining the server
         if self.do_anticheat_actions():
-            self.server.send_chat('[ANTICHEAT] Player %s (%s) has been kicked for cheating.' % (self.entity_data.name,
+            self.server.send_chat('[ANTICHEAT] Player %s (%s) has been kicked for cheating.' % (self.name,
                                                                                                 common.get_entity_type_level_str(self.entity_data)))
             return
 
-        print '[INFO] Player %s #%s (%s) [%s] joined the game' % (self.entity_data.name,
+        print '[INFO] Player %s #%s (%s) [%s] joined the game' % (self.name,
                                                                   common.get_entity_type_level_str(self.entity_data),
                                                                   self.entity_id,
                                                                   self.address.host)
-        self.server.send_chat('>>> %s (%s) joined the game' % (self.entity_data.name,
+        self.server.send_chat('>>> %s (%s) joined the game' % (self.name,
                                                                common.get_entity_type_level_str(self.entity_data)))
         for player in self.server.players.values():
             entity_packet.set_entity(player.entity_data, player.entity_id)
@@ -411,13 +397,12 @@ class CubeWorldConnection(Protocol):
         self.send_packet(packet)
 
     def give_item(self, item):
-        res = self.server.call_scripts('on_before_giving_item', item)
-        if res is False:
-            return False
         action = PickupAction()
         action.entity_id = self.entity_id
         action.item_data = item
-
+        res = self.scripts.call('on_give_item', action=action)
+        if res is False:
+            return False
         # Processed by the server and clients in next update task run
         self.server.update_packet.pickups.append(action)
         self.entity_data.changed = True
@@ -431,7 +416,7 @@ class CubeWorldConnection(Protocol):
     def heal(self, amount=None, reason=None):
         if (amount is not None and amount <= 0) or (hp >= constants.PLAYER_MAX_HEALTH):
             return False
-        res = self.server.call_scripts('on_heal', amount, reason)
+        res = self.scripts.call('on_heal', amount, reason)
         if res is False:
             return False
         if amount is None or amount + hp > constants.PLAYER_MAX_HEALTH:
@@ -448,7 +433,7 @@ class CubeWorldConnection(Protocol):
             self.send_chat(reason)
 
     def damage(self, damage=0, critical=0, stun_duration=0, reason=None):
-        res = self.server.call_scripts('on_damage', damage, critical, stun_duration, reason)
+        res = self.scripts.call('on_damage', damage, critical, stun_duration, reason)
         if res is False:
             return False
         packet = HitPacket()
@@ -523,7 +508,7 @@ class CubeWorldConnection(Protocol):
     def check_name(self):
         server = self.server
         self.entity_data.name = self.entity_data.name.strip()
-        if not self.entity_data.name or re.search(server.config.name_filter, self.entity_data.name) is None:
+        if not self.entity_data.name or re.search(server.config.name_filter, self.name) is None:
             self.kick('Illegal name')
             print '[INFO] Player #%s [%s] had illegal name' % (self.entity_id, self.address.host)
             return False
@@ -545,15 +530,12 @@ class CubeWorldConnection(Protocol):
                 return False
         return True
 
-    def call_scripts(self, name, *arg, **kw):
-        return call_scripts(self.scripts, name, *arg, **kw)
-
 
     # convienience methods
 
     @property
     def position(self):
-        if self.entity_data is None:
+        if not self.entity_data:
             return None
         return Vector3(self.entity_data.x,
                        self.entity_data.y,
@@ -562,9 +544,9 @@ class CubeWorldConnection(Protocol):
 
     @property
     def name(self):
-        if self.entity_data is None:
+        if not self.entity_data:
             return None
-        return getattr(self.entity_data, 'name', None)
+        return self.entity_data.name
 
 
 class CubeWorldServer(Factory):
@@ -743,8 +725,6 @@ class CubeWorldServer(Factory):
         self.broadcast_packet(packet)
 
     def broadcast_packet(self, packet):
-        if not self.players:
-            return
         data = write_packet(packet)
         for player in self.players.values():
             player.transport.write(data)
@@ -795,9 +775,6 @@ class CubeWorldServer(Factory):
         script = mod.get_class()(self)
         print '[INFO] Loaded script "%r"' % name
         return script
-
-    def call_scripts(self, name, *arg, **kw):
-        return call_scripts(self.scripts, name, *arg, **kw)
 
     def call_command(self, user, command, args):
         """

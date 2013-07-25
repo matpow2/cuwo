@@ -27,7 +27,7 @@
 
 
 # Version of clients that should be able to join
-CLIENT_VERSION = 4
+CLIENT_VERSION = 3
 
 # Name of the SQLite database file to use
 DATABASE_NAME = 'cuwo.db'

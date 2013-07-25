@@ -34,6 +34,11 @@ import zlib
 
 def create_entity_data():
     data = EntityData()
+    data.appearance = AppearanceData()
+    data.item_data = ItemData()
+    data.equipment = []
+    for _ in xrange(13):
+        data.equipment.append(ItemData())
     return data
 
 
@@ -107,7 +112,7 @@ class SeedData(Packet):
 
 class EntityUpdate(Packet):
     def read(self, reader):
-        size = reader.read_uint32()
+        size = reader.read_int32()
         self.data = zlib.decompress(reader.read(size))
         reader = ByteReader(self.data)
         self.entity_id = reader.read_uint64()
@@ -626,56 +631,37 @@ class SectorDiscovered(Packet):
         writer.write_uint32(self.y)
 
 
-CS_PACKETS = [
-    EntityUpdate,
-    None,
-    None,
-    None,
-    None,
-    None,
-    InteractPacket,
-    HitPacket,
-    StealthPacket,
-    ShootPacket,
-    ClientChatMessage,
-    ChunkDiscovered,
-    SectorDiscovered,
-    None,
-    None,
-    None,
-    None,
-    ClientVersion
-]
+CS_PACKETS = {
+    0: EntityUpdate,
+    6: InteractPacket,
+    7: HitPacket,
+    8: StealthPacket,
+    9: ShootPacket,
+    10: ClientChatMessage,
+    11: ChunkDiscovered,
+    12: SectorDiscovered,
+    17: ClientVersion
+}
 
-
-SC_PACKETS = [
-    EntityUpdate,
-    MultipleEntityUpdate, # not used
-    UpdateFinished,
-    Unknown3, # not used
-    ServerUpdate,
-    CurrentTime,
-    None,
-    None,
-    None,
-    None,
-    ServerChatMessage,
-    None,
-    None,
-    None,
-    None,
-    SeedData,
-    JoinPacket,
-    ServerMismatch,
-    ServerFull
-]
+SC_PACKETS = {
+    0: EntityUpdate,
+    1: MultipleEntityUpdate,  # not used
+    2: UpdateFinished,
+    3: Unknown3,  # not used
+    4: ServerUpdate,
+    5: CurrentTime,
+    10: ServerChatMessage,
+    18: ServerFull,
+    17: ServerMismatch,
+    16: JoinPacket,
+    15: SeedData
+}
 
 
 def read_packet(reader, table):
     packet_id = reader.read_uint32()
     packet = table[packet_id]()
     packet.read(reader)
-    print 'ReadPacket %s' % packet.packet_id
     return packet
 
 
@@ -683,8 +669,12 @@ def write_packet(packet):
     writer = ByteWriter()
     writer.write_uint32(packet.packet_id)
     packet.write(writer)
-    print 'WritePacket %s' % packet.packet_id
     return writer.get()
+
+
+for table in (CS_PACKETS, SC_PACKETS):
+    for k, v in table.iteritems():
+        v.packet_id = k
 
 
 class PacketHandler(object):
@@ -712,4 +702,3 @@ class PacketHandler(object):
             self.last_packet_id = packet.packet_id
             self.callback(packet)
         self.data = self.data[pos:]
-

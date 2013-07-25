@@ -65,6 +65,7 @@ class ItemUpgrade(Loader):
 
 
 class ItemData(Loader):
+
     def __init__(self):
         self.changed = False
         self.chunk = None
@@ -83,7 +84,6 @@ class ItemData(Loader):
         # change index set by server
         self.change_index = -1
         # double linked and set by the server
-
 
     def read(self, reader):
         self.type = reader.read_uint8()
@@ -124,6 +124,7 @@ class ItemData(Loader):
 
 
 class AppearanceData(Loader):
+
     def __init__(self):
         self.changed = False
         self.not_used_1 = 0
@@ -259,10 +260,12 @@ class AppearanceData(Loader):
 
 
 class EntityData(Loader):
+
     def __init__(self):
+        self.mask = 0
+        self.chunk = None
         self.changed = False
         # double linked and set by the server
-        self.chunk = None
         self.x = 0
         self.y = 0
         self.z = 0
@@ -572,6 +575,7 @@ def is_skill_set(mask):
 
 def read_masked_data(entity, reader):
     mask = reader.read_uint64()
+
     if is_pos_set(mask):
         entity.x = reader.read_int64()
         entity.y = reader.read_int64()
@@ -802,8 +806,7 @@ def get_masked_size(mask):
 def write_masked_data(entity, writer, mask=None):
     if mask is None:
         mask = 0x0000FFFFFFFFFFFF
-    if mask <= 0:
-        return
+
     writer.write_uint64(mask)
     if is_pos_set(mask):
         writer.write_int64(entity.x)
