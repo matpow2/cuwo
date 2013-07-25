@@ -460,13 +460,6 @@ class CurrentTime(Packet):
         writer.write_uint32(self.time)
 
 
-INTERACT_NPC = 2
-INTERACT_NORMAL = 3
-INTERACT_PICKUP = 5
-INTERACT_DROP = 6
-INTERACT_EXAMINE = 8
-
-
 class InteractPacket(Packet):
     def read(self, reader):
         self.item_data = ItemData()
@@ -488,12 +481,6 @@ class InteractPacket(Packet):
         writer.write_uint8(self.interact_type)
         writer.write_uint8(self.something6)
         writer.write_uint16(self.something7)
-
-
-HIT_NORMAL = 0
-HIT_BLOCK = 1
-HIT_MISS = 3
-HIT_ABSORB = 5
 
 
 class HitPacket(Packet):

@@ -30,8 +30,7 @@ import platform
 import sys
 
 
-class CommandServer(ServerScript):
-    pass
+
 
 
 def get_class():
@@ -99,6 +98,34 @@ def heal(script, name=None, heal_amount=None):
     return 'Healed %s' % player.name
 
 
+@admin
+@command
+def restart(script, delay=10, *args):
+    try:
+        delay = int(delay)
+    except Exception:
+        return
+    reason = None
+    if len(args) > 0:
+        reason = ' '.join(args)
+    # Todo: add scheduler function
+    # reactor.callLater(10, 'restart', delay)
+
+
+@admin
+@command
+def shutdown(script, delay=10, *args):
+    try:
+        delay = int(delay)
+    except Exception:
+        return
+    reason = None
+    if len(args) > 0:
+        reason = ' '.join(args)
+    # Todo: add scheduler function
+    # reactor.callLater(10, 'shutdown', delay)
+
+
 @command
 def spawn(script):
     player = script.get_player(name)
@@ -129,22 +156,19 @@ def register(script, password)
         return '[INFO] Register with password to get your login id for future logins: /register <password>'
     reg_id = database.register_player(script.server.db_con, script.connection.entity_data.name, password)
     if reg_id:
-        return '[REGISTRATION] You have successfully been registered with the following ID: %s' % reg_id
+        return '[REGISTRATION] Please note that you have to do /login %s %s now to log in.' % (reg_id, password)
     return '[ERROR] Could not register!'
 
 
 @command
 def login(script, id, password):
     if not id or not password:
-        return '[INFO] Command to login with your id and password: /login <id> <password>'
-    user_types = script.server.passwords.get(id, [])
-    if user_types:
-        script.connection.rights.update(user_types)
+        return '[INFO] Command to login with your ID and password: /login <ID> <password>'
     login_res = database.login_player(script.server.db_con, script.connection.entity_data.name, id, password)
     if not login_res:
         return '[LOGIN] Login failed!'
     else:
-        return '[LOGIN] Successfully logged in with ID %s' % id)
+        return '[LOGIN] Successfully logged in!' % id)
     return '[ERROR] Invalid password!'
 
 
@@ -170,94 +194,3 @@ def tell(script, name=None, *args):
     except:
         pass
     return '[EXCEPTION] Could not tell message to %s!' % player.entity_data.name
-
-
-class ExitAnnouncer:
-    first_tick = True
-    server = None
-    exit_code = 0
-    time_left = 0
-    action = 'shutting down'
-    message = "The server is {action} in {time} seconds."
-    message_long = ("The server is {action} in {time} seconds. "
-                    + " * {reason} *")
-
-    tick_step_sizes = (50*60, 30*60, 10*60, 5*60, 60, 30, 10, 5)
-
-    def exit_tick(self):
-        if self.time_left > 0:
-
-            tick_size = 1
-            for i in self.tick_step_sizes:
-                if self.time_left > i:
-                    tick_size = min(i, self.time_left - i)
-                    break
-
-            self.time_left = self.time_left - tick_size
-            reactor.callLater(tick_size, self.exit_tick)
-
-            announcement = ""
-
-            if ((self.first_tick or self.time_left >= 10)
-                    and not self.reason is None):
-
-                announcement = (self.message_long
-                                .format(action=self.action,
-                                        time=self.time_left+tick_size,
-                                        reason=self.reason))
-            else:
-                announcement = (self.message
-                                .format(action=self.action,
-                                        time=self.time_left+tick_size))
-
-            self.server.send_chat(announcement)
-            # irc send...
-            self.server.call_scripts('send', announcement)
-            print announcement
-        else:
-            self.server.stop(self.exit_code)
-
-        self.first_tick = False
-
-    def announce(self):
-        self.first_tick = True
-        self.exit_tick()
-
-@admin
-@command
-def restart(script, delay=10, *args):
-    try:
-        delay = int(delay)
-    except Exception:
-        return
-
-    reason = None
-    if len(args) > 0:
-        reason = ' '.join(args)
-
-    announcer = ExitAnnouncer()
-    announcer.server = script.server
-    announcer.action = 'restarting'
-    announcer.exit_code = 10
-    announcer.time_left = delay
-    announcer.reason = reason
-    announcer.announce()
-
-
-@admin
-@command
-def shutdown(script, delay=10, *args):
-    try:
-        delay = int(delay)
-    except Exception:
-        return
-
-    reason = None
-    if len(args) > 0:
-        reason = ' '.join(args)
-
-    announcer = ExitAnnouncer()
-    announcer.server = script.server
-    announcer.time_left = delay
-    announcer.reason = reason
-    announcer.announce()

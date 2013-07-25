@@ -78,11 +78,20 @@ NAME_LENGTH_MAX = 16
 # Maximum distance allowed to be able to hit target
 MAX_HIT_DISTANCE = 100
 
+# Maximum move distance per second
+MAX_MOVE_DISTANCE = 100
+
 # Entity classes
 CLASS_WARRIOR = 1
 CLASS_RANGER = 2
 CLASS_MAGE = 3
 CLASS_ROGUE = 4
+
+# Hit types
+HIT_NORMAL = 0
+HIT_BLOCK = 1
+HIT_MISS = 3
+HIT_ABSORB = 5
 
 # Interact types
 INTERACT_NPC = 2

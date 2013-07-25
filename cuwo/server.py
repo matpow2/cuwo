@@ -49,6 +49,7 @@ import zipimport
 import os
 import sys
 import json
+import math
 import random
 
 
@@ -271,7 +272,7 @@ class CubeWorldConnection(Protocol):
                                            target.entity_data.y,
                                            target.entity_data.z)
             if edist > constants.MAX_HIT_DISTANCE:
-                print '[ANTICHEAT] Player %s tried to attack target that is %s away!' % (self.name, edist)
+                print '[ANTICHEAT BASE] Player %s tried to attack target that is %s away!' % (self.name, edist)
                 self.kick('Range error')
                 return
         res = self.scripts.call('on_hit', target, packet.damage)
@@ -303,7 +304,15 @@ class CubeWorldConnection(Protocol):
         if not constants.ANTICHEAT_SYSTEM_ENABLED:
             return False
         if not check_name():
-            return False
+            return True
+        if self.last_pos is not None:
+            # check new coordinates and distances
+            edist = common.get_distance_3d(self.last_pos.x, self.last_pos.y, self.last_pos.z, self.position.x, self.position.y, self.position.z)
+            if edist > (reactor.seconds() * constants.MAX_MOVE_DISTANCE):
+                print '[ANTICHEAT BASE] Player %s moved to fast! Kicked.' % self.name
+                self.kick('Moved to fast')
+                return True
+        self.last_pos = self.position
         if self.entity_data.entity_type < constants.ENTITY_TYPE_PLAYER_MIN_ID or self.entity_data.entity_type > constants.ENTITY_TYPE_PLAYER_MAX_ID:
             print '[ANTICHEAT BASE] Player %s tried to join with invalid entity type id: %s!' % (self.name, self.entity_data.entity_type)
             self.kick('Invalid entity type submitted')
@@ -358,6 +367,7 @@ class CubeWorldConnection(Protocol):
             print '[WARNING] Level of player %s #%s (%s) [%s] is higher than maximum of %s' % (self.name, self.entity_id, common.get_entity_type_level_str(self.entity_data), self.address.host, config.join_level_max)
             self.kick('Your level has to be lower than %s' % config.join_level_max)
             return
+        self.last_pos = self.position
         # we dont want cheaters being able joining the server
         if self.do_anticheat_actions():
             self.server.send_chat('[ANTICHEAT] Player %s (%s) has been kicked for cheating.' % (self.name,
@@ -513,12 +523,14 @@ class CubeWorldConnection(Protocol):
             self.server.send_chat('<<< %s has been kicked' % self.entity_data.name)
 
     def teleport(self, to_x, to_y, to_z):
-        res = self.scripts.call('on_teleport', pos=Vector3(to_x, to_y, to_z))
+        res = self.scripts.call('on_teleport', pos=self.position)
         if res is False:
             return
         self.entity_data.x = to_x
         self.entity_data.y = to_y
         self.entity_data.z = to_z
+        # To not confuse anti cheating system
+        self.last_pos = self.position
         self.entity_data.changed = True
         for connection in self.server.connections.values():
             entity_packet.set_entity(self.entity_data, self.entity_id)
@@ -528,7 +540,7 @@ class CubeWorldConnection(Protocol):
     def check_name(self):
         if not self.name:
             self.kick('No name')
-            print '[WARNING] %s has no name! Kicked.' % self.address.host
+            print '[WARNING] %s had no name! Kicked.' % self.address.host
             return False
         if len(self.name) > constants.NAME_LENGTH_MAX:
             self.kick('Name to long')
@@ -628,18 +640,20 @@ class CubeWorldServer(Factory):
         reactor.listenTCP(config.port, self)
 
     def buildProtocol(self, addr):
-        max_count = self.config.max_connections_per_ip
+        con_remain = self.config.max_connections_per_ip
         for connection in self.connections:
             if connection.address.host == addr.host:
-                if max_count <= 1:
-                    max_count = 0
-                    print '[WARNING] Too many connections from %s, closing...' % addr.host
-                    return
-                else:
-                    max_count -= 1
-        ret = self.scripts.call('on_connection_attempt', address=addr).result
+                con_remain -= 1
+                if con_remain <= 0:
+                    if con_remain == 0:
+                        print '[WARNING] Too many connections from %s, closing...' % addr.host
+                    connection.disconnect()
+        if con_remain <= 0:
+            return
+        ret = self.scripts.call('on_connection_attempt', address=addr)
         if ret is False:
-            return None
+            print '[WARNING] Connection attempt for %s blocked by script!' % addr.host
+            return False
         return CubeWorldConnection(self, addr)
 
     def remove_item(self, chunk, index):
