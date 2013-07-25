@@ -473,6 +473,9 @@ class CubeWorldServer(Factory):
         return self.scripts.call('on_command', user=user, command=command,
                                  args=args).result
 
+    def get_mode(self):
+        return self.scripts.call('get_mode').result
+
     # data store methods
 
     def load_data(self, name, default=None):
@@ -519,6 +522,10 @@ class CubeWorldServer(Factory):
         reactor.stop()
 
     # twisted wrappers
+
+    def listen_udp(self, *arg, **kw):
+        interface = self.config.base.network_interface
+        return reactor.listenUDP(*arg, interface=interface, **kw)
 
     def listen_tcp(self, *arg, **kw):
         interface = self.config.base.network_interface
