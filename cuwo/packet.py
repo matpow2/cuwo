@@ -22,6 +22,11 @@
 # where you got them from (i.e. cuwo) :-)
 
 
+# See: http://www.cubeworldwiki.net/index.php/Multiplayer_Protocol
+# Keep in mind that Cube World is closed source and only very few is known
+# about internals like how the multiplayer protocol is working
+
+
 from cuwo.entity import (EntityData, AppearanceData, ItemData,
                          read_masked_data, write_masked_data, get_masked_size)
 from cuwo.sounds import SOUNDS
@@ -468,9 +473,7 @@ class InteractPacket(Packet):
         self.item_data.read(reader)
         self.chunk_x = reader.read_int32()
         self.chunk_y = reader.read_int32()
-        # index of item in ChunkItems
         self.item_index = reader.read_int32()
-        #
         self.something4 = reader.read_uint32()
         self.interact_type = reader.read_uint8()
         self.something6 = reader.read_uint8()

@@ -71,14 +71,25 @@ ENTITY_CLASS_PLAYER_MAX_ID = 4
 PLAYER_MAX_HEALTH = 300
 PLAYER_MAX_LEVEL = 3000
 
+# Player names length
+NAME_LENGTH_MIN = 3
+NAME_LENGTH_MAX = 16
 
 # Maximum distance allowed to be able to hit target
 MAX_HIT_DISTANCE = 100
 
+# Entity classes
 CLASS_WARRIOR = 1
 CLASS_RANGER = 2
 CLASS_MAGE = 3
 CLASS_ROGUE = 4
+
+# Interact types
+INTERACT_NPC = 2
+INTERACT_NORMAL = 3
+INTERACT_PICKUP = 5
+INTERACT_DROP = 6
+INTERACT_EXAMINE = 8 # also DOORS etc. I think
 
 # Human readable class names ordered by class id
 PLAYER_CLASSES = ['Unknown','Warrior','Ranger','Mage','Rogue']
