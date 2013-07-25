@@ -36,6 +36,7 @@ from cuwo.common import (get_clock_string, parse_clock, parse_command,
                          get_chunk, filter_string)
 from cuwo.script import ScriptManager
 from cuwo.config import ConfigObject
+from cuwo import entity
 
 import collections
 import imp
@@ -146,10 +147,28 @@ class CubeWorldConnection(Protocol):
         if self.entity_data is None:
             self.entity_data = create_entity_data()
             self.server.entities[self.entity_id] = self.entity_data
-        self.entity_data.mask |= packet.update_entity(self.entity_data)
+        mask = packet.update_entity(self.entity_data)
+        self.entity_data.mask |= mask
         if not self.has_joined and getattr(self.entity_data, 'name', None):
             self.on_join()
             return
+
+        # XXX clean this up
+        if entity.is_mode_set(mask):
+            self.scripts.call('on_mode_update')
+        if entity.is_call_set(mask):
+            self.scripts.call('on_class_update')
+        if entity.is_name_set(mask):
+            self.scripts.call('on_name_update')
+        if entity.is_multiplier_set(mask):
+            self.scripts.call('on_multiplier_update')
+        if entity.is_level_set(mask):
+            self.scripts.call('on_level_update')
+        if entity.is_equipment_set(mask):
+            self.scripts.call('on_equipment_update')
+        if entity.is_skill_set(mask):
+            self.scripts.call('on_skill_update')
+
 
     def on_chat_packet(self, packet):
         message = filter_string(packet.value).strip()
