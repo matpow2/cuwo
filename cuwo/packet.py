@@ -675,6 +675,7 @@ def read_packet(reader, table):
     packet_id = reader.read_uint32()
     packet = table[packet_id]()
     packet.read(reader)
+    print 'ReadPacket %s' % packet.packet_id
     return packet
 
 
@@ -682,6 +683,7 @@ def write_packet(packet):
     writer = ByteWriter()
     writer.write_uint32(packet.packet_id)
     packet.write(writer)
+    print 'WritePacket %s' % packet.packet_id
     return writer.get()
 
 

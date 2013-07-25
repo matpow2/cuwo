@@ -66,15 +66,16 @@ class CubeWorldConnection(Protocol):
     """
     Protocol used for players
     """
-    connection_state = 0
+    connection_state = -1
     entity_id = None
     entity_data = None
     change_index = -1
     scripts = None
 
-    last_health = -1
-    last_level = -1
-    last_xp = -1
+    last_pos = None
+    last_health = None
+    last_level = None
+    last_xp = None
 
     # used for anti chat spamming
     time_last_chat    = -1
@@ -92,8 +93,7 @@ class CubeWorldConnection(Protocol):
     # connection methods
 
     def connectionMade(self):
-        server = self.server
-        if len(server.connections) >= server.config.max_players:
+        if len(self.server.connections) >= self.server.config.max_players:
             res = self.call_scripts('on_join_full_server')
             # For being able to allow joining by external scritps when server is full
             if not res:
@@ -123,7 +123,6 @@ class CubeWorldConnection(Protocol):
         self.packet_handler.feed(data)
 
     def disconnect(self, reason=None):
-        self.time_disconnected = self.server.last_secondly_check
         self.transport.loseConnection()
         self.connectionLost(reason)
 
@@ -132,10 +131,11 @@ class CubeWorldConnection(Protocol):
             return
         self.connection_state = 0
         self.server.connections.discard(self)
-        del self.server.players[self]
-        if self.entity_data:
-            print '[INFO] Player %s left the game.' % self.entity_data.name
-            self.server.send_chat('<<< %s left the game' % self.entity_data.name)
+        if self.connection_state == 3:
+            del self.server.players[self]
+            print '[INFO] Player %s left the game.' % self.name
+            self.server.send_chat('<<< %s left the game' % self.entity_id)
+        if self.entity_data is not None:
             del self.server.entities[self.entity_id]
         if self.entity_id is not None:
             self.server.entity_ids.put_back(self.entity_id)
@@ -149,38 +149,28 @@ class CubeWorldConnection(Protocol):
         self.transport.write(write_packet(packet))
 
     def on_packet(self, packet):
-        self.time_last_packet = self.server.last_secondly_check
         handler = self.packet_handlers.get(packet.packet_id, None)
         if handler is None:
             print '[WARNING] Unhandled client packet for player %s #%s [%s]' % (self.entity_data.name,
                                                                                 self.entity_id,
                                                                                 self.address.host,
                                                                                 packet.packet_id)
-        return
+            return
         # packets are normally sent at least once per second by the client
         handler(packet)
 
     def on_version_packet(self, packet):
-        server = self.server
         if packet.version != constants.CLIENT_VERSION:
-            res = self.call_scripts('on_wrong_version_join')
-            if not res:
-                mismatch_packet.version = constants.CLIENT_VERSION
-                self.send_packet(mismatch_packet)
-                self.disconnect(None)
-                print '[INFO] Player %s is using an incompatible client version (%s != %s)' % (self.entity_data.name,
-                                                                                               self.address.host,
-                                                                                               packet.version,
-                                                                                               constants.CLIENT_VERSION)
-                return
-        if len(server.connections) >= server.config.max_players:
-            res = self.call_scripts('on_join_full_server')
-            # For being able to allow joining by external scritps when server is full
-            if not res:
-                self.send_packet(server_full_packet)
-                self.disconnect(None)
-                print '[INFO] Player %s [%s] tried to join full server' % (self.entity_data.name, self.address.host)
-                return
+            mismatch_packet.version = constants.CLIENT_VERSION
+            self.send_packet(mismatch_packet)
+            self.disconnect(None)
+            print '[INFO] Player %s is using an incompatible client version (%s != %s)' % (self.entity_data.name,
+                                                                                           self.address.host,
+                                                                                            packet.version,
+                                                                                            constants.CLIENT_VERSION)
+            return
+        server = self.server
+        print '[INFO] Processing connection from %s ...' % self.address.host
         self.entity_id = server.entity_ids.pop()
         join_packet.entity_id = self.entity_id
         self.send_packet(join_packet)
@@ -190,7 +180,7 @@ class CubeWorldConnection(Protocol):
     def on_entity_packet(self, packet):
         if self.entity_data is None:
             self.entity_data = create_entity_data()
-            self.server.entities[self.entity_id] = self.entity_data
+        self.server.entities[self.entity_id] = self.entity_data
         if self.entity_data.name:
             oldname = self.entity_data.name
         mask = packet.update_entity(self.entity_data)
@@ -199,7 +189,6 @@ class CubeWorldConnection(Protocol):
             if self.connection_state == 0:
                 self.on_join()
                 return
-        if mask > 0:
             if entity.is_mode_set(mask):
                 self.call_scripts('on_mode_update')
             if entity.is_class_set(mask):
@@ -220,6 +209,8 @@ class CubeWorldConnection(Protocol):
                                                                                         self.entity_data.name))
             if entity.is_skill_set(mask):
                 self.call_scripts('on_skill_update')
+        else:
+            self.server.send_chat('Non-Human entity tried to join!')
 
     def on_chat_packet(self, packet):
         # Spammer stopped for a defined amount of seconds - reset spam score
@@ -346,13 +337,13 @@ class CubeWorldConnection(Protocol):
     # handlers
 
     def on_join(self):
+        self.connection_state = 1
         # Call join script
         if self.scripts.call('on_join').result is False:
             return
         if self.connection_state != 0:
             self.kick('Tried to join more than once!')
             return
-        self.connection_state = 1
         if not check_name():
             return
         if self.entity_data.level < config.join_level_min:
@@ -676,7 +667,6 @@ class CubeWorldServer(Factory):
         return False
 
     def update(self):
-        self.scripts.call('update')
         # secondly update check
         uxtime = int(reactor.seconds())
         update_seconds_delta = uxtime - self.last_secondly_check
@@ -685,6 +675,7 @@ class CubeWorldServer(Factory):
         else:
             self.last_secondly_check = uxtime
             if update_seconds_delta > 0:
+                self.scripts.call('update')
                 self.ticks_per_second = (self.ticks_per_second + (self.ticks_since_last_second / update_seconds_delta)) / 2
                 self.ticks_since_last_second = 0
                 if self.ticks_per_second < 20:
@@ -876,10 +867,7 @@ def main():
     import config
     server = CubeWorldServer(config)
     reactor.listenTCP(config.port, server)
-    msg = '[INFO] Server is listening on port %s' % config.port
-    if server.git_rev:
-        msg += ' with cuwo %s' % server.git_rev
-    print msg
+    print '[INFO] Server is listening on port %s using cuwo %s' % (config.port, getattr(config, 'git_rev', None))
     if config.profile_file is None:
         reactor.run()
     else:
