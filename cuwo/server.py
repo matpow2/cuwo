@@ -40,6 +40,7 @@ from cuwo.common import (get_clock_string, parse_clock, parse_command,
                          get_player_class_str, get_player_race_str)
 from cuwo.script import ScriptManager
 from cuwo import database
+from cuwo import entity
 
 import collections
 import imp
@@ -189,27 +190,27 @@ class CubeWorldConnection(Protocol):
     def on_entity_packet(self, packet):
         if self.entity_data is None:
             self.entity_data = create_entity_data()
-        self.server.entities[self.entity_id] = self.entity_data
-        mask = self.entity_data.mask
-        if is_bit_set(mask, 45):
+            self.server.entities[self.entity_id] = self.entity_data
+        if self.entity_data.name:
             oldname = self.entity_data.name
-        mask |= packet.update_entity(self.entity_data)
+        mask = packet.update_entity(self.entity_data)
+        self.entity_data.mask |= mask
         if self.entity_data.entity_type >= constants.ENTITY_TYPE_PLAYER_MIN_ID and self.entity_data.entity_type <= constants.ENTITY_TYPE_PLAYER_MAX_ID and getattr(self.entity_data, 'name', None):
             if self.connection_state == 0:
                 self.on_join()
                 return
         if mask > 0:
-            if is_bit_set(mask, 9):
+            if entity.is_mode_set(mask):
                 self.call_scripts('on_mode_update')
-            if is_bit_set(mask, 21):
+            if entity.is_class_set(mask):
                 self.call_scripts('on_class_update')
-            if is_bit_set(mask, 30):
+            if entity.is_multiplier_set(mask):
                 self.call_scripts('on_multiplier_update')
-            if is_bit_set(mask, 33):
+            if entity.is_level_set(mask):
                 self.call_scripts('on_level_update')
-            if is_bit_set(mask, 44):
+            if entity.is_equipment_set(mask):
                 self.call_scripts('on_equipment_update')
-            if is_bit_set(mask, 45):
+            if entity.is_name_set(mask):
                 if check_name():
                     if self.call_scripts('on_name_update') is False:
                         self.kick('Name update error')
@@ -217,7 +218,7 @@ class CubeWorldConnection(Protocol):
                     self.server.send_chat('[INFO] %s #%s changed his/her name to %s' % (oldname,
                                                                                         self.entity_id,
                                                                                         self.entity_data.name))
-            if is_bit_set(mask, 46):
+            if entity.is_skill_set(mask):
                 self.call_scripts('on_skill_update')
 
     def on_chat_packet(self, packet):
@@ -624,10 +625,12 @@ class CubeWorldServer(Factory):
         max_count = self.config.max_connections_per_ip
         for connection in self.connections:
             if connection.address.host == addr.host:
-                max_count -= 1
-                if max_count <= 0:
-                    print '[WARNING] Too many connections from %s, closing...' % host
+                if max_count <= 1:
+                    max_count = 0
+                    print '[WARNING] Too many connections from %s, closing...' % addr.host
                     return
+                else:
+                    max_count -= 1
         ret = self.scripts.call('on_connection_attempt', address=addr).result
         if ret is False:
             return None
