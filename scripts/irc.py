@@ -157,7 +157,9 @@ class IRCClientFactory(protocol.ClientFactory):
         self.nickname = irc.nickname
         self.username = 'cuwo'
         self.realname = config.base.server_name
-        self.channel = irc.channel
+        self.channel = irc.channel.lower()
+        if not self.channel.startswith('#'):
+            self.channel = '#' + self.channel
         self.commandprefix = irc.commandprefix
         self.chatprefix = irc.chatprefix
         self.password = irc.password
