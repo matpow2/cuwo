@@ -15,6 +15,7 @@ there, and has features like
 * Rights management (/login password)
 * IRC bot
 * PvP script
+* DDoS prevention
 * Lower CPU requirements than normal server
 * Master server on http://mp2.dk/cuwo
 * Support for 40+ players
@@ -74,15 +75,17 @@ FAQ
 Special thanks
 ==============
 
-Sarcen - help with some protocol variables, scripting
+Sarcen - help with protocol variables, scripting, anticheat
 
 Perl - protocol RE
 
 ZeZeene - web interface for master server
 
+Kyle - master server JS
+
 Somer - help with some protocol variables
 
-Kainzo - Testing
+Kainzo - testing
 
 Favorlock - scripting and commands
 
