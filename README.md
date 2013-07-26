@@ -1,6 +1,5 @@
 ![cuwo](http://mp2.dk/cuwo/logo.png)
 ====
-
 cuwo is an open server implementation for Cube World, written in Python.
 It currently has the best protocol coverage among all the server projects out
 there, and has features like
@@ -9,10 +8,10 @@ there, and has features like
 * Registration and Login system
 * Console logging
 * MOTD message
-* Scripting (see scripts in ./scripts directory)
+* Scripting (see scripts inside ./scripts directory)
 * Advanced configuration
 * Ban system
-* AntiSpam system with burst limit
+* AntiSpam system with burst
 * Commands
     ... for players:
         * /register <password>
@@ -40,6 +39,30 @@ there, and has features like
 * Support for more players than you can get
 * ... and much more!
 
+
+World/Sector/Chunk organization
+===============================
+* Each world in Cube World contains sectors and each sector contains chunks
+* Entities are saved in chunk object
+* Chunks are saved in sector object
+* Sectors are saved in world object
+* 3-step targeting (world -> sector -> chunk) for increasing performance on target/destination searching
+
+
+Direction-Coordinate-Delta-Matrix
+=================================
+  #########################
+  #   7   #   0   #   1   #
+  #(-1,-1)#( 0,-1)#( 1,-1)#
+  #########################
+  #   6   #       #   2   #
+  #(-1,0 )#       #( 1,0 )#
+  #########################
+  #   5   #   4   #   3   #
+  #(-1,1 )#( 0,1 )#( 1,1 )#
+  #########################
+
+
 Running
 =======
 
@@ -49,6 +72,7 @@ quick way to get started.
 
 On Linux/Mac OS X/FreeBSD/etc., make sure you have Python 2.7 and Twisted
 installed on your machine, then run run_server.sh.
+
 
 Status
 ======
@@ -91,6 +115,7 @@ FAQ
 * **A.** A MITM server sits between your client and server, and can manipulate
          and inject packets. It's not really useful for the normal user, so
          use the regular cuwo server instead.
+
 
 Special thanks
 ==============
