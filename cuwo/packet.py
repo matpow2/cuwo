@@ -669,7 +669,6 @@ for table in (CS_PACKETS, SC_PACKETS):
 
 class PacketHandler(object):
     data = ''
-    last_packet_id = None
 
     def __init__(self, table, callback):
         self.table = table
@@ -678,17 +677,14 @@ class PacketHandler(object):
     def feed(self, data):
         self.data += data
         reader = ByteReader(self.data)
-        while True:
-            pos = reader.tell()
-            if pos >= len(self.data):
-                break
-            try:
+        try:
+            while True:
+                pos = reader.tell()
+                if pos >= len(self.data):
+                    break
                 packet = read_packet(reader, self.table)
-            except OutOfData:
-                break
-            except KeyError, e:
-                print 'Last packet ID:', self.last_packet_id
+                self.callback(packet)
+        except OutOfData, e:
+            if e.reader is not reader:
                 raise e
-            self.last_packet_id = packet.packet_id
-            self.callback(packet)
         self.data = self.data[pos:]

@@ -18,10 +18,13 @@
 import struct
 
 
-class OutOfData(struct.error):
+class OutOfData(Exception):
     """
     Raised when there is not enough data for the element being read.
     """
+
+    def __init__(self, reader):
+        self.reader = reader
 
 
 class InvalidData(Exception):

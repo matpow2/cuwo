@@ -101,15 +101,17 @@ Sarcen - help with some protocol variables, scripting
 
 Perl - protocol RE
 
+ZeZeene - web interface for master server
+
 Somer - help with some protocol variables
+
+Kainzo - Testing
 
 Favorlock - scripting and commands
 
 Jakky89 - SQLite database integration, scripting, commands
 
 SLoW - scripting
-
-Kainzo - Testing
 
 DRayX - encrypt.py and protocol RE
 

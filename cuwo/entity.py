@@ -27,7 +27,9 @@ ACCEL_BIT = 3
 EXTRA_VEL_BIT = 4
 LOOK_PITCH_BIT = 5
 MODE_BIT = 9
+APPEARANCE_BIT = 13
 CLASS_BIT = 21
+CHARGED_MP_BIT = 23
 MULTIPLIER_BIT = 30
 LEVEL_BIT = 33
 EQUIPMENT_BIT = 44
@@ -549,12 +551,20 @@ def is_mode_set(mask):
     return is_bit_set(mask, MODE_BIT)
 
 
+def is_appearance_set(mask):
+    return is_bit_set(mask, APPEARANCE_BIT)
+
+
 def is_class_set(mask):
     return is_bit_set(mask, CLASS_BIT)
 
 
 def is_multiplier_set(mask):
     return is_bit_set(mask, MULTIPLIER_BIT)
+
+
+def is_charged_mp_set(mask):
+    return is_bit_set(mask, CHARGED_MP_BIT)
 
 
 def is_level_set(mask):
@@ -606,7 +616,7 @@ def read_masked_data(entity, reader):
         entity.hit_counter = reader.read_uint32()
     if is_bit_set(mask, 12):
         entity.last_hit_time = reader.read_uint32()
-    if is_bit_set(mask, 13):
+    if is_appearance_set(mask):
         entity.appearance.read(reader)
     if is_bit_set(mask, 14):
         entity.flags_1 = reader.read_uint8()
@@ -627,7 +637,7 @@ def read_masked_data(entity, reader):
         entity.class_type = reader.read_uint8()
     if is_bit_set(mask, 22):
         entity.specialization = reader.read_uint8()
-    if is_bit_set(mask, 23):
+    if is_charged_mp_set(mask):
         entity.charged_mp = reader.read_float()
     if is_bit_set(mask, 24):
         entity.not_used_1 = reader.read_uint32()
@@ -730,7 +740,7 @@ def get_masked_size(mask):
         size += 4
     if is_bit_set(mask, 12):
         size += 4
-    if is_bit_set(mask, 13):
+    if is_appearance_set(mask):
         size += 172
     if is_bit_set(mask, 14):
         size += 2
@@ -750,7 +760,7 @@ def get_masked_size(mask):
         size += 1
     if is_bit_set(mask, 22):
         size += 1
-    if is_bit_set(mask, 23):
+    if is_charged_mp_set(mask):
         size += 4
     if is_bit_set(mask, 24):
         size += 12
@@ -838,7 +848,7 @@ def write_masked_data(entity, writer, mask=None):
         writer.write_uint32(entity.hit_counter)
     if is_bit_set(mask, 12):
         writer.write_uint32(entity.last_hit_time)
-    if is_bit_set(mask, 13):
+    if is_appearance_set(mask):
         entity.appearance.write(writer)
     if is_bit_set(mask, 14):
         writer.write_uint8(entity.flags_1)
@@ -859,7 +869,7 @@ def write_masked_data(entity, writer, mask=None):
         writer.write_uint8(entity.class_type)
     if is_bit_set(mask, 22):
         writer.write_uint8(entity.specialization)
-    if is_bit_set(mask, 23):
+    if is_charged_mp_set(mask):
         writer.write_float(entity.charged_mp)
     if is_bit_set(mask, 24):
         writer.write_uint32(entity.not_used_1)

@@ -80,11 +80,11 @@ class CubeWorldConnection(Protocol):
     last_xp = None
 
     # used for anti chat spamming
-    time_last_chat    = -1
+    time_last_chat    = None
     chat_messages_burst = 0
 
     # used for detecting dead connections
-    time_last_packet  = -1
+    time_last_packet  = None
     # used for basic DoS protection
     packet_burst = 0
 
@@ -161,6 +161,8 @@ class CubeWorldConnection(Protocol):
         self.transport.write(write_packet(packet))
 
     def on_packet(self, packet):
+        if self.connection_state < 0:
+            return
         handler = self.packet_handlers.get(packet.packet_id, None)
         if handler is None:
             return
@@ -184,12 +186,17 @@ class CubeWorldConnection(Protocol):
         if self.entity_data is None:
             self.entity_data = create_entity_data()
             self.server.entities[self.entity_id] = self.entity_data
+
         mask = packet.update_entity(self.entity_data)
         self.entity_data.mask |= mask
         if self.entity_data.entity_type >= constants.ENTITY_TYPE_PLAYER_MIN_ID and self.entity_data.entity_type <= constants.ENTITY_TYPE_PLAYER_MAX_ID and getattr(self.entity_data, 'name', None):
             if self.connection_state == 0:
                 self.on_join()
                 return
+
+        self.scripts.call('on_entity_update', mask=mask)
+        if entity.is_pos_set(mask):
+            self.scripts.call('on_pos_update')
         if entity.is_mode_set(mask):
             self.scripts.call('on_mode_update')
         if entity.is_class_set(mask):
@@ -208,6 +215,10 @@ class CubeWorldConnection(Protocol):
                     return
         if entity.is_skill_set(mask):
             self.scripts.call('on_skill_update')
+        if entity.is_appearance_set(mask):
+            self.scripts.call('on_appearance_update')
+        if entity.is_charged_mp_set(mask):
+            self.scripts.call('on_charged_mp_update')
 
     def on_chat_packet(self, packet):
         if self.time_last_chat < (reactor.seconds() - constants.ANTISPAM_LIMIT_CHAT):

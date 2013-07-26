@@ -128,8 +128,25 @@ class ByteReader(object):
             return self.fp.read()
         data = self.fp.read(size)
         if len(data) < size:
-            raise OutOfData()
+            raise OutOfData(self)
         return data
+
+    def open_editor(self):
+        if raw_input('Open editor? y/n ').strip().lower() != 'y':
+            return False
+        import tempfile
+        import subprocess
+        fp = tempfile.NamedTemporaryFile('wb', delete=False)
+        fp.write(self.fp.getvalue())
+        fp.close()
+        name = fp.name
+
+        try:
+            subprocess.Popen(['010editor', '%s@%s' % (name, self.tell())])
+        except IOError:
+            pass
+        raw_input('Press enter to continue...')
+        return True
 
     def read_string(self, size):
         value = self.read(size)
@@ -142,15 +159,16 @@ class ByteReader(object):
         return filter_string(self.read_string(size))
 
     def skip(self, size):
-        self.seek(self.tell() + size)
+        end_pos = self.tell() + size
+        self.seek(end_pos)
+        if end_pos != self.tell():
+            raise OutOfData(self)
 
     def rewind(self, size):
-        self.seek(self.tell() - size)
+        self.seek(-size, 1)
 
     def read_struct(self, format):
-        value = format.unpack(self.read(format.size))
-        if len(value) == 1:
-            return value[0]
+        value, = format.unpack(self.read(format.size))
         return value
 
     def read_int8(self):
