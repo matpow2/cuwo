@@ -83,9 +83,11 @@ ZeZeene - web interface for master server
 
 Kyle - master server JS
 
-Somer - help with some protocol variables
-
 Kainzo - testing
+
+uwee - protocol variables
+
+Somer - help with some protocol variables
 
 Favorlock - scripting and commands
 

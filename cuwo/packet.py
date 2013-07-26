@@ -287,7 +287,7 @@ class ChunkItems(Loader):
         write_list(writer, self.items)
 
 
-class Item13(Loader):
+class MissionData(Loader):
     def read(self, reader):
         self.section_x = reader.read_int32() / 8
         self.section_y = reader.read_int32() / 8
@@ -297,15 +297,15 @@ class Item13(Loader):
         self.something3 = reader.read_uint32()
         self.something4 = reader.read_uint32()
         self.something5 = reader.read_uint32()
-        self.something6 = reader.read_uint32()
-        self.something7 = reader.read_uint32()
+        self.monster_id = reader.read_uint32()
+        self.quest_level = reader.read_uint32()
         self.something8 = reader.read_uint8()
         self.something9 = reader.read_uint8()
         reader.skip(2)
         self.something10 = reader.read_float()
         self.something11 = reader.read_float()
-        self.something12 = reader.read_uint32()
-        self.something13 = reader.read_uint32()
+        self.chunk_x = reader.read_uint32()
+        self.chunk_y = reader.read_uint32()
         print vars(self)
 
     def write(self, writer):
@@ -316,15 +316,15 @@ class Item13(Loader):
         writer.write_uint32(self.something3)
         writer.write_uint32(self.something4)
         writer.write_uint32(self.something5)
-        writer.write_uint32(self.something6)
-        writer.write_uint32(self.something7)
+        writer.write_uint32(self.monster_id)
+        writer.write_uint32(self.quest_level)
         writer.write_uint8(self.something8)
         writer.write_uint8(self.something9)
         writer.pad(2)
         writer.write_uint32(self.something10)
         writer.write_uint32(self.something11)
-        writer.write_uint32(self.something12)
-        writer.write_uint32(self.something13)
+        writer.write_uint32(self.chunk_x)
+        writer.write_uint32(self.chunk_y)
 
 
 class ServerUpdate(Packet):
@@ -341,7 +341,7 @@ class ServerUpdate(Packet):
         self.kill_actions = []
         self.damage_actions = []
         self.items_12 = []
-        self.items_13 = []
+        self.missions = []
 
     def read(self, reader):
         size = reader.read_uint32()
@@ -381,7 +381,7 @@ class ServerUpdate(Packet):
             self.items_12.append(reader.read(40))
 
         # objective/quests? not sure
-        self.items_13 = read_list(reader, Item13)
+        self.missions = read_list(reader, MissionData)
 
         debug = True
         if debug:
@@ -436,7 +436,7 @@ class ServerUpdate(Packet):
         for item in self.items_12:
             data.write(item)
 
-        write_list(data, self.items_13)
+        write_list(data, self.missions)
 
         compressed_data = zlib.compress(data.get())
         writer.write_uint32(len(compressed_data))
