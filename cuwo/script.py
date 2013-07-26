@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-from cuwo.types import AttributeSet, AttributeDict
+from cuwo.cwtypes import AttributeSet, AttributeDict
 import collections
 import sys
 
