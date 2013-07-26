@@ -3,55 +3,61 @@
   <head>
     <meta charset="UTF-8">
     <title>cuwo - open Cube World server in Python</title>
-    <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
-    <link href="includes/flags.css" rel="stylesheet">
-    <link href="includes/table.css" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/tablesorter.bootstrap.css" >
+    <link rel="stylesheet" href="css/flags.css"  >
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script type="text/javascript" src="includes/loadServers.js"></script>
-    <script type="text/javascript" src="includes/tablesort.min.js"></script>
+    <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
+    <script type="text/javascript" src="js/jquery.tablesorter.widgets.min.js"></script>
+    <script type="text/javascript" src="js/serverlist.js"></script>
     <script type="text/javascript">
     <!--
-      window.onload = function() {
-        ajaxRequest();
-      }
+      $(document).ready(function() {
+        loadServerList();
+
+        $('#serverlist').tablesorter({
+          theme: "bootstrap",
+          widthFixed: true,
+          headerTemplate : '{content} {icon}',
+          widgets: [ "uitheme", "zebra" ],
+          sortList: [[2,1]]
+        });
+      });
     //-->
     </script>
+    <style>
+      .navbar {
+        margin: 0 0 20px 0;
+      }
+    </style>
   </head>
   <body>
-    <div class="navbar navbar-inverse">
+    <div class="navbar navbar-inverse navbar-static-top">
       <div class="navbar-inner">
         <img class="brand" src="http://mp2.dk/cuwo/logo.png" alt="cuwo" style="height:1em;"/>
         <ul class="nav">
 <!--           <li><a href="http://mp2.dk/cuwo/">Home</a></li> -->
 <!--           <li><a href="http://mp2.dk/cuwo/#about">About</a></li> -->
-		      <li class="active"><a href="#">Server List</a></li>
+          <li class="active"><a href="#">Server List</a></li>
 <!--           <li><a href="http://mp2.dk/cuwo/#contact">Contact</a></li> -->
         </ul>
       </div>
     </div>
-	<div class="container">
-	  <h1>Server List</h1>
-	  <table class="table sortable">
-	    <thead>
-	      <tr>
-        <th><span class="pointer">Server Name</span></th>
-		    <th><span class="pointer">Mode</span></th>
-		    <th><span class="pointer">Players</span></th>
-		    <th><span class="pointer">IP</span></th>
-		    <th><span class="pointer">Location</span></th>
-		  </tr>
-	    </thead>
-	    <tbody id="serverListTable">
-	      <tr>
-		    <td class="muted">Loading...</td>
-		    <td class="muted">Loading...</td>
-        <td class="muted">Loading...</td>
-		    <td class="muted">Loading...</td>
-		    <td class="muted">Loading...</td>
+    <div class="container-fluid">
+      <table id="serverlist" class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Server Name</th>
+            <th>Mode</th>
+            <th>Players</th>
+            <th>IP</th>
+            <th>Location</th>
           </tr>
-	    </tbody>
-	  </table>
-      <button class="btn pull-right" onclick="ajaxRequest();">Refresh</button>
-	</div>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <button class="btn pull-right" onclick="loadServerList();">Refresh</button>
+    </div>
   </body>
 </html>
