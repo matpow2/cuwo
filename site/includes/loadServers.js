@@ -1,29 +1,25 @@
 function ajaxRequest() {
-  var xmlhttpRequest;
-  if (window.XMLHttpRequest) {
-    xmlhttpRequest = new XMLHttpRequest();
-  }
-  else if (window.ActiveXObject) {
-    try {
-      xmlhttpRequest = new ActiveXObject("Msxml2.XMLHTTP");
+  $.getJSON('http://mp2.dk/cuwo/servers.json', function(jsonData) {
+    var table = document.getElementById('serverListTable');
+    while(table.hasChildNodes()) {
+      table.removeChild(table.firstChild);
     }
-    catch(e) {
-      try {
-      xmlhttpRequest = new ActiveXObject("Microsoft.XMLHTTP");
-      }
-      catch(e) {}
-    }
-  }
-  else {
-    return false;
-  }        
-        
-  xmlhttpRequest.onreadystatechange = function() {
-    if (xmlhttpRequest.readyState === 4 && xmlhttpRequest.status === 200) {
-      document.getElementById("serverListTable").innerHTML = xmlhttpRequest.responseText;
-      setTimeout('ajaxRequest()', 20000);
-    }
-  }
-  xmlhttpRequest.open('GET', 'includes/serversOnlineTable.php', true);
-  xmlhttpRequest.send();
+
+    $.each(jsonData, function() {
+      var row = table.insertRow();
+      var name = row.insertCell(0);
+      var mode = row.insertCell(1);
+      var players = row.insertCell(2);
+      var ip = row.insertCell(3);
+      var location = row.insertCell(4);
+      name.innerHTML = $('<div/>').text(this.name).html();
+      mode.innerHTML = $('<div/>').text(this.mode).html();
+      players.innerHTML = $('<div/>').text(this.players + '/' + this.max).html();
+      ip.innerHTML = $('<div/>').text(this.ip).html();
+      var loc = $('<div/>').text(this.location).html();
+      location.innerHTML = '<span class="hidden-desktop hidden-phone hidden-tablet">' + loc + '</span> <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="flag flag-' + loc.toLowerCase() + '" alt="' + loc + '" />';
+
+    });
+  });
+  setTimeout('ajaxRequest()', 20000);
 }
