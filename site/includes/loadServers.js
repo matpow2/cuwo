@@ -15,11 +15,13 @@ function ajaxRequest() {
       name.innerHTML = $('<div/>').text(this.name).html();
       mode.innerHTML = $('<div/>').text(this.mode).html();
       players.innerHTML = $('<div/>').text(this.players + '/' + this.max).html();
+      players.dataset.sort = $('<div/>').text(this.players).html();
       ip.innerHTML = $('<div/>').text(this.ip).html();
       var loc = $('<div/>').text(this.location).html();
       location.innerHTML = '<span class="hidden-desktop hidden-phone hidden-tablet">' + loc + '</span> <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="flag flag-' + loc.toLowerCase() + '" alt="' + loc + '" />';
-
     });
+    var sort = new Tablesort($('.sortable')[0]);
+    sort.refresh();
   });
   setTimeout('ajaxRequest()', 20000);
 }
