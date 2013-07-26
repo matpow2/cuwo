@@ -29,7 +29,7 @@ from cuwo.packet import (PacketHandler, write_packet, CS_PACKETS,
                          INTERACT_DROP, INTERACT_PICKUP, ChunkItemData,
                          ChunkItems, InteractPacket, PickupAction,
                          HitPacket, ShootPacket)
-from cuwo.types import IDPool, MultikeyDict, AttributeSet
+from cuwo.cwtypes import IDPool, MultikeyDict, AttributeSet
 from cuwo.vector import Vector3
 from cuwo import constants
 from cuwo.common import (get_clock_string, parse_clock, parse_command,
@@ -547,10 +547,15 @@ class CubeWorldServer(Factory):
 
 
 def main():
-    # for py2exe
+    # for py2exe and pyinstaller
     if hasattr(sys, 'frozen'):
+        encoding = sys.getfilesystemencoding()
+        # Pyinstaller can't find the encoding in linux :/
+        if encoding == None and sys.platform.startswith("linux"):
+            print "Could'nt find out the encoding. Guessing it's UTF-8."
+            encoding = 'UTF-8'
         path = os.path.dirname(
-            unicode(sys.executable, sys.getfilesystemencoding()))
+            unicode(sys.executable, encoding))
         sys.path.append(path)
 
     config = ConfigObject('./config')
