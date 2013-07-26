@@ -23,7 +23,6 @@ XXX should probably be merged with anticheat
 
 from cuwo.script import ServerScript, ConnectionScript
 from twisted.internet import reactor
-from cuwo import entity
 
 
 class SaneConnection(ConnectionScript):

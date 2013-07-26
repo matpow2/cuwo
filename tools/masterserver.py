@@ -61,16 +61,35 @@ class MasterServer(master.MasterProtocol):
             fp.write(json.dumps(self.output.values()))
         self.output.clear()
 
+    def on_resolve(self, resolved_ip, ip, hostname, data):
+        if resolved_ip == ip:
+            data.ip = hostname
+        else:
+            data.ip = ip
+        self.add_server(data, ip)
+
+    def on_resolve_error(self, failure, ip, data):
+        data.ip = ip
+        self.add_server(data, ip)
+
     def on_server(self, data, addr):
         host, port = addr
+        if data.ip is not None:
+            d = reactor.resolve(data.ip)
+            d.addCallback(self.on_resolve, host, data.ip, data)
+            d.addErrback(self.on_resolve_error, host, data)
+            return
+        data.ip = host
+        self.add_server(data, host)
+
+    def add_server(self, data, ip):
         try:
-            location = self.ip_database.country_code_by_addr(host)
+            location = self.ip_database.country_code_by_addr(ip)
         except TypeError:
             location = '?'
         data.location = location
-        data.ip = host
         data.mode = data.mode or 'default'
-        self.output[host] = data.get()
+        self.output[ip] = data.get()
 
     def on_packet(self, value, addr):
         host, port = addr

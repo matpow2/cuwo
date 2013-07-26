@@ -65,6 +65,7 @@ class ServerData(object):
             self.max = data.pop('max')
             self.players = data.pop('players')
             self.mode = data.pop('mode')
+            self.ip = data.pop('ip', None)
         except KeyError:
             raise InvalidData()
         if data:
@@ -98,6 +99,7 @@ class MasterClient(MasterProtocol):
         data = ServerData()
         data.name = config.server_name
         data.max = config.max_players
+        data.ip = self.server.config.master.hostname
         data.players = len(self.server.players)
         data.mode = self.server.get_mode()
         self.send_packet(data.get(), self.address)
