@@ -1,5 +1,3 @@
-var reload_action;
-
 function loadServerList() {
   $.getJSON('http://mp2.dk/cuwo/servers.json', function(jsonData) {
     var table = $('#serverlist');
@@ -21,9 +19,9 @@ function loadServerList() {
       rowHolder.append(row);
     });
 
-    table.trigger("update", [true]);
+    if (Object.keys(jsonData).length < 40) $("#pagination").hide(); else $("#pagination").show();
 
-    clearTimeout(reload_action);
-    reload_action = setTimeout('loadServerList()', 20000);
+    table.trigger("update", [true]);
+    var reload_action = setTimeout('loadServerList()', 20000);
   });
 }
