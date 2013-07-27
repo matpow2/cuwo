@@ -2,46 +2,22 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>cuwo - open Cube World server in Python</title>
-    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/tablesorter.bootstrap.css">
+    <title>cuwo - An open Cube World server written in Python</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css">
+    <link rel="stylesheet" href="css/cuwo.css">
+    <link rel="stylesheet" href="css/jquery.tablesorter.bootstrap.css">
     <link rel="stylesheet" href="css/jquery.tablesorter.pager.css">
-    <link rel="stylesheet" href="css/flags.css">
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script type="text/javascript" src="js/cuwo.js"></script>
     <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
     <script type="text/javascript" src="js/jquery.tablesorter.widgets.min.js"></script>
     <script type="text/javascript" src="js/jquery.tablesorter.pager.js"></script>
-    <script type="text/javascript" src="js/serverlist.js"></script>
-    <script type="text/javascript">
-      $(function() {
-        loadServerList();
-
-        $('#serverlist').tablesorter({
-          theme: 'bootstrap',
-          widthFixed: true,
-          headerTemplate : '{content} {icon}',
-          widgets: [ 'uitheme', 'zebra' ],
-          sortList: [[2,1]]
-        })
-        .tablesorterPager({
-          container: $(".pager"),
-          cssGoto: ".pagenum",
-          output: 'Page {page} of {totalPages} ({startRow}&ndash;{endRow} / {totalRows})',
-          size: 40
-        });
-      });
-    </script>
-    <style>
-      .navbar {
-        margin: 0 0 20px 0;
-      }
-    </style>
   </head>
   <body>
     <div class="navbar navbar-inverse navbar-static-top">
       <div class="navbar-inner">
       	<div class="container">
-          <img class="brand" src="img/logo.png" alt="cuwo" style="height:1em;"/>
+          <img class="brand" src="img/cuwo.png" alt="cuwo" style="height:1em;"/>
           <ul class="nav">
             <li class="active"><a href="#">Server List</a></li>
             <li><a href="https://github.com/matpow2/cuwo" target="_blank">GitHub</a></li>
