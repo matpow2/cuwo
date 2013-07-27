@@ -230,6 +230,10 @@ class CubeWorldConnection(Protocol):
         if self.scripts.call('on_join').result is False:
             return
 
+        if self.disconnected:
+            print 'Client disconnected by script.'
+            return
+
         print 'Player %s joined' % self.name
         for player in self.server.players.values():
             entity_packet.set_entity(player.entity_data, player.entity_id)
