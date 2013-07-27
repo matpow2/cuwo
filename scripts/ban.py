@@ -68,4 +68,4 @@ def get_class():
 def ban(script, name, *args):
     player = get_player(script.server, name)
     reason = ' '.join(args) or DEFAULT_REASON
-    script.parent.ban(player.address.host, reason)
+    script.server.scripts.ban.ban(player.address.host, reason)
