@@ -27,12 +27,12 @@ function loadServerList() {
     $.each(jsonData, function() {
       var row = $('<tr/>');
 
-      $('<td/>').html(this.name).appendTo(row);
-      $('<td/>').html(this.mode).appendTo(row);
-      $('<td/>').html(this.players + '/' + this.max).appendTo(row);
-      $('<td/>').html(this.ip).appendTo(row);
+      $('<td/>').text(this.name).appendTo(row);
+      $('<td/>').text(this.mode).appendTo(row);
+      $('<td/>').text(this.players + '/' + this.max).appendTo(row);
+      $('<td/>').text(this.ip).appendTo(row);
 
-      var loc = $('<div/>').html(this.location).html();
+      var loc = $('<div/>').text(this.location).html();
       var image = $('<img/>').attr('src', 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7').attr('alt', loc).attr('title', loc).addClass('flag flag-' + loc.toLowerCase());
       $('<td/>').append($('<span/>').text(loc).addClass('hidden-desktop hidden-phone hidden-tablet')).append(image).appendTo(row);
 
