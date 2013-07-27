@@ -1,7 +1,11 @@
+.navbar {
+  margin: 0 0 20px 0;
+}
+
 .flag {
-	width: 16px;
-	height: 11px;
-	background:url(flags.png) no-repeat
+  width: 16px;
+  height: 11px;
+  background:url(flags.png) no-repeat
 }
 
 .flag.flag-ad {background-position: -16px 0}
