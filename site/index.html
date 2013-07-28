@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/jquery.tablesorter.bootstrap.css">
     <link rel="stylesheet" href="css/jquery.tablesorter.pager.css">
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script type="text/javascript" src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="js/cuwo.js"></script>
     <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
     <script type="text/javascript" src="js/jquery.tablesorter.widgets.min.js"></script>
@@ -35,14 +36,20 @@
           <div class="hero-unit">
             <h1><img src="img/cuwo.png" alt="cuwo" title="cuwo"> <small class="muted">(pronounced 'coo-woo')</small></h1>
             <p>is an open server implementation, written in Python, for <a href="https://picroma.com/cubeworld" target="_blank">Cube World</a>.</p>
-            <p>
+            <div style="margin:0 0 10px">
               <a href="https://github.com/matpow2/cuwo" target="_blank" class="btn btn-primary btn-large">
-                <i class="icon-github-alt"></i> Fork cuwo on GitHub
+                <i class="icon-github-alt"></i> Fork on GitHub
               </a>
-              <a href="https://github.com/matpow2/cuwo/archive/master.zip" class="btn btn-success btn-large">
-                <i class="icon-download-alt"></i> Download cuwo
-              </a>
-            </p>
+              <div class="btn-group">
+                <a class="btn btn-success btn-large dropdown-toggle" data-toggle="dropdown">
+                  <i class="icon-download-alt"></i> Download
+                </a>
+                <ul class="dropdown-menu">
+                  <li><a href="http://cuwo.org/bin/latest.php" target="_blank" title="Download - Windows Binaries"><i class="icon-windows"></i> Windows Binaries</a></li>
+                  <li><a href="https://github.com/matpow2/cuwo/archive/master.zip" target="_blank" title="Download - Source"><i class="icon-linux"></i> Source</a></li>
+                </ul>
+              </div>
+            </div>
             <p><small>Need help running cuwo? <a href="https://github.com/matpow2/cuwo/wiki" target="_blank">Read the wiki</a> or join us in <a href="irc://irc.esper.net/cuwo">#cuwo</a> on the EsperNet IRC network.</small></p>
           </div>
         </div>
