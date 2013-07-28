@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>cuwo - An open Cube World server written in Python</title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css">
     <link rel="stylesheet" href="css/cuwo.css">
     <link rel="stylesheet" href="css/jquery.tablesorter.bootstrap.css">
     <link rel="stylesheet" href="css/jquery.tablesorter.pager.css">
@@ -16,56 +17,122 @@
   <body>
     <div class="navbar navbar-inverse navbar-static-top">
       <div class="navbar-inner">
-      	<div class="container">
-          <img class="brand" src="img/cuwo.png" alt="cuwo" style="height:1em;"/>
+        <div class="container">
+          <img class="brand" src="img/cuwo.png" alt="cuwo" title="cuwo" style="height:1em;">
           <ul class="nav">
-            <li class="active"><a href="#">Server List</a></li>
-            <li><a href="https://github.com/matpow2/cuwo" target="_blank">GitHub</a></li>
+            <li class="active"><a data-page="#about" class="nav-link">About</a></li>
+            <li><a data-page="#servers" class="nav-link">Server List</a></li>
           </ul>
-          <ul class="nav pull-right">
-            <li><button class="btn btn-success" onclick="loadServerList();">Refresh</button></li>
+          <ul id="refresh" class="nav pull-right" style="display:none">
+            <li><button class="btn btn-success" onclick="getServers();">Refresh</button></li>
           </ul>
         </div>
       </div>
     </div>
     <div class="container">
-      <table id="serverlist" class="table table-striped table-bordered">
-        <thead>
-          <tr>
-            <th>Server Name</th>
-            <th>Mode</th>
-            <th>Players</th>
-            <th>IP</th>
-            <th>Location</th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-        <tfoot id="pagination" style="display:none">
-          <tr>
-            <th colspan="5" class="pager form-horizontal">
-              <button type="button" class="btn first" title="First page"><i class="icon-step-backward"></i></button>
-              <button type="button" class="btn prev" title="Previous page"><i class="icon-arrow-left"></i></button>
-              <span class="pagedisplay"></span>
-              <button type="button" class="btn next" title="Next page"><i class="icon-arrow-right"></i></button>
-              <button type="button" class="btn last" title="Last page"><i class="icon-step-forward"></i></button>
-              <select class="pagesize input-mini" title="Servers per page">
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="30">30</option>
-                <option value="40">40</option>
-                <option value="50">50</option>
-                <option value="60">60</option>
-                <option value="70">70</option>
-                <option value="80">80</option>
-                <option value="90">90</option>
-                <option value="100">100</option>
-              </select>
-              <select class="pagenum input-mini" title="Jump to page"></select>
-            </th>
-          </tr>
-        </tfoot>
-      </table>
+      <div data-page="#about" class="page-content row" style="display:none">
+        <div class="span12">
+          <div class="hero-unit">
+            <h1><img src="img/cuwo.png" alt="cuwo" title="cuwo"> <small class="muted">(pronounced 'coo-woo')</small></h1>
+            <p>is an open server implementation, written in Python, for <a href="https://picroma.com/cubeworld" target="_blank">Cube World</a>.</p>
+            <p>
+              <a href="https://github.com/matpow2/cuwo" target="_blank" class="btn btn-primary btn-large">
+                <i class="icon-github-alt"></i> Fork cuwo on GitHub
+              </a>
+              <a href="https://github.com/matpow2/cuwo/archive/master.zip" class="btn btn-success btn-large">
+                <i class="icon-download-alt"></i> Download cuwo
+              </a>
+            </p>
+            <p><small>Need help running cuwo? <a href="https://github.com/matpow2/cuwo/wiki" target="_blank">Read the wiki</a> or join us in <a href="irc://irc.esper.net/cuwo">#cuwo</a> on the EsperNet IRC network.</small></p>
+          </div>
+        </div>
+        <div class="span12">
+          <h1>cuwo is...</h1>
+          <div class="row">
+            <div class="span4">
+              <h4><i class="icon-globe"></i> Open</h4>
+              <p>cuwo is completely open to the public under the <em>GNU General Public License</em>. Take a peek into the source code and tinker with the features!</p>
+            </div>
+            <div class="span4">
+              <h4><i class="icon-rocket"></i> Fast</h4>
+              <p>With less processing power required to run in a stable state, cuwo is a fast and reliable option for a Cube World server.</p>
+            </div>
+            <div class="span4">
+              <h4><i class="icon-wrench"></i> Moddable</h4>
+              <p>Have a feature you'd like to see in cuwo? Make that custom feature with a script! Submit your script to <a href="https://github.com/matpow2/cuwo-scripts" target="_blank">matpow2/cuwo-scripts</a> to share it!</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="span4">
+              <h4><i class="icon-linux"></i> Cross Platform</h4>
+              <p>Own a <em>non-Windows</em> server? You are free to run cuwo on any platform that supports <em>Python</em>.</p>
+            </div>
+            <div class="span4">
+              <h4><i class="icon-star"></i> Featureful</h4>
+              <p>Right out of the box, cuwo comes with many features such as banning players, rights management, DDoS protection, PvP, server logging, and much more!</p>
+            </div>
+            <div class="span4">
+              <h4><i class="icon-signal"></i> Scalable</h4>
+              <p>With support for over 40 simultaneously connected players, you can host a server for your friends or a whole community.</p>
+            </div>
+          </div>
+        </div>
+        <div class="span12">
+          <h2>Commit History <small><a href="https://github.com/matpow2/cuwo/commits/" target="_blank" title="View on GitHub"><i class="icon-share"></i></a></small></h2>
+          <table id="commits" class="table table-bordered table-striped table-hover">
+            <thead>
+              <tr>
+                <th class="span1">Author</th>
+                <th>Commit Message</th>
+                <th class="span1">SHA</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div data-page="#servers" class="page-content row" style="display:none">
+        <div class="span12">
+          <table id="servers" class="table table-striped table-bordered">
+            <thead>
+              <tr>
+                <th>Server Name</th>
+                <th>Mode</th>
+                <th>Players</th>
+                <th>IP</th>
+                <th>Location</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot id="pagination" style="display:none">
+              <tr>
+                <th colspan="5" class="pager form-horizontal">
+                  <button type="button" class="btn first" title="First page"><i class="icon-step-backward"></i></button>
+                  <button type="button" class="btn prev" title="Previous page"><i class="icon-arrow-left"></i></button>
+                  <span class="pagedisplay"></span>
+                  <button type="button" class="btn next" title="Next page"><i class="icon-arrow-right"></i></button>
+                  <button type="button" class="btn last" title="Last page"><i class="icon-step-forward"></i></button>
+                  <select class="pagesize input-mini" title="Servers per page">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="30">30</option>
+                    <option value="40">40</option>
+                    <option value="50">50</option>
+                    <option value="60">60</option>
+                    <option value="70">70</option>
+                    <option value="80">80</option>
+                    <option value="90">90</option>
+                    <option value="100">100</option>
+                  </select>
+                  <select class="pagenum input-mini" title="Jump to page"></select>
+                </th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
     </div>
   </body>
 </html>
