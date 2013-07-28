@@ -1,6 +1,9 @@
 .navbar {
   margin: 0 0 20px 0;
 }
+.nav-link {
+  cursor: pointer;
+}
 
 .flag {
   width: 16px;
