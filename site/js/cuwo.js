@@ -43,7 +43,8 @@ function getCommits() {
         var author = '<a href="' + commit.author.html_url + '" target="_blank">' + commit.author.login + '</a>';
         $('<td/>').html(author).appendTo(row);
 
-        $('<td/>').html(commit.commit.message.replace('\n', '<br>', 'g')).appendTo(row);
+        var timestamp = new Date(commit.commit.author.date);
+        $('<td/>').html('<small class="muted">' + timestamp.toString() + '</small><br>' + commit.commit.message.replace('\n', '<br>', 'g')).appendTo(row);
 
         var shortSHA = commit.sha.substr(0,10);
         var sha = '<a href="' + commit.html_url + '" target="_blank">' + shortSHA + '</a>';
