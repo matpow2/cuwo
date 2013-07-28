@@ -219,6 +219,7 @@ class ServerScript(BaseScript):
         f = self.commands.get(command, None)
         if not f:
             return
+        user.parent = self  # for ScriptInterface
         try:
             ret = f(user, *args) or ''
         except InvalidPlayer:
@@ -242,6 +243,7 @@ class ScriptInterface(object):
         self.rights = AttributeSet(rights)
         self.server = server
         self.connection = self
+        self.parent = None  # set by call_command
 
     def get_player(self, name):
         return get_player(self.server, name)

@@ -85,6 +85,8 @@ Kyle - master server JS
 
 MazeXD - master server JS and design
 
+Skarmy - website design
+
 Kainzo - testing
 
 uwee - protocol variables

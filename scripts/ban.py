@@ -66,6 +66,6 @@ def get_class():
 @command
 @admin
 def ban(script, name, *args):
-    player = get_player(script.server, name)
+    player = script.get_player(name)
     reason = ' '.join(args) or DEFAULT_REASON
     script.parent.ban(player.address.host, reason)
