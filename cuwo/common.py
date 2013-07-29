@@ -113,3 +113,33 @@ def create_file_path(path):
 def open_create(filename, mode):
     create_file_path(filename)
     return open(filename, mode)
+
+
+def get_power(level):
+    return int(((1.0 - (1.0 / (((float(level) - 1.0) * 0.05)
+                + 1.0))) * 100.0) + 1.0)
+
+
+def get_item_name(item):
+    name = []
+
+    if item.material in constants.MATERIAL_NAMES:
+        name.append(constants.MATERIAL_NAMES[item.material])
+
+    if item.type in constants.ITEM_NAMES:
+        name.append(constants.ITEM_NAMES[item.type])
+
+    if item.type == 1 and item.sub_type in constants.CONSUMABLE_NAMES:
+        name.append(constants.CONSUMABLE_NAMES[item.sub_type])
+
+    if item.type == 3 and item.sub_type in constants.WEAPON_NAMES:
+        name.append(constants.WEAPON_NAMES[item.sub_type])
+
+    if item.type == 19 and item.sub_type in constants.NPC_NAMES:
+        name.append(constants.NPC_NAMES[item.sub_type])
+
+    power = get_power(item.level)
+    name.append("+{power}".format(power=power))
+
+    itemname = ' '.join(name)
+    return itemname

@@ -17,623 +17,26 @@
 
 """ Anti Cheat script for Cuwo by Sarcen """
 
-CUWO_ANTICHEAT = "cuwo anti-cheat"
-
-LOG_LEVEL_VERBOSE = 2
-LOG_LEVEL_DEFAULT = 1
-LOG_LEVEL_NONE = 0
-
-CLASS_WARRIOR = 1
-CLASS_RANGER = 2
-CLASS_MAGE = 3
-CLASS_ROGUE = 4
-
-LEGAL_CLASSES = (CLASS_WARRIOR, CLASS_RANGER, CLASS_MAGE, CLASS_ROGUE)
-
-TWOHANDED_WEAPONS = (5, 6, 7, 10, 11, 15, 16, 17)
-
-LEGAL_RECIPE_ITEMS = (3, 4, 5, 6, 7, 8)
-
-LEGAL_ITEMS = dict({
-    # Consumables
-    (1, 1): (0, ),
-    (1, 2): (0, ),
-
-    (1, 4): (0, ),
-    (1, 5): (0, ),
-    (1, 6): (0, ),
-    (1, 7): (0, ),
-    (1, 8): (0, ),
-    (1, 9): (0, ),
-    # Weapons
-    (3, 0): (1, ),   # 1h swords only iron
-    (3, 1): (1, ),   # axes only iron
-    (3, 2): (1, ),   # maces only iron
-    (3, 3): (1, ),   # daggers only iron
-    (3, 4): (1, ),   # fists only iron
-    (3, 5): (1, ),   # longswords only iron
-    (3, 6): (2, ),   # bows, only wood
-    (3, 7): (2, ),   # crossbows, only wood
-    (3, 8): (2, ),   # boomerangs, only wood
-
-    (3, 10): (2, ),  # wands, only wood
-    (3, 11): (2, ),     # staffs, only wood
-    (3, 12): (11, 12),   # bracelets, silver, gold
-
-    (3, 13): (1, ),    # shields, only iron
-
-    (3, 15): (1, ),    # 2h, only iron
-    (3, 16): (1, ),    # 2h, only iron
-    (3, 17): (1, 2),   # 2h mace, iron and wood
-    # Equipment
-
-    # chest warrior (iron), mage (silk), ranger(linen), rogue(cotton)
-    (4, 0): (1, 25, 26, 27),
-    # gloves warrior (iron), mage (silk), ranger(linen), rogue(cotton)
-    (5, 0): (1, 25, 26, 27),
-    # boots warrior (iron), mage (silk), ranger(linen), rogue(cotton)
-    (6, 0): (1, 25, 26, 27),
-    # shoulder warrior (iron), mage (silk), ranger(linen), rogue(cotton)
-    (7, 0): (1, 25, 26, 27),
-    (8, 0): (11, 12),  # rings, gold and silver
-    (9, 0): (11, 12),  # amulets, gold and silver
-    (11, 0): (1, 11, 12, 13, 14, 15, 16),
-    (11, 1): (2, ),
-    (11, 2): (19, ),   # I've only ever seen parrot feathers, are there others?
-    (11, 5): (21, ),
-    (11, 6): (0, ),
-    (11, 9): (26, 27),
-    (11, 11): (27, ),
-    (11, 12): (24, ),
-
-    (11, 14): (128, 129, 130, 131),
-    (11, 15): (0, ),
-    (11, 16): (0, ),
-    (11, 17): (0, ),
-    (11, 18): (0, ),
-    (11, 19): (9, ),
-    (11, 20): (0, ),
-    (11, 21): (0, ),
-    (11, 22): (0, ),
-    (11, 23): (0, ),
-    (11, 24): (0, ),
-
-    (11, 26): (0, ),
-    (11, 27): (0, ),
-
-    (14, 0): (0, ),    # leftovers
-    (18, 0): (0, ),    # candle
-    (18, 1): (0, ),    # candle
-    (23, 0): (2, ),    # wood hanglider
-    (23, 1): (2, ),    # wood boat
-    (24, 0): (1, ),    # lamp, iron
-})
-
-LEGAL_PETS = (19, 22, 23, 25, 26, 27, 30, 33, 34, 35, 36, 37, 38, 39, 40, 50,
-              53, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 74, 75,
-              86, 87, 88, 90, 91, 92, 93, 98, 99, 102, 103, 104, 105, 106, 151)
-
-
-# generate pets and petfood in the legal item list based on legal pets
-def generate_pets():
-    for pet in LEGAL_PETS:
-        LEGAL_ITEMS[(19, pet)] = (0, )
-        LEGAL_ITEMS[(20, pet)] = (0, )
-
-
-generate_pets()
-
-LEGAL_ITEMSLOTS = dict({
-    3: (6, 7),
-    4: (2, ),
-    5: (4, ),
-    6: (3, ),
-    7: (5, ),
-    8: (1, ),
-    9: (8, 9),
-    19: (12, ),
-    20: (12, ),
-    23: (11, ),
-    24: (10, ),
-})
-
-ARMOR_IDS = (4, 5, 6, 7)
-
-CLASS_WEAPONS = dict({
-    CLASS_WARRIOR: (0, 1, 2, 13, 15, 16, 17),  # Warrior
-    CLASS_RANGER: (6, 7, 8),                   # Ranger
-    CLASS_MAGE: (10, 11, 12),                  # Mage
-    CLASS_ROGUE: (3, 4, 5)                     # Rogue
-})
-
-CLASS_ARMOR = dict({
-    CLASS_WARRIOR: (1, ),                      # Warrior
-    CLASS_RANGER: (26, ),                      # Ranger
-    CLASS_MAGE: (25, ),                        # Mage
-    CLASS_ROGUE: (27, )                        # Rogue
-})
-
-ALL_BUT_MAGE = (CLASS_ROGUE, CLASS_RANGER, CLASS_WARRIOR)
-
-ABILITIES = dict({
-    # One handed
-    1: {'class': (CLASS_WARRIOR, ),
-        'weapon': (0, 1, 2)},
-    2: {'class': (CLASS_WARRIOR, ),
-        'weapon': (0, 1, 2)},
-    68: {'class': (CLASS_WARRIOR, ),
-         'weapon': (0, 1, 2)},
-
-    # Mouse 2 Longsword skill
-    5: {'class': (CLASS_ROGUE, ),
-        'weapon': (5, )},
-
-    # Mouse 1 Unarmed\fist skills
-    6: {'class': ALL_BUT_MAGE,
-        'weapon': (-1, 4)},
-    7: {'class': ALL_BUT_MAGE,
-        'weapon': (-1, 4)},
-
-    # Shield skills
-    8: {'class': (CLASS_WARRIOR, ),
-        'weapon': (13, )},
-    9: {'class': (CLASS_WARRIOR, ),
-        'weapon': (13, )},
-    10: {'class': (CLASS_WARRIOR, ),
-         'weapon': (13, )},
-
-    # Mouse 2 Unarmed skills
-    11: {'weapon': (-1, 0, 1, 2)},
-    63: {'weapon': (-1, 0, 1, 2)},
-
-    # Fist skill
-    20: {'class': (CLASS_ROGUE, ),
-         'weapon': (4, )},
-
-    # Mouse 1 Longsword skills
-    13: {'class': (CLASS_ROGUE, ),
-         'weapon': (5, )},
-    14: {'class': (CLASS_ROGUE, ),
-         'weapon': (5, )},
-
-    # Dagger skills
-    17: {'class': (CLASS_ROGUE, ),
-         'weapon': (3, )},
-    18: {'class': (CLASS_ROGUE, ),
-         'weapon': (3, )},
-    19: {'class': (CLASS_ROGUE, ),
-         'weapon': (3, )},
-
-    # Ranger skill 2 (Retreat)
-    21: {'class': (CLASS_RANGER, ), },
-
-    # Bow and crossbow basic attack
-    22: {'class': (CLASS_RANGER, ),
-         'weapon': (6, 7)},
-
-    # Crossbow skills
-    23: {'class': (CLASS_RANGER, ),
-         'weapon': (7, )},
-    24: {'class': (CLASS_RANGER, ),
-         'weapon': (7, )},
-
-    # Bow skills
-    25: {'class': (CLASS_RANGER, ),
-         'weapon': (6, )},
-    55: {'class': (CLASS_RANGER, ),
-         'weapon': (6, )},
-
-    # Boomerang skills
-    26: {'class': (CLASS_RANGER, ),
-         'weapon': (8, )},
-    27: {'class': (CLASS_RANGER, ),
-         'weapon': (8, )},
-
-    # Fire Staff skills
-    30: {'class': (CLASS_MAGE, ),
-         'spec': 0,
-         'weapon': (10, )},
-    31: {'class': (CLASS_MAGE, ),
-         'spec': 0,
-         'weapon': (10, )},
-
-    # Water Staff skills
-    32: {'class': (CLASS_MAGE, ),
-         'spec': 1,
-         'weapon': (10, )},
-    33: {'class': (CLASS_MAGE, ),
-         'spec': 1,
-         'weapon': (10, )},
-
-    # Water Mage skill 1 (heal)
-    34: {'class': (CLASS_MAGE, ),
-         'spec': 1},
-
-    # Fire Bracelet\unarmed skills
-    37: {'class': (CLASS_MAGE, ),
-         'spec': 0,
-         'weapon': (12, -1)},
-    39: {'class': (CLASS_MAGE, ),
-         'spec': 0,
-         'weapon': (12, -1)},
-    40: {'class': (CLASS_MAGE, ),
-         'spec': 0,
-         'weapon': (12, -1)},
-
-    # Fire Wand skills
-    38: {'class': (CLASS_MAGE, ),
-         'spec': 0,
-         'weapon': (11, )},
-    46: {'class': (CLASS_MAGE, ),
-         'spec': 0,
-         'weapon': (11, )},
-
-    # Water Bracelet\Unarmed skills
-    41: {'class': (CLASS_MAGE, ),
-         'spec': 1,
-         'weapon': (12, -1)},
-    42: {'class': (CLASS_MAGE, ),
-         'spec': 1,
-         'weapon': (12, -1)},
-    43: {'class': (CLASS_MAGE, ),
-         'spec': 1,
-         'weapon': (12, -1)},
-
-    # Water Wand skills
-    44: {'class': (CLASS_MAGE, ),
-         'spec': 1,
-         'weapon': (11, )},
-    45: {'class': (CLASS_MAGE, ),
-         'spec': 1,
-         'weapon': (11, )},
-
-    # Rogue skill 1 (Charge)
-    48: {'class': (CLASS_ROGUE, ), },
-
-    # Mage skill 3 (Teleport)
-    49: {'class': (CLASS_MAGE, ), },
-
-    # Warrior skill 1 (Slam)
-    54: {'class': (CLASS_WARRIOR, ), },
-
-    # Two handed skills
-    57: {'class': (CLASS_WARRIOR, ),
-         'weapon': (15, 16, 17)},
-    58: {'class': (CLASS_WARRIOR, ),
-         'weapon': (15, 16, 17)},
-    59: {'class': (CLASS_WARRIOR, ),
-         'weapon': (15, 16, 17)},
-    60: {'class': (CLASS_WARRIOR, ),
-         'weapon': (15, 16, 17)},
-    61: {'class': (CLASS_WARRIOR, ),
-         'weapon': (15, 16, 17)},
-    67: {'class': (CLASS_WARRIOR, ),
-         'weapon': (15, 16, 17)},
-
-    # Rogue Skill 2 (Stealth)
-    79: {'class': (CLASS_ROGUE, ), },
-
-    # Mage Skill 1 (Fire Explosion)
-    88: {'class': (CLASS_MAGE, ),
-         'spec': 0},
-
-    # Warrior Skill 2 (Spinning blade attack)
-    86: {'class': (CLASS_WARRIOR, ), },
-
-    # Rogue Skill 3 (Ninja stars)
-    96: {'class': (CLASS_ROGUE, ),
-         'spec': 1},
-
-    # Warrior Skill 3 (Bulwark)
-    101: {'class': (CLASS_WARRIOR, ),
-          'spec': 1},
-
-    # Mage Skill 2 (Mana shield)
-    103: {'class': (CLASS_MAGE, ), },
-
-    # Shield
-    104: {'class': (CLASS_WARRIOR, ),
-          'weapon': (13, )},
-
-
-    # Generic
-    80: {},     # Drink potion
-    81: {},     # Eat
-    82: {},     # Present pet food
-    83: {},     # Sit
-    84: {},     # Sleep
-    106: {},    # Ride pet
-    107: {}     # Sailing
-})
-
-ITEM_NAMES = {0: 'Crash',
-              2: 'Formula',
-              4: 'Chest',
-              5: 'Gloves',
-              6: 'Boots',
-              7: 'Shoulders',
-              8: 'Amulet',
-              9: 'Ring',
-              10: 'Cube',
-              11: 'Item',
-              12: 'Coin',
-              13: 'Platinum Coin',
-              14: 'Leftovers',
-              15: 'Beak',
-              16: 'Painting',
-              17: 'Vase',
-              18: 'Candle',
-              19: 'Pet:',
-              20: 'Pet Food',
-              21: 'Quest Item',
-              22: 'Unknown',
-              23: 'Special',
-              24: 'Lamp'}
-
-CONSUMABLE_NAMES = {0: 'Cookie',
-                    1: 'Life Potion',
-                    2: 'Cactus Potion',
-                    3: 'Mana Potion',
-                    4: 'Ginseng Soup',
-                    5: 'Snowberry Mash',
-                    6: 'Mushroom Spit',
-                    7: 'Bomb',
-                    8: 'Pineapple Slice',
-                    9: 'Pumpkin Muffin',
-                    10: 'Mushroom?'}
-
-WEAPON_NAMES = {0: 'Sword',
-                1: 'Axe',
-                2: 'Mace',
-                3: 'Dagger',
-                4: 'Fist',
-                5: 'Longsword',
-                6: 'Bow',
-                7: 'Crossbow',
-                8: 'Boomerang',
-                9: 'Arrow',
-                10: 'Staff',
-                11: 'Wand',
-                12: 'Bracelet',
-                13: 'Shield',
-                14: 'Quiver',
-                15: 'Greatsword',
-                16: 'Greataxe',
-                17: 'Greatmace',
-                18: 'Pitchfork',
-                19: 'Pickaxe',
-                20: 'Torch'}
-
-MATERIAL_NAMES = {1: 'Iron',
-                  2: 'Wood',
-                  5: 'Obsidian',
-                  7: 'Bone',
-                  11: 'Gold',
-                  12: 'Silver',
-                  13: 'Emerald',
-                  14: 'Sapphire',
-                  15: 'Ruby',
-                  16: 'Diamond',
-                  17: 'Sandstone',
-                  18: 'Saurian',
-                  19: 'Parrot',
-                  20: 'Mammoth',
-                  21: 'Plant',
-                  22: 'Ice',
-                  23: 'Licht',
-                  24: 'Glass',
-                  25: 'Silk',
-                  26: 'Linen',
-                  27: 'Cotton',
-                  128: 'Fire',
-                  129: 'Unholy',
-                  130: 'Ice',
-                  131: 'Wind'
-                  }
-
-NPC_NAMES = {0: 'Elf (Male)',
-             1: 'Elf (Female)',
-             2: 'Human (Male)',
-             3: 'Human (Female)',
-             4: 'Goblin (Male)',
-             5: 'Goblin (Female)',
-             6: 'Terrier (Bull)',
-             7: 'Lizardman (Male)',
-             8: 'Lizardman (Female)',
-             9: 'Dwarf (Male)',
-             10: 'Dwarf (Female)',
-             11: 'Orc (Male)',
-             12: 'Orc (Female)',
-             13: 'Frogman (Male)',
-             14: 'Frogman (Female)',
-             15: 'Undead (Male)',
-             16: 'Undead (Female)',
-             17: 'Skeleton',
-             18: 'Old Man',
-             19: 'Collie',
-             20: 'Shepherd Dog',
-             21: 'Skull Bull',
-             22: 'Alpaca',
-             23: 'Alpaca (Brown)',
-             24: 'Egg',
-             25: 'Turtle',
-             26: 'Terrier',
-             27: 'Terrier (Scottish)',
-             28: 'Wolf',
-             29: 'Panther',
-             30: 'Cat',
-             31: 'Cat (Brown)',
-             32: 'Cat (White)',
-             33: 'Pig',
-             34: 'Sheep',
-             35: 'Bunny',
-             36: 'Porcupine',
-             37: 'Slime (Green)',
-             38: 'Slime (Pink)',
-             39: 'Slime (Yellow)',
-             40: 'Slime (Blue)',
-             41: 'Frightener',
-             42: 'Sandhorror',
-             43: 'Wizard',
-             44: 'Bandit',
-             45: 'Witch',
-             46: 'Ogre',
-             47: 'Rockling',
-             48: 'Gnoll',
-             49: 'Gnoll (Polar)',
-             50: 'Monkey',
-             51: 'Gnobold',
-             52: 'Insectoid',
-             53: 'Hornet',
-             54: 'Insect Guard',
-             55: 'Crow',
-             56: 'Chicken',
-             57: 'Seagull',
-             58: 'Parrot',
-             59: 'Bat',
-             60: 'Fly',
-             61: 'Midge',
-             62: 'Mosquito',
-             63: 'Runner (Plain)',
-             64: 'Runner (Leaf)',
-             65: 'Runner (Snow)',
-             66: 'Runner (Desert)',
-             67: 'Peacock',
-             68: 'Frog',
-             69: 'Creature (Plant)',
-             70: 'Creature (Radish)',
-             71: 'Onionling',
-             72: 'Onionling (Desert)',
-             73: 'Devourer',
-             74: 'Duckbill',
-             75: 'Crocodile',
-             76: 'Creature (Spike)',
-             77: 'Anubis',
-             78: 'Horus',
-             79: 'Jester',
-             80: 'Spectrino',
-             81: 'Djinn',
-             82: 'Minotaur',
-             83: 'Nomad (Male)',
-             84: 'Nomad (Female)',
-             85: 'Imp',
-             86: 'Spitter',
-             87: 'Mole',
-             88: 'Biter',
-             89: 'Koala',
-             90: 'Squirrel',
-             91: 'Raccoon',
-             92: 'Owl',
-             93: 'Penguin',
-             94: 'Werewolf',
-             95: 'Santa?',
-             96: 'Zombie',
-             97: 'Vampire',
-             98: 'Horse',
-             99: 'Camel',
-             100: 'Cow',
-             101: 'Dragon',
-             102: 'Beetle (Dark)',
-             103: 'Beetle (Fire)',
-             104: 'Beetle (Snout)',
-             105: 'Beetle (Lemon)',
-             106: 'Crab',
-             107: 'Crab (Sea)',
-             108: 'Troll',
-             109: 'Troll (Dark)',
-             110: 'Helldemon',
-             111: 'Golem',
-             112: 'Golem (Ember)',
-             113: 'Golem (Snow)',
-             114: 'Yeti',
-             115: 'Cyclops',
-             116: 'Mammoth',
-             117: 'Lich',
-             118: 'Runegiant',
-             119: 'Saurian',
-             120: 'Bush',
-             121: 'Bush (Snow)',
-             122: 'Bush (Snowberry)',
-             123: 'Plant (Cotton)',
-             124: 'Scrub',
-             125: 'Scrub (Cobweg)',
-             126: 'Scrub (Fire)',
-             127: 'Ginseng',
-             128: 'Cactus',
-             129: 'Christmas Tree?',
-             130: 'Thorntree',
-             131: 'Deposit (Gold)',
-             132: 'Deposit (Iron)',
-             133: 'Deposit (Silver)',
-             134: 'Deposit (Sandstone)',
-             135: 'Deposit (Emerald)',
-             136: 'Deposit (Sapphire)',
-             137: 'Deposit (Ruby)',
-             138: 'Deposit (Diamond)',
-             139: 'Deposit (Icecrystal)',
-             140: 'Scarecrow',
-             141: 'Aim',
-             142: 'Dummy',
-             143: 'Vase',
-             144: 'Bomb',
-             145: 'Fish (Sapphire)',
-             146: 'Fish (Lemon)',
-             147: 'Seahorse',
-             148: 'Mermaid',
-             149: 'Merman',
-             150: 'Shark',
-             151: 'Bumblebee',
-             152: 'Lanternfish',
-             153: 'Mawfish',
-             154: 'Piranha',
-             155: 'Blowfish'
-             }
-
-
+from cuwo.constants import (WARRIOR_CLASS, RANGER_CLASS,
+                            MAGE_CLASS, ROGUE_CLASS)
 from cuwo.script import (ServerScript,
                          ConnectionScript, command, admin,
                          get_player)
+from cuwo.common import get_power, get_item_name, is_bit_set
 from cuwo.packet import ServerUpdate, PickupAction
+from anticheatpackage.constants import *
 import re
 import time
-
-
-def calc_power_level(level):
-    return int(((1.0 - (1.0 / (((float(level) - 1.0) * 0.05)
-                + 1.0))) * 100.0) + 1.0)
-
-
-def get_item_name(item):
-    name = ""
-
-    if item.material in MATERIAL_NAMES:
-        name = name + MATERIAL_NAMES[item.material] + " "
-
-    if item.type in ITEM_NAMES:
-        name = name + ITEM_NAMES[item.type] + " "
-
-    if item.type == 1 and item.sub_type in CONSUMABLE_NAMES:
-        name = name + CONSUMABLE_NAMES[item.sub_type] + " "
-
-    if item.type == 3 and item.sub_type in WEAPON_NAMES:
-        name = name + WEAPON_NAMES[item.sub_type] + " "
-
-    if item.type == 19 and item.sub_type in NPC_NAMES:
-        name = name + NPC_NAMES[item.sub_type] + " "
-
-    power = calc_power_level(item.level)
-    name = name + "+" + str(power)
-
-    return name
-
-
-def get_class():
-    return AntiCheatServer
 
 
 class AntiCheatConnection(ConnectionScript):
 
     combat_end_time = 0
+    last_glider_active = 0
+    last_attacking = 0
+
+    glider_count = 0
+    attack_count = 0
 
     def on_load(self):
         config = self.server.config.anticheat
@@ -646,6 +49,7 @@ class AntiCheatConnection(ConnectionScript):
         self.disconnect_message = config.disconnect_message
         self.welcome_message = config.welcome_message
         self.irc_log_level = config.irc_log_level
+        self.glider_abuse_count = config.glider_abuse_count
 
     def on_join(self, event):
 
@@ -665,6 +69,12 @@ class AntiCheatConnection(ConnectionScript):
             return False
 
         if self.on_multiplier_update() is False:
+            return False
+
+        if self.on_consumable_update() is False:
+            return False
+
+        if self.on_flags_update() is False:
             return False
 
         self.connection.send_chat(self.welcome_message
@@ -720,6 +130,16 @@ class AntiCheatConnection(ConnectionScript):
             self.remove_cheater('illegal charge multiplier')
             return False
 
+    def on_consumable_update(self, event=None):
+        if self.has_illegal_consumable():
+            self.remove_cheater('illegal consumable equiped')
+            return False
+
+    def on_flags_update(self, event=None):
+        if self.has_illegal_flags():
+            self.remove_cheater('illegal character flags')
+            return False
+
     def on_drop(self, event):
         if self.is_item_illegal(event.item):
             pack = ServerUpdate()
@@ -735,9 +155,9 @@ class AntiCheatConnection(ConnectionScript):
             return False
 
     def log(self, message, loglevel=LOG_LEVEL_DEFAULT):
-        if self.log_level >= loglevel:
+        if loglevel >= self.log_level:
             print CUWO_ANTICHEAT + " - " + message
-        if self.irc_log_level >= loglevel:
+        if loglevel >= self.irc_log_level:
             try:
                 self.server.scripts.irc.send(CUWO_ANTICHEAT + " - " + message)
             except KeyError:
@@ -750,6 +170,7 @@ class AntiCheatConnection(ConnectionScript):
                     anticheat=CUWO_ANTICHEAT)
 
                 self.irc_log_level = 0
+                self.server.config.anticheat.irc_log_level = 0
 
     def remove_cheater(self, reason):
         connection = self.connection
@@ -761,6 +182,7 @@ class AntiCheatConnection(ConnectionScript):
         connection.send_chat(self.disconnect_message.
                              format(name=CUWO_ANTICHEAT,
                                     reason=reason))
+
         connection.disconnect()
 
     def has_illegal_name(self):
@@ -808,6 +230,13 @@ class AntiCheatConnection(ConnectionScript):
         if item.rarity > self.rarity_cap:
             self.log("item rarity: {rarity}".format(
                      rarity=item.rarity), LOG_LEVEL_VERBOSE)
+            return True
+
+        if item.type == 1 and item.rarity > 0:
+            self.log(("consumable with rarity above 0, item={item}" +
+                     " item rarity: {rarity}")
+                     .format(item=get_item_name(item),
+                             rarity=item.rarity), LOG_LEVEL_VERBOSE)
             return True
 
         # Item type 2 is a recipe they are handled differently.
@@ -861,8 +290,8 @@ class AntiCheatConnection(ConnectionScript):
     def is_equipped_illegal(self, item, in_slotindex):
         entity_data = self.connection.entity_data
 
-        power_item = calc_power_level(item.level)
-        power_char = calc_power_level(entity_data.level)
+        power_item = get_power(item.level)
+        power_char = get_power(entity_data.level)
         if power_item > power_char:
             self.log(("item level too high for character " +
                      "item: level:{level1} (power: {power1}) " +
@@ -937,6 +366,31 @@ class AntiCheatConnection(ConnectionScript):
                              classid=entity_data.class_type,
                              item=get_item_name(item)),
                      LOG_LEVEL_VERBOSE)
+            return True
+
+        return False
+
+    def has_illegal_consumable(self):
+        entity_data = self.connection.entity_data
+        item = entity_data.item_data
+
+        # no consumable equiped
+        if item.type == 0:
+            return False
+
+        if self.is_item_illegal(item):
+            return True
+
+        power_item = get_power(item.level)
+        power_char = get_power(entity_data.level)
+        if power_item > power_char:
+            self.log(("consumable level too high for character " +
+                     "item: level:{level1} (power: {power1}) " +
+                     "character: level:{level2} (power: {power2})")
+                     .format(level1=item.level,
+                             power1=power_item,
+                             level2=entity_data.level,
+                             power2=power_char), LOG_LEVEL_VERBOSE)
             return True
 
         return False
@@ -1104,6 +558,57 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
+        return False
+
+    def has_illegal_flags(self):
+        entity_data = self.connection.entity_data
+        # This is when holding control, doesnt need to be on a wall
+        FLAGS_1_CLIMBING = 0
+        FLAGS_1_ATTACKING = 2
+        FLAGS_1_GLIDER_ACTIVE = 4
+
+        FLAGS_2_LANTERN_ON = 1
+        FLAGS_2_RANGER_STEALTH = 2
+
+        flags_1 = entity_data.flags_1
+        flags_2 = entity_data.flags_2
+
+        if (is_bit_set(flags_2, FLAGS_2_RANGER_STEALTH) and
+                entity_data.class_type != RANGER_CLASS):
+            self.log("none ranger class using ranger stealth. class={classid}"
+                     .format(classid=entity_data.class_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        # Glider resetting attack animations bug
+        # Rapidly switching between will be seen as bug abusing.
+        if is_bit_set(flags_1, FLAGS_1_ATTACKING):
+            self.last_attacking = time.time()
+            self.attack_count += 1
+
+        if is_bit_set(flags_1, FLAGS_1_GLIDER_ACTIVE):
+            self.last_glider_active = time.time()
+            self.glider_count += 1
+
+        # Reset if either attacking or gliding has not happend for a time
+        if (time.time() - self.last_glider_active > 0.75 or
+                time.time() - self.last_attacking > 0.75):
+            self.glider_count = 0
+            self.attack_count = 0
+
+        if (self.glider_count > self.glider_abuse_count and
+            self.attack_count > self.glider_abuse_count):
+            self.log("glider reset attack animation bug abuse."
+                     .format(classid=entity_data.class_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        return False
+
 
 class AntiCheatServer(ServerScript):
     connection_class = AntiCheatConnection
+
+
+def get_class():
+    return AntiCheatServer

@@ -17,6 +17,14 @@ level_cap = 1000
 # Highest level rarity level allowed on items, 4 is gold
 rarity_cap = 4
 
+# Number of times someone can attack and switch glider before it gets caught
+# If you put this too low people just gliding after attacking will get kicked
+# But you might want to put it slightly higher if people are getting kicked
+# that are playing normally.
+# This is mainly to stop the boomerang glitch, but who knows what other skills
+# you can reset by spamming glider.
+glider_abuse_count = 5
+
 log_message = "{playername}({ip}) was removed for: {reason}."
 disconnect_message = "{name} - You are being removed for: {reason}."
 welcome_message = "{name} - No cheats detected! (yet)"
