@@ -449,28 +449,10 @@ class CubeWorldServer(Factory):
 
     # script methods
 
-    def load_script_source(self, name):
-        path = './scripts/%s.py' % name
-        try:
-            return imp.load_source(name, path)
-        except IOError:
-            pass
-
-    def load_script_zip(self, name):
-        path = './scripts/%s.zip' % name
-        try:
-            return zipimport.zipimporter(path).load_module(name)
-        except ImportError:
-            pass
-        except zipimport.ZipImportError:
-            pass
-
     def load_script(self, name):
-        for f in (self.load_script_source, self.load_script_zip):
-            mod = f(name)
-            if mod:
-                break
-        else:
+        try:
+            mod = __import__('scripts.%s' % name, globals(), locals(), [name])
+        except ImportError:
             return None
         script = mod.get_class()(self)
         print 'Loaded script %r' % name
