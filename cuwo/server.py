@@ -44,6 +44,7 @@ import zipimport
 import os
 import sys
 import pprint
+import traceback
 
 # initialize packet instances for sending
 join_packet = JoinPacket()
@@ -454,7 +455,8 @@ class CubeWorldServer(Factory):
     def load_script(self, name):
         try:
             mod = __import__('scripts.%s' % name, globals(), locals(), [name])
-        except ImportError:
+        except ImportError, e:
+            traceback.print_exc(e)
             return None
         script = mod.get_class()(self)
         print 'Loaded script %r' % name
