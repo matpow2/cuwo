@@ -33,7 +33,7 @@ import zlib
 def create_entity_data():
     data = EntityData()
     data.appearance = AppearanceData()
-    data.item_data = ItemData()
+    data.consumable = ItemData()
     data.equipment = []
     for _ in xrange(13):
         data.equipment.append(ItemData())
