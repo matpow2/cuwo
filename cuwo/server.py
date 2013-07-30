@@ -178,6 +178,10 @@ class CubeWorldConnection(Protocol):
             self.scripts.call('on_appearance_update')
         if entity.is_charged_mp_set(mask):
             self.scripts.call('on_charged_mp_update')
+        if entity.is_flags_set(mask):
+            self.scripts.call('on_flags_update')
+        if entity.is_consumable_set(mask):
+            self.scripts.call('on_consumable_update')
 
     def on_chat_packet(self, packet):
         message = filter_string(packet.value).strip()
@@ -282,9 +286,7 @@ class CubeWorldConnection(Protocol):
     def position(self):
         if self.entity_data is None:
             return None
-        return Vector3(self.entity_data.x,
-                       self.entity_data.y,
-                       self.entity_data.z)
+        return self.entity_data.pos
 
     @property
     def name(self):

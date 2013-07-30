@@ -175,10 +175,12 @@ EXTRA_VEL_BIT = 4
 LOOK_PITCH_BIT = 5
 MODE_BIT = 9
 APPEARANCE_BIT = 13
+FLAGS_BIT = 14
 CLASS_BIT = 21
 CHARGED_MP_BIT = 23
 MULTIPLIER_BIT = 30
 LEVEL_BIT = 33
+CONSUMABLE_BIT = 43
 EQUIPMENT_BIT = 44
 NAME_BIT = 45
 SKILL_BIT = 46
@@ -188,9 +190,7 @@ class EntityData(Loader):
     mask = 0
 
     def read(self, reader):
-        self.x = reader.read_int64()
-        self.y = reader.read_int64()
-        self.z = reader.read_int64()
+        self.pos = reader.read_qvec3()
         self.body_roll = reader.read_float()
         self.body_pitch = reader.read_float()
         self.body_yaw = reader.read_float()
@@ -252,19 +252,14 @@ class EntityData(Loader):
         self.not_used11 = reader.read_uint32()
         self.not_used12 = reader.read_uint32()
         self.super_weird = reader.read_uint32()
-        self.not_used13 = reader.read_uint32()
-        self.not_used14 = reader.read_uint32()
-        self.not_used15 = reader.read_uint32()
-        self.not_used16 = reader.read_uint32()
-        self.not_used17 = reader.read_uint32()
-        self.not_used18 = reader.read_uint32()
+        self.spawn_pos = reader.read_qvec3()
         self.not_used19 = reader.read_uint8()
         reader.skip(3)
         self.not_used20 = reader.read_uint32()
         self.not_used21 = reader.read_uint32()
         self.not_used22 = reader.read_uint32()
-        self.item_data = ItemData()
-        self.item_data.read(reader)
+        self.consumable = ItemData()
+        self.consumable.read(reader)
         self.equipment = []
         for _ in xrange(13):
             new_item = ItemData()
@@ -277,9 +272,7 @@ class EntityData(Loader):
         self.name = reader.read_ascii(16)
 
     def write(self, writer):
-        writer.write_int64(self.x)
-        writer.write_int64(self.y)
-        writer.write_int64(self.z)
+        writer.write_qvec3(self.pos)
         writer.write_float(self.body_roll)
         writer.write_float(self.body_pitch)
         writer.write_float(self.body_yaw)
@@ -340,18 +333,13 @@ class EntityData(Loader):
         writer.write_uint32(self.not_used11)
         writer.write_uint32(self.not_used12)
         writer.write_uint32(self.super_weird)
-        writer.write_uint32(self.not_used13)
-        writer.write_uint32(self.not_used14)
-        writer.write_uint32(self.not_used15)
-        writer.write_uint32(self.not_used16)
-        writer.write_uint32(self.not_used17)
-        writer.write_uint32(self.not_used18)
+        writer.write_qvec3(self.spawn_pos)
         writer.write_uint8(self.not_used19)
         writer.pad(3)
         writer.write_uint32(self.not_used20)
         writer.write_uint32(self.not_used21)
         writer.write_uint32(self.not_used22)
-        self.item_data.write(writer)
+        self.consumable.write(writer)
         for item in self.equipment:
             item.write(writer)
         for item in self.skills:
@@ -392,6 +380,10 @@ def is_appearance_set(mask):
     return is_bit_set(mask, APPEARANCE_BIT)
 
 
+def is_flags_set(mask):
+    return is_bit_set(mask, FLAGS_BIT)
+
+
 def is_class_set(mask):
     return is_bit_set(mask, CLASS_BIT)
 
@@ -406,6 +398,10 @@ def is_multiplier_set(mask):
 
 def is_level_set(mask):
     return is_bit_set(mask, LEVEL_BIT)
+
+
+def is_consumable_set(mask):
+    return is_bit_set(mask, CONSUMABLE_BIT)
 
 
 def is_equipment_set(mask):
@@ -423,9 +419,7 @@ def is_skill_set(mask):
 def read_masked_data(entity, reader):
     mask = reader.read_uint64()
     if is_pos_set(mask):
-        entity.x = reader.read_int64()
-        entity.y = reader.read_int64()
-        entity.z = reader.read_int64()
+        entity.pos = reader.read_qvec3()
     if is_orient_set(mask):
         entity.body_roll = reader.read_float()
         entity.body_pitch = reader.read_float()
@@ -454,7 +448,7 @@ def read_masked_data(entity, reader):
         entity.last_hit_time = reader.read_uint32()
     if is_appearance_set(mask):
         entity.appearance.read(reader)
-    if is_bit_set(mask, 14):
+    if is_flags_set(mask):
         entity.flags_1 = reader.read_uint8()
         entity.flags_2 = reader.read_uint8()
     if is_bit_set(mask, 15):
@@ -519,20 +513,15 @@ def read_masked_data(entity, reader):
         entity.not_used11 = reader.read_uint32()
         entity.not_used12 = reader.read_uint32()
     if is_bit_set(mask, 40):
-        entity.not_used13 = reader.read_uint32()
-        entity.not_used14 = reader.read_uint32()
-        entity.not_used15 = reader.read_uint32()
-        entity.not_used16 = reader.read_uint32()
-        entity.not_used17 = reader.read_uint32()
-        entity.not_used18 = reader.read_uint32()
+        entity.spawn_pos = reader.read_qvec3()
     if is_bit_set(mask, 41):
         entity.not_used20 = reader.read_uint32()
         entity.not_used21 = reader.read_uint32()
         entity.not_used22 = reader.read_uint32()
     if is_bit_set(mask, 42):
         entity.not_used19 = reader.read_uint8()
-    if is_bit_set(mask, 43):
-        entity.item_data.read(reader)
+    if is_consumable_set(mask):
+        entity.consumable.read(reader)
     if is_equipment_set(mask):
         for item in entity.equipment:
             item.read(reader)
@@ -578,7 +567,7 @@ def get_masked_size(mask):
         size += 4
     if is_appearance_set(mask):
         size += 172
-    if is_bit_set(mask, 14):
+    if is_flags_set(mask):
         size += 2
     if is_bit_set(mask, 15):
         size += 4
@@ -636,7 +625,7 @@ def get_masked_size(mask):
         size += 12
     if is_bit_set(mask, 42):
         size += 1
-    if is_bit_set(mask, 43):
+    if is_consumable_set(mask):
         size += 280
     if is_equipment_set(mask):
         size += 3640
@@ -655,9 +644,7 @@ def write_masked_data(entity, writer, mask=None):
 
     writer.write_uint64(mask)
     if is_pos_set(mask):
-        writer.write_int64(entity.x)
-        writer.write_int64(entity.y)
-        writer.write_int64(entity.z)
+        writer.write_qvec3(entity.pos)
     if is_orient_set(mask):
         writer.write_float(entity.body_roll)
         writer.write_float(entity.body_pitch)
@@ -686,7 +673,7 @@ def write_masked_data(entity, writer, mask=None):
         writer.write_uint32(entity.last_hit_time)
     if is_appearance_set(mask):
         entity.appearance.write(writer)
-    if is_bit_set(mask, 14):
+    if is_flags_set(mask):
         writer.write_uint8(entity.flags_1)
         writer.write_uint8(entity.flags_2)
     if is_bit_set(mask, 15):
@@ -751,20 +738,15 @@ def write_masked_data(entity, writer, mask=None):
         writer.write_uint32(entity.not_used11)
         writer.write_uint32(entity.not_used12)
     if is_bit_set(mask, 40):
-        writer.write_uint32(entity.not_used13)
-        writer.write_uint32(entity.not_used14)
-        writer.write_uint32(entity.not_used15)
-        writer.write_uint32(entity.not_used16)
-        writer.write_uint32(entity.not_used17)
-        writer.write_uint32(entity.not_used18)
+        writer.write_qvec3(entity.spawn_pos)
     if is_bit_set(mask, 41):
         writer.write_uint32(entity.not_used20)
         writer.write_uint32(entity.not_used21)
         writer.write_uint32(entity.not_used22)
     if is_bit_set(mask, 42):
         writer.write_uint8(entity.not_used19)
-    if is_bit_set(mask, 43):
-        entity.item_data.write(writer)
+    if is_consumable_set(mask):
+        entity.consumable.write(writer)
     if is_equipment_set(mask):
         for item in entity.equipment:
             item.write(writer)
