@@ -116,8 +116,8 @@ def open_create(filename, mode):
 
 
 def get_power(level):
-    return int(((1.0 - (1.0 / (((float(level) - 1.0) * 0.05)
-                + 1.0))) * 100.0) + 1.0)
+    power = 101 - 100 / (0.05 * (level - 1) + 1)
+    return int(power)
 
 
 def get_item_name(item):

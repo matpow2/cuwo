@@ -286,13 +286,16 @@ ABILITIES = dict({
          'weapon': (11, )},
 
     # Rogue skill 1 (Charge)
-    48: {'class': (ROGUE_CLASS, ), },
+    48: {'class': (ROGUE_CLASS, ),
+        'cooldown': 8.0  },
 
     # Mage skill 3 (Teleport)
-    49: {'class': (MAGE_CLASS, ), },
+    49: {'class': (MAGE_CLASS, ),
+        'cooldown': 6.0 },
 
     # Warrior skill 1 (Slam)
-    54: {'class': (WARRIOR_CLASS, ), },
+    54: {'class': (WARRIOR_CLASS, ),
+        'cooldown': 6.0 },
 
     # Two handed skills
     57: {'class': (WARRIOR_CLASS, ),
@@ -316,11 +319,13 @@ ABILITIES = dict({
          'spec': 0},
 
     # Warrior Skill 2 (Spinning blade attack)
-    86: {'class': (WARRIOR_CLASS, ), },
+    86: {'class': (WARRIOR_CLASS, ),
+        'cooldown': 20.0 },
 
     # Rogue Skill 3 (Ninja stars)
     96: {'class': (ROGUE_CLASS, ),
-         'spec': 1},
+         'spec': 1,
+         'cooldown': 6.0},
 
     # Warrior Skill 3 (Bulwark)
     101: {'class': (WARRIOR_CLASS, ),

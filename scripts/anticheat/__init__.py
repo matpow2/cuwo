@@ -24,7 +24,7 @@ from cuwo.script import (ServerScript,
                          get_player)
 from cuwo.common import get_power, get_item_name, is_bit_set
 from cuwo.packet import ServerUpdate, PickupAction
-from anticheatpackage.constants import *
+from constants import *
 import re
 import time
 
@@ -38,6 +38,8 @@ class AntiCheatConnection(ConnectionScript):
     glider_count = 0
     attack_count = 0
 
+    ability_cooldown = {}
+
     def on_load(self):
         config = self.server.config.anticheat
         self.level_cap = config.level_cap
@@ -50,6 +52,7 @@ class AntiCheatConnection(ConnectionScript):
         self.welcome_message = config.welcome_message
         self.irc_log_level = config.irc_log_level
         self.glider_abuse_count = config.glider_abuse_count
+        self.cooldown_margin = config.cooldown_margin
 
     def on_join(self, event):
 
@@ -372,7 +375,7 @@ class AntiCheatConnection(ConnectionScript):
 
     def has_illegal_consumable(self):
         entity_data = self.connection.entity_data
-        item = entity_data.item_data
+        item = entity_data.consumable
 
         # no consumable equiped
         if item.type == 0:
@@ -597,7 +600,7 @@ class AntiCheatConnection(ConnectionScript):
             self.attack_count = 0
 
         if (self.glider_count > self.glider_abuse_count and
-            self.attack_count > self.glider_abuse_count):
+                self.attack_count > self.glider_abuse_count):
             self.log("glider reset attack animation bug abuse."
                      .format(classid=entity_data.class_type),
                      LOG_LEVEL_VERBOSE)

@@ -25,6 +25,11 @@ rarity_cap = 4
 # you can reset by spamming glider.
 glider_abuse_count = 5
 
+# Margin of time that can be between actual cooldown readiness and received
+# readiness. smaller means more accurate, but also more chance someone gets
+# kicked if he lags.
+cooldown_margin = 0.75
+
 log_message = "{playername}({ip}) was removed for: {reason}."
 disconnect_message = "{name} - You are being removed for: {reason}."
 welcome_message = "{name} - No cheats detected! (yet)"
