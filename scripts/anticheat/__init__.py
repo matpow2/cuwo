@@ -492,6 +492,26 @@ class AntiCheatConnection(ConnectionScript):
                          LOG_LEVEL_VERBOSE)
                 return True
 
+        if 'cooldown' in ABILITIES[mode]:
+            min_cd = ABILITIES[mode]['cooldown']
+            last_used = 0
+            if mode in self.ability_cooldown:
+                last_used = self.ability_cooldown[mode]
+
+            current_cd = time.time() - last_used
+            if current_cd < min_cd - self.cooldown_margin:
+                self.log(("ability\\mode used before cooldown was ready" +
+                         "mode={mode} min. cooldown={mincd} " +
+                         "current cooldown={currentcd}")
+                         .format(mode=mode,
+                                 mincd=min_cd,
+                                 currentcd=current_cd),
+                         LOG_LEVEL_VERBOSE)
+                return True
+
+            # keep track of ability usage
+            self.ability_cooldown[mode] = time.time()
+
         return False
 
     def has_illegal_class(self):
