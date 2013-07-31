@@ -180,7 +180,7 @@ class ServerScript(BaseScript):
     commands = None
 
     def __init__(self, server):
-        self.script_name = self.__module__
+        self.script_name = self.__module__.split('.')[1]
 
         self.server = server
         server.scripts.add(self)

@@ -44,8 +44,7 @@ def extract(dbfile, dir):
     conn.row_factory = sqlite3.Row
     for row in conn.execute('SELECT key, value FROM blobs'):
         with open(os.path.join(dir, row['key']), 'wb') as f:
-            f.write(row['value'])
-            # f.write(decode(row['value']))
+            f.write(decode(row['value']))
 
 
 def pack(dbfile, dir):
