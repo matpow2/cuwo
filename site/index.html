@@ -30,10 +30,12 @@
     </div>
     <div class="container">
       <div data-page-id="#about" data-page-title="About" class="row" style="display:none">
-      	<script type="text/javascript">
-          if (!doneGit) getCommits(); doneGit = true;
-          clearTimeout(reload_action);
-      	</script>
+        <script type="text/javascript">
+          function about() {
+            if (!doneGit) getCommits(); doneGit = true;
+            clearTimeout(reload_action);
+          }
+        </script>
         <div class="span12">
           <div class="hero-unit">
             <h1><img src="img/cuwo.png" alt="cuwo" title="cuwo"> <small class="muted">(pronounced 'coo-woo')</small></h1>
@@ -102,9 +104,11 @@
         </div>
       </div>
       <div data-page-id="#servers" data-page-title="Server List" class="row" style="display:none">
-      	<script type="text/javascript">
-          if (!doneServers) getServers(); doneServers = true;
-      	</script>
+        <script type="text/javascript">
+          function servers() {
+            if (!doneServers) getServers(); doneServers = true;
+          }
+        </script>
         <div class="span12">
           <table id="servers" class="table table-striped table-bordered">
             <thead>
