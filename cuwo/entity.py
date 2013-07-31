@@ -204,7 +204,7 @@ class EntityData(Loader):
         self.entity_type = reader.read_uint32()
         self.current_mode = reader.read_uint8()
         reader.skip(3)
-        self.last_shoot_time = reader.read_uint32()
+        self.mode_start_time = reader.read_uint32()
         self.hit_counter = reader.read_uint32()
         self.last_hit_time = reader.read_uint32()
         self.appearance = AppearanceData()
@@ -286,7 +286,7 @@ class EntityData(Loader):
         writer.write_uint32(self.entity_type)
         writer.write_uint8(self.current_mode)
         writer.pad(3)
-        writer.write_uint32(self.last_shoot_time)
+        writer.write_uint32(self.mode_start_time)
         writer.write_uint32(self.hit_counter)
         writer.write_uint32(self.last_hit_time)
         self.appearance.write(writer)
@@ -441,7 +441,7 @@ def read_masked_data(entity, reader):
     if is_mode_set(mask):
         entity.current_mode = reader.read_uint8()
     if is_bit_set(mask, 10):
-        entity.last_shoot_time = reader.read_uint32()
+        entity.mode_start_time = reader.read_uint32()
     if is_bit_set(mask, 11):
         entity.hit_counter = reader.read_uint32()
     if is_bit_set(mask, 12):
@@ -666,7 +666,7 @@ def write_masked_data(entity, writer, mask=None):
     if is_mode_set(mask):
         writer.write_uint8(entity.current_mode)
     if is_bit_set(mask, 10):
-        writer.write_uint32(entity.last_shoot_time)
+        writer.write_uint32(entity.mode_start_time)
     if is_bit_set(mask, 11):
         writer.write_uint32(entity.hit_counter)
     if is_bit_set(mask, 12):
