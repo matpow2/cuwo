@@ -90,7 +90,7 @@ function getServers() {
       rowHolder.append(row);
     });
 
-    if (Object.keys(jsonData).length < 40) $('#pagination').hide(); else $('#pagination').show();
+    if (Object.keys(jsonData).length <= 40) $('#pagination').hide(); else $('#pagination').show();
 
     table.trigger('update', [true]);
 
