@@ -1,34 +1,10 @@
 var doneGit = false , doneServers = false, reload_action;
 
 $(function() {
+  $('.tip').tooltip();
   doSort();
-  var id = window.location.hash || '#about';
-  page(id);
-  $('.nav-link').click(function() {
-    page($(this).data('page'));
-    return false;
-  });
+  $.pages();
 });
-
-function showContent(id) {
-  $('.nav-link').parent().removeClass('active');
-  $('a[data-page=' + id + ']').parent().addClass('active');
-  $('.page-content').hide();
-  $('div[data-page=' + id + ']').show();
-  window.location.hash = id;
-}
-function page(id) {
-  if (id == '#servers') {
-    if (!doneServers) getServers(); doneServers = true;
-    showContent('#servers');
-    $('ul#refresh').show();
-  } else {
-    if (!doneGit) getCommits(); doneGit = true;
-    clearTimeout(reload_action);
-    showContent('#about');
-    $('ul#refresh').hide();
-  }
-}
 
 function getCommits() {
   $.getJSON('https://api.github.com/repos/matpow2/cuwo/commits?per_page=5&callback=?', function(data) {
@@ -40,21 +16,49 @@ function getCommits() {
       $.each(data.data, function(index, commit) {
         var row = $('<tr/>');
 
-        var author = '<a href="' + commit.author.html_url + '" target="_blank">' + commit.author.login + '</a>';
+        var avatar = $('<img/>')
+          .attr('src', 'http://www.gravatar.com/avatar/' + commit.author.gravatar_id + '?s=50&d=https://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-user-420.png')
+          .attr('alt', commit.author.login)
+          .attr('title', commit.author.login)
+          .addClass('avatar')
+          .tooltip();
+        var author = $('<a/>')
+          .attr('href', commit.author.html_url)
+          .attr('target', '_blank')
+          .append(avatar);
         $('<td/>').html(author).appendTo(row);
 
-        var timestamp = new Date(commit.commit.author.date);
-        $('<td/>').html('<small class="muted">' + timestamp.toString() + '</small><br>' + commit.commit.message.replace('\n', '<br>', 'g')).appendTo(row);
+        var timestamp = $('<small/>').addClass('muted').text(new Date(commit.commit.author.date).toString());
+        var messageParts = commit.commit.message.split('\n');
+        var messageShort = messageParts[0];
+        messageParts.splice(0, 1);
+        var description = $('<div/>')
+          .attr('id', 'message' + index)
+          .attr('style', 'display:none')
+          .html(entities(messageParts.join('\n')).replace(/\n/g, '<br>') || '<br><em class="muted">No description available</em>');
+        var message = $('<div/>')
+          .append(timestamp)
+          .append('<br>')
+          .append(entities(messageShort))
+          .append(description);
+        $('<td/>').html(message)
+          .attr('onclick', '$("#message' + index + '").slideToggle(250)')
+          .attr('style', 'cursor:pointer')
+          .appendTo(row);
 
-        var shortSHA = commit.sha.substr(0,10);
-        var sha = '<a href="' + commit.html_url + '" target="_blank">' + shortSHA + '</a>';
+        var sha = $('<a/>')
+          .attr('href', commit.html_url)
+          .attr('target', '_blank')
+          .text(commit.sha.substr(0,10));
         $('<td/>').html(sha).appendTo(row);
 
         rowHolder.append(row);
       });
     } else {
       var row = $('<tr/>');
-      $('<td/>').html('GitHub API limit reached! <a href="https://github.com/matpow2/cuwo/commits/" target="_blank" title="View on GitHub">Click here</a> to view the commit history on GitHub or wait for the limit to reset.').attr('colspan', 3).appendTo(row);
+      $('<td/>').html('GitHub API limit reached! <a href="https://github.com/matpow2/cuwo/commits/" target="_blank" title="View on GitHub">Click here</a> to view the commit history on GitHub.')
+        .attr('colspan', 3)
+        .appendTo(row);
       rowHolder.append(row);
     }
   });
@@ -63,7 +67,6 @@ function getCommits() {
 function getServers() {
   $.getJSON('http://mp2.dk/cuwo/servers.json', function(jsonData) {
     var table = $('#servers');
-
     var rowHolder = table.find('tbody');
     rowHolder.find('tr').remove();
 
@@ -76,13 +79,18 @@ function getServers() {
       $('<td/>').text(this.ip).appendTo(row);
 
       var loc = $('<div/>').text(this.location).html();
-      var image = $('<img/>').attr('src', 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7').attr('alt', loc).attr('title', loc).addClass('flag flag-' + loc.toLowerCase());
-      $('<td/>').append($('<span/>').text(loc).addClass('hidden-desktop hidden-phone hidden-tablet')).append(image).appendTo(row);
+      var country = $('<span/>').text(loc).addClass('hidden-desktop hidden-phone hidden-tablet');
+      var flag = $('<img/>')
+        .attr('src', 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')
+        .attr('alt', loc)
+        .attr('title', loc)
+        .addClass('flag flag-' + loc.toLowerCase());
+      $('<td/>').append(country).append(flag).appendTo(row);
 
       rowHolder.append(row);
     });
 
-    if (Object.keys(jsonData).length < 40) $('#pagination').hide(); else $('#pagination').show();
+    if (Object.keys(jsonData).length <= 40) $('#pagination').hide(); else $('#pagination').show();
 
     table.trigger('update', [true]);
 
@@ -90,6 +98,7 @@ function getServers() {
     reload_action = setTimeout('getServers()', 20000);
   });
 }
+
 function doSort() {
   $('#servers').tablesorter({
     theme: 'bootstrap',
@@ -104,4 +113,8 @@ function doSort() {
     output: 'Page {page} of {totalPages} ({startRow}&ndash;{endRow} / {totalRows})',
     size: 40
   });
+}
+
+function entities(input) {
+  return input.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
