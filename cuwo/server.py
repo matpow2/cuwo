@@ -345,7 +345,7 @@ class CubeWorldServer(Factory):
         self.entity_ids = IDPool(1)
 
         self.update_loop = LoopingCall(self.update)
-        self.update_loop.start(1.0 / constants.UPDATE_FPS, False)
+        self.update_loop.start(1.0 / base.update_fps, False)
 
         # server-related
         self.git_rev = base.get('git_rev', None)

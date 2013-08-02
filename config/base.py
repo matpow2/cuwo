@@ -47,3 +47,7 @@ network_interface = ''
 
 # Server port. Do not change this unless you have a modified client!
 port = 12345
+
+# Server send rate. Change this to a lower value for high-traffic servers.
+# The vanilla server uses 50, but 20 or 25 may be more sane.
+update_fps = 50

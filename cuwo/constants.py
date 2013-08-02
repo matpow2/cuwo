@@ -23,7 +23,6 @@ SERVER_PORT = 12345
 MAX_TIME = 24 * 60 * 60 * 1000
 NORMAL_TIME_SPEED = 10.0
 SLEEP_TIME_SPEED = 100.0
-UPDATE_FPS = 50  # 50FPS in the code, 100FPS when measured-- odd.
 
 # scale constants
 BLOCK_SCALE = 0x10000
