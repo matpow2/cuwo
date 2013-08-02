@@ -187,18 +187,18 @@ class IRCClientFactory(protocol.ClientFactory):
 
 class IRCScriptConnection(ConnectionScript):
     def on_join(self, event):
-        self.parent.send('* %s entered the game' % encode_irc(
-            self.connection.name))
+        self.parent.send('* %s entered the game <\x0304%s\x0F>' % (encode_irc(
+            self.connection.name), encode_irc(self.connection.address.host)))
 
     def on_unload(self):
         if not self.connection.has_joined:
             return
-        self.parent.send('* %s disconnected' % encode_irc(
-            self.connection.name))
+        self.parent.send('* %s disconnected <\x0304%s\x0F>' % (encode_irc(
+            self.connection.name), encode_irc(self.connection.address.host)))
 
     def on_chat(self, event):
-        message = encode_irc('<\x0306%s\x0F> %s' % (
-            self.connection.name, event.message))
+        message = encode_irc('<\x0304%s\x0F><\x0306%s\x0F> %s' % (
+            self.connection.address.host, self.connection.name, event.message))
         self.parent.send(message)
 
 
