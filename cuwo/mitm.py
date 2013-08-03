@@ -15,16 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-from cuwo.twistedreactor import install_reactor
-install_reactor()
-from twisted.internet.protocol import Factory, Protocol
-from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from cuwo.packet import (PacketHandler, write_packet, ServerChatMessage,
                          CS_PACKETS, SC_PACKETS, EntityUpdate,
                          create_entity_data, JoinPacket, CurrentTime)
 from cuwo import constants
-
+from cuwo import clock
 
 class RelayClient(Protocol):
     def __init__(self, protocol):
@@ -50,7 +46,7 @@ class CubeWorldProtocol(Protocol):
 
     def __init__(self, server):
         self.server = server
-        self.start_time = reactor.seconds()
+        self.start_time = clock.seconds()
         self.client_handler = PacketHandler(CS_PACKETS,
                                             self.on_client_packet)
         self.server_handler = PacketHandler(SC_PACKETS,

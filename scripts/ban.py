@@ -19,7 +19,7 @@
 Ban management
 """
 
-from cuwo.script import ServerScript, command, admin, get_player
+from cuwo.script import ServerScript, command, admin
 
 SELF_BANNED = 'You are banned: {reason}'
 PLAYER_BANNED = '{name} has been banned: {reason}'

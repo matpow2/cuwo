@@ -118,9 +118,12 @@ class ByteReader(object):
         if fp is None:
             raise ValueError('need to specify data or fp')
         self.fp = fp
-        self.seek = fp.seek
         self.close = fp.close
-        self.tell = fp.tell
+        try:
+            self.seek = fp.seek
+            self.tell = fp.tell
+        except AttributeError:
+            pass
 
     def read(self, size=None):
         if size is None:
@@ -158,10 +161,7 @@ class ByteReader(object):
         return filter_string(self.read_string(size))
 
     def skip(self, size):
-        end_pos = self.tell() + size
-        self.seek(end_pos)
-        if end_pos != self.tell():
-            raise OutOfData(self)
+        self.read(size)
 
     def rewind(self, size):
         self.seek(-size, 1)

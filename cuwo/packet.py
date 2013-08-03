@@ -685,17 +685,9 @@ class PacketHandler(object):
         self.table = table
         self.callback = callback
 
-    def feed(self, data):
-        self.data += data
-        reader = ByteReader(self.data)
-        try:
-            while True:
-                pos = reader.tell()
-                if pos >= len(self.data):
-                    break
-                packet = read_packet(reader, self.table)
-                self.callback(packet)
-        except OutOfData, e:
-            if e.reader is not reader:
-                raise e
-        self.data = self.data[pos:]
+    def start(self, socket):
+        fp = socket.makefile()
+        reader = ByteReader(fp=fp)
+        while True:
+            packet = read_packet(reader, self.table)
+            self.callback(packet)
