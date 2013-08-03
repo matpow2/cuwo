@@ -18,7 +18,7 @@
 import gevent
 from gevent.monkey import patch_all
 patch_all()
-from gevent.server import StreamServer
+from gevent.server import StreamServer, DatagramServer
 from cuwo.packet import (PacketHandler, write_packet, CS_PACKETS,
                          ClientVersion, JoinPacket, SeedData, EntityUpdate,
                          ClientChatMessage, ServerChatMessage,
@@ -520,20 +520,21 @@ class CWServer(object):
         try:
             self.tcp_server.serve_forever()
         except KeyboardInterrupt:
-            print 'Closing...'
-            return
+            pass
+        self.stop()
 
-    def listen_udp(self, *arg, **kw):
+    def listen_udp(self, port, f):
         interface = self.config.base.network_interface
-        return reactor.listenUDP(*arg, interface=interface, **kw)
+        return DatagramServer((interface, port), f)
 
     def listen_tcp(self, port, f):
         interface = self.config.base.network_interface
         return StreamServer((interface, port), f)
 
-    def connect_tcp(self, *arg, **kw):
+    def connect_tcp(self, host, port):
         interface = self.config.base.network_interface
-        return reactor.connectTCP(*arg, bindAddress=(interface, 0), **kw)
+        return gevent.socket.create_connection((host, port),
+                                               source_address=(interface, 0))
 
 
 def main():
@@ -553,6 +554,8 @@ def main():
     else:
         import cProfile
         cProfile.run('server.run()', filename=config.base.profile_file)
+
+    print 'Server stopped.'
 
     sys.exit(server.exit_code)
 

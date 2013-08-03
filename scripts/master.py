@@ -21,9 +21,8 @@ Sends updates to a master server at a constant interval
 
 from cuwo.script import ServerScript
 from cuwo.exceptions import InvalidData
-from twisted.internet.protocol import DatagramProtocol
-from twisted.internet.task import LoopingCall
-from twisted.internet import reactor
+from cuwo import clock
+from gevent.socket import gethostbyname
 import zlib
 import json
 
@@ -32,12 +31,16 @@ import json
 UPDATE_RATE = 10
 
 
-class MasterProtocol(DatagramProtocol):
-    def datagramReceived(self, data, addr):
+class MasterProtocol(object):
+    def __init__(self, port, server):
+        self.socket = server.listen_udp(port, self.on_data)
+
+    def on_data(self, data, addr):
         try:
             value = json.loads(zlib.decompress(data))
         except (zlib.error, ValueError):
             self.on_bad_packet(addr)
+            return
         self.on_packet(value, addr)
 
     def on_packet(self, data, addr):
@@ -47,7 +50,7 @@ class MasterProtocol(DatagramProtocol):
         if self.transport is None:
             return
         data = zlib.compress(json.dumps(value))
-        self.transport.write(data, addr)
+        self.socket.sendto(data, addr)
 
     def on_bad_packet(self, addr):
         pass
@@ -89,10 +92,10 @@ class MasterClient(MasterProtocol):
     has_response = False
 
     def __init__(self, server, addr):
+        super(MasterClient, self).__init__(0, server)
         self.server = server
         self.address = addr
-        self.update_loop = LoopingCall(self.update)
-        self.update_loop.start(UPDATE_RATE)
+        self.update_loop = start_loop(UPDATE_RATE, self.update)
 
     def update(self):
         config = self.server.config.base
@@ -120,11 +123,9 @@ class MasterRelay(ServerScript):
 
     def on_load(self):
         master = self.server.config.master
-        reactor.resolve(master.server).addCallback(self.on_ip)
+        base = self.server.config.base
 
-    def on_ip(self, ip):
-        master = self.server.config.master
-        config = self.server.config.base
+        ip = gethostbyname(master.server)
         self.client = MasterClient(self.server, (ip, master.port))
         self.server.listen_udp(config.port, self.client)
 
