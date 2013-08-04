@@ -529,7 +529,7 @@ APPEARANCES = dict({
          'scale_feet': 0.98,
          'scale_weapon': 0.95,
          'scale_back': 0.80,
-         'scale_shoulder': 1.10,
+         'scale_shoulder': 1.00,
          'scale_wing': 1.00,
          'offset_body': Vector3(0, 0, -5),
          'offset_head': Vector3(0, 0.5, 5),
