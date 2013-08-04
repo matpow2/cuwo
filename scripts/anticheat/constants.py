@@ -29,6 +29,13 @@ LOG_LEVEL_NONE = 0
 
 LEGAL_CLASSES = (WARRIOR_CLASS, RANGER_CLASS, MAGE_CLASS, ROGUE_CLASS)
 
+FLAGS_1_CLIMBING = 0
+FLAGS_1_ATTACKING = 2
+FLAGS_1_GLIDER_ACTIVE = 4
+
+FLAGS_2_LANTERN_ON = 1
+FLAGS_2_RANGER_STEALTH = 2
+
 TWOHANDED_WEAPONS = (5, 6, 7, 10, 11, 15, 16, 17)
 
 LEGAL_RECIPE_ITEMS = (3, 4, 5, 6, 7, 8)
@@ -197,7 +204,8 @@ ABILITIES = dict({
 
     # Dagger skills
     17: {'class': (ROGUE_CLASS, ),
-         'weapon': (3, )},
+         'weapon': (3, ),
+         'mana_consumption': 1.0},
     18: {'class': (ROGUE_CLASS, ),
          'weapon': (3, )},
     19: {'class': (ROGUE_CLASS, ),
@@ -220,7 +228,8 @@ ABILITIES = dict({
     25: {'class': (RANGER_CLASS, ),
          'weapon': (6, )},
     55: {'class': (RANGER_CLASS, ),
-         'weapon': (6, )},
+         'weapon': (6, ),
+         'mana_consumption': 0.0},
 
     # Boomerang skills
     26: {'class': (RANGER_CLASS, ),
@@ -417,10 +426,10 @@ APPEARANCES = dict({
         'offset_foot': Vector3(3, 1, -10.5),
         'offset_back': Vector3(0, -8, 2),
         'offset_wing': Vector3(0, 0, 0),
-        'model_head': range(1240, 1245 + 1),
-        'model_hair': range(1290, 1299 + 1),
+        'model_head': range(1236, 1239 + 1),
+        'model_hair': range(1280, 1289 + 1),
         'model_feet': (432, ),
-        'model_hand': (430, 431),
+        'model_hand': (430, ),
         'model_body': (1, ),
         'model_back': (-1, ),
         'model_shoulder': (-1, ),
@@ -442,11 +451,11 @@ APPEARANCES = dict({
         'offset_foot': Vector3(3, 1, -10.5),
         'offset_back': Vector3(0, -8, 2),
         'offset_wing': Vector3(0, 0, 0),
-        'model_head': range(1267, 1272 + 1),
-        'model_hair': range(1273, 1279 + 1),
+        'model_head': range(1240, 1245 + 1),
+        'model_hair': range(1290, 1299 + 1),
         'model_feet': (432, ),
-        'model_hand': (430, 431),
-        'model_body': (1, ),
+        'model_hand': (430, ),
+        'model_body': (0, ),
         'model_back': (-1, ),
         'model_shoulder': (-1, ),
         'model_wing': (-1, )},
