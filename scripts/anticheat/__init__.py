@@ -24,7 +24,7 @@ from cuwo.script import (ServerScript,
                          get_player)
 from cuwo.common import get_power, get_item_name, is_bit_set
 from cuwo.packet import ServerUpdate, PickupAction
-from .constants import *
+from constants import *
 import re
 import time
 import math
@@ -1001,9 +1001,6 @@ class AntiCheatConnection(ConnectionScript):
 
 class AntiCheatServer(ServerScript):
     connection_class = AntiCheatConnection
-
-    def on_kill(self, event):
-        event.target.scripts.anticheat.on_killed(event)
 
 
 def get_class():
