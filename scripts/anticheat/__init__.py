@@ -193,8 +193,8 @@ class AntiCheatConnection(ConnectionScript):
         self.mana = entity_data.mp
         self.health = entity_data.hp
 
-        if self.check_speed() is False:
-            return False
+#        if self.check_speed() is False:
+#            return False
 
         if self.check_flying() is False:
             return False
