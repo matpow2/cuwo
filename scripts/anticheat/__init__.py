@@ -64,6 +64,8 @@ class AntiCheatConnection(ConnectionScript):
     time_traveled = 0
     distance_traveled = 0
 
+    cooldown_strikes = 0
+
     def on_load(self):
         self.last_entity_update = time.time()
 
@@ -81,6 +83,7 @@ class AntiCheatConnection(ConnectionScript):
         self.cooldown_margin = config.cooldown_margin
         self.max_hit_distance = config.max_hit_distance ** 2
         self.max_hit_distance_strikes = config.max_hit_distance_strikes
+        self.max_cooldown_strikes = config.max_cooldown_strikes
         self.max_air_time = config.max_air_time
         self.speed_margin = config.speed_margin
 
@@ -227,14 +230,12 @@ class AntiCheatConnection(ConnectionScript):
                      .format(source=packet.entity_id,
                              myid=self.connection.entity_id),
                      LOG_LEVEL_VERBOSE)
-            self.remove_cheater('illegal hit source')
             return False
 
         # how far away did this hit hit from where the target actually is
         hitdistance = (packet.pos - event.target.pos).magnitude_squared()
         if hitdistance > self.max_hit_distance:
             self.hit_distance_strikes += 1
-
             if self.hit_distance_strikes > self.max_hit_distance_strikes:
                 self.remove_cheater('hit distance too far, ' +
                                     'either cheating or lagging too much')
@@ -597,14 +598,18 @@ class AntiCheatConnection(ConnectionScript):
 
             current_cd = time.time() - last_used
             if current_cd < min_cd - self.cooldown_margin:
-                self.log(("ability\\mode used before cooldown was ready. " +
-                         "mode={mode}, min. cooldown={mincd}s, " +
-                         "current cooldown={currentcd}s")
-                         .format(mode=mode,
-                                 mincd=min_cd,
-                                 currentcd=current_cd),
-                         LOG_LEVEL_VERBOSE)
-                return False
+                self.cooldown_strikes += 1
+                if self.cooldown_strikes > self.max_cooldown_strikes:
+                    self.log(("ability used before cooldown was ready. " +
+                             "mode={mode}, min. cooldown={mincd}s, " +
+                             "current cooldown={currentcd}s")
+                             .format(mode=mode,
+                                     mincd=min_cd,
+                                     currentcd=current_cd),
+                             LOG_LEVEL_VERBOSE)
+                    return False
+            else:
+                self.cooldown_strikes = 0
 
             # keep track of ability usage
             self.ability_cooldown[mode] = time.time()
