@@ -24,9 +24,10 @@ from cuwo.script import (ServerScript,
                          get_player)
 from cuwo.common import get_power, get_item_name, is_bit_set
 from cuwo.packet import ServerUpdate, PickupAction
-from constants import *
+from .constants import *
 import re
 import time
+import math
 
 
 def is_similar(float1, float2):
@@ -43,9 +44,29 @@ class AntiCheatConnection(ConnectionScript):
     attack_count = 0
 
     ability_cooldown = {}
-    mode_start_time = 0
+
+    time_since_update = 0
+    last_entity_update = 0
+    last_update_mode = 0
+
+    last_mana = 0
+    last_health = 0
+
+    mana = 0
+    health = 0
+
+    air_time = 0
+    hit_distance_strikes = 0
+    is_dead = False
+
+    last_pos = None
+    last_speed_check = 0
+    time_traveled = 0
+    distance_traveled = 0
 
     def on_load(self):
+        self.last_entity_update = time.time()
+
         config = self.server.config.anticheat
         self.level_cap = config.level_cap
         self.allow_dual_wield = config.allow_dual_wield
@@ -58,9 +79,12 @@ class AntiCheatConnection(ConnectionScript):
         self.irc_log_level = config.irc_log_level
         self.glider_abuse_count = config.glider_abuse_count
         self.cooldown_margin = config.cooldown_margin
+        self.max_hit_distance = config.max_hit_distance ** 2
+        self.max_hit_distance_strikes = config.max_hit_distance_strikes
+        self.max_air_time = config.max_air_time
+        self.speed_margin = config.speed_margin
 
     def on_join(self, event):
-
         if self.on_name_update() is False:
             return False
 
@@ -77,9 +101,6 @@ class AntiCheatConnection(ConnectionScript):
             return False
 
         if self.on_multiplier_update() is False:
-            return False
-
-        if self.on_consumable_update() is False:
             return False
 
         if self.on_flags_update() is False:
@@ -126,6 +147,11 @@ class AntiCheatConnection(ConnectionScript):
             self.remove_cheater('illegal character mode (ability)')
             return False
 
+        if entity_data.current_mode != 0:
+            if self.use_ability(entity_data.current_mode) is False:
+                self.remove_cheater('cooldown hack')
+                return True
+
     def on_class_update(self, event=None):
         if self.has_illegal_class():
             self.remove_cheater('illegal character class')
@@ -157,22 +183,28 @@ class AntiCheatConnection(ConnectionScript):
             return False
 
     def on_entity_update(self, event):
-        if is_bit_set(event.mask, 10):
-            self.on_mode_start()
-
-    def on_mode_start(self, event=None):
         entity_data = self.connection.entity_data
+        self.time_since_update = time.time() - self.last_entity_update
+        self.last_entity_update = time.time()
 
-        if (self.mode_start_time > entity_data.mode_start_time or
-                entity_data.mode_start_time == 0):
-            self.mode_start_time = entity_data.mode_start_time
+        self.last_mana = self.mana
+        self.last_health = self.health
 
-            if entity_data.current_mode == 0:
-                return None
+        self.mana = entity_data.mp
+        self.health = entity_data.hp
 
-            if self.use_ability(entity_data.current_mode) is False:
-                self.remove_cheater('ability cooldown hack')
-                return False
+        if self.check_speed() is False:
+            return False
+
+        if self.check_flying() is False:
+            return False
+
+        if not self.is_dead and self.health <= 0:
+            self.is_dead = True
+            self.on_death()
+
+        if self.health > 0 and self.is_dead:
+            self.is_dead = False
 
     def on_drop(self, event):
         if self.is_item_illegal(event.item):
@@ -188,7 +220,28 @@ class AntiCheatConnection(ConnectionScript):
             self.remove_cheater('illegal item dropped')
             return False
 
-    def on_killed(self, event=None):
+    def on_hit(self, event):
+        packet = event.packet
+        if packet.entity_id != self.connection.entity_id:
+            self.log('hitpacket source is {source}, expected {myid}.'
+                     .format(source=packet.entity_id,
+                             myid=self.connection.entity_id),
+                     LOG_LEVEL_VERBOSE)
+            self.remove_cheater('illegal hit source')
+            return False
+
+        # how far away did this hit hit from where the target actually is
+        hitdistance = (packet.pos - event.target.pos).magnitude_squared()
+        if hitdistance > self.max_hit_distance:
+            self.hit_distance_strikes += 1
+
+            if self.hit_distance_strikes > self.max_hit_distance_strikes:
+                self.remove_cheater('hit distance too far, ' +
+                                    'either cheating or lagging too much')
+        else:
+            self.hit_distance_strikes = 0
+
+    def on_death(self, event=None):
         # if i get killed reset cooldowns! (this actually happens on respawn,
         # but there is no way to determine respawning as of yet)
         self.ability_cooldown = {}
@@ -491,8 +544,10 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if 'class' in ABILITIES[mode]:
-            if not entity_data.class_type in ABILITIES[mode]['class']:
+        ability = ABILITIES[mode]
+
+        if 'class' in ability:
+            if not entity_data.class_type in ability['class']:
                 self.log("ability or mode not allowed for class:" +
                          "mode={mode} class={classid}"
                          .format(mode=mode,
@@ -500,8 +555,8 @@ class AntiCheatConnection(ConnectionScript):
                          LOG_LEVEL_VERBOSE)
                 return True
 
-        if 'spec' in ABILITIES[mode]:
-            if entity_data.specialization != ABILITIES[mode]['spec']:
+        if 'spec' in ability:
+            if entity_data.specialization != ability['spec']:
                 self.log("ability or mode not allowed for class spec:" +
                          "mode={mode} class={classid} spec={spec}"
                          .format(mode=mode,
@@ -510,7 +565,7 @@ class AntiCheatConnection(ConnectionScript):
                          LOG_LEVEL_VERBOSE)
                 return True
 
-        if 'weapon' in ABILITIES[mode]:
+        if 'weapon' in ability:
             weap1 = entity_data.equipment[6].sub_type
             weap2 = entity_data.equipment[7].sub_type
 
@@ -519,8 +574,8 @@ class AntiCheatConnection(ConnectionScript):
             if entity_data.equipment[7].type == 0:
                 weap2 = -1  # Treating unarmed as -1
 
-            if (not weap1 in ABILITIES[mode]['weapon'] and
-                    not weap2 in ABILITIES[mode]['weapon']):
+            if (not weap1 in ability['weapon'] and
+                    not weap2 in ability['weapon']):
                 self.log("ability or mode not allowed for weapon:" +
                          "mode={mode} weapon1={weap1} weapon2={weap2}"
                          .format(mode=mode,
@@ -532,9 +587,11 @@ class AntiCheatConnection(ConnectionScript):
         return False
 
     def use_ability(self, mode):
-        if 'cooldown' in ABILITIES[mode]:
-            min_cd = ABILITIES[mode]['cooldown']
+        ability = ABILITIES[mode]
+        if 'cooldown' in ability:
+            min_cd = ability['cooldown']
             last_used = 0
+
             if mode in self.ability_cooldown:
                 last_used = self.ability_cooldown[mode]
 
@@ -551,6 +608,7 @@ class AntiCheatConnection(ConnectionScript):
 
             # keep track of ability usage
             self.ability_cooldown[mode] = time.time()
+
         return True
 
     def has_illegal_class(self):
@@ -613,15 +671,6 @@ class AntiCheatConnection(ConnectionScript):
                      .format(mult=entity_data.charged_mp),
                      LOG_LEVEL_VERBOSE)
             return True
-
-        # check disabled, this is not reliable, the game can actually bug out
-        # and give negative charged_mp
-        #if entity_data.charged_mp < 0:
-            #self.log("charged mp multiplier below 0, charged_mp={mult}"
-            #         .format(mult=entity_data.charged_mp),
-            #         LOG_LEVEL_VERBOSE)
-            #return True
-
         return False
 
     def has_illegal_appearance(self):
@@ -780,7 +829,7 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if appearance.unknown != 1:
+        if not is_similar(appearance.unknown, app['scale_unknown']):
             self.log("invalid appearance, unknown scale={f} entity_type={t}"
                      .format(f=appearance.unknown,
                              t=entity_data.entity_type),
@@ -881,12 +930,6 @@ class AntiCheatConnection(ConnectionScript):
     def has_illegal_flags(self):
         entity_data = self.connection.entity_data
         # This is when holding control, doesnt need to be on a wall
-        FLAGS_1_CLIMBING = 0
-        FLAGS_1_ATTACKING = 2
-        FLAGS_1_GLIDER_ACTIVE = 4
-
-        FLAGS_2_LANTERN_ON = 1
-        FLAGS_2_RANGER_STEALTH = 2
 
         flags_1 = entity_data.flags_1
         flags_2 = entity_data.flags_2
@@ -922,6 +965,38 @@ class AntiCheatConnection(ConnectionScript):
             return True
 
         return False
+
+    def check_flying(self):
+        entity_data = self.connection.entity_data
+        flags_1 = entity_data.flags_1
+        # in the air when, not gliding, not "on ground", not swimming, not
+        # climbing
+        if not (is_bit_set(flags_1, FLAGS_1_GLIDER_ACTIVE)
+                or is_bit_set(entity_data.physics_flags, 0)
+                or is_bit_set(entity_data.physics_flags, 2)
+                or is_bit_set(entity_data.physics_flags, 3)):
+            self.air_time += self.time_since_update
+
+            if self.air_time > self.max_air_time:
+                self.remove_cheater('flying hack')
+                return False
+        else:
+            self.air_time = 0
+
+    def check_speed(self):
+        entity_data = self.connection.entity_data
+
+        if not self.last_pos is None:
+            mx = (entity_data.pos.x-self.last_pos.x) ** 2
+            my = (entity_data.pos.y-self.last_pos.y) ** 2
+            self.distance_traveled += math.sqrt(mx + my)
+        self.last_pos = entity_data.pos
+        self.time_traveled += self.time_since_update
+        if self.time_traveled > 0.5:
+            speed = self.distance_traveled / self.time_traveled
+            #print "Traveling at", speed
+            self.time_traveled = 0
+            self.distance_traveled = 0
 
 
 class AntiCheatServer(ServerScript):
