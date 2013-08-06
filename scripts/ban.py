@@ -51,6 +51,14 @@ class BanServer(ServerScript):
             print message
             self.server.send_chat(message)
 
+    def unban(self, ip):
+        try:
+            self.ban_entries.pop(ip)
+            self.save_bans()
+            return True
+        except KeyError:
+            return False
+
     def on_connection_attempt(self, event):
         try:
             reason = self.ban_entries[event.address.host]
@@ -69,3 +77,12 @@ def ban(script, name, *args):
     player = script.get_player(name)
     reason = ' '.join(args) or DEFAULT_REASON
     script.parent.ban(player.address.host, reason)
+
+
+@command
+@admin
+def unban(script, ip):
+    if script.parent.unban(ip):
+        return 'IP "%s" unbanned' % ip
+    else:
+        return 'IP not found'
