@@ -200,7 +200,7 @@ class SoundAction(Loader):
         return SOUNDS[self.sound_index]
 
     def write(self, writer):
-        writer.write_vec3(self.pos * 65536.0)
+        writer.write_vec3(self.pos / 65536.0)
         writer.write_uint32(self.sound_index)
         writer.write_float(self.pitch)
         writer.write_float(self.volume)
