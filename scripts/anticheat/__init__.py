@@ -890,7 +890,7 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if appearance.body_offset != Vector3(0.00, 0.00, -5.00):
+        if appearance.body_offset != app['offset_body']:
             self.log("invalid appearance, body offset={field} entity_type={t}"
                      .format(field=appearance.body_offset,
                              t=entity_data.entity_type),
@@ -979,7 +979,8 @@ class AntiCheatConnection(ConnectionScript):
         if not (is_bit_set(flags_1, FLAGS_1_GLIDER_ACTIVE)
                 or is_bit_set(entity_data.physics_flags, 0)
                 or is_bit_set(entity_data.physics_flags, 2)
-                or is_bit_set(entity_data.physics_flags, 3)):
+                or is_bit_set(entity_data.physics_flags, 3)
+                or entity_data.hp <= 0):
             self.air_time += self.time_since_update
 
             if self.air_time > self.max_air_time:
