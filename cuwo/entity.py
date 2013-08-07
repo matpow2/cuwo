@@ -199,7 +199,7 @@ class EntityData(Loader):
         self.extra_vel = reader.read_vec3()
         self.look_pitch = reader.read_float()
         self.physics_flags = reader.read_uint32()
-        self.speed_flags = reader.read_uint8()
+        self.hostile_type = reader.read_uint8()
         reader.skip(3)
         self.entity_type = reader.read_uint32()
         self.current_mode = reader.read_uint8()
@@ -245,7 +245,7 @@ class EntityData(Loader):
         self.parent_owner = reader.read_uint64()
         self.unknown_or_not_used1 = reader.read_uint32()
         self.unknown_or_not_used2 = reader.read_uint32()
-        self.unknown_or_not_used3 = reader.read_uint8()
+        self.power_base = reader.read_uint8()
         reader.skip(3)
         self.unknown_or_not_used4 = reader.read_uint32()
         self.unknown_or_not_used5 = reader.read_uint32()
@@ -281,7 +281,7 @@ class EntityData(Loader):
         writer.write_vec3(self.extra_vel)
         writer.write_float(self.look_pitch)
         writer.write_uint32(self.physics_flags)
-        writer.write_uint8(self.speed_flags)
+        writer.write_uint8(self.hostile_type)
         writer.pad(3)
         writer.write_uint32(self.entity_type)
         writer.write_uint8(self.current_mode)
@@ -326,7 +326,7 @@ class EntityData(Loader):
         writer.write_uint64(self.parent_owner)
         writer.write_uint32(self.unknown_or_not_used1)
         writer.write_uint32(self.unknown_or_not_used2)
-        writer.write_uint8(self.unknown_or_not_used3)
+        writer.write_uint8(self.power_base)
         writer.pad(3)
         writer.write_uint32(self.unknown_or_not_used4)
         writer.write_uint32(self.unknown_or_not_used5)
@@ -435,7 +435,7 @@ def read_masked_data(entity, reader):
     if is_bit_set(mask, 6):
         entity.physics_flags = reader.read_uint32()
     if is_bit_set(mask, 7):
-        entity.speed_flags = reader.read_uint8()
+        entity.hostile_type = reader.read_uint8()
     if is_bit_set(mask, 8):
         entity.entity_type = reader.read_uint32()
     if is_mode_set(mask):
@@ -505,7 +505,7 @@ def read_masked_data(entity, reader):
         entity.unknown_or_not_used1 = reader.read_uint32()
         entity.unknown_or_not_used2 = reader.read_uint32()
     if is_bit_set(mask, 37):
-        entity.unknown_or_not_used3 = reader.read_uint8()
+        entity.power_base = reader.read_uint8()
     if is_bit_set(mask, 38):
         entity.unknown_or_not_used4 = reader.read_uint32()
     if is_bit_set(mask, 39):
@@ -660,7 +660,7 @@ def write_masked_data(entity, writer, mask=None):
     if is_bit_set(mask, 6):
         writer.write_uint32(entity.physics_flags)
     if is_bit_set(mask, 7):
-        writer.write_uint8(entity.speed_flags)
+        writer.write_uint8(entity.hostile_type)
     if is_bit_set(mask, 8):
         writer.write_uint32(entity.entity_type)
     if is_mode_set(mask):
@@ -730,7 +730,7 @@ def write_masked_data(entity, writer, mask=None):
         writer.write_uint32(entity.unknown_or_not_used1)
         writer.write_uint32(entity.unknown_or_not_used2)
     if is_bit_set(mask, 37):
-        writer.write_uint8(entity.unknown_or_not_used3)
+        writer.write_uint8(entity.power_base)
     if is_bit_set(mask, 38):
         writer.write_uint32(entity.unknown_or_not_used4)
     if is_bit_set(mask, 39):
