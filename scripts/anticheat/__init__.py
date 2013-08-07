@@ -226,10 +226,9 @@ class AntiCheatConnection(ConnectionScript):
     def on_hit(self, event):
         packet = event.packet
         if packet.entity_id != self.connection.entity_id:
-            self.log('hitpacket source is {source}, expected {myid}.'
-                     .format(source=packet.entity_id,
-                             myid=self.connection.entity_id),
-                     LOG_LEVEL_VERBOSE)
+            # These packets are often send on join, apparently the client
+            # saves his old hitpackets and sends it as soon as it connects..
+            # possibly just a bug where wollay doesnt clear a list.
             return False
 
         # how far away did this hit hit from where the target actually is
