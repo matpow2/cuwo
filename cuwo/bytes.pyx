@@ -50,7 +50,6 @@ cdef extern from "bytes_c.cpp":
     void write_uint64(void * stream, uint64_t)
     void write_float(void * stream, double value)
     void write_double(void * stream, double value)
-    void write_string(void * stream, char * data, size_t size)
     void write(void * stream, char * data, size_t size)
     void write_pad(void * stream, size_t size)
     object get_stream_data(void * stream)
@@ -202,8 +201,11 @@ cdef class ByteWriter:
     cpdef write(self, bytes data):
         write(self.stream, data, len(data))
 
-    cpdef write_string(self, char * value, size_t size):
-        write_string(self.stream, value, size)
+    cpdef write_string(self, bytes value, size_t size):
+        size_t string_size = len(value)
+        size_t write_size = min(size, string_size)
+        write(self.stream, value, write_size)
+        write_pad(self.stream, size - write_size)
 
     cpdef write_ascii(self, unicode value, size_t size):
         cdef bytes new_value = value.encode('ascii', 'ignore')

@@ -192,13 +192,6 @@ inline void write_double(void * stream, double value)
     ss->write(out, 4);
 }
 
-inline void write_string(void * stream, char * data, size_t size)
-{
-    ostringstream * ss = (ostringstream*)stream;
-    ss->write(data, size);
-    ss->put(0);
-}
-
 inline void write(void * stream, char * data, size_t size)
 {
     ostringstream * ss = (ostringstream*)stream;
