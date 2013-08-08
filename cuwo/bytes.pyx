@@ -202,8 +202,8 @@ cdef class ByteWriter:
         write(self.stream, data, len(data))
 
     cpdef write_string(self, bytes value, size_t size):
-        size_t string_size = len(value)
-        size_t write_size = min(size, string_size)
+        cdef size_t string_size = len(value)
+        cdef size_t write_size = min(size, string_size)
         write(self.stream, value, write_size)
         write_pad(self.stream, size - write_size)
 

@@ -62,7 +62,7 @@ cdef class ByteWriter:
 
     cpdef size_t tell(self)
     cpdef write(self, bytes data)
-    cpdef write_string(self, char * value, size_t size)
+    cpdef write_string(self, bytes value, size_t size)
     cpdef write_ascii(self, unicode value, size_t size)
     cpdef pad(self, size_t size)
     cpdef write_int8(self, char value)
