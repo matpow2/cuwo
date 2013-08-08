@@ -27,6 +27,11 @@ from cuwo.packet import ServerUpdate, PickupAction
 from constants import *
 import re
 import time
+import math
+
+
+def is_similar(float1, float2):
+    return float1 > float2 - 0.1 and float1 < float2 + 0.1
 
 
 class AntiCheatConnection(ConnectionScript):
@@ -40,7 +45,30 @@ class AntiCheatConnection(ConnectionScript):
 
     ability_cooldown = {}
 
+    time_since_update = 0
+    last_entity_update = 0
+    last_update_mode = 0
+
+    last_mana = 0
+    last_health = 0
+
+    mana = 0
+    health = 0
+
+    air_time = 0
+    hit_distance_strikes = 0
+    is_dead = False
+
+    last_pos = None
+    last_speed_check = 0
+    time_traveled = 0
+    distance_traveled = 0
+
+    cooldown_strikes = 0
+
     def on_load(self):
+        self.last_entity_update = time.time()
+
         config = self.server.config.anticheat
         self.level_cap = config.level_cap
         self.allow_dual_wield = config.allow_dual_wield
@@ -53,9 +81,13 @@ class AntiCheatConnection(ConnectionScript):
         self.irc_log_level = config.irc_log_level
         self.glider_abuse_count = config.glider_abuse_count
         self.cooldown_margin = config.cooldown_margin
+        self.max_hit_distance = config.max_hit_distance ** 2
+        self.max_hit_distance_strikes = config.max_hit_distance_strikes
+        self.max_cooldown_strikes = config.max_cooldown_strikes
+        self.max_air_time = config.max_air_time
+        self.speed_margin = config.speed_margin
 
     def on_join(self, event):
-
         if self.on_name_update() is False:
             return False
 
@@ -74,10 +106,10 @@ class AntiCheatConnection(ConnectionScript):
         if self.on_multiplier_update() is False:
             return False
 
-        if self.on_consumable_update() is False:
+        if self.on_flags_update() is False:
             return False
 
-        if self.on_flags_update() is False:
+        if self.on_appearance_update() is False:
             return False
 
         self.connection.send_chat(self.welcome_message
@@ -118,6 +150,11 @@ class AntiCheatConnection(ConnectionScript):
             self.remove_cheater('illegal character mode (ability)')
             return False
 
+        if entity_data.current_mode != 0:
+            if self.use_ability(entity_data.current_mode) is False:
+                self.remove_cheater('cooldown hack')
+                return True
+
     def on_class_update(self, event=None):
         if self.has_illegal_class():
             self.remove_cheater('illegal character class')
@@ -143,6 +180,35 @@ class AntiCheatConnection(ConnectionScript):
             self.remove_cheater('illegal character flags')
             return False
 
+    def on_appearance_update(self, event=None):
+        if self.has_illegal_appearance():
+            self.remove_cheater('illegal character appearance')
+            return False
+
+    def on_entity_update(self, event):
+        entity_data = self.connection.entity_data
+        self.time_since_update = time.time() - self.last_entity_update
+        self.last_entity_update = time.time()
+
+        self.last_mana = self.mana
+        self.last_health = self.health
+
+        self.mana = entity_data.mp
+        self.health = entity_data.hp
+
+#        if self.check_speed() is False:
+#            return False
+
+        if self.check_flying() is False:
+            return False
+
+        if not self.is_dead and self.health <= 0:
+            self.is_dead = True
+            self.on_death()
+
+        if self.health > 0 and self.is_dead:
+            self.is_dead = False
+
     def on_drop(self, event):
         if self.is_item_illegal(event.item):
             pack = ServerUpdate()
@@ -157,23 +223,47 @@ class AntiCheatConnection(ConnectionScript):
             self.remove_cheater('illegal item dropped')
             return False
 
+    def on_hit(self, event):
+        packet = event.packet
+        if packet.entity_id != self.connection.entity_id:
+            # These packets are often send on join, apparently the client
+            # saves his old hitpackets and sends it as soon as it connects..
+            # possibly just a bug where wollay doesnt clear a list.
+            return False
+
+        # how far away did this hit hit from where the target actually is
+        hitdistance = (packet.pos - event.target.pos).magnitude_squared()
+        if hitdistance > self.max_hit_distance:
+            self.hit_distance_strikes += 1
+            if self.hit_distance_strikes > self.max_hit_distance_strikes:
+                self.remove_cheater('hit distance too far, ' +
+                                    'either cheating or lagging too much')
+        else:
+            self.hit_distance_strikes = 0
+
+    def on_death(self, event=None):
+        # if i get killed reset cooldowns! (this actually happens on respawn,
+        # but there is no way to determine respawning as of yet)
+        self.ability_cooldown = {}
+
     def log(self, message, loglevel=LOG_LEVEL_DEFAULT):
-        if loglevel >= self.log_level:
+        if self.log_level >= loglevel:
             print CUWO_ANTICHEAT + " - " + message
-        if loglevel >= self.irc_log_level:
+        if self.irc_log_level >= loglevel:
             try:
                 self.server.scripts.irc.send(CUWO_ANTICHEAT + " - " + message)
             except KeyError:
-                print ("{anticheat} - irc not found, logging to " +
-                       "irc automatically turned off").format(
-                    anticheat=CUWO_ANTICHEAT)
+                self.disable_irc_logging()
             except AttributeError:
-                print ("{anticheat} - irc not found, logging to " +
-                       "irc automatically turned off").format(
-                    anticheat=CUWO_ANTICHEAT)
+                self.disable_irc_logging()
 
-                self.irc_log_level = 0
-                self.server.config.anticheat.irc_log_level = 0
+    def disable_irc_logging(self):
+        print ("{anticheat} - irc not found, logging to " +
+               "irc automatically turned off").format(
+            anticheat=CUWO_ANTICHEAT)
+
+        self.irc_log_level = 0
+        self.server.config.anticheat.irc_log_level = 0
 
     def remove_cheater(self, reason):
         connection = self.connection
@@ -454,8 +544,10 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if 'class' in ABILITIES[mode]:
-            if not entity_data.class_type in ABILITIES[mode]['class']:
+        ability = ABILITIES[mode]
+
+        if 'class' in ability:
+            if not entity_data.class_type in ability['class']:
                 self.log("ability or mode not allowed for class:" +
                          "mode={mode} class={classid}"
                          .format(mode=mode,
@@ -463,8 +555,8 @@ class AntiCheatConnection(ConnectionScript):
                          LOG_LEVEL_VERBOSE)
                 return True
 
-        if 'spec' in ABILITIES[mode]:
-            if entity_data.specialization != ABILITIES[mode]['spec']:
+        if 'spec' in ability:
+            if entity_data.specialization != ability['spec']:
                 self.log("ability or mode not allowed for class spec:" +
                          "mode={mode} class={classid} spec={spec}"
                          .format(mode=mode,
@@ -473,7 +565,7 @@ class AntiCheatConnection(ConnectionScript):
                          LOG_LEVEL_VERBOSE)
                 return True
 
-        if 'weapon' in ABILITIES[mode]:
+        if 'weapon' in ability:
             weap1 = entity_data.equipment[6].sub_type
             weap2 = entity_data.equipment[7].sub_type
 
@@ -482,8 +574,8 @@ class AntiCheatConnection(ConnectionScript):
             if entity_data.equipment[7].type == 0:
                 weap2 = -1  # Treating unarmed as -1
 
-            if (not weap1 in ABILITIES[mode]['weapon'] and
-                    not weap2 in ABILITIES[mode]['weapon']):
+            if (not weap1 in ability['weapon'] and
+                    not weap2 in ability['weapon']):
                 self.log("ability or mode not allowed for weapon:" +
                          "mode={mode} weapon1={weap1} weapon2={weap2}"
                          .format(mode=mode,
@@ -493,6 +585,35 @@ class AntiCheatConnection(ConnectionScript):
                 return True
 
         return False
+
+    def use_ability(self, mode):
+        ability = ABILITIES[mode]
+        if 'cooldown' in ability:
+            min_cd = ability['cooldown']
+            last_used = 0
+
+            if mode in self.ability_cooldown:
+                last_used = self.ability_cooldown[mode]
+
+            current_cd = time.time() - last_used
+            if current_cd < min_cd - self.cooldown_margin:
+                self.cooldown_strikes += 1
+                if self.cooldown_strikes > self.max_cooldown_strikes:
+                    self.log(("ability used before cooldown was ready. " +
+                             "mode={mode}, min. cooldown={mincd}s, " +
+                             "current cooldown={currentcd}s")
+                             .format(mode=mode,
+                                     mincd=min_cd,
+                                     currentcd=current_cd),
+                             LOG_LEVEL_VERBOSE)
+                    return False
+            else:
+                self.cooldown_strikes = 0
+
+            # keep track of ability usage
+            self.ability_cooldown[mode] = time.time()
+
+        return True
 
     def has_illegal_class(self):
         entity_data = self.connection.entity_data
@@ -554,24 +675,265 @@ class AntiCheatConnection(ConnectionScript):
                      .format(mult=entity_data.charged_mp),
                      LOG_LEVEL_VERBOSE)
             return True
+        return False
 
-        if entity_data.charged_mp < 0:
-            self.log("charged mp multiplier below 0, charged_mp={mult}"
-                     .format(mult=entity_data.charged_mp),
+    def has_illegal_appearance(self):
+        entity_data = self.connection.entity_data
+        appearance = entity_data.appearance
+
+        if appearance.movement_flags != 0:
+            self.log("invalid appearance flags, movement_flags={flags}"
+                     .format(flags=appearance.movement_flags),
                      LOG_LEVEL_VERBOSE)
             return True
 
-        return False
+        if appearance.entity_flags != 0:
+            self.log("invalid appearance flags, entity_flags={flags}"
+                     .format(flags=appearance.entity_flags),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not entity_data.entity_type in APPEARANCES:
+            self.log("invalid entity_type (race), entity_type={entity_type}"
+                     .format(entity_type=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        app = APPEARANCES[entity_data.entity_type]
+        if not is_similar(appearance.scale, app['scale']):
+            self.log("invalid appearance, scale={field} entity_type={t}"
+                     .format(field=appearance.scale,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not is_similar(appearance.bounding_radius, app['radius']):
+            self.log("invalid appearance, radius={field} entity_type={t}"
+                     .format(field=appearance.bounding_radius,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not is_similar(appearance.bounding_height, app['height']):
+            self.log("invalid appearance, height={field} entity_type={t}"
+                     .format(field=appearance.bounding_height,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not appearance.head_model in app['model_head']:
+            self.log("invalid appearance, head model={field} entity_type={t}"
+                     .format(field=appearance.head_model,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not appearance.hair_model in app['model_hair']:
+            self.log("invalid appearance, hair model={field} entity_type={t}"
+                     .format(field=appearance.hair_model,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not appearance.hand_model in app['model_hand']:
+            self.log("invalid appearance, hand model={field} entity_type={t}"
+                     .format(field=appearance.hand_model,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not appearance.foot_model in app['model_feet']:
+            self.log("invalid appearance, foot model={field} entity_type={t}"
+                     .format(field=appearance.foot_model,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not appearance.body_model in app['model_body']:
+            self.log("invalid appearance, body model={field} entity_type={t}"
+                     .format(field=appearance.body_model,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not appearance.back_model in app['model_back']:
+            self.log("invalid appearance, back model={field} entity_type={t}"
+                     .format(field=appearance.back_model,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not appearance.shoulder_model in app['model_shoulder']:
+            self.log("invalid appearance, shoulder model={f} entity_type={t}"
+                     .format(f=appearance.shoulder_model,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not appearance.wing_model in app['model_wing']:
+            self.log("invalid appearance, wing model={field} entity_type={t}"
+                     .format(field=appearance.wing_model,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not is_similar(appearance.head_scale, app['scale_head']):
+            self.log("invalid appearance, head scale={field} entity_type={t}"
+                     .format(field=appearance.head_scale,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not is_similar(appearance.hand_scale, app['scale_hand']):
+            self.log("invalid appearance, hand scale={field} entity_type={t}"
+                     .format(field=appearance.hand_scale,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not is_similar(appearance.body_scale, app['scale_body']):
+            self.log("invalid appearance, body scale={field} entity_type={t}"
+                     .format(field=appearance.body_scale,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not is_similar(appearance.foot_scale, app['scale_feet']):
+            self.log("invalid appearance, foot scale={field} entity_type={t}"
+                     .format(field=appearance.foot_scale,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not is_similar(appearance.shoulder_scale, app['scale_shoulder']):
+            self.log("invalid appearance, shoulder scale={f} entity_type={t}"
+                     .format(f=appearance.shoulder_scale,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not is_similar(appearance.weapon_scale, app['scale_weapon']):
+            self.log("invalid appearance, weapon scale={field} entity_type={t}"
+                     .format(field=appearance.weapon_scale,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not is_similar(appearance.back_scale, app['scale_back']):
+            self.log("invalid appearance, back scale={field} entity_type={t}"
+                     .format(field=appearance.back_scale,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not is_similar(appearance.wing_scale, app['scale_wing']):
+            self.log("invalid appearance, wing scale={field} entity_type={t}"
+                     .format(field=appearance.wing_scale,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if not is_similar(appearance.unknown, app['scale_unknown']):
+            self.log("invalid appearance, unknown scale={f} entity_type={t}"
+                     .format(f=appearance.unknown,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.body_pitch != 0:
+            self.log("invalid appearance, body_pitch={field} entity_type={t}"
+                     .format(field=appearance.body_pitch,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.arm_pitch != 0:
+            self.log("invalid appearance, arm_pitch={field} entity_type={t}"
+                     .format(field=appearance.arm_pitch,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.arm_roll != 0:
+            self.log("invalid appearance, arm_roll={field} entity_type={t}"
+                     .format(field=appearance.arm_roll,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.arm_yaw != 0:
+            self.log("invalid appearance, arm_yaw={field} entity_type={t}"
+                     .format(field=appearance.arm_yaw,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.feet_pitch != 0:
+            self.log("invalid appearance, feet_pitch={field} entity_type={t}"
+                     .format(field=appearance.feet_pitch,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.wing_pitch != 0:
+            self.log("invalid appearance, wing_pitch={field} entity_type={t}"
+                     .format(field=appearance.wing_pitch,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.back_pitch != 0:
+            self.log("invalid appearance, back_pitch={field} entity_type={t}"
+                     .format(field=appearance.back_pitch,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.body_offset != app['offset_body']:
+            self.log("invalid appearance, body offset={field} entity_type={t}"
+                     .format(field=appearance.body_offset,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.head_offset != app['offset_head']:
+            self.log("invalid appearance, head offset={field} entity_type={t}"
+                     .format(field=appearance.head_offset,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.hand_offset != app['offset_hand']:
+            self.log("invalid appearance, hand offset={field} entity_type={t}"
+                     .format(field=appearance.hand_offset,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.foot_offset != app['offset_foot']:
+            self.log("invalid appearance, foot offset={field} entity_type={t}"
+                     .format(field=appearance.foot_offset,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.back_offset != app['offset_back']:
+            self.log("invalid appearance, back offset={field} entity_type={t}"
+                     .format(field=appearance.back_offset,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
+
+        if appearance.wing_offset != app['offset_wing']:
+            self.log("invalid appearance, wing offset={field} entity_type={t}"
+                     .format(field=appearance.wing_offset,
+                             t=entity_data.entity_type),
+                     LOG_LEVEL_VERBOSE)
+            return True
 
     def has_illegal_flags(self):
         entity_data = self.connection.entity_data
         # This is when holding control, doesnt need to be on a wall
-        FLAGS_1_CLIMBING = 0
-        FLAGS_1_ATTACKING = 2
-        FLAGS_1_GLIDER_ACTIVE = 4
-
-        FLAGS_2_LANTERN_ON = 1
-        FLAGS_2_RANGER_STEALTH = 2
 
         flags_1 = entity_data.flags_1
         flags_2 = entity_data.flags_2
@@ -607,6 +969,39 @@ class AntiCheatConnection(ConnectionScript):
             return True
 
         return False
+
+    def check_flying(self):
+        entity_data = self.connection.entity_data
+        flags_1 = entity_data.flags_1
+        # in the air when, not gliding, not "on ground", not swimming, not
+        # climbing
+        if not (is_bit_set(flags_1, FLAGS_1_GLIDER_ACTIVE)
+                or is_bit_set(entity_data.physics_flags, 0)
+                or is_bit_set(entity_data.physics_flags, 2)
+                or is_bit_set(entity_data.physics_flags, 3)
+                or entity_data.hp <= 0):
+            self.air_time += self.time_since_update
+
+            if self.air_time > self.max_air_time:
+                self.remove_cheater('flying hack')
+                return False
+        else:
+            self.air_time = 0
+
+    def check_speed(self):
+        entity_data = self.connection.entity_data
+
+        if not self.last_pos is None:
+            mx = (entity_data.pos.x-self.last_pos.x) ** 2
+            my = (entity_data.pos.y-self.last_pos.y) ** 2
+            self.distance_traveled += math.sqrt(mx + my)
+        self.last_pos = entity_data.pos
+        self.time_traveled += self.time_since_update
+        if self.time_traveled > 0.5:
+            speed = self.distance_traveled / self.time_traveled
+            #print "Traveling at", speed
+            self.time_traveled = 0
+            self.distance_traveled = 0
 
 
 class AntiCheatServer(ServerScript):
