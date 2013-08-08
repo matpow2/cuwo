@@ -165,3 +165,8 @@ def who(script):
 @command
 def whowhere(script):
     return who_where(script, True)
+
+
+@command
+def scripts(script):
+    return 'Scripts: ' + ', '.join(script.server.scripts.scripts)
