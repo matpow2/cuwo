@@ -9,12 +9,13 @@ setup(
     zipfile=None,
     options={
         'py2exe': {
+            'dist_dir': 'dist/bin',
             'compressed': 1,
             'optimize': 2,
-            'bundle_files': 1,
+            'bundle_files': 3,
             'includes': ['zope.interface', 'twisted.web.resource', 'json',
                          'platform'],
-            'packages': ['twisted.words', 'encodings'],
+            'packages': ['cuwo', 'twisted.words', 'encodings'],
             'excludes': ['config'],
             'dll_excludes': ["mswsock.dll", "powrprof.dll"]
         }}

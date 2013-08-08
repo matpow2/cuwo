@@ -536,9 +536,10 @@ class CubeWorldServer(Factory):
 def main():
     # for py2exe
     if hasattr(sys, 'frozen'):
-        path = os.path.dirname(
-            unicode(sys.executable, sys.getfilesystemencoding()))
-        sys.path.append(path)
+        path = os.path.dirname(unicode(sys.executable, 
+                                       sys.getfilesystemencoding()))
+        root = os.path.abspath(os.path.join(path, '..'))
+        sys.path.append(root)
 
     config = ConfigObject('./config')
     server = CubeWorldServer(config)
