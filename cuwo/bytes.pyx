@@ -22,12 +22,8 @@ High-level byte read/writing and pack/unpacking from files and data
 from cuwo.vector import Vector3
 from cuwo.exceptions import OutOfData
 from cuwo.common import filter_string
-cimport cython
 
 cdef extern from "bytes_c.cpp":
-    ctypedef signed long long int64_t
-    ctypedef unsigned long long uint64_t
-
     # read
     char read_int8(char * data)
     unsigned char read_uint8(char * data)
@@ -62,14 +58,7 @@ cdef extern from "bytes_c.cpp":
     size_t get_write_pos(void * stream)
 
 
-@cython.final
 cdef class ByteReader:
-    cdef:
-        char * start
-        char * end
-        char * pos
-        bytes py_data
-
     def __init__(self, bytes data):
         self.start = data
         self.end = self.start + len(data)
@@ -91,7 +80,7 @@ cdef class ByteReader:
     cpdef unsigned int get_left(self):
         return self.end - self.pos
 
-    cdef char * check_available(self, unsigned int size) except NULL:
+    cdef char * check_available(self, unsigned int size):
         cdef char * data = self.pos
         if data + size > self.end:
             raise OutOfData(self)
@@ -141,43 +130,43 @@ cdef class ByteReader:
     cpdef rewind(self, int size):
         self.seek(-size, 1)
 
-    cpdef char read_int8(self) except *:
+    cpdef char read_int8(self):
         cdef char * data = self.check_available(1)
         return read_int8(data)
 
-    cpdef unsigned char read_uint8(self) except *:
+    cpdef unsigned char read_uint8(self):
         cdef char * data = self.check_available(1)
         return read_uint8(data)
 
-    cpdef short read_int16(self) except *:
+    cpdef short read_int16(self):
         cdef char * data = self.check_available(2)
         return read_int16(data)
 
-    cpdef unsigned short read_uint16(self) except *:
+    cpdef unsigned short read_uint16(self):
         cdef char * data = self.check_available(2)
         return read_uint16(data)
 
-    cpdef int read_int32(self) except *:
+    cpdef int read_int32(self):
         cdef char * data = self.check_available(4)
         return read_int32(data)
 
-    cpdef unsigned int read_uint32(self) except *:
+    cpdef unsigned int read_uint32(self):
         cdef char * data = self.check_available(4)
         return read_uint32(data)
 
-    cpdef int64_t read_int64(self) except *:
+    cpdef int64_t read_int64(self):
         cdef char * data = self.check_available(8)
         return read_int64(data)
 
-    cpdef uint64_t read_uint64(self) except *:
+    cpdef uint64_t read_uint64(self):
         cdef char * data = self.check_available(8)
         return read_uint64(data)
 
-    cpdef double read_float(self) except *:
+    cpdef double read_float(self):
         cdef char * data = self.check_available(4)
         return read_float(data)
 
-    cpdef double read_double(self) except *:
+    cpdef double read_double(self):
         cdef char * data = self.check_available(8)
         return read_double(data)
 
@@ -200,11 +189,7 @@ cdef class ByteReader:
         return Vector3(x, y, z)
 
 
-@cython.final
 cdef class ByteWriter:
-    cdef:
-        void * stream
-
     def __init__(self):
         self.stream = create_write_stream()
 
