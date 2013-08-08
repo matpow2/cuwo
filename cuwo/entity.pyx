@@ -26,10 +26,6 @@ from cuwo.common cimport int64_t, uint64_t
 from cuwo.bytes cimport ByteReader, ByteWriter
 
 
-cdef inline bint is_bit_set(uint64_t mask, int index):
-    return mask & (<uint64_t>1 << index) != 0
-
-
 @cython.final
 cdef class ItemUpgrade:
     cdef public:
@@ -488,189 +484,189 @@ cdef class EntityData:
 
 
 cpdef inline bint is_pos_set(uint64_t mask):
-    return is_bit_set(mask, 0)
+    return mask & (<uint64_t>1 << 0) != 0
 
 
 cpdef inline bint is_orient_set(uint64_t mask):
-    return is_bit_set(mask, 1)
+    return mask & (<uint64_t>1 << 1) != 0
 
 
 cpdef inline bint is_vel_set(uint64_t mask):
-    return is_bit_set(mask, 2)
+    return mask & (<uint64_t>1 << 2) != 0
 
 
 cpdef inline bint is_accel_set(uint64_t mask):
-    return is_bit_set(mask, 3)
+    return mask & (<uint64_t>1 << 3) != 0
 
 
 cpdef inline bint is_extra_vel_set(uint64_t mask):
-    return is_bit_set(mask, 4)
+    return mask & (<uint64_t>1 << 4) != 0
 
 
 cpdef inline bint is_look_pitch_set(uint64_t mask):
-    return is_bit_set(mask, 5)
+    return mask & (<uint64_t>1 << 5) != 0
 
 
 cpdef inline bint is_mode_set(uint64_t mask):
-    return is_bit_set(mask, 9)
+    return mask & (<uint64_t>1 << 9) != 0
 
 
 cpdef inline bint is_appearance_set(uint64_t mask):
-    return is_bit_set(mask, 13)
+    return mask & (<uint64_t>1 << 13) != 0
 
 
 cpdef inline bint is_flags_set(uint64_t mask):
-    return is_bit_set(mask, 14)
+    return mask & (<uint64_t>1 << 14) != 0
 
 
 cpdef inline bint is_class_set(uint64_t mask):
-    return is_bit_set(mask, 21)
+    return mask & (<uint64_t>1 << 21) != 0
 
 
 cpdef inline bint is_charged_mp_set(uint64_t mask):
-    return is_bit_set(mask, 23)
+    return mask & (<uint64_t>1 << 23) != 0
 
 
 cpdef inline bint is_multiplier_set(uint64_t mask):
-    return is_bit_set(mask, 30)
+    return mask & (<uint64_t>1 << 30) != 0
 
 
 cpdef inline bint is_level_set(uint64_t mask):
-    return is_bit_set(mask, 33)
+    return mask & (<uint64_t>1 << 33) != 0
 
 
 cpdef inline bint is_consumable_set(uint64_t mask):
-    return is_bit_set(mask, 43)
+    return mask & (<uint64_t>1 << 43) != 0
 
 
 cpdef inline bint is_equipment_set(uint64_t mask):
-    return is_bit_set(mask, 44)
+    return mask & (<uint64_t>1 << 44) != 0
 
 
 cpdef inline bint is_name_set(uint64_t mask):
-    return is_bit_set(mask, 45)
+    return mask & (<uint64_t>1 << 45) != 0
 
 
 cpdef inline bint is_skill_set(uint64_t mask):
-    return is_bit_set(mask, 46)
+    return mask & (<uint64_t>1 << 46) != 0
 
 
 cpdef uint64_t read_masked_data(EntityData entity, ByteReader reader):
     cdef uint64_t mask = reader.read_uint64()
-    if is_pos_set(mask):
+    if mask & (<uint64_t>1 << 0) != 0:
         entity.pos = reader.read_qvec3()
-    if is_orient_set(mask):
+    if mask & (<uint64_t>1 << 1) != 0:
         entity.body_roll = reader.read_float()
         entity.body_pitch = reader.read_float()
         entity.body_yaw = reader.read_float()
-    if is_vel_set(mask):
+    if mask & (<uint64_t>1 << 2) != 0:
         entity.velocity = reader.read_vec3()
-    if is_accel_set(mask):
+    if mask & (<uint64_t>1 << 3) != 0:
         entity.accel = reader.read_vec3()
-    if is_extra_vel_set(mask):
+    if mask & (<uint64_t>1 << 4) != 0:
         entity.extra_vel = reader.read_vec3()
-    if is_look_pitch_set(mask):
+    if mask & (<uint64_t>1 << 5) != 0:
         entity.look_pitch = reader.read_float()
-    if is_bit_set(mask, 6):
+    if mask & (<uint64_t>1 << 6) != 0:
         entity.physics_flags = reader.read_uint32()
-    if is_bit_set(mask, 7):
+    if mask & (<uint64_t>1 << 7) != 0:
         entity.hostile_type = reader.read_uint8()
-    if is_bit_set(mask, 8):
+    if mask & (<uint64_t>1 << 8) != 0:
         entity.entity_type = reader.read_uint32()
-    if is_mode_set(mask):
+    if mask & (<uint64_t>1 << 9) != 0:
         entity.current_mode = reader.read_uint8()
-    if is_bit_set(mask, 10):
+    if mask & (<uint64_t>1 << 10) != 0:
         entity.mode_start_time = reader.read_uint32()
-    if is_bit_set(mask, 11):
+    if mask & (<uint64_t>1 << 11) != 0:
         entity.hit_counter = reader.read_uint32()
-    if is_bit_set(mask, 12):
+    if mask & (<uint64_t>1 << 12) != 0:
         entity.last_hit_time = reader.read_uint32()
-    if is_appearance_set(mask):
+    if mask & (<uint64_t>1 << 13) != 0:
         entity.appearance.read(reader)
-    if is_flags_set(mask):
+    if mask & (<uint64_t>1 << 14) != 0:
         entity.flags_1 = reader.read_uint8()
         entity.flags_2 = reader.read_uint8()
-    if is_bit_set(mask, 15):
+    if mask & (<uint64_t>1 << 15) != 0:
         entity.roll_time = reader.read_uint32()
-    if is_bit_set(mask, 16):
+    if mask & (<uint64_t>1 << 16) != 0:
         entity.stun_time = reader.read_int32()
-    if is_bit_set(mask, 17):
+    if mask & (<uint64_t>1 << 17) != 0:
         entity.slowed_time = reader.read_uint32()
-    if is_bit_set(mask, 18):
+    if mask & (<uint64_t>1 << 18) != 0:
         entity.make_blue_time = reader.read_uint32()
-    if is_bit_set(mask, 19):
+    if mask & (<uint64_t>1 << 19) != 0:
         entity.speed_up_time = reader.read_uint32()
-    if is_bit_set(mask, 20):
+    if mask & (<uint64_t>1 << 20) != 0:
         entity.show_patch_time = reader.read_float()
-    if is_class_set(mask):
+    if mask & (<uint64_t>1 << 21) != 0:
         entity.class_type = reader.read_uint8()
-    if is_bit_set(mask, 22):
+    if mask & (<uint64_t>1 << 22) != 0:
         entity.specialization = reader.read_uint8()
-    if is_charged_mp_set(mask):
+    if mask & (<uint64_t>1 << 23) != 0:
         entity.charged_mp = reader.read_float()
-    if is_bit_set(mask, 24):
+    if mask & (<uint64_t>1 << 24) != 0:
         entity.not_used_1 = reader.read_uint32()
         entity.not_used_2 = reader.read_uint32()
         entity.not_used_3 = reader.read_uint32()
-    if is_bit_set(mask, 25):
+    if mask & (<uint64_t>1 << 25) != 0:
         entity.not_used_4 = reader.read_uint32()
         entity.not_used_5 = reader.read_uint32()
         entity.not_used_6 = reader.read_uint32()
-    if is_bit_set(mask, 26):
+    if mask & (<uint64_t>1 << 26) != 0:
         entity.ray_hit = reader.read_vec3()
-    if is_bit_set(mask, 27):
+    if mask & (<uint64_t>1 << 27) != 0:
         entity.hp = reader.read_float()
-    if is_bit_set(mask, 28):
+    if mask & (<uint64_t>1 << 28) != 0:
         entity.mp = reader.read_float()
-    if is_bit_set(mask, 29):
+    if mask & (<uint64_t>1 << 29) != 0:
         entity.block_power = reader.read_float()
-    if is_multiplier_set(mask):
+    if mask & (<uint64_t>1 << 30) != 0:
         entity.max_hp_multiplier = reader.read_float()
         entity.shoot_speed = reader.read_float()
         entity.damage_multiplier = reader.read_float()
         entity.armor_multiplier = reader.read_float()
         entity.resi_multiplier = reader.read_float()
-    if is_bit_set(mask, 31):
+    if mask & (<uint64_t>1 << 31) != 0:
         entity.not_used7 = reader.read_uint8()
-    if is_bit_set(mask, 32):
+    if mask & (<uint64_t>1 << 32) != 0:
         entity.not_used8 = reader.read_uint8()
-    if is_level_set(mask):
+    if mask & (<uint64_t>1 << 33) != 0:
         entity.level = reader.read_uint32()
-    if is_bit_set(mask, 34):
+    if mask & (<uint64_t>1 << 34) != 0:
         entity.current_xp = reader.read_uint32()
-    if is_bit_set(mask, 35):
+    if mask & (<uint64_t>1 << 35) != 0:
         entity.parent_owner = reader.read_uint64()
-    if is_bit_set(mask, 36):
+    if mask & (<uint64_t>1 << 36) != 0:
         entity.unknown_or_not_used1 = reader.read_uint32()
         entity.unknown_or_not_used2 = reader.read_uint32()
-    if is_bit_set(mask, 37):
+    if mask & (<uint64_t>1 << 37) != 0:
         entity.power_base = reader.read_uint8()
-    if is_bit_set(mask, 38):
+    if mask & (<uint64_t>1 << 38) != 0:
         entity.unknown_or_not_used4 = reader.read_uint32()
-    if is_bit_set(mask, 39):
+    if mask & (<uint64_t>1 << 39) != 0:
         entity.unknown_or_not_used5 = reader.read_uint32()
         entity.not_used11 = reader.read_uint32()
         entity.not_used12 = reader.read_uint32()
-    if is_bit_set(mask, 40):
+    if mask & (<uint64_t>1 << 40) != 0:
         entity.spawn_pos = reader.read_qvec3()
-    if is_bit_set(mask, 41):
+    if mask & (<uint64_t>1 << 41) != 0:
         entity.not_used20 = reader.read_uint32()
         entity.not_used21 = reader.read_uint32()
         entity.not_used22 = reader.read_uint32()
-    if is_bit_set(mask, 42):
+    if mask & (<uint64_t>1 << 42) != 0:
         entity.not_used19 = reader.read_uint8()
-    if is_consumable_set(mask):
+    if mask & (<uint64_t>1 << 43) != 0:
         entity.consumable.read(reader)
-    if is_equipment_set(mask):
+    if mask & (<uint64_t>1 << 44) != 0:
         for item in entity.equipment:
             (<ItemData>item).read(reader)
-    if is_name_set(mask):
+    if mask & (<uint64_t>1 << 45) != 0:
         entity.name = reader.read_ascii(16)
-    if is_skill_set(mask):
+    if mask & (<uint64_t>1 << 46) != 0:
         entity.skills = []
         for _ in xrange(11):
             entity.skills.append(reader.read_uint32())
-    if is_bit_set(mask, 47):
+    if mask & (<uint64_t>1 << 47) != 0:
         entity.mana_cubes = reader.read_uint32()
 
     return mask
@@ -678,218 +674,218 @@ cpdef uint64_t read_masked_data(EntityData entity, ByteReader reader):
 
 cpdef unsigned int get_masked_size(uint64_t mask):
     cdef unsigned int size = 0
-    if is_pos_set(mask):
+    if mask & (<uint64_t>1 << 0) != 0:
         size += 24
-    if is_orient_set(mask):
+    if mask & (<uint64_t>1 << 1) != 0:
         size += 12
-    if is_vel_set(mask):
+    if mask & (<uint64_t>1 << 2) != 0:
         size += 12
-    if is_accel_set(mask):
+    if mask & (<uint64_t>1 << 3) != 0:
         size += 12
-    if is_extra_vel_set(mask):
+    if mask & (<uint64_t>1 << 4) != 0:
         size += 12
-    if is_look_pitch_set(mask):
+    if mask & (<uint64_t>1 << 5) != 0:
         size += 4
-    if is_bit_set(mask, 6):
+    if mask & (<uint64_t>1 << 6) != 0:
         size += 4
-    if is_bit_set(mask, 7):
+    if mask & (<uint64_t>1 << 7) != 0:
         size += 1
-    if is_bit_set(mask, 8):
+    if mask & (<uint64_t>1 << 8) != 0:
         size += 4
-    if is_mode_set(mask):
+    if mask & (<uint64_t>1 << 9) != 0:
         size += 1
-    if is_bit_set(mask, 10):
+    if mask & (<uint64_t>1 << 10) != 0:
         size += 4
-    if is_bit_set(mask, 11):
+    if mask & (<uint64_t>1 << 11) != 0:
         size += 4
-    if is_bit_set(mask, 12):
+    if mask & (<uint64_t>1 << 12) != 0:
         size += 4
-    if is_appearance_set(mask):
+    if mask & (<uint64_t>1 << 13) != 0:
         size += 172
-    if is_flags_set(mask):
+    if mask & (<uint64_t>1 << 14) != 0:
         size += 2
-    if is_bit_set(mask, 15):
+    if mask & (<uint64_t>1 << 15) != 0:
         size += 4
-    if is_bit_set(mask, 16):
+    if mask & (<uint64_t>1 << 16) != 0:
         size += 4
-    if is_bit_set(mask, 17):
+    if mask & (<uint64_t>1 << 17) != 0:
         size += 4
-    if is_bit_set(mask, 18):
+    if mask & (<uint64_t>1 << 18) != 0:
         size += 4
-    if is_bit_set(mask, 19):
+    if mask & (<uint64_t>1 << 19) != 0:
         size += 4
-    if is_bit_set(mask, 20):
+    if mask & (<uint64_t>1 << 20) != 0:
         size += 4
-    if is_class_set(mask):
+    if mask & (<uint64_t>1 << 21) != 0:
         size += 1
-    if is_bit_set(mask, 22):
+    if mask & (<uint64_t>1 << 22) != 0:
         size += 1
-    if is_charged_mp_set(mask):
+    if mask & (<uint64_t>1 << 23) != 0:
         size += 4
-    if is_bit_set(mask, 24):
+    if mask & (<uint64_t>1 << 24) != 0:
         size += 12
-    if is_bit_set(mask, 25):
+    if mask & (<uint64_t>1 << 25) != 0:
         size += 12
-    if is_bit_set(mask, 26):
+    if mask & (<uint64_t>1 << 26) != 0:
         size += 12
-    if is_bit_set(mask, 27):
+    if mask & (<uint64_t>1 << 27) != 0:
         size += 4
-    if is_bit_set(mask, 28):
+    if mask & (<uint64_t>1 << 28) != 0:
         size += 4
-    if is_bit_set(mask, 29):
+    if mask & (<uint64_t>1 << 29) != 0:
         size += 4
-    if is_multiplier_set(mask):
+    if mask & (<uint64_t>1 << 30) != 0:
         size += 20
-    if is_bit_set(mask, 31):
+    if mask & (<uint64_t>1 << 31) != 0:
         size += 1
-    if is_bit_set(mask, 32):
+    if mask & (<uint64_t>1 << 32) != 0:
         size += 1
-    if is_level_set(mask):
+    if mask & (<uint64_t>1 << 33) != 0:
         size += 4
-    if is_bit_set(mask, 34):
+    if mask & (<uint64_t>1 << 34) != 0:
         size += 4
-    if is_bit_set(mask, 35):
+    if mask & (<uint64_t>1 << 35) != 0:
         size += 8
-    if is_bit_set(mask, 36):
+    if mask & (<uint64_t>1 << 36) != 0:
         size += 8
-    if is_bit_set(mask, 37):
+    if mask & (<uint64_t>1 << 37) != 0:
         size += 1
-    if is_bit_set(mask, 38):
+    if mask & (<uint64_t>1 << 38) != 0:
         size += 4
-    if is_bit_set(mask, 39):
+    if mask & (<uint64_t>1 << 39) != 0:
         size += 12
-    if is_bit_set(mask, 40):
+    if mask & (<uint64_t>1 << 40) != 0:
         size += 24
-    if is_bit_set(mask, 41):
+    if mask & (<uint64_t>1 << 41) != 0:
         size += 12
-    if is_bit_set(mask, 42):
+    if mask & (<uint64_t>1 << 42) != 0:
         size += 1
-    if is_consumable_set(mask):
+    if mask & (<uint64_t>1 << 43) != 0:
         size += 280
-    if is_equipment_set(mask):
+    if mask & (<uint64_t>1 << 44) != 0:
         size += 3640
-    if is_name_set(mask):
+    if mask & (<uint64_t>1 << 45) != 0:
         size += 16
-    if is_skill_set(mask):
+    if mask & (<uint64_t>1 << 46) != 0:
         size += 44
-    if is_bit_set(mask, 47):
+    if mask & (<uint64_t>1 << 47) != 0:
         size += 4
     return size
 
 
 cpdef write_masked_data(EntityData entity, ByteWriter writer, uint64_t mask):
     writer.write_uint64(mask)
-    if is_pos_set(mask):
+    if mask & (<uint64_t>1 << 0) != 0:
         writer.write_qvec3(entity.pos)
-    if is_orient_set(mask):
+    if mask & (<uint64_t>1 << 1) != 0:
         writer.write_float(entity.body_roll)
         writer.write_float(entity.body_pitch)
         writer.write_float(entity.body_yaw)
-    if is_vel_set(mask):
+    if mask & (<uint64_t>1 << 2) != 0:
         writer.write_vec3(entity.velocity)
-    if is_accel_set(mask):
+    if mask & (<uint64_t>1 << 3) != 0:
         writer.write_vec3(entity.accel)
-    if is_extra_vel_set(mask):
+    if mask & (<uint64_t>1 << 4) != 0:
         writer.write_vec3(entity.extra_vel)
-    if is_look_pitch_set(mask):
+    if mask & (<uint64_t>1 << 5) != 0:
         writer.write_float(entity.look_pitch)
-    if is_bit_set(mask, 6):
+    if mask & (<uint64_t>1 << 6) != 0:
         writer.write_uint32(entity.physics_flags)
-    if is_bit_set(mask, 7):
+    if mask & (<uint64_t>1 << 7) != 0:
         writer.write_uint8(entity.hostile_type)
-    if is_bit_set(mask, 8):
+    if mask & (<uint64_t>1 << 8) != 0:
         writer.write_uint32(entity.entity_type)
-    if is_mode_set(mask):
+    if mask & (<uint64_t>1 << 9) != 0:
         writer.write_uint8(entity.current_mode)
-    if is_bit_set(mask, 10):
+    if mask & (<uint64_t>1 << 10) != 0:
         writer.write_uint32(entity.mode_start_time)
-    if is_bit_set(mask, 11):
+    if mask & (<uint64_t>1 << 11) != 0:
         writer.write_uint32(entity.hit_counter)
-    if is_bit_set(mask, 12):
+    if mask & (<uint64_t>1 << 12) != 0:
         writer.write_uint32(entity.last_hit_time)
-    if is_appearance_set(mask):
+    if mask & (<uint64_t>1 << 13) != 0:
         entity.appearance.write(writer)
-    if is_flags_set(mask):
+    if mask & (<uint64_t>1 << 14) != 0:
         writer.write_uint8(entity.flags_1)
         writer.write_uint8(entity.flags_2)
-    if is_bit_set(mask, 15):
+    if mask & (<uint64_t>1 << 15) != 0:
         writer.write_uint32(entity.roll_time)
-    if is_bit_set(mask, 16):
+    if mask & (<uint64_t>1 << 16) != 0:
         writer.write_int32(entity.stun_time)
-    if is_bit_set(mask, 17):
+    if mask & (<uint64_t>1 << 17) != 0:
         writer.write_uint32(entity.slowed_time)
-    if is_bit_set(mask, 18):
+    if mask & (<uint64_t>1 << 18) != 0:
         writer.write_uint32(entity.make_blue_time)
-    if is_bit_set(mask, 19):
+    if mask & (<uint64_t>1 << 19) != 0:
         writer.write_uint32(entity.speed_up_time)
-    if is_bit_set(mask, 20):
+    if mask & (<uint64_t>1 << 20) != 0:
         writer.write_float(entity.show_patch_time)
-    if is_class_set(mask):
+    if mask & (<uint64_t>1 << 21) != 0:
         writer.write_uint8(entity.class_type)
-    if is_bit_set(mask, 22):
+    if mask & (<uint64_t>1 << 22) != 0:
         writer.write_uint8(entity.specialization)
-    if is_charged_mp_set(mask):
+    if mask & (<uint64_t>1 << 23) != 0:
         writer.write_float(entity.charged_mp)
-    if is_bit_set(mask, 24):
+    if mask & (<uint64_t>1 << 24) != 0:
         writer.write_uint32(entity.not_used_1)
         writer.write_uint32(entity.not_used_2)
         writer.write_uint32(entity.not_used_3)
-    if is_bit_set(mask, 25):
+    if mask & (<uint64_t>1 << 25) != 0:
         writer.write_uint32(entity.not_used_4)
         writer.write_uint32(entity.not_used_5)
         writer.write_uint32(entity.not_used_6)
-    if is_bit_set(mask, 26):
+    if mask & (<uint64_t>1 << 26) != 0:
         writer.write_vec3(entity.ray_hit)
-    if is_bit_set(mask, 27):
+    if mask & (<uint64_t>1 << 27) != 0:
         writer.write_float(entity.hp)
-    if is_bit_set(mask, 28):
+    if mask & (<uint64_t>1 << 28) != 0:
         writer.write_float(entity.mp)
-    if is_bit_set(mask, 29):
+    if mask & (<uint64_t>1 << 29) != 0:
         writer.write_float(entity.block_power)
-    if is_multiplier_set(mask):
+    if mask & (<uint64_t>1 << 30) != 0:
         writer.write_float(entity.max_hp_multiplier)
         writer.write_float(entity.shoot_speed)
         writer.write_float(entity.damage_multiplier)
         writer.write_float(entity.armor_multiplier)
         writer.write_float(entity.resi_multiplier)
-    if is_bit_set(mask, 31):
+    if mask & (<uint64_t>1 << 31) != 0:
         writer.write_uint8(entity.not_used7)
-    if is_bit_set(mask, 32):
+    if mask & (<uint64_t>1 << 32) != 0:
         writer.write_uint8(entity.not_used8)
-    if is_level_set(mask):
+    if mask & (<uint64_t>1 << 33) != 0:
         writer.write_uint32(entity.level)
-    if is_bit_set(mask, 34):
+    if mask & (<uint64_t>1 << 34) != 0:
         writer.write_uint32(entity.current_xp)
-    if is_bit_set(mask, 35):
+    if mask & (<uint64_t>1 << 35) != 0:
         writer.write_uint64(entity.parent_owner)
-    if is_bit_set(mask, 36):
+    if mask & (<uint64_t>1 << 36) != 0:
         writer.write_uint32(entity.unknown_or_not_used1)
         writer.write_uint32(entity.unknown_or_not_used2)
-    if is_bit_set(mask, 37):
+    if mask & (<uint64_t>1 << 37) != 0:
         writer.write_uint8(entity.power_base)
-    if is_bit_set(mask, 38):
+    if mask & (<uint64_t>1 << 38) != 0:
         writer.write_uint32(entity.unknown_or_not_used4)
-    if is_bit_set(mask, 39):
+    if mask & (<uint64_t>1 << 39) != 0:
         writer.write_uint32(entity.unknown_or_not_used5)
         writer.write_uint32(entity.not_used11)
         writer.write_uint32(entity.not_used12)
-    if is_bit_set(mask, 40):
+    if mask & (<uint64_t>1 << 40) != 0:
         writer.write_qvec3(entity.spawn_pos)
-    if is_bit_set(mask, 41):
+    if mask & (<uint64_t>1 << 41) != 0:
         writer.write_uint32(entity.not_used20)
         writer.write_uint32(entity.not_used21)
         writer.write_uint32(entity.not_used22)
-    if is_bit_set(mask, 42):
+    if mask & (<uint64_t>1 << 42) != 0:
         writer.write_uint8(entity.not_used19)
-    if is_consumable_set(mask):
+    if mask & (<uint64_t>1 << 43) != 0:
         entity.consumable.write(writer)
-    if is_equipment_set(mask):
+    if mask & (<uint64_t>1 << 44) != 0:
         for item in entity.equipment:
             (<ItemData>item).write(writer)
-    if is_name_set(mask):
+    if mask & (<uint64_t>1 << 45) != 0:
         writer.write_ascii(entity.name, 16)
-    if is_skill_set(mask):
+    if mask & (<uint64_t>1 << 46) != 0:
         for item in entity.skills:
             writer.write_uint32(item)
-    if is_bit_set(mask, 47):
+    if mask & (<uint64_t>1 << 47) != 0:
         writer.write_uint32(entity.mana_cubes)
