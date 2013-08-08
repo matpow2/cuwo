@@ -30,7 +30,6 @@ from cuwo.packet import (PacketHandler, write_packet, CS_PACKETS,
                          ChunkItems, InteractPacket, PickupAction,
                          HitPacket, ShootPacket)
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
-from cuwo.vector import Vector3
 from cuwo import constants
 from cuwo.common import (get_clock_string, parse_clock, parse_command,
                          get_chunk, filter_string)
@@ -39,8 +38,6 @@ from cuwo.config import ConfigObject
 from cuwo import entity
 
 import collections
-import imp
-import zipimport
 import os
 import sys
 import pprint

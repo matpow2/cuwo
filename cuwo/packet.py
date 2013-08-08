@@ -21,8 +21,10 @@
 # definitions in your own work, it would be nice with a little notice of
 # where you got them from (i.e. cuwo) :-)
 
+print 'importing entity'
 from cuwo.entity import (EntityData, AppearanceData, ItemData,
                          read_masked_data, write_masked_data, get_masked_size)
+print 'done'
 from cuwo.sounds import SOUNDS
 from cuwo.loader import Loader
 from cuwo.bytes import ByteReader, ByteWriter
