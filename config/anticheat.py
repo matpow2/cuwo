@@ -32,7 +32,7 @@ cooldown_margin = 0.5
 
 # Max times someone can break cooldowns in a row before he is kicked
 # This should be 1 or above because wollay.
-max_cooldown_strikes = 2
+max_cooldown_strikes = 3
 
 # distance from the target they are hitting, larger basically allows
 # for more lag.
