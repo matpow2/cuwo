@@ -53,4 +53,3 @@ speed_margin = 1
 
 log_message = "{playername}({ip}) was removed for: {reason}."
 disconnect_message = "{name} - You are being removed for: {reason}."
-welcome_message = "{name} - No cheats detected! (yet)"

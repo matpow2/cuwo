@@ -77,7 +77,6 @@ class AntiCheatConnection(ConnectionScript):
         self.log_level = config.log_level
         self.log_message = config.log_message
         self.disconnect_message = config.disconnect_message
-        self.welcome_message = config.welcome_message
         self.irc_log_level = config.irc_log_level
         self.glider_abuse_count = config.glider_abuse_count
         self.cooldown_margin = config.cooldown_margin
@@ -111,9 +110,6 @@ class AntiCheatConnection(ConnectionScript):
 
         if self.on_appearance_update() is False:
             return False
-
-        self.connection.send_chat(self.welcome_message
-                                  .format(name=CUWO_ANTICHEAT))
 
     def on_name_update(self, event=None):
         if self.has_illegal_name():
