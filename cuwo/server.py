@@ -219,6 +219,10 @@ class CubeWorldConnection(Protocol):
             target = self.server.entities[packet.target_id]
         except KeyError:
             return
+
+        if self.scripts.call('on_hit', target=target, packet=packet) is False:
+            return
+
         self.server.update_packet.player_hits.append(packet)
         if target.hp <= 0:
             return
