@@ -63,82 +63,6 @@ cdef extern from "bytes_c.cpp":
 
 
 @cython.final
-cdef class ByteWriter:
-    cdef:
-        void * stream
-
-    def __init__(self):
-        self.stream = create_write_stream()
-
-    def __dealloc__(self):
-        delete_write_stream(self.stream)
-
-    cpdef size_t tell(self):
-        return get_write_pos(self.stream)
-
-    cpdef write(self, bytes data):
-        write(self.stream, data, len(data))
-
-    cpdef write_string(self, char * value, size_t size):
-        write_string(self.stream, value, size)
-
-    cpdef write_ascii(self, unicode value, size_t size):
-        cdef bytes new_value = value.encode('ascii', 'ignore')
-        self.write_string(new_value, size)
-
-    cpdef pad(self, size_t size):
-        write_pad(self.stream, size)
-
-    cpdef write_int8(self, char value):
-        write_int8(self.stream, value)
-
-    cpdef write_uint8(self, unsigned char value):
-        write_uint8(self.stream, value)
-
-    cpdef write_int16(self, short value):
-        write_int16(self.stream, value)
-
-    cpdef write_uint16(self, unsigned short value):
-        write_uint16(self.stream, value)
-
-    cpdef write_int32(self, int value):
-        write_int32(self.stream, value)
-
-    cpdef write_uint32(self, unsigned int value):
-        write_uint32(self.stream, value)
-
-    cpdef write_int64(self, int64_t value):
-        write_int64(self.stream, value)
-
-    cpdef write_uint64(self, uint64_t value):
-        write_uint64(self.stream, value)
-
-    cpdef write_float(self, double value):
-        write_float(self.stream, value)
-
-    cpdef write_double(self, double value):
-        write_double(self.stream, value)
-
-    cpdef write_vec3(self, value):
-        self.write_float(value.x)
-        self.write_float(value.y)
-        self.write_float(value.z)
-
-    cpdef write_ivec3(self, value):
-        self.write_int32(value.x)
-        self.write_int32(value.y)
-        self.write_int32(value.z)
-
-    cpdef write_qvec3(self, value):
-        self.write_int64(value.x)
-        self.write_int64(value.y)
-        self.write_int64(value.z)
-
-    cpdef bytes get(self):
-        return get_stream_data(self.stream)
-
-
-@cython.final
 cdef class ByteReader:
     cdef:
         char * start
@@ -274,3 +198,79 @@ cdef class ByteReader:
         cdef int64_t y = self.read_int64()
         cdef int64_t z = self.read_int64()
         return Vector3(x, y, z)
+
+
+@cython.final
+cdef class ByteWriter:
+    cdef:
+        void * stream
+
+    def __init__(self):
+        self.stream = create_write_stream()
+
+    def __dealloc__(self):
+        delete_write_stream(self.stream)
+
+    cpdef size_t tell(self):
+        return get_write_pos(self.stream)
+
+    cpdef write(self, bytes data):
+        write(self.stream, data, len(data))
+
+    cpdef write_string(self, char * value, size_t size):
+        write_string(self.stream, value, size)
+
+    cpdef write_ascii(self, unicode value, size_t size):
+        cdef bytes new_value = value.encode('ascii', 'ignore')
+        self.write_string(new_value, size)
+
+    cpdef pad(self, size_t size):
+        write_pad(self.stream, size)
+
+    cpdef write_int8(self, char value):
+        write_int8(self.stream, value)
+
+    cpdef write_uint8(self, unsigned char value):
+        write_uint8(self.stream, value)
+
+    cpdef write_int16(self, short value):
+        write_int16(self.stream, value)
+
+    cpdef write_uint16(self, unsigned short value):
+        write_uint16(self.stream, value)
+
+    cpdef write_int32(self, int value):
+        write_int32(self.stream, value)
+
+    cpdef write_uint32(self, unsigned int value):
+        write_uint32(self.stream, value)
+
+    cpdef write_int64(self, int64_t value):
+        write_int64(self.stream, value)
+
+    cpdef write_uint64(self, uint64_t value):
+        write_uint64(self.stream, value)
+
+    cpdef write_float(self, double value):
+        write_float(self.stream, value)
+
+    cpdef write_double(self, double value):
+        write_double(self.stream, value)
+
+    cpdef write_vec3(self, value):
+        self.write_float(value.x)
+        self.write_float(value.y)
+        self.write_float(value.z)
+
+    cpdef write_ivec3(self, value):
+        self.write_int32(value.x)
+        self.write_int32(value.y)
+        self.write_int32(value.z)
+
+    cpdef write_qvec3(self, value):
+        self.write_int64(value.x)
+        self.write_int64(value.y)
+        self.write_int64(value.z)
+
+    cpdef bytes get(self):
+        return get_stream_data(self.stream)
