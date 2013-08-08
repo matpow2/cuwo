@@ -22,6 +22,8 @@ High-level byte read/writing and pack/unpacking from files and data
 from cuwo.vector import Vector3
 from cuwo.exceptions import OutOfData
 from cuwo.common import filter_string
+cimport cython
+
 
 cdef extern from "bytes_c.cpp":
     # read
@@ -57,6 +59,7 @@ cdef extern from "bytes_c.cpp":
     size_t get_write_pos(void * stream)
 
 
+@cython.final
 cdef class ByteReader:
     def __init__(self, bytes data):
         self.start = data

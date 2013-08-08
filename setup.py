@@ -24,7 +24,8 @@ from Cython.Build import cythonize
 ext_modules = []
 
 names = [
-    'cuwo.bytes'
+    'cuwo.bytes',
+    'cuwo.entity'
 ]
 
 for name in names:

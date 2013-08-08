@@ -187,9 +187,9 @@ inline void write_float(void * stream, double value)
 inline void write_double(void * stream, double value)
 {
     ostringstream * ss = (ostringstream*)stream;
-    char out[4];
+    char out[8];
     _PyFloat_Pack8(value, (unsigned char *)&out, true);
-    ss->write(out, 4);
+    ss->write(out, 8);
 }
 
 inline void write(void * stream, char * data, size_t size)

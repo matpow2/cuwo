@@ -17,8 +17,7 @@
 
 
 cimport cython
-ctypedef signed long long int64_t
-ctypedef unsigned long long uint64_t
+from cuwo.common cimport int64_t, uint64_t
 
 
 @cython.final
@@ -29,30 +28,29 @@ cdef class ByteReader:
         char * pos
         bytes py_data
 
-    cpdef unsigned int tell(self)
-    cpdef seek(self, int pos, int whence=?)
+    cpdef inline unsigned int tell(self)
+    cpdef inline seek(self, int pos, int whence=?)
 
-    cpdef unsigned int get_left(self)
-    cdef char * check_available(self, unsigned int size) except NULL
-    cpdef bytes read(self, unsigned int size)
-    cpdef bytes read_string(self, unsigned int size)
-
-    cpdef unicode read_ascii(self, unsigned int size)
-    cpdef skip(self, unsigned int size)
-    cpdef rewind(self, int size)
-    cpdef char read_int8(self) except *
-    cpdef unsigned char read_uint8(self) except *
-    cpdef short read_int16(self) except *
-    cpdef unsigned short read_uint16(self) except *
-    cpdef int read_int32(self) except *
-    cpdef unsigned int read_uint32(self) except *
-    cpdef int64_t read_int64(self) except *
-    cpdef uint64_t read_uint64(self) except *
-    cpdef double read_float(self) except *
-    cpdef double read_double(self) except *
-    cpdef object read_vec3(self)
-    cpdef object read_ivec3(self)
-    cpdef object read_qvec3(self)
+    cpdef inline unsigned int get_left(self)
+    cdef inline char * check_available(self, unsigned int size) except NULL
+    cpdef inline bytes read(self, unsigned int size)
+    cpdef inline bytes read_string(self, unsigned int size)
+    cpdef inline unicode read_ascii(self, unsigned int size)
+    cpdef inline skip(self, unsigned int size)
+    cpdef inline rewind(self, int size)
+    cpdef inline char read_int8(self) except *
+    cpdef inline unsigned char read_uint8(self) except *
+    cpdef inline short read_int16(self) except *
+    cpdef inline unsigned short read_uint16(self) except *
+    cpdef inline int read_int32(self) except *
+    cpdef inline unsigned int read_uint32(self) except *
+    cpdef inline int64_t read_int64(self) except *
+    cpdef inline uint64_t read_uint64(self) except *
+    cpdef inline double read_float(self) except *
+    cpdef inline double read_double(self) except *
+    cpdef inline object read_vec3(self)
+    cpdef inline object read_ivec3(self)
+    cpdef inline object read_qvec3(self)
 
 
 @cython.final
@@ -60,22 +58,22 @@ cdef class ByteWriter:
     cdef:
         void * stream
 
-    cpdef size_t tell(self)
-    cpdef write(self, bytes data)
-    cpdef write_string(self, bytes value, size_t size)
-    cpdef write_ascii(self, unicode value, size_t size)
-    cpdef pad(self, size_t size)
-    cpdef write_int8(self, char value)
-    cpdef write_uint8(self, unsigned char value)
-    cpdef write_int16(self, short value)
-    cpdef write_uint16(self, unsigned short value)
-    cpdef write_int32(self, int value)
-    cpdef write_uint32(self, unsigned int value)
-    cpdef write_int64(self, int64_t value)
-    cpdef write_uint64(self, uint64_t value)
-    cpdef write_float(self, double value)
-    cpdef write_double(self, double value)
-    cpdef write_vec3(self, value)
-    cpdef write_ivec3(self, value)
-    cpdef write_qvec3(self, value)
-    cpdef bytes get(self)
+    cpdef inline size_t tell(self)
+    cpdef inline write(self, bytes data)
+    cpdef inline write_string(self, bytes value, size_t size)
+    cpdef inline write_ascii(self, unicode value, size_t size)
+    cpdef inline pad(self, size_t size)
+    cpdef inline write_int8(self, char value)
+    cpdef inline write_uint8(self, unsigned char value)
+    cpdef inline write_int16(self, short value)
+    cpdef inline write_uint16(self, unsigned short value)
+    cpdef inline write_int32(self, int value)
+    cpdef inline write_uint32(self, unsigned int value)
+    cpdef inline write_int64(self, int64_t value)
+    cpdef inline write_uint64(self, uint64_t value)
+    cpdef inline write_float(self, double value)
+    cpdef inline write_double(self, double value)
+    cpdef inline write_vec3(self, value)
+    cpdef inline write_ivec3(self, value)
+    cpdef inline write_qvec3(self, value)
+    cpdef inline bytes get(self)

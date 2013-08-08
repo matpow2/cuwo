@@ -121,6 +121,8 @@ class EntityUpdate(Packet):
         return read_masked_data(entity, reader)
 
     def set_entity(self, entity, entity_id, mask=None):
+        if mask is None:
+            mask = constants.FULL_MASK
         writer = ByteWriter()
         writer.write_uint64(entity_id)
         write_masked_data(entity, writer, mask)

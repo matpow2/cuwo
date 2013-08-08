@@ -18,6 +18,7 @@
 # prtocol constants
 CLIENT_VERSION = 3
 SERVER_PORT = 12345
+FULL_MASK = 0x0000FFFFFFFFFFFF
 
 # time constants
 MAX_TIME = 24 * 60 * 60 * 1000

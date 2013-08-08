@@ -1,9 +1,9 @@
 ![cuwo](http://mp2.dk/cuwo/logo.png)
 ====
 
-cuwo is an open server implementation for Cube World, written in Python.
-It currently has the best protocol coverage among all the server projects out
-there, and has features like
+cuwo is an open server implementation for Cube World, written in Python and
+C++. It currently has the best protocol coverage among all the server projects
+out there, and has features like
 
 * Cross-platform support (Windows, Mac OS X, Linux, FreeBSD, what have you)
 * File/console logging
@@ -17,7 +17,8 @@ there, and has features like
 * PvP script
 * DDoS prevention
 * Lower CPU requirements than normal server
-* Master server on http://mp2.dk/cuwo
+* Optimizations in C++
+* Master server on http://cuwo.org
 * Support for 40+ players
 * ... and much more!
 
@@ -28,8 +29,9 @@ On Windows, see the
 [quick-start guide](https://github.com/matpow2/cuwo/wiki/Quickstart) for a 
 quick way to get started.
 
-On Linux/Mac OS X/FreeBSD/etc., make sure you have Python 2.7 and Twisted
-installed on your machine, then run run_server.sh. 
+On Linux/Mac OS X/FreeBSD/etc., make sure you have Python 2.7, Twisted and
+Cython installed on your machine, along with native compilers.
+Run build.sh and afterwards run_server.sh. 
 
 Status
 ======
