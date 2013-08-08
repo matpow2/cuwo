@@ -33,7 +33,7 @@ def switch_axes(x, y, z):
 
 
 def to_qmo(in_file, out_file):
-    cub = CubModel(ByteReader(fp=open(in_file, 'rb')))
+    cub = CubModel(ByteReader(open(in_file, 'rb').read()))
     qmo_file = QubicleFile()
     qmo_model = QubicleModel()
     x_size, y_size, z_size = switch_axes(cub.x_size, cub.y_size, cub.z_size)
@@ -52,7 +52,7 @@ def to_qmo(in_file, out_file):
 
 
 def to_cub(in_file, out_file):
-    qmo_file = QubicleFile(ByteReader(fp=open(in_file, 'rb')))
+    qmo_file = QubicleFile(ByteReader(open(in_file, 'rb').read()))
     qmo_model = qmo_file.models[0]
     cub = CubModel()
     x_size, y_size, z_size = switch_axes(qmo_model.x_size,
