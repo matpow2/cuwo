@@ -98,7 +98,7 @@ class MasterServer(master.MasterProtocol):
         try:
             self.on_server(master.ServerData(value), addr)
         except InvalidData:
-            self.on_bad_packet()
+            self.on_bad_packet(addr)
             return
         self.send_packet({'ack': True}, addr)
 
