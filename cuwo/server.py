@@ -124,6 +124,10 @@ class CubeWorldConnection(Protocol):
     def on_packet(self, packet):
         if self.disconnected:
             return
+        if packet is None:
+            print 'Invalid packet received'
+            self.disconnect()
+            raise StopIteration()
         handler = self.packet_handlers.get(packet.packet_id, None)
         if handler is None:
             # print 'Unhandled client packet: %s' % packet.packet_id

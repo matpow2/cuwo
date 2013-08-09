@@ -664,7 +664,10 @@ SC_PACKETS = {
 
 def read_packet(reader, table):
     packet_id = reader.read_uint32()
-    packet = table[packet_id]()
+    try:
+        packet = table[packet_id]()
+    except KeyError:
+        return None
     packet.read(reader)
     return packet
 
@@ -701,4 +704,6 @@ class PacketHandler(object):
         except OutOfData, e:
             if e.reader is not reader:
                 raise e
+        except StopIteration:
+            return
         self.data = self.data[pos:]
