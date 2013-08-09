@@ -36,37 +36,35 @@ def is_similar(float1, float2):
 
 class AntiCheatConnection(ConnectionScript):
 
-    combat_end_time = 0
-    last_glider_active = 0
-    last_attacking = 0
-
-    glider_count = 0
-    attack_count = 0
-
-    ability_cooldown = {}
-
-    time_since_update = 0
-    last_entity_update = 0
-    last_update_mode = 0
-
-    last_mana = 0
-    last_health = 0
-
-    mana = 0
-    health = 0
-
-    air_time = 0
-    hit_distance_strikes = 0
-    is_dead = False
-
-    last_pos = None
-    last_speed_check = 0
-    time_traveled = 0
-    distance_traveled = 0
-
-    cooldown_strikes = 0
-
     def on_load(self):
+        self.combat_end_time = 0
+        self.last_glider_active = 0
+        self.last_attacking = 0
+
+        self.glider_count = 0
+        self.attack_count = 0
+
+        self.time_since_update = 0
+        self.last_entity_update = 0
+        self.last_update_mode = 0
+
+        self.last_mana = 0
+        self.last_health = 0
+
+        self.mana = 0
+        self.health = 0
+
+        self.air_time = 0
+        self.hit_distance_strikes = 0
+        self.is_dead = False
+
+        self.last_pos = None
+        self.last_speed_check = 0
+        self.time_traveled = 0
+        self.distance_traveled = 0
+
+        self.cooldown_strikes = 0
+        self.ability_cooldown = {}
         self.last_entity_update = time.time()
 
         config = self.server.config.anticheat
@@ -973,8 +971,8 @@ class AntiCheatConnection(ConnectionScript):
         # climbing
         if not (is_bit_set(flags_1, FLAGS_1_GLIDER_ACTIVE)
                 or is_bit_set(entity_data.physics_flags, 0)
+                or is_bit_set(entity_data.physics_flags, 1)
                 or is_bit_set(entity_data.physics_flags, 2)
-                or is_bit_set(entity_data.physics_flags, 3)
                 or entity_data.hp <= 0):
             self.air_time += self.time_since_update
 
