@@ -216,7 +216,7 @@ class ServerScript(BaseScript):
     def call_command(self, user, command, args):
         if self.commands is None:
             return
-        f = self.commands.get(command, None)
+        f = self.commands.get(command.lower(), None)
         if not f:
             return
         user.parent = self  # for ScriptInterface
