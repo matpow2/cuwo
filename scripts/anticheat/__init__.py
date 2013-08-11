@@ -22,7 +22,8 @@ from cuwo.constants import (WARRIOR_CLASS, RANGER_CLASS,
 from cuwo.script import (ServerScript,
                          ConnectionScript, command, admin,
                          get_player)
-from cuwo.common import get_power, get_item_name, is_bit_set
+from cuwo.common import (get_power, get_item_name, is_bit_set,
+                         get_entity_max_health)
 from cuwo.packet import ServerUpdate, PickupAction
 from constants import *
 import re
@@ -48,6 +49,7 @@ class AntiCheatConnection(ConnectionScript):
         self.last_entity_update = 0
         self.last_update_mode = 0
 
+        self.max_health = 0
         self.last_mana = 0
         self.last_health = 0
 
@@ -109,6 +111,21 @@ class AntiCheatConnection(ConnectionScript):
         if self.on_appearance_update() is False:
             return False
 
+        if self.check_max_health(True) is False:
+            return False
+
+    def check_max_health(self, update_max_hp=False):
+        entity_data = self.connection.entity_data
+        if update_max_hp or self.max_health == 0:
+            self.max_health = get_entity_max_health(entity_data)
+
+        if entity_data.hp > self.max_health+1:
+            self.log("character hp higher than max hp: {hp}/{max}"
+                     .format(hp=entity_data.hp,
+                             max=self.max_health), LOG_LEVEL_VERBOSE)
+            self.remove_cheater('health hack')
+            return False
+
     def on_name_update(self, event=None):
         if self.has_illegal_name():
             self.remove_cheater('illegal character name')
@@ -119,10 +136,16 @@ class AntiCheatConnection(ConnectionScript):
             self.remove_cheater('illegal items are equipped')
             return False
 
+        if self.check_max_health(True) is False:
+            return False
+
     def on_level_update(self, event=None):
         if self.has_illegal_level():
             self.remove_cheater('illegal character level, max:' +
                                 str(self.level_cap))
+            return False
+
+        if self.check_max_health(True) is False:
             return False
 
     def on_skill_update(self, event=None):
@@ -189,6 +212,8 @@ class AntiCheatConnection(ConnectionScript):
 
         self.mana = entity_data.mp
         self.health = entity_data.hp
+
+        self.check_max_health()
 
 #        if self.check_speed() is False:
 #            return False
