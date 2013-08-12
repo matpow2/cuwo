@@ -69,6 +69,15 @@ class AntiCheatConnection(ConnectionScript):
         self.ability_cooldown = {}
         self.last_entity_update = time.time()
 
+        self.last_hit_time_catchup_count = 0
+        self.last_hit_time_catchup = 0
+        self.last_hit_time = 0
+        self.last_hit_strikes = 0
+        self.last_hit_check = 0
+        self.hit_counter = 0
+        self.hit_counter_strikes = 0
+        self.max_hp_strikes = 0
+
         config = self.server.config.anticheat
         self.level_cap = config.level_cap
         self.allow_dual_wield = config.allow_dual_wield
@@ -85,6 +94,11 @@ class AntiCheatConnection(ConnectionScript):
         self.max_cooldown_strikes = config.max_cooldown_strikes
         self.max_air_time = config.max_air_time
         self.speed_margin = config.speed_margin
+        self.last_hit_margin = config.last_hit_margin
+        self.max_last_hit_strikes = config.max_last_hit_strikes
+        self.max_hit_counter_strikes = config.max_hit_counter_strikes
+        self.max_hit_counter_difference = config.max_hit_counter_difference
+        self.max_max_hp_strikes = config.max_max_hp_strikes
 
     def on_join(self, event):
         if self.on_name_update() is False:
@@ -112,21 +126,26 @@ class AntiCheatConnection(ConnectionScript):
             return False
 
         self.update_max_health()
-        if self.check_max_health() is False:
+        if self.check_max_health(True) is False:
             return False
 
     def update_max_health(self):
         entity_data = self.connection.entity_data
         self.max_health = get_entity_max_health(entity_data)
 
-    def check_max_health(self):
+    def check_max_health(self, no_strikes=False):
         entity_data = self.connection.entity_data
-        if entity_data.hp > self.max_health+1:
-            self.log("character hp higher than max hp: {hp}/{max}"
-                     .format(hp=entity_data.hp,
-                             max=self.max_health), LOG_LEVEL_VERBOSE)
-            self.remove_cheater('health hack')
-            return False
+        if entity_data.hp > self.max_health + 1:
+            self.max_hp_strikes += 1
+
+            if no_strikes or self.max_hp_strikes > self.max_max_hp_strikes:
+                self.log("character hp higher than max hp: {hp}/{max}"
+                         .format(hp=entity_data.hp,
+                                 max=self.max_health), LOG_LEVEL_VERBOSE)
+                self.remove_cheater('health hack')
+                return False
+        else:
+            self.max_hp_strikes = 0
 
     def on_name_update(self, event=None):
         if self.has_illegal_name():
@@ -217,6 +236,11 @@ class AntiCheatConnection(ConnectionScript):
             if self.check_max_health() is False:
                 return False
 
+        if time.time() - self.last_hit_check > 1.0:
+            self.last_hit_check = time.time()
+            if self.check_last_hit() is False:
+                return False
+
 #        if self.check_speed() is False:
 #            return False
 
@@ -251,6 +275,11 @@ class AntiCheatConnection(ConnectionScript):
             # saves his old hitpackets and sends it as soon as it connects..
             # possibly just a bug where wollay doesnt clear a list.
             return False
+
+        # just damage packets, not healing would be negative
+        if event.packet.damage >= 0:
+            self.last_hit_time = time.time()
+            self.hit_counter += 1
 
         # how far away did this hit hit from where the target actually is
         hitdistance = (packet.pos - event.target.pos).magnitude_squared()
@@ -697,10 +726,10 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.class_type == 0:
+        if entity_data.class_type == 1:
             # -1 check for warriors because they have a bug that can make them
             # go negative while blocking
-            if entity_data.charged_mp < -1:
+            if entity_data.charged_mp < -2:
                 self.log("charged mp multiplier below 2, charged_mp={mult}"
                          .format(mult=entity_data.charged_mp),
                          LOG_LEVEL_VERBOSE)
@@ -1039,6 +1068,68 @@ class AntiCheatConnection(ConnectionScript):
             #print "Traveling at", speed
             self.time_traveled = 0
             self.distance_traveled = 0
+
+    def check_hit_counter(self):
+        entity_data = self.connection.entity_data
+
+        if entity_data.hit_counter < 0:
+            self.log("negative hit counter. hits={hits}"
+                     .format(hits=entity_data.hit_counter),
+                     LOG_LEVEL_VERBOSE)
+            self.remove_cheater('illegal hit counter')
+            return False
+
+        if time.time() - self.last_hit_time > 4.0:
+            self.hit_counter = 0
+
+        hit_counter_diff = entity_data.hit_counter - self.hit_counter
+        if hit_counter_diff > self.max_hit_counter_difference:
+            self.hit_counter_strikes += 1
+            if self.hit_counter_strikes > self.max_hit_counter_strikes:
+                self.log("hit counter mismatch, hits={hits}, expected={exp}"
+                         .format(hits=entity_data.hit_counter,
+                                 exp=self.hit_counter),
+                         LOG_LEVEL_VERBOSE)
+                self.remove_cheater('illegal hit counter')
+                return False
+        else:
+            self.hit_counter_strikes = 0
+
+    def check_last_hit(self):
+        entity_data = self.connection.entity_data
+        last_hit_rc = (float(entity_data.last_hit_time) / 1000.0)
+        if self.last_hit_time == 0:
+            self.last_hit_time = time.time() - last_hit_rc
+        last_hit_pk = time.time() - self.last_hit_time
+
+        time_diff = last_hit_pk - last_hit_rc
+        if abs(time_diff) > self.last_hit_margin:
+            self.last_hit_strikes += 1
+            if self.last_hit_strikes > self.max_last_hit_strikes:
+                self.log("last hit time mismatch, time={t}, expected={exp}"
+                         .format(t=last_hit_rc,
+                                 exp=last_hit_pk),
+                         LOG_LEVEL_VERBOSE)
+                self.remove_cheater('last hit time mismatch')
+                return False
+
+            # catch up time, this is only allowed twice every 15 seconds
+            # it will make sure that a freeze or lagspike will be allowed
+            # to catch up to (otherwise this would result in a kick)
+            if (time.time() - self.last_hit_time_catchup > 15.0):
+                self.last_hit_time_catchup = time.time()
+                self.last_hit_time_catchup_count = 0
+
+            if self.last_hit_time_catchup_count < 2:
+                self.last_hit_time_catchup_count += 1
+                self.last_hit_strikes -= 1
+                self.last_hit_time = time.time() - last_hit_rc
+                print "last hit time mismatch, catching up time", \
+                    self.last_hit_time_catchup_count, self.last_hit_time
+        else:
+            self.last_hit_strikes = 0
+
+        return self.check_hit_counter()
 
 
 class AntiCheatServer(ServerScript):
