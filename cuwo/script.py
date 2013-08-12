@@ -53,24 +53,23 @@ def get_player(server, value):
     return ret
 
 
-def restrict(func, *user_types):
+def restrict(*user_types):
     """
     Restricts the command to certain user types
     """
-    def new_func(script, *arg, **kw):
-        if script.connection.rights.isdisjoint(user_types):
-            raise InsufficientRights()
-        return func(script, *arg, **kw)
-    new_func.__module__ = func.__module__
-    new_func.func_name = func.func_name
-    return new_func
+    def dec(func):
+        def new_func(script, *arg, **kw):
+            if script.connection.rights.isdisjoint(user_types):
+                raise InsufficientRights()
+            return func(script, *arg, **kw)
+        new_func.__module__ = func.__module__
+        new_func.func_name = func.func_name
+        return new_func
+    return dec
 
 
-def admin(func):
-    """
-    Restricts the use of the command to administrators only
-    """
-    return restrict(func, 'admin')
+# decorator to restrict the use of commands to administrators only
+admin = restrict('admin')
 
 
 class ScriptManager(object):
