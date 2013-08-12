@@ -111,14 +111,16 @@ class AntiCheatConnection(ConnectionScript):
         if self.on_appearance_update() is False:
             return False
 
-        if self.check_max_health(True) is False:
+        self.update_max_health()
+        if self.check_max_health() is False:
             return False
 
-    def check_max_health(self, update_max_hp=False):
+    def update_max_health(self):
         entity_data = self.connection.entity_data
-        if update_max_hp or self.max_health == 0:
-            self.max_health = get_entity_max_health(entity_data)
+        self.max_health = get_entity_max_health(entity_data)
 
+    def check_max_health(self):
+        entity_data = self.connection.entity_data
         if entity_data.hp > self.max_health+1:
             self.log("character hp higher than max hp: {hp}/{max}"
                      .format(hp=entity_data.hp,
@@ -136,8 +138,7 @@ class AntiCheatConnection(ConnectionScript):
             self.remove_cheater('illegal items are equipped')
             return False
 
-        if self.check_max_health(True) is False:
-            return False
+        self.update_max_health()
 
     def on_level_update(self, event=None):
         if self.has_illegal_level():
@@ -145,8 +146,7 @@ class AntiCheatConnection(ConnectionScript):
                                 str(self.level_cap))
             return False
 
-        if self.check_max_health(True) is False:
-            return False
+        self.update_max_health()
 
     def on_skill_update(self, event=None):
         if self.has_illegal_skills():
@@ -213,7 +213,9 @@ class AntiCheatConnection(ConnectionScript):
         self.mana = entity_data.mp
         self.health = entity_data.hp
 
-        self.check_max_health()
+        if is_bit_set(event.mask, 27):
+            if self.check_max_health() is False:
+                return False
 
 #        if self.check_speed() is False:
 #            return False
@@ -694,6 +696,22 @@ class AntiCheatConnection(ConnectionScript):
                      .format(mult=entity_data.charged_mp),
                      LOG_LEVEL_VERBOSE)
             return True
+
+        if entity_data.class_type == 0:
+            # -1 check for warriors because they have a bug that can make them
+            # go negative while blocking
+            if entity_data.charged_mp < -1:
+                self.log("charged mp multiplier below 2, charged_mp={mult}"
+                         .format(mult=entity_data.charged_mp),
+                         LOG_LEVEL_VERBOSE)
+                return True
+        else:
+            if entity_data.charged_mp < 0:
+                self.log("charged mp multiplier below 0, charged_mp={mult}"
+                         .format(mult=entity_data.charged_mp),
+                         LOG_LEVEL_VERBOSE)
+                return True
+
         return False
 
     def has_illegal_appearance(self):
