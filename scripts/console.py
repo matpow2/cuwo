@@ -89,7 +89,7 @@ class ConsoleInput(LineReceiver):
             ret = self.server.call_command(self.interface, command, args)
             if not ret:
                 return
-            self.sendLine(str(ret))
+            self.sendLine(ret.encode(sys.stdout.encoding, 'replace'))
         else:
             self.server.send_chat(line)
 
