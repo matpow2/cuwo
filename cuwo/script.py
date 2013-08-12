@@ -46,7 +46,6 @@ def get_command_list(playerscript):
 
 def get_command_func(playerscript, func_name):
     script_list = playerscript.server.scripts.scripts
-    available_commands = []
     for script in script_list.itervalues():
         if script.commands is None:
             continue
