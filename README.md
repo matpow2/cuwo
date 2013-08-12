@@ -31,7 +31,7 @@ quick way to get started.
 
 On Linux/Mac OS X/FreeBSD/etc., make sure you have Python 2.7, Twisted and
 Cython installed on your machine, along with native compilers.
-Run build.sh and afterwards run_server.sh. 
+Run build.sh and afterwards run_server.sh.
 
 Status
 ======
@@ -87,7 +87,7 @@ Kyle - master server JS
 
 MazeXD - master server JS and design
 
-Skarmy - website design
+cs475x - website design
 
 Kainzo - testing
 
