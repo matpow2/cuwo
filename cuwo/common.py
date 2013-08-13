@@ -115,6 +115,84 @@ def open_create(filename, mode):
     return open(filename, mode)
 
 
+def get_entity_base_health(entity):
+    level_health = 2 ** ((1 - (1 / (0.05 * (entity.level - 1) + 1))) * 3)
+
+    if entity.hostile_type == 0:
+        health = level_health * 2 * entity.max_hp_multiplier
+    else:
+        power_health = 2 ** (entity.power_base * 0.25)
+        health = level_health * power_health * entity.max_hp_multiplier
+
+    if entity.class_type == 1:
+        health *= 1.30
+        if entity.specialization == 1:
+            health *= 1.25
+
+    elif entity.class_type == 2:
+        health *= 1.10
+
+    elif entity.class_type == 4:
+        health *= 1.20
+
+    return health
+
+
+def get_item_base_hp(level, rarity):
+    level_health = 2 ** ((1 - (1 / (0.05 * (float(level) - 1) + 1))) * 3)
+    rarity_health = 2 ** (float(rarity) * 0.25)
+    return level_health * rarity_health
+
+
+def get_item_hp(item):
+    if item.type not in (3, 4, 5, 6, 7):
+        return 0.0
+
+    type_multiplier = 0.5
+    if item.type == 4:
+        type_multiplier = 1.0
+
+    hp_mod = 8 * item.modifier % 0x15
+
+    if hp_mod >> 31 == 1:
+        hp_mod += 4294967296.0
+
+    mod_mult = (1.0 - (hp_mod / 20.0)) + 1.0
+
+    if item.material == 1:
+        mod_mult += 1.0
+
+    if item.material == 26:
+        mod_mult += 0.5
+
+    if item.material == 27:
+        mod_mult += 0.75
+
+    upgrade_lv = item.upgrade_count * 0.10
+    base_hp = get_item_base_hp(item.level + upgrade_lv, item.rarity)
+    return base_hp * 5.0 * type_multiplier * mod_mult
+
+
+def get_consumable_heal(item):
+    return get_item_base_hp(item.level, item.rarity) * 200
+
+
+def get_entity_max_health(entity):
+    health = get_entity_base_health(entity)
+    health += get_item_hp(entity.equipment[6])
+    health += get_item_hp(entity.equipment[7])
+    health += get_item_hp(entity.equipment[2])
+    health += get_item_hp(entity.equipment[3])
+    health += get_item_hp(entity.equipment[4])
+    health += get_item_hp(entity.equipment[5])
+    return health
+
+
+def get_max_xp(level):
+    xp = 1050 - 1000 / (0.05 * (level - 1) + 1)
+    return int(xp)
+
+
 def get_power(level):
     power = 101 - 100 / (0.05 * (level - 1) + 1)
     return int(power)
