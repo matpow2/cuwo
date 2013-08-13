@@ -69,14 +69,16 @@ class AntiCheatConnection(ConnectionScript):
         self.ability_cooldown = {}
         self.last_entity_update = time.time()
 
-        self.last_hit_time_catchup_count = 0
-        self.last_hit_time_catchup = 0
         self.last_hit_time = 0
         self.last_hit_strikes = 0
         self.last_hit_check = 0
         self.hit_counter = 0
         self.hit_counter_strikes = 0
         self.max_hp_strikes = 0
+
+        # allow for extra catch ups during join
+        self.last_hit_time_catchup = time.time() + 10
+        self.last_hit_time_catchup_count = -10
 
         config = self.server.config.anticheat
         self.level_cap = config.level_cap
@@ -99,6 +101,7 @@ class AntiCheatConnection(ConnectionScript):
         self.max_hit_counter_strikes = config.max_hit_counter_strikes
         self.max_hit_counter_difference = config.max_hit_counter_difference
         self.max_max_hp_strikes = config.max_max_hp_strikes
+        self.max_last_hit_time_catchup = config.max_last_hit_time_catchup
 
     def on_join(self, event):
         if self.on_name_update() is False:
@@ -295,6 +298,10 @@ class AntiCheatConnection(ConnectionScript):
         # if i get killed reset cooldowns! (this actually happens on respawn,
         # but there is no way to determine respawning as of yet)
         self.ability_cooldown = {}
+        # give one catchup count back as they will probably get one from
+        # respawning :d
+        self.last_hit_time_catchup = time.time()
+        self.last_hit_time_catchup_count = -1
 
     def log(self, message, loglevel=LOG_LEVEL_DEFAULT):
         if self.log_level >= loglevel:
@@ -1079,7 +1086,7 @@ class AntiCheatConnection(ConnectionScript):
             self.remove_cheater('illegal hit counter')
             return False
 
-        if time.time() - self.last_hit_time > 4.0:
+        if time.time() - self.last_hit_time > 4 + self.last_hit_margin:
             self.hit_counter = 0
 
         hit_counter_diff = entity_data.hit_counter - self.hit_counter
@@ -1120,12 +1127,11 @@ class AntiCheatConnection(ConnectionScript):
                 self.last_hit_time_catchup = time.time()
                 self.last_hit_time_catchup_count = 0
 
-            if self.last_hit_time_catchup_count < 2:
+            if (self.last_hit_time_catchup_count <
+                    self.max_last_hit_time_catchup):
                 self.last_hit_time_catchup_count += 1
                 self.last_hit_strikes -= 1
                 self.last_hit_time = time.time() - last_hit_rc
-                print "last hit time mismatch, catching up time", \
-                    self.last_hit_time_catchup_count, self.last_hit_time
         else:
             self.last_hit_strikes = 0
 
