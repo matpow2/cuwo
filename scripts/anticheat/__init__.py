@@ -1104,6 +1104,8 @@ class AntiCheatConnection(ConnectionScript):
 
     def check_last_hit(self):
         entity_data = self.connection.entity_data
+        if entity_data.hp <= 0:
+            return
         last_hit_rc = (float(entity_data.last_hit_time) / 1000.0)
         if self.last_hit_time == 0:
             self.last_hit_time = time.time() - last_hit_rc
