@@ -51,5 +51,31 @@ max_air_time = 10
 # (not yet implemented)
 speed_margin = 1
 
+# Amount of seconds difference between last_hit and receiving a hitpacket
+# last_hit_margin * max_last_hit_time_catchup + max_last_hit_strikes
+# should be less then 15
+# for it to effective, the closer to 15 the less chance it will actually do
+# something..
+last_hit_margin = 3.0
+
+# Times last hit will be caught up instead of a strike given
+max_last_hit_time_catchup = 3
+
+# Last hit gets checked every second, if its over the margin a strike will be
+# given. This should be above 0 as last_hit could probably be updated BEFORE
+# the hitpacket arrives.
+max_last_hit_strikes = 3
+
+# Amount of times someone can exceed the max hit counter difference in a row
+max_hit_counter_strikes = 3
+
+# Max difference between estimated hit counter and actual hit counter
+max_hit_counter_difference = 4
+
+# max times someones hp can exceed actual max hp, used to avoid kicks when
+# switch items, and gaining above max hp from unholy spirits
+max_max_hp_strikes = 4
+
+
 log_message = "{playername}({ip}) was removed for: {reason}."
 disconnect_message = "{name} - You are being removed for: {reason}."
