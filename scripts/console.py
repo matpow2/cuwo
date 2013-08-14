@@ -81,18 +81,14 @@ class ConsoleInput(LineReceiver):
         self.interface = ScriptInterface(server, 'admin', 'console')
 
     def lineReceived(self, line):
-        if line.startswith('/'):
-            command, args = parse_command(line[1:])
-            if command == 'stop':
-                self.server.stop()
-                return
-            ret = self.server.call_command(self.interface, command, args)
-            if not ret:
-                return
-            self.sendLine(ret.encode(sys.stdout.encoding, 'replace'))
-        else:
-            self.server.send_chat(line)
-
+        command, args = parse_command(line)
+        if command == 'stop':
+            self.server.stop()
+            return
+        ret = self.server.call_command(self.interface, command, args)
+        if not ret:
+            return
+        self.sendLine(ret.encode(sys.stdout.encoding, 'replace'))
 
 class ConsoleServer(ServerScript):
     connection_class = None
