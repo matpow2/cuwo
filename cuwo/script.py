@@ -225,6 +225,8 @@ class ServerScript(BaseScript):
             ret = 'Invalid player specified'
         except InsufficientRights:
             ret = 'Insufficient rights'
+        except TypeError as e:
+            ret = str(e)
         except Exception:
             import traceback
             traceback.print_exc()
