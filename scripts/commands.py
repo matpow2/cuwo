@@ -37,9 +37,9 @@ def get_class():
 @command
 @admin
 def say(script, *args):
-    message = ' '.join(args)
+    message = 'Console: ' + ' '.join(args)
     script.server.send_chat(message)
-
+    return message
 
 @command
 def server(script):
