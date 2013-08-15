@@ -81,6 +81,9 @@ class ConsoleInput(LineReceiver):
         self.interface = ScriptInterface(server, 'admin', 'console')
 
     def lineReceived(self, line):
+        if not line.strip():
+            return
+
         command, args = parse_command(line)
         if command == 'stop':
             self.server.stop()
