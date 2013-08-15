@@ -58,12 +58,16 @@ if sys.platform == 'win32':
                     # ignore special characters
                     msvcrt.getwch()
                 elif c == u'\x08':  # delete
+                    if not self.input.strip(): # Don't delete '>>> '
+                        return
                     self.input = self.input[:-1]
                     stdout.write('\x08 \x08')
                 else:
-                    self.input += c
+                    try: # Protect the console from non-ASCII symbol (like EUR)
                     stdout.write(c)
-
+                        self.input += c
+                    except Exception:
+                        return
         def write(self, data):
             stdout.write(data)
 
