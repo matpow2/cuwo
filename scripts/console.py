@@ -64,7 +64,7 @@ if sys.platform == 'win32':
                     stdout.write('\x08 \x08')
                 else:
                     try: # Protect the console from non-ASCII symbol (like EUR)
-                    stdout.write(c)
+                        stdout.write(c)
                         self.input += c
                     except Exception:
                         return
