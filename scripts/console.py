@@ -80,8 +80,12 @@ class ConsoleInput(LineReceiver):
         self.server = server
         self.interface = ScriptInterface(server, 'admin', 'console')
 
+    def connectionMade(self):
+        self.transport.write('>>> ')
+
     def lineReceived(self, line):
         if not line.strip():
+            self.transport.write('>>> ')
             return
 
         command, args = parse_command(line)
@@ -92,6 +96,7 @@ class ConsoleInput(LineReceiver):
         if not ret:
             return
         print ret.encode(sys.stdout.encoding, 'replace')
+        self.transport.write('>>> ')
 
 class ConsoleServer(ServerScript):
     connection_class = None
