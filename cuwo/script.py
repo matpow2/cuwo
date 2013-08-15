@@ -217,7 +217,7 @@ class ServerScript(BaseScript):
             return
         f = self.commands.get(command.lower(), None)
         if not f:
-            return 'Unknown command. Type "help" for help.'
+            return 'Unknown command. Type the command "help" for help.'
         user.parent = self  # for ScriptInterface
         try:
             ret = f(user, *args) or ''
