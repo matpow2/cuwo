@@ -39,6 +39,7 @@ from cuwo import entity
 
 import collections
 import os
+import time
 import sys
 import pprint
 import traceback
@@ -547,10 +548,33 @@ def main():
         root = os.path.abspath(os.path.join(path, '..'))
         sys.path.append(root)
 
+    print '__/\\____/\\____/\\____/\\____/\\____/\\____/\\__'
+    print '\\    /\\    /\\    /\\    /\\    /\\    /\\    /'
+    print '/_  _\\/_  _\\/_  _\\/_  _\\/_  _\\/_  _\\/_  _\\'
+    print '  \\/    \\/    \\/    \\/    \\/    \\/    \\/  '
+
+    print '                                          '
+    print '__/\\__    ___ _   ___      _____    __/\\__'
+    print '\\    /   / __| | | \\ \\ /\\ / / _ \\   \\    /'
+    print '/_  _\\  | (__| |_| |\\ V  V / (_) |  /_  _\\'
+    print '  \\/     \\___|\\__,_| \\_/\\_/ \\___/     \\/  '
+
+    print '                                          '
+    print '__/\\____/\\____/\\____/\\____/\\____/\\____/\\__'
+    print '\\    /\\    /\\    /\\    /\\    /\\    /\\    /'
+    print '/_  _\\/_  _\\/_  _\\/_  _\\/_  _\\/_  _\\/_  _\\'
+    print '  \\/    \\/    \\/    \\/    \\/    \\/    \\/  '
+    
+    print '                                          '
+    
+    start_time = reactor.seconds()
+    print 'Server started on %s' % time.strftime('%c')
+    
     config = ConfigObject('./config')
     server = CubeWorldServer(config)
 
     print 'cuwo running on port %s' % config.base.port
+    print 'cuwo loaded in {0:.2f}s.'.format(reactor.seconds() - start_time)
 
     if config.base.profile_file is None:
         reactor.run()

@@ -37,9 +37,9 @@ def get_class():
 @command
 @admin
 def say(script, *args):
-    message = ' '.join(args)
+    message = 'Console: ' + ' '.join(args)
     script.server.send_chat(message)
-
+    return message
 
 @command
 def server(script):
@@ -114,7 +114,10 @@ def damage_player(script, player, damage=0, stun_duration=0):
 @command
 @admin
 def kill(script, name=None):
-    player = script.get_player(name)
+    try:
+        player = script.get_player(name)
+    except AttributeError:
+        return 'No player to kill specified'
     damage_player(script, player, damage=player.entity_data.hp + 100.0)
     message = '%s was killed' % player.name
     print message

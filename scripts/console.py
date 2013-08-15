@@ -58,12 +58,16 @@ if sys.platform == 'win32':
                     # ignore special characters
                     msvcrt.getwch()
                 elif c == u'\x08':  # delete
+                    if not self.input.strip(): # Don't delete '>>> '
+                        return
                     self.input = self.input[:-1]
                     stdout.write('\x08 \x08')
                 else:
-                    self.input += c
-                    stdout.write(c)
-
+                    try: # Protect the console from non-ASCII symbol (like EUR)
+                        stdout.write(c)
+                        self.input += c
+                    except Exception:
+                        return
         def write(self, data):
             stdout.write(data)
 
@@ -80,19 +84,23 @@ class ConsoleInput(LineReceiver):
         self.server = server
         self.interface = ScriptInterface(server, 'admin', 'console')
 
-    def lineReceived(self, line):
-        if line.startswith('/'):
-            command, args = parse_command(line[1:])
-            if command == 'stop':
-                self.server.stop()
-                return
-            ret = self.server.call_command(self.interface, command, args)
-            if not ret:
-                return
-            self.sendLine(ret.encode(sys.stdout.encoding, 'replace'))
-        else:
-            self.server.send_chat(line)
+    def connectionMade(self):
+        self.transport.write('>>> ')
 
+    def lineReceived(self, line):
+        if not line.strip():
+            self.transport.write('>>> ')
+            return
+
+        command, args = parse_command(line)
+        if command == 'stop':
+            self.server.stop()
+            return
+        ret = self.server.call_command(self.interface, command, args)
+        if not ret:
+            return
+        print ret.encode(sys.stdout.encoding, 'replace')
+        self.transport.write('>>> ')
 
 class ConsoleServer(ServerScript):
     connection_class = None
