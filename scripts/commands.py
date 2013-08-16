@@ -19,8 +19,9 @@
 Default set of commands bundled with cuwo
 """
 
-from cuwo.script import ServerScript, command, admin
-from cuwo.common import get_chunk
+from cuwo.script import ServerScript, ScriptInterface, command, admin
+from cuwo.common import get_chunk, get_entity_max_health, get_power
+from cuwo.constants import NPC_NAMES, CLASS_NAMES, CLASS_SPECIALIZATIONS
 from cuwo.packet import HitPacket, HIT_NORMAL
 from cuwo.vector import Vector3
 import platform
@@ -165,6 +166,38 @@ def who(script):
 @command
 def whowhere(script):
     return who_where(script, True)
+
+
+@command
+def player(script, name):
+    player = script.get_player(name)
+    entity_data = player.entity_data
+
+    character = NPC_NAMES[entity_data.entity_type]
+
+    class_type = entity_data.class_type
+    class_spec = entity_data.specialization
+    klass = CLASS_NAMES[class_type]
+    spec = CLASS_SPECIALIZATIONS[class_type][class_spec]
+
+    level = entity_data.level
+    power = get_power(level)
+
+    hp = entity_data.hp
+    max_hp = get_entity_max_health(entity_data)
+
+    info = [("{character}").format(character=character),
+            ("Class: {klass} ({spec})").format(klass=klass, spec=spec),
+            ("Level: {level} (+{power})").format(level=level, power=power),
+            ("Health: {hp} / {max_hp}").format(hp=int(hp), max_hp=int(max_hp))]
+    for idx, line in enumerate(info):
+        info[idx] = ('[{name}] ' + line).format(name=name)
+
+    if isinstance(script, ScriptInterface):
+        for line in info:
+            print line
+    else:
+        script.connection.send_lines(info)
 
 
 @command

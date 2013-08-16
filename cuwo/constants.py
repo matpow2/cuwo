@@ -48,6 +48,24 @@ ROGUE_CLASS = 4
 ASSASSIN = 0
 NINJA = 1
 
+CLASS_NAMES = {
+    1: 'Warrior',
+    2: 'Ranger',
+    3: 'Mage',
+    4: 'Rogue'
+}
+
+CLASS_SPECIALIZATIONS = {
+    1: {0: 'Berserker',
+        1: 'Guardian'},
+    2: {0: 'Sniper',
+        1: 'Scout'},
+    3: {0: 'Fire',
+        1: 'Water'},
+    4: {0: 'Assassin',
+        1: 'Ninja'}
+}
+
 ITEM_NAMES = {
     0: 'Crash',
     2: 'Formula',
