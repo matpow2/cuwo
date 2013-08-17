@@ -48,6 +48,32 @@ ROGUE_CLASS = 4
 ASSASSIN = 0
 NINJA = 1
 
+CLASS_NAMES = {
+    WARRIOR_CLASS: 'Warrior',
+    RANGER_CLASS: 'Ranger',
+    MAGE_CLASS: 'Mage',
+    ROGUE_CLASS: 'Rogue'
+}
+
+CLASS_SPECIALIZATIONS = {
+    WARRIOR_CLASS: {
+        BERSERKER: 'Berserker',
+        GUARDIAN: 'Guardian'
+    },
+    RANGER_CLASS: {
+        SNIPER: 'Sniper',
+        SCOUT: 'Scout'
+    },
+    MAGE_CLASS: {
+        FIRE_MAGE: 'Fire',
+        WATER_MAGE: 'Water'
+    },
+    ROGUE_CLASS: {
+        ASSASSIN: 'Assassin',
+        NINJA: 'Ninja'
+    }
+}
+
 ITEM_NAMES = {
     0: 'Crash',
     2: 'Formula',
