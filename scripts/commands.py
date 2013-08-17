@@ -176,7 +176,7 @@ def player(script, name):
     klass = CLASS_NAMES[typ]
     spec = CLASS_SPECIALIZATIONS[typ][entity.specialization]
     level = entity.level
-    return '%s lvl %s %s %s' % (player.name, level, klass, spec)
+    return "'%s' is a lvl %s %s %s" % (player.name, level, klass, spec)
 
 
 @command
