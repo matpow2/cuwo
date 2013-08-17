@@ -19,9 +19,9 @@
 Default set of commands bundled with cuwo
 """
 
-from cuwo.script import ServerScript, ScriptInterface, command, admin
-from cuwo.common import get_chunk, get_entity_max_health, get_power
-from cuwo.constants import NPC_NAMES, CLASS_NAMES, CLASS_SPECIALIZATIONS
+from cuwo.script import ServerScript, command, admin
+from cuwo.common import get_chunk
+from cuwo.constants import CLASS_NAMES, CLASS_SPECIALIZATIONS
 from cuwo.packet import HitPacket, HIT_NORMAL
 from cuwo.vector import Vector3
 import platform
@@ -172,32 +172,12 @@ def whowhere(script):
 def player(script, name):
     player = script.get_player(name)
     entity_data = player.entity_data
-
-    character = NPC_NAMES[entity_data.entity_type]
-
+    level = entity_data.level
     class_type = entity_data.class_type
     class_spec = entity_data.specialization
     klass = CLASS_NAMES[class_type]
     spec = CLASS_SPECIALIZATIONS[class_type][class_spec]
-
-    level = entity_data.level
-    power = get_power(level)
-
-    hp = entity_data.hp
-    max_hp = get_entity_max_health(entity_data)
-
-    info = ["%s" % character,
-            "Class: %s (%s)" % (klass, spec),
-            "Level: %d (+%d)" % (level, power),
-            "Health: %d / %d" % (hp, max_hp)]
-    for idx, line in enumerate(info):
-        info[idx] = ('[%s] ' + line) % name
-
-    if isinstance(script, ScriptInterface):
-        for line in info:
-            print line
-    else:
-        script.connection.send_lines(info)
+    return '[%s] Lvl %d %s (%s)' % (name, level, klass, spec)
 
 
 @command
