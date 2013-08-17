@@ -186,12 +186,12 @@ def player(script, name):
     hp = entity_data.hp
     max_hp = get_entity_max_health(entity_data)
 
-    info = [("{character}").format(character=character),
-            ("Class: {klass} ({spec})").format(klass=klass, spec=spec),
-            ("Level: {level} (+{power})").format(level=level, power=power),
-            ("Health: {hp} / {max_hp}").format(hp=int(hp), max_hp=int(max_hp))]
+    info = ["%s" % character,
+            "Class: %s (%s)" % (klass, spec),
+            "Level: %d (+%d)" % (level, power),
+            "Health: %d / %d" % (hp, max_hp)]
     for idx, line in enumerate(info):
-        info[idx] = ('[{name}] ' + line).format(name=name)
+        info[idx] = ('[%s] ' + line) % name
 
     if isinstance(script, ScriptInterface):
         for line in info:

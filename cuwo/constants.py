@@ -49,21 +49,29 @@ ASSASSIN = 0
 NINJA = 1
 
 CLASS_NAMES = {
-    1: 'Warrior',
-    2: 'Ranger',
-    3: 'Mage',
-    4: 'Rogue'
+    WARRIOR_CLASS: 'Warrior',
+    RANGER_CLASS: 'Ranger',
+    MAGE_CLASS: 'Mage',
+    ROGUE_CLASS: 'Rogue'
 }
 
 CLASS_SPECIALIZATIONS = {
-    1: {0: 'Berserker',
-        1: 'Guardian'},
-    2: {0: 'Sniper',
-        1: 'Scout'},
-    3: {0: 'Fire',
-        1: 'Water'},
-    4: {0: 'Assassin',
-        1: 'Ninja'}
+    WARRIOR_CLASS: {
+        BERSERKER: 'Berserker',
+        GUARDIAN: 'Guardian'
+    },
+    RANGER_CLASS: {
+        SNIPER: 'Sniper',
+        SCOUT: 'Scout'
+    },
+    MAGE_CLASS: {
+        FIRE_MAGE: 'Fire',
+        WATER_MAGE: 'Water'
+    },
+    ROGUE_CLASS: {
+        ASSASSIN: 'Assassin',
+        NINJA: 'Ninja'
+    }
 }
 
 ITEM_NAMES = {
