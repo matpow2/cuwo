@@ -29,97 +29,95 @@ class InsufficientRights(Exception):
     pass
 
 
-def get_command_list(playerscript):
-    script_list = playerscript.server.scripts.scripts
-    rights = playerscript.connection.rights
-    available_commands = []
-    for script in script_list.itervalues():
-        if script.commands is None:
-            continue
-        for name, command in script.commands.iteritems():
-            user_types = getattr(command, 'user_types', None)
-            if (user_types is None
-                    or not rights.isdisjoint(user_types)):
-                available_commands.append(name)
-    return available_commands
-
-
-def get_command_func(playerscript, func_name):
-    script_list = playerscript.server.scripts.scripts
-    for script in script_list.itervalues():
-        if script.commands is None:
-            continue
-        if func_name in script.commands:
-            return script.commands[func_name]
-    return None
-
-
-def resolve_command_func(func):
-    new_func = getattr(func, 'func', None)
-    if not new_func is None:
-        func = new_func
-    return func
-
-
-def get_min_command_arguments(func):
-    func_info = inspect.getargspec(func)
-    min_args = len(func_info.args) - 1
-    if not func_info.defaults is None:
-        min_args -= len(func_info.defaults)
-    return min_args
-
-
-def get_command_syntax(func):
-    func_info = inspect.getargspec(func)
-    syntax = 'Syntax: /' + func.func_name
-    for i in xrange(1, len(func_info.args)):
-        argument = func_info.args[i]
-        if not func_info.defaults is None:
-            defaults_start = len(func_info.args) - len(func_info.defaults)
-            defaults_index = i - defaults_start
-            if defaults_index >= 0:
-                default = func_info.defaults[defaults_index]
-                if default is None:
-                    syntax += ' [%s]' % argument
-                else:
-                    syntax += ' [%s=%s]' % (argument, default)
-                continue
-        syntax += ' %s' % argument
-    return syntax
-
-
-def get_command_help(func):
-    information = func.__doc__
-    syntax = get_command_syntax(func)
-
-    if information is None:
-        return syntax
-    return "%s\n%s" % (information, syntax)
-
-
 def get_player(server, value):
     ret = None
     players = server.players
     try:
         if value.startswith('#'):
             value = int(value[1:])
-            ret = players[value]
-        else:
-            try:
-                ret = players[value]
-            except KeyError:
-                value = value.lower()
-                for player in players.values():
-                    name = player.entity_data.name.lower()
-                    if name == value:
-                        return player
-                    if name.count(value):
-                        ret = player
+            return players[value]
+        try:
+            return players[value]
+        except KeyError:
+            pass
+        value = value.lower()
+        for player in players.values():
+            name = player.name.lower()
+            if name == value:
+                return player
+            if name.count(value):
+                ret = player
     except (KeyError, IndexError, ValueError):
         pass
     if ret is None:
         raise InvalidPlayer()
     return ret
+
+
+# command decorators/class implementation
+
+class Command(object):
+    def __init__(self, func):
+        self.func = func
+        self.original = original = getattr(func, 'func', func)
+        self.name = original.func_name
+        self.module = original.__module__
+        self.user_types = getattr(original, 'user_types', None)
+        self.doc = original.__doc__
+        self.__call__ = func
+
+        # parse function object information
+
+        # get min args
+        func_info = inspect.getargspec(original)
+        self.min_args = len(func_info.args) - 1
+        if not func_info.defaults is None:
+            self.min_args -= len(func_info.defaults)
+
+    def __call__(self, *arg, **kw):
+        return self.func(*arg, **kw)
+
+    def is_compatible(self, rights):
+        if self.user_types is None:
+            return True
+        return not rights.isdisjoint(self.user_types)
+
+    def get_help(self):
+        syntax = self.get_syntax()
+        if self.doc is None:
+            return syntax
+        return "%s\n%s" % (self.doc, syntax)
+
+    def get_syntax(self):
+        func_info = inspect.getargspec(self.original)
+        if func_info.defaults is not None:
+            defaults_start = len(func_info.args) - len(func_info.defaults)
+        arguments = [self.name]
+        for i in xrange(1, len(func_info.args)):
+            argument = func_info.args[i]
+            if func_info.defaults is None:
+                arguments.append(argument)
+                continue
+            defaults_index = i - defaults_start
+            if defaults_index >= 0:
+                default = func_info.defaults[defaults_index]
+                if default is None:
+                    arguments.append('[%s]' % argument)
+                else:
+                    arguments.append('[%s=%s]' % (argument, default))
+                continue
+            arguments.append(argument)
+        return 'Syntax: /' + ' '.join(arguments)
+
+
+def command(func, klass=None):
+    command = Command(func)
+    if klass is None:
+        klass = sys.modules[command.module].get_class()
+    if klass.commands is None:
+        klass.commands = {}
+    klass.commands[command.name] = command
+    return func
 
 
 def restrict(*user_types):
@@ -131,10 +129,9 @@ def restrict(*user_types):
             if script.connection.rights.isdisjoint(user_types):
                 raise InsufficientRights()
             return func(script, *arg, **kw)
-        new_func.func = func
-        new_func.__module__ = func.__module__
-        new_func.func_name = func.func_name
-        new_func.user_types = user_types
+        original = getattr(func, 'func', func)
+        original.user_types = user_types
+        new_func.func = original
         return new_func
     return dec
 
@@ -148,30 +145,33 @@ class ScriptManager(object):
     Manages scripts for either a server or connection
     """
     def __init__(self):
-        self.scripts = collections.OrderedDict()
+        self.items = collections.OrderedDict()
         self.cached_calls = {}
 
     def __getattr__(self, name):
-        return self.scripts[name]
+        return self.items[name]
 
     def add(self, script):
-        self.scripts[script.script_name] = script
+        self.items[script.script_name] = script
         self.cached_calls.clear()
 
     def remove(self, script):
-        del self.scripts[script.script_name]
+        del self.items[script.script_name]
         self.cached_calls.clear()
 
     def unload(self):
-        for script in self.scripts.values():
+        for script in self.items.values():
             script.unload()
+
+    def get(self):
+        return self.items.itervalues()
 
     def call(self, event_name, **kw):
         try:
             handlers = self.cached_calls[event_name]
         except KeyError:
             handlers = []
-            for script in self.scripts.values():
+            for script in self.items.values():
                 f = getattr(script, event_name, None)
                 if not f:
                     continue
@@ -236,6 +236,20 @@ class ConnectionScript(BaseScript):
             return self.connection
         return get_player(self.server, name)
 
+    def get_commands(self):
+        rights = self.connection.rights
+        for command in self.server.get_commands():
+            if command.is_compatible(rights):
+                yield command
+
+    def get_command(self, name):
+        command = self.server.get_command(name)
+        if not command:
+            return
+        if not command.is_compatible(self.connection.rights):
+            return
+        return command
+
     def unload(self):
         if self.parent is None:
             return
@@ -286,18 +300,16 @@ class ServerScript(BaseScript):
     def call_command(self, user, command, args):
         if self.commands is None:
             return
-        f = self.commands.get(command.lower(), None)
-        if not f:
+        command = self.commands.get(command.lower(), None)
+        if not command:
             return
         user.parent = self  # for ScriptInterface
 
-        resolved_func = resolve_command_func(f)
-        min_args = get_min_command_arguments(resolved_func)
-        if len(args) < min_args:
-            return get_command_syntax(resolved_func)
+        if len(args) < command.min_args:
+            return command.get_syntax()
 
         try:
-            ret = f(user, *args) or ''
+            ret = command(user, *args) or ''
         except InvalidPlayer:
             ret = 'Invalid player specified'
         except InsufficientRights:
@@ -324,13 +336,8 @@ class ScriptInterface(object):
     def get_player(self, name):
         return get_player(self.server, name)
 
+    def get_commands(self):
+        return self.server.get_commands()
 
-# decorators for commands
-def command(func, klass=None, level=None):
-    if klass is None:
-        klass = sys.modules[func.__module__].get_class()
-    if klass.commands is None:
-        klass.commands = {}
-    func.level = level
-    klass.commands[func.func_name] = func
-    return func
+    def get_command(self, name):
+        return self.server.get_command(name)

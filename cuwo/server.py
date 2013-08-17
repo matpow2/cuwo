@@ -479,6 +479,23 @@ class CubeWorldServer(Factory):
     def get_mode(self):
         return self.scripts.call('get_mode').result
 
+    # command convenience methods (for /help)
+
+    def get_commands(self):
+        for script in self.scripts.get():
+            if script.commands is None:
+                continue
+            for command in script.commands.itervalues():
+                yield command
+
+    def get_command(self, name):
+        for script in self.scripts.get():
+            if script.commands is None:
+                continue
+            command = script.commands.get(name, None)
+            if command:
+                return command
+
     # data store methods
 
     def load_data(self, name, default=None):

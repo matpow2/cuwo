@@ -19,10 +19,7 @@
 Default set of commands bundled with cuwo
 """
 
-from cuwo.script import (ServerScript, command, admin,
-                         get_command_help, get_command_syntax,
-                         get_command_list, resolve_command_func,
-                         get_command_func)
+from cuwo.script import ServerScript, command, admin
 from cuwo.common import get_chunk
 from cuwo.constants import CLASS_NAMES, CLASS_SPECIALIZATIONS
 from cuwo.packet import HitPacket, HIT_NORMAL
@@ -65,24 +62,16 @@ def login(script, password):
 
 
 @command
-def syntax(script, command):
-    func = get_command_func(script, command)
-    if func is None:
-        return 'there is no command called %s' % command
-    return get_command_syntax(resolve_command_func(func))
-
-
-@command
-def help(script, command=None):
-    if command is None:
-        list = get_command_list(script)
-        list.sort()
-        return 'Commands: ' + ', '.join(list)
+def help(script, name=None):
+    if name is None:
+        commands = [item.name for item in script.get_commands()]
+        commands.sort()
+        return 'Commands: ' + ', '.join(commands)
     else:
-        func = get_command_func(script, command)
-        if func is None:
-            return 'there is no command called %s' % command
-        return get_command_help(resolve_command_func(func))
+        command = script.get_command(name)
+        if command is None:
+            return 'No such command'
+        return command.get_help()
 
 
 @command
