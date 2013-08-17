@@ -18,6 +18,7 @@
 from cuwo.types import AttributeSet, AttributeDict
 import collections
 import sys
+import inspect
 
 
 class InvalidPlayer(Exception):
@@ -26,6 +27,74 @@ class InvalidPlayer(Exception):
 
 class InsufficientRights(Exception):
     pass
+
+
+def get_command_list(playerscript):
+    script_list = playerscript.server.scripts.scripts
+    rights = playerscript.connection.rights
+    available_commands = []
+    for script in script_list.itervalues():
+        if script.commands is None:
+            continue
+        for name, command in script.commands.iteritems():
+            user_types = getattr(command, 'user_types', None)
+            if (user_types is None
+                    or not rights.isdisjoint(user_types)):
+                available_commands.append(name)
+    return available_commands
+
+
+def get_command_func(playerscript, func_name):
+    script_list = playerscript.server.scripts.scripts
+    for script in script_list.itervalues():
+        if script.commands is None:
+            continue
+        if func_name in script.commands:
+            return script.commands[func_name]
+    return None
+
+
+def resolve_command_func(func):
+    new_func = getattr(func, 'func', None)
+    if not new_func is None:
+        func = new_func
+    return func
+
+
+def get_min_command_arguments(func):
+    func_info = inspect.getargspec(func)
+    min_args = len(func_info.args) - 1
+    if not func_info.defaults is None:
+        min_args -= len(func_info.defaults)
+    return min_args
+
+
+def get_command_syntax(func):
+    func_info = inspect.getargspec(func)
+    syntax = 'Syntax: /' + func.func_name
+    for i in xrange(1, len(func_info.args)):
+        argument = func_info.args[i]
+        if not func_info.defaults is None:
+            defaults_start = len(func_info.args) - len(func_info.defaults)
+            defaults_index = i - defaults_start
+            if defaults_index >= 0:
+                default = func_info.defaults[defaults_index]
+                if default is None:
+                    syntax += ' [%s]' % argument
+                else:
+                    syntax += ' [%s=%s]' % (argument, default)
+                continue
+        syntax += ' %s' % argument
+    return syntax
+
+
+def get_command_help(func):
+    information = func.__doc__
+    syntax = get_command_syntax(func)
+
+    if information is None:
+        return syntax
+    return "%s\n%s" % (information, syntax)
 
 
 def get_player(server, value):
@@ -62,8 +131,10 @@ def restrict(*user_types):
             if script.connection.rights.isdisjoint(user_types):
                 raise InsufficientRights()
             return func(script, *arg, **kw)
+        new_func.func = func
         new_func.__module__ = func.__module__
         new_func.func_name = func.func_name
+        new_func.user_types = user_types
         return new_func
     return dec
 
@@ -219,6 +290,12 @@ class ServerScript(BaseScript):
         if not f:
             return
         user.parent = self  # for ScriptInterface
+
+        resolved_func = resolve_command_func(f)
+        min_args = get_min_command_arguments(resolved_func)
+        if len(args) < min_args:
+            return get_command_syntax(resolved_func)
+
         try:
             ret = f(user, *args) or ''
         except InvalidPlayer:
