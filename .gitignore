@@ -34,5 +34,7 @@ nosetests.xml
 .project
 .pydevproject
 
-# cuwo folders
+# cuwo folders and files
 logs/
+cuwo/bytes.cpp
+cuwo/entity.cpp
