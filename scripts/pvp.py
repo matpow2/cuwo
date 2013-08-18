@@ -25,10 +25,10 @@ from cuwo.entity import FLAGS_1_HOSTILE
 
 class VersusConnection(ConnectionScript):
     def on_join(self, event):
-        self.entity_data.flags_1 |= FLAGS_1_HOSTILE
+        self.connection.entity_data.flags_1 |= FLAGS_1_HOSTILE
 
     def on_flags_update(self, event):
-        self.entity_data.flags_1 |= FLAGS_1_HOSTILE
+        self.connection.entity_data.flags_1 |= FLAGS_1_HOSTILE
 
     def on_kill(self, event):
         self.server.send_chat('%s killed %s!' % (self.connection.name,
