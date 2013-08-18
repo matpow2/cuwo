@@ -327,13 +327,16 @@ class ScriptInterface(object):
     console and IRC commands
     """
 
-    def __init__(self, server, *rights):
+    def __init__(self, name, server, *rights):
+        self.name = name
         self.rights = AttributeSet(rights)
         self.server = server
         self.connection = self
         self.parent = None  # set by call_command
 
     def get_player(self, name):
+        if name is None:
+            raise InvalidPlayer()
         return get_player(self.server, name)
 
     def get_commands(self):

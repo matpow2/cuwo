@@ -51,7 +51,7 @@ class IRCBot(irc.IRCClient):
         self.nickname = factory.nickname
         self.password = factory.password
         self.channel_password = factory.channel_password
-        self.interface = ScriptInterface(server, 'admin', 'irc')
+        self.interface = ScriptInterface('IRC', server, 'admin', 'irc')
 
     def signedOn(self):
         self.join(self.factory.channel, self.factory.channel_password)
