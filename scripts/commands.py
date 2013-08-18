@@ -195,4 +195,4 @@ def player(script, name):
 
 @command
 def scripts(script):
-    return 'Scripts: ' + ', '.join(script.server.scripts.scripts)
+    return 'Scripts: ' + ', '.join(script.server.scripts.items)
