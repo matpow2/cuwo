@@ -45,7 +45,7 @@ def say(script, *message):
 
 @command
 def server(script):
-    """Returns information about the server's platform"""
+    """Returns information about the server's platform."""
     msg = 'Server is running on %r' % platform.system()
     revision = script.server.git_rev
     if revision is not None:
@@ -146,10 +146,10 @@ def kill(script, name=None):
 
 @command
 @admin
-def stun(script, name, stun_duration=500):
+def stun(script, name, milliseconds=1000):
     """Stuns a player for a specified duration of time."""
     player = script.get_player(name)
-    damage_player(script, player, stun_duration=int(stun_duration))
+    damage_player(script, player, stun_duration=int(milliseconds))
     message = '%s was stunned' % player.name
     print message
     script.server.send_chat(message)
