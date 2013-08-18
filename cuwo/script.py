@@ -124,9 +124,7 @@ def command(func, klass=None):
 
 
 def restrict(*user_types):
-    """
-    Restricts the command to certain user types
-    """
+    """Restricts the command to certain user types."""
     def dec(func):
         def new_func(script, *arg, **kw):
             if script.connection.rights.isdisjoint(user_types):
@@ -144,9 +142,8 @@ admin = restrict('admin')
 
 
 class ScriptManager(object):
-    """
-    Manages scripts for either a server or connection
-    """
+    """Manages scripts for either a server or connection."""
+
     def __init__(self):
         self.items = collections.OrderedDict()
         self.cached_calls = {}

@@ -38,12 +38,14 @@ def get_class():
 @command
 @admin
 def say(script, *message):
+    """Sends a global server message."""
     message = ' '.join(message)
     script.server.send_chat(message)
 
 
 @command
 def server(script):
+    """Returns information about the server's platform"""
     msg = 'Server is running on %r' % platform.system()
     revision = script.server.git_rev
     if revision is not None:
@@ -53,6 +55,7 @@ def server(script):
 
 @command
 def login(script, password):
+    """Logs in using the specified password."""
     password = password.lower()
     user_types = script.server.passwords.get(password, [])
     if not user_types:
@@ -63,6 +66,7 @@ def login(script, password):
 
 @command
 def help(script, name=None):
+    """Returns information about commands."""
     if name is None:
         commands = [item.name for item in script.get_commands()]
         commands.sort()
@@ -77,6 +81,7 @@ def help(script, name=None):
 @command
 @admin
 def kick(script, name):
+    """Kicks the specified player."""
     player = script.get_player(name)
     player.kick()
 
@@ -84,7 +89,7 @@ def kick(script, name):
 @command
 @admin
 def setclock(script, value):
-    """Sets the time of day. Format: HH:mm. Example: 16:00"""
+    """Sets the time of day. Format: hh:mm."""
     try:
         script.server.set_clock(value)
     except ValueError:
@@ -94,6 +99,7 @@ def setclock(script, value):
 
 @command
 def whereis(script, name=None):
+    """Shows where a player is in the world."""
     player = script.get_player(name)
     if player is script.connection:
         message = 'You are at %s'
@@ -104,6 +110,7 @@ def whereis(script, name=None):
 
 @command
 def pm(script, name, *message):
+    """Sends a private message to a player."""
     player = script.get_player(name)
     message = ' '.join(message)
     player.send_chat('%s (PM): %s' % (script.connection.name, message))
@@ -129,6 +136,7 @@ def damage_player(script, player, damage=0, stun_duration=0):
 @command
 @admin
 def kill(script, name=None):
+    """Kills a player."""
     player = script.get_player(name)
     damage_player(script, player, damage=player.entity_data.hp + 100.0)
     message = '%s was killed' % player.name
@@ -139,6 +147,7 @@ def kill(script, name=None):
 @command
 @admin
 def stun(script, name, stun_duration=500):
+    """Stuns a player for a specified duration of time."""
     player = script.get_player(name)
     damage_player(script, player, stun_duration=int(stun_duration))
     message = '%s was stunned' % player.name
@@ -149,6 +158,7 @@ def stun(script, name, stun_duration=500):
 @command
 @admin
 def heal(script, name=None, hp=1000):
+    """Heals a player by a specified amount."""
     player = script.get_player(name)
     damage_player(script, player, damage=-int(hp))
     message = '%s was healed' % player.name
@@ -174,16 +184,19 @@ def who_where(script, include_where):
 
 @command
 def who(script):
+    """Lists players."""
     return who_where(script, False)
 
 
 @command
 def whowhere(script):
+    """Lists players and their locations."""
     return who_where(script, True)
 
 
 @command
 def player(script, name):
+    """Returns information about a player."""
     player = script.get_player(name)
     entity = player.entity_data
     typ = entity.class_type
@@ -195,4 +208,5 @@ def player(script, name):
 
 @command
 def scripts(script):
+    """Lists the currently loaded scripts."""
     return 'Scripts: ' + ', '.join(script.server.scripts.items)

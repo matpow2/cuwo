@@ -74,6 +74,7 @@ def get_class():
 @command
 @admin
 def ban(script, name, *reason):
+    """Bans a player."""
     player = script.get_player(name)
     reason = ' '.join(reason) or DEFAULT_REASON
     script.parent.ban(player.address.host, reason)
@@ -82,6 +83,7 @@ def ban(script, name, *reason):
 @command
 @admin
 def unban(script, ip):
+    """Unbans a player by IP."""
     if script.parent.unban(ip):
         return 'IP "%s" unbanned' % ip
     else:
