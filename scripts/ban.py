@@ -19,7 +19,7 @@
 Ban management
 """
 
-from cuwo.script import ServerScript, command, admin, get_player
+from cuwo.script import ServerScript, command, admin
 
 SELF_BANNED = 'You are banned: {reason}'
 PLAYER_BANNED = '{name} has been banned: {reason}'
@@ -73,9 +73,9 @@ def get_class():
 
 @command
 @admin
-def ban(script, name, *args):
+def ban(script, name, *reason):
     player = script.get_player(name)
-    reason = ' '.join(args) or DEFAULT_REASON
+    reason = ' '.join(reason) or DEFAULT_REASON
     script.parent.ban(player.address.host, reason)
 
 

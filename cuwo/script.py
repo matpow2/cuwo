@@ -109,10 +109,7 @@ class Command(object):
                 continue
             arguments.append(argument)
         if func_info.varargs is not None:
-            if has_defaults:
-                arguments.append('[%s]' % func_info.varargs)
-            else:
-                arguments.append('%s' % func_info.varargs)
+            arguments.append('[%s]' % func_info.varargs)
         return 'Syntax: /' + ' '.join(arguments)
 
 
