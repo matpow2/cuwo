@@ -79,6 +79,7 @@ class ConsoleInput(LineReceiver):
     def __init__(self, server):
         self.server = server
         self.interface = ScriptInterface(server, 'admin', 'console')
+        self.interface.connection.name = 'Console'
 
     def lineReceived(self, line):
         if line.startswith('/'):
