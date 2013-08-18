@@ -107,6 +107,7 @@
         <script type="text/javascript">
           function servers() {
             if (!doneServers) getServers(); doneServers = true;
+            reload_action = setTimeout('getServers()', 20000);
           }
         </script>
         <div class="span12">
