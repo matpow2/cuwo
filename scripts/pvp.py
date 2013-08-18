@@ -24,6 +24,12 @@ from cuwo.entity import FLAGS_1_HOSTILE
 
 
 class VersusConnection(ConnectionScript):
+    def on_join(self, event):
+        self.entity_data.flags_1 |= FLAGS_1_HOSTILE
+
+    def on_flags_update(self, event):
+        self.entity_data.flags_1 |= FLAGS_1_HOSTILE
+
     def on_kill(self, event):
         self.server.send_chat('%s killed %s!' % (self.connection.name,
                                                  event.target.name))
@@ -31,11 +37,6 @@ class VersusConnection(ConnectionScript):
 
 class VersusServer(ServerScript):
     connection_class = VersusConnection
-
-    def update(self, event):
-        for player in self.server.players.values():
-            data = player.entity_data
-            data.flags_1 |= FLAGS_1_HOSTILE
 
     def get_mode(self, event):
         return 'pvp'
