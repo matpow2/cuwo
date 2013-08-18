@@ -47,7 +47,7 @@ def get_player(server, value):
                 return player
             if name.count(value):
                 ret = player
-    except (KeyError, IndexError, ValueError):
+    except (KeyError, IndexError, ValueError, AttributeError):
         pass
     if ret is None:
         raise InvalidPlayer()
