@@ -26,7 +26,7 @@ from cuwo.entity import (EntityData, AppearanceData, ItemData,
 from cuwo.sounds import SOUNDS
 from cuwo.loader import Loader
 from cuwo.bytes import ByteReader, ByteWriter
-from cuwo.constants import FULL_MASK
+from cuwo.constants import FULL_MASK, BLOCK_SCALE 
 from cuwo.exceptions import OutOfData
 import zlib
 
@@ -194,7 +194,7 @@ class Packet4Struct1(Loader):
 
 class SoundAction(Loader):
     def read(self, reader):
-        self.pos = reader.read_vec3() * 65536.0
+        self.pos = reader.read_vec3() * float(BLOCK_SCALE)
         self.sound_index = reader.read_uint32()
         self.pitch = reader.read_float()
         self.volume = reader.read_float()
@@ -203,7 +203,7 @@ class SoundAction(Loader):
         return SOUNDS[self.sound_index]
 
     def write(self, writer):
-        writer.write_vec3(self.pos / 65536.0)
+        writer.write_vec3(self.pos / float(BLOCK_SCALE))
         writer.write_uint32(self.sound_index)
         writer.write_float(self.pitch)
         writer.write_float(self.volume)
