@@ -37,8 +37,8 @@ def get_class():
 
 @command
 @admin
-def say(script, *args):
-    message = ' '.join(args)
+def say(script, *message):
+    message = ' '.join(message)
     script.server.send_chat(message)
 
 
@@ -103,9 +103,9 @@ def whereis(script, name=None):
 
 
 @command
-def pm(script, name, *args):
+def pm(script, name, *message):
     player = script.get_player(name)
-    message = ' '.join(args)
+    message = ' '.join(message)
     player.send_chat('%s (PM): %s' % (script.connection.name, message))
     return 'PM sent'
 

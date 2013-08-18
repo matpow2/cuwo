@@ -90,12 +90,13 @@ class Command(object):
 
     def get_syntax(self):
         func_info = inspect.getargspec(self.original)
-        if func_info.defaults is not None:
+        has_defaults = func_info.defaults is not None
+        if has_defaults:
             defaults_start = len(func_info.args) - len(func_info.defaults)
         arguments = [self.name]
         for i in xrange(1, len(func_info.args)):
             argument = func_info.args[i]
-            if func_info.defaults is None:
+            if not has_defaults:
                 arguments.append(argument)
                 continue
             defaults_index = i - defaults_start
@@ -107,6 +108,11 @@ class Command(object):
                     arguments.append('[%s=%s]' % (argument, default))
                 continue
             arguments.append(argument)
+        if func_info.varargs is not None:
+            if has_defaults:
+                arguments.append('[%s]' % func_info.varargs)
+            else:
+                arguments.append('%s' % func_info.varargs)
         return 'Syntax: /' + ' '.join(arguments)
 
 
