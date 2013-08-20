@@ -172,23 +172,20 @@ class Unknown3(Packet):
 
 class Packet4Struct1(Loader):
     def read(self, reader):
-        self.something = reader.read_uint32()
-        self.something2 = reader.read_uint32()
-        self.something3 = reader.read_uint32()
-        self.something4 = reader.read_uint8()
-        self.something5 = reader.read_uint8()
-        self.something6 = reader.read_uint8()
-        self.something7 = reader.read_uint8()
+        self.pos = reader.read_ivec3() * BLOCK_SCALE
+        self.color_red = reader.read_uint8()
+        self.color_green = reader.read_uint8()
+        self.color_blue = reader.read_uint8()
+        # v  0 = Invisible, 1 = Solid, 2 = Water, 3 = Flat water, ...
+        self.block_type = reader.read_uint8()
         self.something8 = reader.read_uint32()
 
     def write(self, writer):
-        writer.write_uint32(self.something)
-        writer.write_uint32(self.something2)
-        writer.write_uint32(self.something3)
-        writer.write_uint8(self.something4)
-        writer.write_uint8(self.something5)
-        writer.write_uint8(self.something6)
-        writer.write_uint8(self.something7)
+        writer.write_ivec3(self.pos / BLOCK_SCALE)
+        writer.write_uint8(self.color_red)
+        writer.write_uint8(self.color_green)
+        writer.write_uint8(self.color_blue)
+        writer.write_uint8(self.block_type)
         writer.write_uint32(self.something8)
 
 
