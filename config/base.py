@@ -14,7 +14,7 @@ time_modifier = 1.0
 
 # List of scripts to run on the server on startup.
 # Consider turning on 'pvp', i.e. player versus player
-scripts = ['log', 'commands', 'welcome', 'ban', 'ddos', 'console', 'master',
+scripts = ['log', 'ddos', 'commands', 'welcome', 'ban', 'console', 'master',
            'anticheat']
 
 # Passwords used for rights management. Keys are passwords, and values are
@@ -49,5 +49,5 @@ network_interface = ''
 port = 12345
 
 # Server send rate. Change this to a lower value for high-traffic servers.
-# The vanilla server uses 50, but 20 or 25 may be more sane.
+# The vanilla server uses 50, but 20 or 25 may be more sensible.
 update_fps = 50

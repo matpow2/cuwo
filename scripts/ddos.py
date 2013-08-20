@@ -45,8 +45,13 @@ class SaneConnection(ConnectionScript):
 class SaneServer(ServerScript):
     connection_class = SaneConnection
 
+    def on_load(self):
+        self.hard_bans = set()
+
     def on_connection_attempt(self, event):
         host = event.address.host
+        if host in self.hard_bans:
+            return False
         max_count = self.server.config.base.max_connections_per_ip
         for connection in self.server.connections:
             if connection.address.host != host:
@@ -57,6 +62,7 @@ class SaneServer(ServerScript):
         else:
             return
         print 'Too many connections from %s, closing...' % host
+        self.hard_bans.add(host)
         return False
 
 
