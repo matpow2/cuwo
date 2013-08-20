@@ -223,7 +223,7 @@ class KillAction(Loader):
         self.target_id = reader.read_uint64()  # killed
         # is this actually padding? copied as part of MOVQ, but may just be
         # optimization. not used in client, it seems.
-        # could also be related to items_10, seems to use same list
+        # could also be related to DamageAction, seems to use same list
         # copy implementation
         reader.skip(4)
         self.xp_gained = reader.read_int32()
