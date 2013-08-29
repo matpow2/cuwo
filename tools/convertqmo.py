@@ -48,7 +48,10 @@ def to_qmo(in_file, out_file):
         x2, y2, z2 = switch_axes(x, y, z)
         qmo_model.blocks[x2, y2, z2] = v
     qmo_file.models.append(qmo_model)
-    qmo_file.write(ByteWriter(fp=open(out_file, 'wb')))
+    writer = ByteWriter()
+    qmo_file.write(writer)
+    with open(out_file, 'wb') as fp:
+        fp.write(writer.get())
 
 
 def to_cub(in_file, out_file):
@@ -65,7 +68,10 @@ def to_cub(in_file, out_file):
         x, y, z = k
         x2, y2, z2 = switch_axes(x, y, z)
         cub.blocks[x2, y2, z2] = v
-    cub.write(ByteWriter(fp=open(out_file, 'wb')))
+    writer = ByteWriter()
+    cub.write(writer)
+    with open(out_file, 'wb') as fp:
+        fp.write(writer.get())
 
 
 def main():
