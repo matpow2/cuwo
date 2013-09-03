@@ -23,6 +23,7 @@ from cuwo.vector import Vector3
 from cuwo.exceptions import OutOfData
 from cuwo.common import filter_string
 cimport cython
+from libc.limits cimport UINT_MAX
 
 
 cdef extern from "bytes_c.cpp":
@@ -89,7 +90,9 @@ cdef class ByteReader:
         self.pos += size
         return data
 
-    cpdef bytes read(self, unsigned int size):
+    cpdef bytes read(self, unsigned int size=UINT_MAX):
+        if size == UINT_MAX:
+            size = self.get_left()
         cdef char * pos = self.check_available(size)
         return pos[:size]
 
