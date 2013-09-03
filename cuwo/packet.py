@@ -289,8 +289,8 @@ class ChunkItems(Loader):
 
 class MissionData(Loader):
     def read(self, reader):
-        self.section_x = reader.read_int32() / 8
-        self.section_y = reader.read_int32() / 8
+        self.section_x = reader.read_int32() / 8.0
+        self.section_y = reader.read_int32() / 8.0
         self.something1 = reader.read_uint32()  # padding?
         self.something2 = reader.read_uint32()  # also padding???
         # --
@@ -310,8 +310,8 @@ class MissionData(Loader):
         print vars(self)
 
     def write(self, writer):
-        writer.write_int32(self.section_x * 8)
-        writer.write_int32(self.section_y * 8)
+        writer.write_int32(self.section_x * 8.0)
+        writer.write_int32(self.section_y * 8.0)
         writer.write_uint32(self.something1)
         writer.write_uint32(self.something2)
         writer.write_uint32(self.something3)
