@@ -33,7 +33,7 @@ cdef class ByteReader:
 
     cpdef inline unsigned int get_left(self)
     cdef inline char * check_available(self, unsigned int size) except NULL
-    cpdef inline bytes read(self, unsigned int size)
+    cpdef inline bytes read(self, unsigned int size=*)
     cpdef inline bytes read_string(self, unsigned int size)
     cpdef inline unicode read_ascii(self, unsigned int size)
     cpdef inline skip(self, unsigned int size)

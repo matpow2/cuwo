@@ -89,7 +89,9 @@ cdef class ByteReader:
         self.pos += size
         return data
 
-    cpdef bytes read(self, unsigned int size):
+    cpdef bytes read(self, unsigned int size=-1):
+        if size == -1:
+            size = self.get_left()
         cdef char * pos = self.check_available(size)
         return pos[:size]
 
