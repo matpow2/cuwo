@@ -189,6 +189,35 @@ class Packet4Struct1(Loader):
         writer.write_uint32(self.something8)
 
 
+class ParticleData(Loader):
+    def read(self, reader):
+        self.pos = reader.read_qvec3()
+        self.accel = reader.read_vec3()
+        self.color_red = reader.read_float()
+        self.color_blue = reader.read_float()
+        self.color_green = reader.read_float()
+        self.color_alpha = reader.read_float()
+        self.scale = reader.read_float()
+        self.count = reader.read_uint32()
+        # v  0 = Solid, 1 = Bombs, 3 = No accel/spread, 4 = No Gravity, ...
+        self.particle_type = reader.read_uint32()
+        self.spreading = reader.read_float()
+        self.something18 = reader.read_uint32()
+
+    def write(self, writer):
+        writer.write_qvec3(self.pos)
+        writer.write_vec3(self.accel)
+        writer.write_float(self.color_red)
+        writer.write_float(self.color_blue)
+        writer.write_float(self.color_green)
+        writer.write_float(self.color_alpha)
+        writer.write_float(self.scale)
+        writer.write_uint32(self.count)
+        writer.write_uint32(self.particle_type)
+        writer.write_float(self.spreading)
+        writer.write_uint32(self.something18)
+
+
 class SoundAction(Loader):
     def read(self, reader):
         self.pos = reader.read_vec3() * float(BLOCK_SCALE)
@@ -332,7 +361,7 @@ class ServerUpdate(Packet):
     def reset(self):
         self.items_1 = []
         self.player_hits = []
-        self.items_3 = []
+        self.particles = []
         self.sound_actions = []
         self.shoot_actions = []
         self.items_6 = []
@@ -351,11 +380,7 @@ class ServerUpdate(Packet):
 
         self.items_1 = read_list(reader, Packet4Struct1)
         self.player_hits = read_list(reader, HitPacket)
-
-        self.items_3 = []
-        for _ in xrange(reader.read_uint32()):
-            self.items_3.append(reader.read(72))
-
+        self.particles = read_list(reader, ParticleData)
         self.sound_actions = read_list(reader, SoundAction)
         self.shoot_actions = read_list(reader, ShootPacket)
 
@@ -407,11 +432,7 @@ class ServerUpdate(Packet):
 
         write_list(data, self.items_1)
         write_list(data, self.player_hits)
-
-        data.write_uint32(len(self.items_3))
-        for item in self.items_3:
-            data.write(item)
-
+        write_list(data, self.particles)
         write_list(data, self.sound_actions)
         write_list(data, self.shoot_actions)
 
