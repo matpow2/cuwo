@@ -41,7 +41,10 @@ def encode_irc(value):
 
 
 class IRCBot(irc.IRCClient):
+    owners = None
+    sops = None
     ops = None
+    hops = None
     voices = None
     commands = {}
 
@@ -58,16 +61,28 @@ class IRCBot(irc.IRCClient):
 
     def joined(self, channel):
         if channel.lower() == self.factory.channel:
+            self.owners = set()
+            self.sops = set()
             self.ops = set()
+            self.hops = set()
             self.voices = set()
         print "Joined channel %s" % channel
 
     def irc_NICK(self, prefix, params):
         user = prefix.split('!', 1)[0]
         new_user = params[0]
+        if user in self.owners:
+            self.owners.discard(user)
+            self.owners.add(new_user)
+        if user in self.sops:
+            self.sops.discard(user)
+            self.sops.add(new_user)
         if user in self.ops:
             self.ops.discard(user)
             self.ops.add(new_user)
+        if user in self.hops:
+            self.hops.discard(user)
+            self.hops.add(new_user)
         if user in self.voices:
             self.voices.discard(user)
             self.voices.add(new_user)
@@ -77,18 +92,21 @@ class IRCBot(irc.IRCClient):
             return
         for name in arg[1][3].split():
             mode = name[0]
-            l = {'@': self.ops, '+': self.voices}
+            l = {'~': self.owners, '&': self.sops, '@': self.ops, '%': self.hops, '+': self.voices}
             if mode in l:
                 l[mode].add(name[1:])
 
     def left(self, channel):
         if channel.lower() == self.factory.channel:
+            self.owners = None
+            self.sops = None
             self.ops = None
+            self.hops = None
             self.voices = None
 
     @channel
     def modeChanged(self, user, channel, set, modes, args):
-        ll = {'o': self.ops, 'v': self.voices}
+        ll = {'q': self.owners, 'a': self.sops, 'o': self.ops, 'h': self.hops, 'v': self.voices}
         for i in range(len(args)):
             mode, name = modes[i], args[i]
             if mode not in ll:
@@ -101,8 +119,8 @@ class IRCBot(irc.IRCClient):
 
     @channel
     def privmsg(self, user, channel, msg):
-        if user in self.ops or user in self.voices:
-            prefix = '@' if user in self.ops else '+'
+        if user in self.owners or user in self.sops or user in self.ops or user in self.hops or user in self.voices:
+            prefix = '~' if user in self.owners else '&' if user in self.sops else '@' if user in self.ops else '%' if user in self.hops else '+'
             name = prefix + user
             if msg.startswith(self.factory.commandprefix) and user in self.ops:
                 cmd = msg[len(self.factory.commandprefix):]
@@ -130,7 +148,10 @@ class IRCBot(irc.IRCClient):
 
     @channel
     def userLeft(self, user, channel):
+        self.owners.discard(user)
+        self.sops.discard(user)
         self.ops.discard(user)
+        self.hops.discard(user)
         self.voices.discard(user)
 
     def userQuit(self, user, message):
