@@ -41,8 +41,6 @@ def encode_irc(value):
 
 
 class IRCBot(irc.IRCClient):
-    ops = None
-    voices = None
     commands = {}
 
     def __init__(self, factory, server):
@@ -53,69 +51,84 @@ class IRCBot(irc.IRCClient):
         self.channel_password = factory.channel_password
         self.interface = ScriptInterface('IRC', server, 'admin', 'irc')
 
+        self.chat_users = set()
+        self.command_users = set()
+        self.user_dict = {}
+        for symbol in factory.command_modes:
+            self.user_dict[symbol] = self.command_users
+        for symbol in factory.chat_modes:
+            self.user_dict[symbol] = self.chat_users
+
+    def reset_users(self):
+        self.chat_users.clear()
+        self.command_users.clear()
+
     def signedOn(self):
         self.join(self.factory.channel, self.factory.channel_password)
 
     def joined(self, channel):
         if channel.lower() == self.factory.channel:
-            self.ops = set()
-            self.voices = set()
+            self.reset_users()
         print "Joined channel %s" % channel
 
     def irc_NICK(self, prefix, params):
         user = prefix.split('!', 1)[0]
         new_user = params[0]
-        if user in self.ops:
-            self.ops.discard(user)
-            self.ops.add(new_user)
-        if user in self.voices:
-            self.voices.discard(user)
-            self.voices.add(new_user)
+        if user in self.command_users:
+            self.command_users.discard(user)
+            self.command_users.add(new_user)
+        if user in self.chat_users:
+            self.chat_users.discard(user)
+            self.chat_users.add(new_user)
 
     def irc_RPL_NAMREPLY(self, *arg):
         if not arg[1][2].lower() == self.factory.channel:
             return
         for name in arg[1][3].split():
             mode = name[0]
-            l = {'@': self.ops, '+': self.voices}
-            if mode in l:
-                l[mode].add(name[1:])
+            try:
+                self.user_dict[mode].add(name[1:])
+            except KeyError:
+                pass
 
     def left(self, channel):
-        if channel.lower() == self.factory.channel:
-            self.ops = None
-            self.voices = None
+        if channel.lower() != self.factory.channel:
+            return
+        self.reset_users()
 
     @channel
-    def modeChanged(self, user, channel, set, modes, args):
-        ll = {'o': self.ops, 'v': self.voices}
-        for i in range(len(args)):
+    def modeChanged(self, user, channel, is_set, modes, args):
+        for i in xrange(len(args)):
             mode, name = modes[i], args[i]
-            if mode not in ll:
+            try:
+                l = self.user_dict[mode]
+            except KeyError:
                 continue
-            l = ll[mode]
-            if set:
+            if is_set:
                 l.add(name)
-            elif not set:
+            else:
                 l.discard(name)
 
     @channel
     def privmsg(self, user, channel, msg):
-        if user in self.ops or user in self.voices:
-            prefix = '@' if user in self.ops else '+'
-            name = prefix + user
-            if msg.startswith(self.factory.commandprefix) and user in self.ops:
-                cmd = msg[len(self.factory.commandprefix):]
-                result = self.handle_command(name, cmd)
-                if result is None:
-                    return
-                self.send("%s: %s" % (user, result))
-            elif msg.startswith(self.factory.chatprefix):
-                msg = msg[len(self.factory.chatprefix):].strip()
-                message = ("<%s> %s" % (name, msg))
-                message = message[:MAX_IRC_CHAT_SIZE]
-                print message
-                self.server.send_chat(message)
+        if user not in self.command_users and user not in self.chat_users:
+            return
+        prefix = '@' if user in self.command_users else '+'
+        name = prefix + user
+        if msg.startswith(self.factory.commandprefix):
+            if user not in self.command_users:
+                return
+            cmd = msg[len(self.factory.commandprefix):]
+            result = self.handle_command(name, cmd)
+            if result is None:
+                return
+            self.send("%s: %s" % (user, result))
+        elif msg.startswith(self.factory.chatprefix):
+            msg = msg[len(self.factory.chatprefix):].strip()
+            message = ("<%s> %s" % (name, msg))
+            message = message[:MAX_IRC_CHAT_SIZE]
+            print message
+            self.server.send_chat(message)
 
     def handle_command(self, name, command):
         command, args = parse_command(command)
@@ -130,8 +143,8 @@ class IRCBot(irc.IRCClient):
 
     @channel
     def userLeft(self, user, channel):
-        self.ops.discard(user)
-        self.voices.discard(user)
+        self.command_users.discard(user)
+        self.chat_users.discard(user)
 
     def userQuit(self, user, message):
         self.userLeft(user, self.factory.channel)
@@ -144,6 +157,10 @@ class IRCBot(irc.IRCClient):
 
     def me(self, msg):
         self.describe(self.factory.channel, encode_irc(msg))
+
+
+def unpack_modes(value):
+    return set([item for sublist in value for item in sublist])
 
 
 class IRCClientFactory(protocol.ClientFactory):
@@ -165,6 +182,8 @@ class IRCClientFactory(protocol.ClientFactory):
         self.password = irc.password
         self.channel_password = irc.channel_password
         self.rights = irc.rights
+        self.command_modes = unpack_modes(irc.command_modes)
+        self.chat_modes = unpack_modes(irc.chat_modes)
 
     def startedConnecting(self, connector):
         print "Connecting to IRC server..."
