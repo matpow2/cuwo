@@ -106,7 +106,7 @@ inline T sub_vec(const T & a, const T & b, const T & res)
 template <class T>
 inline void set_lazy(CPU & cpu, const T & res)
 {
-    cpu.res = (uint32_t)((T)(boost::make_signed<T>::type(res)));
+    cpu.res = (uint32_t)((T)(typename boost::make_signed<T>::type(res)));
     cpu.aux = 0;
 }
 
