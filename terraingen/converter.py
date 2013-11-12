@@ -1945,7 +1945,7 @@ def main():
 
     file_hash = hashlib.md5(open(args.file, 'rb').read()).hexdigest()
 
-    if file_hash != SERVER_HASH:
+    if file_hash != SERVER_HASH.lower():
         print 'Invalid Server.exe hash, should be %s' % SERVER_HASH
         return
 
