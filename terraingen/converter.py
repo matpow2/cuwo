@@ -23,6 +23,7 @@ import struct
 import os
 import math
 from alias import function_alias, import_alias, function_enders
+from ctypes import c_int32
 
 LICENSE_TEXT = '''\
 /*
@@ -310,15 +311,19 @@ AM_I = 0x00060000  # Immediate data follows
 AM_J = 0x00070000  # Immediate value is relative to EIP
 AM_I1 = 0x00200000 # Immediate byte 1 encoded in instruction
 
+
 def get_mask_ot(x):
     return x & 0xff000000
+
 
 def get_mask_am(x):
     return x & 0x00ff0000
 
+
 def get_register(reg, reg_type):
     reg_name = reg_table[reg_type][reg]
     return reg_ref_table[reg_type] % reg_name
+
 
 def get_gen_register(reg, size):
     if size == 1:
@@ -328,6 +333,11 @@ def get_gen_register(reg, size):
     else:
         reg_type = REG_GEN_DWORD
     return get_register(reg, reg_type)
+
+
+def uint32_to_int32(v):
+    return c_int32(v).value
+
 
 class Operand(object):
     is_memory = False
@@ -408,7 +418,7 @@ class Operand(object):
                     elif op.dispbytes == 2:
                         tmp = ~tmp & 0xffff
                     elif op.dispbytes == 4:
-                        tmp = ~tmp
+                        tmp = ~tmp & 0xffffffff
                     self.displacement = '(-0x%x)' % (tmp + 1)
                 # Positive displacement
                 else:
@@ -433,7 +443,7 @@ class Operand(object):
             if mask == AM_J:
                 value = op.immediate + inst.length + offset
             elif mask in (AM_I1, AM_I):
-                value = op.immediate & 0xFFFFFFFF
+                value = uint32_to_int32(op.immediate & 0xFFFFFFFF)
             # 32-bit or 48-bit address
             elif mask == AM_A:
                 raise NotImplementedError()
