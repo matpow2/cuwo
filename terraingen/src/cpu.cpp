@@ -124,7 +124,7 @@ inline void set_lazy(CPU & cpu, const T & res)
 
 #define LF_SIGN_BIT  31
 
-template <class T>
+template <typename T>
 inline void set_lazy(CPU & cpu, const T & aux, const T & res)
 {
     cpu.res = (uint32_t)(boost::make_signed<T>::type(res));

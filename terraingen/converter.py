@@ -440,11 +440,10 @@ class Operand(object):
         elif self.type == pydasm.OPERAND_TYPE_IMMEDIATE:
             self.is_immediate = True
             mask = get_mask_am(op.flags)
-            imm = uint32_to_int32(op.immediate)
             if mask == AM_J:
-                value = imm + inst.length + offset
+                value = uint32_to_int32(op.immediate) + inst.length + offset
             elif mask in (AM_I1, AM_I):
-                value = imm
+                value = op.immediate & 0xFFFFFFFF
             # 32-bit or 48-bit address
             elif mask == AM_A:
                 raise NotImplementedError()

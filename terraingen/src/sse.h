@@ -314,10 +314,10 @@ inline uint64_t ld_to_qword(long double v)
     return to_qword(vv);
 }
 
-inline void and_pd(XMMReg & dst, XMMReg & src)
+inline void and_pd(XMMReg & dst, const XMMReg & src)
 {
-    dst.u64(0) &= src.u64(0);
-    dst.u64(1) &= src.u64(1);
+    dst.u64(0) &= ((XMMReg&)src).u64(0);
+    dst.u64(1) &= ((XMMReg&)src).u64(1);
 }
 
 inline long double si_to_ld(uint64_t v)
