@@ -35,6 +35,11 @@ if(WIN32)
         ${CMAKE_INCLUDE_PATH})
 endif()
 
+if(UNIX)
+    find_package(Threads REQUIRED)
+    set(GEN_LIBS libdl ${CMAKE_THREAD_LIBS_INIT})
+endif()
+
 # build
 
 include_directories(
