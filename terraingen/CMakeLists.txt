@@ -37,7 +37,7 @@ endif()
 
 if(UNIX)
     find_package(Threads REQUIRED)
-    set(GEN_LIBS libdl ${CMAKE_THREAD_LIBS_INIT})
+    set(GEN_LIBS ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 # build
