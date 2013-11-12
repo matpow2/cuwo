@@ -127,7 +127,7 @@ inline void set_lazy(CPU & cpu, const T & res)
 template <typename T>
 inline void set_lazy(CPU & cpu, const T & aux, const T & res)
 {
-    cpu.res = (uint32_t)(boost::make_signed<T>::type(res));
+    cpu.res = (uint32_t)(typename boost::make_signed<T>::type(res));
     const uint32_t size = sizeof(T)*8;
     uint32_t temp = (aux & (LF_MASK_AF)) | ((aux >> (size - 2)) << LF_BIT_PO);
     if (size == 32)
