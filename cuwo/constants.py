@@ -25,7 +25,7 @@ MAX_TIME = 24 * 60 * 60 * 1000
 NORMAL_TIME_SPEED = 10.0
 SLEEP_TIME_SPEED = 100.0
 
-# scale constants
+# scale constants, relative to native coordinates
 BLOCK_SCALE = 0x10000
 CHUNK_SCALE = BLOCK_SCALE * 256
 SECTOR_SCALE = CHUNK_SCALE * 64
