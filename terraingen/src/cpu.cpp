@@ -277,6 +277,20 @@ inline uint8_t CPU::sub_byte(uint8_t a, uint8_t b)
     return res;
 }
 
+inline uint32_t CPU::add_dword(uint32_t a, uint32_t b)
+{
+    uint32_t res = a + b;
+    set_lazy_add<uint32_t>(a, b, res);
+    return res;
+}
+
+inline uint8_t CPU::add_byte(uint8_t a, uint8_t b)
+{
+    uint32_t res = uint32_t(a) + uint32_t(b);
+    set_lazy_add<uint8_t>(a, b, res);
+    return uint8_t(res);
+}
+
 inline uint32_t CPU::adc_dword(uint32_t a, uint32_t b)
 {
     bool cf = get_cf();

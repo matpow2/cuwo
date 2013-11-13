@@ -138,6 +138,8 @@ public:
     uint8_t neg_byte(uint8_t v);
     uint32_t sub_dword(uint32_t a, uint32_t b);
     uint8_t sub_byte(uint8_t a, uint8_t b);
+    uint32_t add_dword(uint32_t a, uint32_t b);
+    uint8_t add_byte(uint8_t a, uint8_t b);
     uint32_t adc_dword(uint32_t a, uint32_t b);
     uint32_t sbb_dword(uint32_t a, uint32_t b);
     uint8_t sbb_byte(uint8_t a, uint8_t b);

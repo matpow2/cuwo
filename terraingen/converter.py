@@ -1534,7 +1534,8 @@ class CPU(object):
         self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
 
     def on_add(self, i):
-        self.set_op(i.op1, '%s + %s' % (i.op1.get(), i.op2.get()))
+        func = 'cpu.add_%s' % size_names[i.op1.size]
+        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
 
     def on_xadd(self, i):
         func = 'cpu.xadd_%s' % size_names[i.op1.size]
