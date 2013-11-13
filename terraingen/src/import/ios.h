@@ -189,6 +189,8 @@ inline void basic_iostream_char_ctor_imp()
     delete current_stream;
     current_stream = new std::stringstream;
     // inlined destructors depend on these
+    mem.write_dword(base, base);
+    mem.write_dword(base+4, 4);
     mem.write_dword(base+36, base+36);
     mem.write_dword(base+40, base+40);
     mem.write_dword(base+52, base+52);

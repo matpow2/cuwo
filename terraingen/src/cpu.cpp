@@ -139,6 +139,23 @@ inline void set_lazy(CPU & cpu, const T & aux, const T & res)
     cpu.aux = temp;
 }
 
+template <typename T>
+inline void set_lazy_incdec(CPU & cpu, const T & aux, const T & res)
+{
+    cpu.res = (uint32_t)(typename boost::make_signed<T>::type(res));
+    const uint32_t size = sizeof(T)*8;
+    uint32_t temp = (aux & (LF_MASK_AF)) | ((aux >> (size - 2)) << LF_BIT_PO);
+    if (size == 32)
+        temp = aux & ~(LF_MASK_PDB | LF_MASK_SD);
+    else if (size == 16)
+        temp = (aux & (LF_MASK_AF)) | (aux << 16);
+    else if (size == 8)
+        temp = (aux & (LF_MASK_AF)) | (aux << 24);
+    uint32_t delta_c = (cpu.aux ^ temp) & LF_MASK_CF;
+    delta_c ^= delta_c >> 1;
+    cpu.aux = temp ^ delta_c;
+}
+
 template <class T>
 inline void set_lazy_add(CPU & cpu, const T & a, const T & b,
                          const T & res)
@@ -147,10 +164,24 @@ inline void set_lazy_add(CPU & cpu, const T & a, const T & b,
 }
 
 template <class T>
+inline void set_lazy_inc(CPU & cpu, const T & a, const T & b,
+                         const T & res)
+{
+    set_lazy_incdec(cpu, add_vec(a, b, res), res);
+}
+
+template <class T>
 inline void set_lazy_sub(CPU & cpu, const T & a, const T & b,
                          const T & res)
 {
     set_lazy(cpu, sub_vec(a, b, res), res);
+}
+
+template <class T>
+inline void set_lazy_dec(CPU & cpu, const T & a, const T & b,
+                         const T & res)
+{
+    set_lazy_incdec(cpu, sub_vec(a, b, res), res);
 }
 
 inline bool CPU::get_df()
@@ -573,42 +604,42 @@ inline uint32_t CPU::xadd_dword(uint32_t a, uint32_t & b)
 inline uint32_t CPU::dec_dword(uint32_t a)
 {
     uint32_t res = a - 1;
-    set_lazy_sub<uint32_t>(*this, a + 1, 0, res);
+    set_lazy_dec<uint32_t>(*this, a + 1, 0, res);
     return res;
 }
 
 inline uint16_t CPU::dec_word(uint16_t a)
 {
     uint16_t res = a - 1;
-    set_lazy_sub<uint16_t>(*this, a + 1, 0, res);
+    set_lazy_dec<uint16_t>(*this, a + 1, 0, res);
     return res;
 }
 
 inline uint8_t CPU::dec_byte(uint8_t a)
 {
     uint8_t res = a - 1;
-    set_lazy_sub<uint8_t>(*this, a + 1, 0, res);
+    set_lazy_dec<uint8_t>(*this, a + 1, 0, res);
     return res;
 }
 
 inline uint32_t CPU::inc_dword(uint32_t a)
 {
     uint32_t res = a + 1;
-    set_lazy_add<uint32_t>(*this, a - 1, 0, res);
+    set_lazy_inc<uint32_t>(*this, a - 1, 0, res);
     return res;
 }
 
 inline uint16_t CPU::inc_word(uint16_t a)
 {
     uint16_t res = a + 1;
-    set_lazy_add<uint16_t>(*this, a - 1, 0, res);
+    set_lazy_inc<uint16_t>(*this, a - 1, 0, res);
     return res;
 }
 
 inline uint8_t CPU::inc_byte(uint8_t a)
 {
     uint8_t res = a + 1;
-    set_lazy_add<uint8_t>(*this, a - 1, 0, res);
+    set_lazy_inc<uint8_t>(*this, a - 1, 0, res);
     return res;
 }
 
