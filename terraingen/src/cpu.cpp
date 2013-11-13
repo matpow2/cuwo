@@ -91,20 +91,18 @@ inline void CPU::call_dynamic(uint32_t addr)
     f();
 }
 
-template <class T>
-inline T add_vec(const T & a, const T & b, const T & res)
+inline uint32_t add_vec(uint32_t a, uint32_t b, uint32_t res)
 {
     return (a & b) | ((a | b) & (~res));
 }
 
-template <class T>
-inline T sub_vec(const T & a, const T & b, const T & res)
+inline uint32_t sub_vec(uint32_t a, uint32_t b, uint32_t res)
 {
     return ((~a) & b) | (((~a) ^ b) & res);
 }
 
 template <class T>
-inline void set_lazy(CPU & cpu, const T & res)
+inline void set_lazy(uint32_t res)
 {
     cpu.res = (uint32_t)((T)(typename boost::make_signed<T>::type(res)));
     cpu.aux = 0;
@@ -125,7 +123,7 @@ inline void set_lazy(CPU & cpu, const T & res)
 #define LF_SIGN_BIT  31
 
 template <typename T>
-inline void set_lazy(CPU & cpu, const T & aux, const T & res)
+inline void set_lazy(uint32_t aux, uint32_t res)
 {
     cpu.res = (uint32_t)(typename boost::make_signed<T>::type(res));
     const uint32_t size = sizeof(T)*8;
@@ -140,7 +138,7 @@ inline void set_lazy(CPU & cpu, const T & aux, const T & res)
 }
 
 template <typename T>
-inline void set_lazy_incdec(CPU & cpu, const T & aux, const T & res)
+inline void set_lazy_incdec(uint32_t aux, uint32_t res)
 {
     cpu.res = (uint32_t)(typename boost::make_signed<T>::type(res));
     const uint32_t size = sizeof(T)*8;
@@ -157,31 +155,27 @@ inline void set_lazy_incdec(CPU & cpu, const T & aux, const T & res)
 }
 
 template <class T>
-inline void set_lazy_add(CPU & cpu, const T & a, const T & b,
-                         const T & res)
+inline void set_lazy_add(uint32_t a, uint32_t b, uint32_t res)
 {
-    set_lazy(cpu, add_vec(a, b, res), res);
+    set_lazy<T>(add_vec(a, b, res), res);
 }
 
 template <class T>
-inline void set_lazy_inc(CPU & cpu, const T & a, const T & b,
-                         const T & res)
+inline void set_lazy_inc(uint32_t a, uint32_t b, uint32_t res)
 {
-    set_lazy_incdec(cpu, add_vec(a, b, res), res);
+    set_lazy_incdec<T>(add_vec(a, b, res), res);
 }
 
 template <class T>
-inline void set_lazy_sub(CPU & cpu, const T & a, const T & b,
-                         const T & res)
+inline void set_lazy_sub(uint32_t a, uint32_t b, uint32_t res)
 {
-    set_lazy(cpu, sub_vec(a, b, res), res);
+    set_lazy<T>(sub_vec(a, b, res), res);
 }
 
 template <class T>
-inline void set_lazy_dec(CPU & cpu, const T & a, const T & b,
-                         const T & res)
+inline void set_lazy_dec(uint32_t a, uint32_t b, uint32_t res)
 {
-    set_lazy_incdec(cpu, sub_vec(a, b, res), res);
+    set_lazy_incdec<T>(sub_vec(a, b, res), res);
 }
 
 inline bool CPU::get_df()
@@ -254,32 +248,32 @@ inline void CPU::set_flags(bool of, bool sf, bool zf, bool af, bool pf,
 inline void CPU::test_dword(uint32_t a, uint32_t b)
 {
     uint32_t res = a & b;
-    set_lazy(*this, res);
+    set_lazy<uint32_t>(res);
 }
 
 inline void CPU::test_word(uint16_t a, uint16_t b)
 {
     uint16_t res = a & b;
-    set_lazy(*this, res);
+    set_lazy<uint16_t>(res);
 }
 
 inline void CPU::test_byte(uint8_t a, uint8_t b)
 {
     uint8_t res = a & b;
-    set_lazy(*this, res);
+    set_lazy<uint8_t>(res);
 }
 
 inline uint32_t CPU::sub_dword(uint32_t a, uint32_t b)
 {
     uint32_t res = a - b;
-    set_lazy_sub(*this, a, b, res);
+    set_lazy_sub<uint32_t>(a, b, res);
     return res;
 }
 
 inline uint8_t CPU::sub_byte(uint8_t a, uint8_t b)
 {
-    uint8_t res = a - b;
-    set_lazy_sub(*this, a, b, res);
+    uint32_t res = uint32_t(a) - uint32_t(b);
+    set_lazy_sub<uint8_t>(a, b, res);
     return res;
 }
 
@@ -287,7 +281,7 @@ inline uint32_t CPU::adc_dword(uint32_t a, uint32_t b)
 {
     bool cf = get_cf();
     uint32_t res = a + b + int(cf);
-    set_lazy_add(*this, a, b, res);
+    set_lazy_add<uint32_t>(a, b, res);
     return res;
 }
 
@@ -295,29 +289,29 @@ inline uint32_t CPU::sbb_dword(uint32_t a, uint32_t b)
 {
     bool cf = get_cf();
     uint32_t res = a - (b + int(cf));
-    set_lazy_sub(*this, a, b, res);
+    set_lazy_sub<uint32_t>(a, b, res);
     return res;
 }
 
 inline uint8_t CPU::sbb_byte(uint8_t a, uint8_t b)
 {
     bool cf = get_cf();
-    uint8_t res = a - (b + int(cf));
-    set_lazy_sub(*this, a, b, res);
+    uint32_t res = uint32_t(a) - (uint32_t(b) + uint32_t(cf));
+    set_lazy_sub<uint8_t>(a, b, res);
     return res;
 }
 
 inline uint32_t CPU::neg_dword(uint32_t value)
 {
     uint32_t res = -(int32_t)(value);
-    set_lazy_sub(*this, uint32_t(0), value, res);
+    set_lazy_sub<uint32_t>(0, value, res);
     return res;
 }
 
 inline uint8_t CPU::neg_byte(uint8_t value)
 {
-    uint8_t res = -(int8_t)(value);
-    set_lazy_sub(*this, uint8_t(0), value, res);
+    uint32_t res = -(int8_t)(value);
+    set_lazy_sub<uint8_t>(0, value, res);
     return res;
 }
 
@@ -330,7 +324,7 @@ inline uint32_t CPU::shl_dword(uint32_t value, uint32_t count)
     uint32_t res = value << count;
     uint32_t cf = (value >> (32 - count)) & 0x1;
     uint32_t of = cf ^ (res >> 31);
-    set_lazy(*this, res);
+    set_lazy<uint32_t>(res);
     set_of_cf(of == 1, cf == 1);
     return res;
 }
@@ -355,7 +349,7 @@ inline uint16_t CPU::shl_word(uint16_t value, uint16_t count)
         res = 0;
     }
 
-    set_lazy(*this, res);
+    set_lazy<uint16_t>(res);
     set_of_cf(of==1, cf==1);
 
     return res;
@@ -380,7 +374,7 @@ inline uint8_t CPU::shl_byte(uint8_t value, uint8_t count)
         res = 0;
     }
 
-    set_lazy(*this, res);
+    set_lazy<uint8_t>(res);
     set_of_cf(of==1, cf==1);
 
     return res;
@@ -394,7 +388,7 @@ inline uint32_t CPU::shld_dword(uint32_t value, uint32_t shr, uint32_t count)
         return value;
 
     uint32_t res = (value << count) | (shr >> (32 - count));
-    set_lazy(*this, res);
+    set_lazy<uint32_t>(res);
     uint32_t cf = (value >> (32 - count)) & 0x1;
     uint32_t of = cf ^ (res >> 31);
     set_of_cf(of==1, cf==1);
@@ -410,7 +404,7 @@ inline uint32_t CPU::sar_dword(uint32_t v, uint32_t count)
         return v;
 
     uint32_t res = ((int32_t)v) >> count;
-    set_lazy(*this, res);
+    set_lazy<uint32_t>(res);
     uint32_t cf = (res >> (count - 1)) & 1;
     set_of_cf(false, cf==1);
     return res;
@@ -480,7 +474,7 @@ inline uint32_t CPU::shr_dword(uint32_t v, uint32_t count)
     uint32_t res = v >> count;
     unsigned cf = (v >> (count - 1)) & 0x1;
     unsigned of = ((res << 1) ^ res) >> 31;
-    set_lazy(*this, res);
+    set_lazy<uint32_t>(res);
     set_of_cf(of==1, cf==1);
     return res;
 }
@@ -492,9 +486,9 @@ inline uint16_t CPU::shr_word(uint16_t v, uint16_t count)
     if (!count)
         return v;
     uint16_t res = v >> count;
-    unsigned cf = (v >> (count - 1)) & 0x1;
-    unsigned of = ((uint16_t)((res << 1) ^ res) >> 15) & 0x1;
-    set_lazy(*this, res);
+    uint32_t cf = (v >> (count - 1)) & 0x1;
+    uint32_t of = ((uint16_t)((res << 1) ^ res) >> 15) & 0x1;
+    set_lazy<uint16_t>(res);
     set_of_cf(of==1, cf==1);
     return res;
 }
@@ -509,7 +503,7 @@ inline uint8_t CPU::shr_byte(uint8_t v, uint8_t count)
     uint8_t res = v >> count;
     unsigned cf = (v >> (count - 1)) & 0x1;
     unsigned of = (((res << 1) ^ res) >> 7) & 0x1;
-    set_lazy(*this, res);
+    set_lazy<uint8_t>(res);
     set_of_cf(of==1, cf==1);
     return res;
 }
@@ -525,7 +519,7 @@ inline void CPU::mul_dword(uint32_t v)
     reg[EAX] = product_low;
     reg[EDX] = product_high;
 
-    set_lazy(*this, product_low);
+    set_lazy<uint32_t>(product_low);
     if (product_high != 0)
         set_of_cf(true, true);
 }
@@ -542,7 +536,7 @@ inline void CPU::imul_dword(uint32_t v)
     reg[EAX] = product_low;
     reg[EDX] = product_high;
 
-    set_lazy(*this, product_low);
+    set_lazy<uint32_t>(product_low);
     if (product != (int32_t)product)
         set_of_cf(true, true);
 }
@@ -555,7 +549,7 @@ inline uint32_t CPU::imul_dword(uint32_t v, uint32_t mul)
     int64_t product = ((int64_t)a)*((int64_t)vv);
     uint32_t product_32 = (uint32_t)(product & 0xFFFFFFFF);
 
-    set_lazy(*this, product_32);
+    set_lazy<uint32_t>(product_32);
     if (product != (int32_t)product)
         set_of_cf(true, true);
 
@@ -597,110 +591,110 @@ inline uint32_t CPU::xadd_dword(uint32_t a, uint32_t & b)
 {
     uint32_t res = a + b;
     b = a;
-    set_lazy_add(*this, a, b, res);
+    set_lazy_add<uint32_t>(a, b, res);
     return res;
 }
 
 inline uint32_t CPU::dec_dword(uint32_t a)
 {
     uint32_t res = a - 1;
-    set_lazy_dec<uint32_t>(*this, a + 1, 0, res);
+    set_lazy_dec<uint32_t>(res + 1, 0, res);
     return res;
 }
 
 inline uint16_t CPU::dec_word(uint16_t a)
 {
-    uint16_t res = a - 1;
-    set_lazy_dec<uint16_t>(*this, a + 1, 0, res);
-    return res;
+    uint32_t res = uint32_t(a) - 1;
+    set_lazy_dec<uint16_t>(res + 1, 0, res);
+    return uint16_t(res);
 }
 
 inline uint8_t CPU::dec_byte(uint8_t a)
 {
-    uint8_t res = a - 1;
-    set_lazy_dec<uint8_t>(*this, a + 1, 0, res);
+    uint32_t res = uint32_t(a) - 1;
+    set_lazy_dec<uint8_t>(res + 1, 0, res);
     return res;
 }
 
 inline uint32_t CPU::inc_dword(uint32_t a)
 {
     uint32_t res = a + 1;
-    set_lazy_inc<uint32_t>(*this, a - 1, 0, res);
+    set_lazy_inc<uint32_t>(res - 1, 0, res);
     return res;
 }
 
 inline uint16_t CPU::inc_word(uint16_t a)
 {
-    uint16_t res = a + 1;
-    set_lazy_inc<uint16_t>(*this, a - 1, 0, res);
-    return res;
+    uint32_t res = uint32_t(a) + 1;
+    set_lazy_inc<uint16_t>(res - 1, 0, res);
+    return uint16_t(res);
 }
 
 inline uint8_t CPU::inc_byte(uint8_t a)
 {
-    uint8_t res = a + 1;
-    set_lazy_inc<uint8_t>(*this, a - 1, 0, res);
-    return res;
+    uint32_t res = uint32_t(a) + 1;
+    set_lazy_inc<uint8_t>(res - 1, 0, res);
+    return uint8_t(res);
 }
 
 inline uint32_t CPU::or_dword(uint32_t a, uint32_t b)
 {
     uint32_t res = a | b;
-    set_lazy(*this, res);
+    set_lazy<uint32_t>(res);
     return res;
 }
 
 inline uint16_t CPU::or_word(uint16_t a, uint16_t b)
 {
     uint16_t res = a | b;
-    set_lazy(*this, res);
+    set_lazy<uint16_t>(res);
     return res;
 }
 
 inline uint8_t CPU::or_byte(uint8_t a, uint8_t b)
 {
     uint8_t res = a | b;
-    set_lazy(*this, res);
+    set_lazy<uint8_t>(res);
     return res;
 }
 
 inline uint32_t CPU::and_dword(uint32_t a, uint32_t b)
 {
     uint32_t res = a & b;
-    set_lazy(*this, res);
+    set_lazy<uint32_t>(res);
     return res;
 }
 
 inline uint16_t CPU::and_word(uint16_t a, uint16_t b)
 {
     uint16_t res = a & b;
-    set_lazy(*this, res);
+    set_lazy<uint16_t>(res);
     return res;
 }
 
 inline uint8_t CPU::and_byte(uint8_t a, uint8_t b)
 {
     uint8_t res = a & b;
-    set_lazy(*this, res);
+    set_lazy<uint8_t>(res);
     return res;
 }
 
 inline void CPU::cmp_dword(uint32_t a, uint32_t b)
 {
-    uint32_t res = a - b;
-    set_lazy_sub(*this, a, b, res);
+    uint32_t res = uint32_t(a) - uint32_t(b);
+    set_lazy_sub<uint32_t>(a, b, res);
 }
 
 inline void CPU::cmp_word(uint16_t a, uint16_t b)
 {
-    uint16_t res = a - b;
-    set_lazy_sub(*this, a, b, res);
+    uint32_t res = uint32_t(a) - uint32_t(b);
+    set_lazy_sub<uint16_t>(a, b, res);
 }
 
 inline void CPU::cmp_byte(uint8_t a, uint8_t b)
 {
-    uint8_t res = a - b;
-    set_lazy_sub(*this, a, b, res);
+    uint32_t res = uint32_t(a) - uint32_t(b);
+    set_lazy_sub<uint8_t>(a, b, res);
 }
 
 #ifdef DEBUG_STACK
