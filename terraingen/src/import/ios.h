@@ -56,19 +56,7 @@ struct basic_string_char
     }
 };
 
-struct basic_iostream_char
-{
-    std::stringstream * stream;
-};
-
-#define IOSTREAM_OFF 8
-
-inline std::stringstream * get_stream(uint32_t addr)
-{
-    addr += IOSTREAM_OFF;
-    basic_iostream_char * ptr = (basic_iostream_char*)mem.translate(addr);
-    return ptr->stream;
-}
+std::stringstream * current_stream = NULL;
 
 inline void basic_istream_char_ctor_imp()
 {
@@ -198,9 +186,8 @@ inline void basic_iostream_char_ctor_imp()
     uint32_t virtinit = cpu.pop_dword();
     // hack: use vtable space to create a pointer in host space
     uint32_t base = get_self();
-    uint32_t addr = base+IOSTREAM_OFF;
-    basic_iostream_char * p = (basic_iostream_char*)mem.translate(addr);
-    p->stream = new std::stringstream;
+    delete current_stream;
+    current_stream = new std::stringstream;
     // inlined destructors depend on these
     mem.write_dword(base+36, base+36);
     mem.write_dword(base+40, base+40);
@@ -215,8 +202,8 @@ inline void basic_iostream_char_ctor_imp()
 inline void basic_iostream_char_dtor_imp()
 {
     pop_ret();
-    std::stringstream * ss = get_stream(get_self());
-    delete ss;
+    delete current_stream;
+    current_stream = NULL;
     // std::cout << "basic_iostream_char_ctor" << std::endl;
 }
 
@@ -257,7 +244,7 @@ inline void basic_ostream_char_print_int_imp()
 {
     pop_ret();
     int32_t val = (int32_t)cpu.pop_dword();
-    std::stringstream & str = *get_stream(get_self()-16);
+    std::stringstream & str = *current_stream;
     str << val;
     ret_self();
     // std::cout << "basic_ostream_char_print_int: " << val << std::endl;
@@ -280,7 +267,7 @@ inline void sub_4120D0()
 {
     pop_ret();
     uint32_t stream = cpu.get_dword(0);
-    std::stringstream & str = *get_stream(stream-16);
+    std::stringstream & str = *current_stream;
     char * value = mem.translate(cpu.get_dword(4));
     str << value;
     set_ret(stream);
@@ -292,7 +279,7 @@ inline void sub_4C6970()
 {
     pop_ret();
     uint32_t stream = cpu.get_dword(0);
-    std::stringstream & str = *get_stream(stream-16);
+    std::stringstream & str = *current_stream;
     uint32_t val = cpu.get_dword(4);
     basic_string_char * v = (basic_string_char*)mem.translate(val);
     // std::cout << "ostream_writestr: " << v->str() << std::endl;
@@ -305,7 +292,7 @@ inline void sub_4D8B70()
 {
     pop_ret();
     uint32_t stream = get_self();
-    std::stringstream & str = *get_stream(stream);
+    std::stringstream & str = *current_stream;
     uint32_t stdstring = cpu.pop_dword();
     // need to initialize str since it hasn't been done already
     ((basic_string_char*)mem.translate(stdstring))->reset();
