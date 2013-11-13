@@ -1110,7 +1110,7 @@ class CPU(object):
         self.set_op(i.op1, i.op2.get())
 
     def on_movsd(self, i):
-        if i.opcode not in (0xA4, 0xA5):
+        if i.opcode in (16, 17):
             return self.on_movsd_sse(i)
         mode = i.get_address_mode()
         if mode == MODE_32:
@@ -1173,15 +1173,21 @@ class CPU(object):
         self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
 
     def on_xor(self, i):
-        self.set_op(i.op1, '%s ^ %s' % (i.op1.get(), i.op2.get()))
+        func = 'cpu.xor_%s' % size_names[i.op1.size]
+        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
 
     def on_not(self, i):
+        # eflags not affected
         self.set_op(i.op1, '~%s' % i.op1.get())
 
     def on_xorps(self, i):
+        # eflags not affected
         self.set_op(i.op1, '%s ^ %s' % (i.op1.get(), i.op2.get()))
  
     def on_lea(self, i):
+        if i.get_operand_mode() != MODE_32 or i.get_address_mode() != MODE_32:
+            import code
+            code.interact(local=locals())
         self.set_op(i.op1, i.op2.value)
 
     def call_memory(self, op):
@@ -1255,9 +1261,14 @@ class CPU(object):
         self.writer.end_brace()
 
     def on_cbw(self, i):
+        if i.get_operand_mode() != MODE_32:
+            ax = get_register(REG_AX, REG_GEN_WORD)
+            al = get_register(REG_AL, REG_GEN_BYTE)
+            self.set_register(ax, '(uint16_t)int16_t(int8_t(%s))' % al)
+            return
+        eax = get_register(REG_EAX, REG_GEN_DWORD)
         ax = get_register(REG_AX, REG_GEN_WORD)
-        al = get_register(REG_AL, REG_GEN_BYTE)
-        self.set_register(ax, '(uint16_t)int16_t(int8_t(%s))' % al)
+        self.set_register(eax, 'uint32_t(int16_t(%s))' % ax)
 
     def on_setnz(self, i):
         test = get_flag('ZF')
@@ -1550,6 +1561,9 @@ class CPU(object):
         self.writer.putln('%s(%s, %s);' % (name, i.op1.get(), i.op2.get()))
 
     def on_cwd(self, i):
+        if i.get_operand_mode() != MODE_32:
+            import code
+            code.interact(local=locals())
         eax = get_register(REG_EAX, REG_GEN_DWORD)
         edx = get_register(REG_EDX, REG_GEN_DWORD)
         self.set_register(edx, 'cdq_x86(%s)' % eax)
@@ -1603,13 +1617,10 @@ class CPU(object):
         self.set_register(ebp, 'cpu.pop_dword();')
 
     def on_cmp(self, i):
-        #83 /7 ib CMP r/m16,imm8 Compare imm8 with r/m16
-        #83 /7 ib CMP r/m32,imm8 Compare imm8 with r/m32
         name = 'cpu.cmp_%s' % size_names[i.op1.size]
         self.writer.putln('%s(%s, %s);' % (name, i.op1.get(), i.op2.get()))
 
     def on_jnz(self, i):
-        #75 cb JNZ rel8 Valid Valid Jump short if not zero (ZF=0).
         self.test_flag('ZF', False, i.op1.value)
 
 import struct

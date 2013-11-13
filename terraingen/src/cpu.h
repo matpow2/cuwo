@@ -172,6 +172,8 @@ public:
     void idiv_dword(uint32_t v);
     void div_dword(uint32_t v);
     uint32_t xadd_dword(uint32_t a, uint32_t & b);
+    uint32_t xor_dword(uint32_t a, uint32_t b);
+    uint8_t xor_byte(uint8_t a, uint8_t b);
 
     // sse
     void compare_ss(float a, float b);

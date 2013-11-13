@@ -419,7 +419,7 @@ inline uint32_t CPU::sar_dword(uint32_t v, uint32_t count)
 
     uint32_t res = ((int32_t)v) >> count;
     set_lazy<uint32_t>(res);
-    uint32_t cf = (res >> (count - 1)) & 1;
+    uint32_t cf = (v >> (count - 1)) & 1;
     set_of_cf(false, cf==1);
     return res;
 }
@@ -442,8 +442,8 @@ inline uint16_t CPU::rol_word(uint16_t v, uint16_t count)
 {
     if ((count & 0x0f) == 0) {
         if (count & 0x10) {
-            uint32_t bit0  = (v & 0x1);
-            uint32_t bit15 = (v >> 15);
+            uint32_t bit0  = v & 0x1;
+            uint32_t bit15 = v >> 15;
             set_of_cf((bit0 ^ bit15)==1, bit0==1);
         }
     } else {
@@ -467,9 +467,9 @@ inline uint32_t CPU::rcr_dword(uint32_t v, uint32_t count)
     uint32_t res;
 
     if (count == 1) {
-        res = (v >> 1) | (int(get_cf()) << 31);
+        res = (v >> 1) | (uint32_t(get_cf()) << 31);
     } else {
-        res = (v >> count) | (int(get_cf()) << (32 - count)) |
+        res = (v >> count) | (uint32_t(get_cf()) << (32 - count)) |
               (v << (33 - count));
     }
 
@@ -526,7 +526,7 @@ inline void CPU::mul_dword(uint32_t v)
 {
     uint32_t a = reg[EAX];
 
-    uint64_t product = ((uint64_t)a)*((uint64_t)v); 
+    uint64_t product = ((uint64_t)a)*((uint64_t)v);
     uint32_t product_low = GET32L(product);
     uint32_t product_high = GET32H(product);
 
@@ -573,19 +573,12 @@ inline uint32_t CPU::imul_dword(uint32_t v, uint32_t mul)
 inline void CPU::div_dword(uint32_t d)
 {
     uint64_t v = (((uint64_t)reg[EDX]) << 32) + ((uint64_t)reg[EAX]);
+    uint64_t quot_64  = v / d;
+    uint32_t rem_32 = (uint32_t)(v % d);
+    uint32_t quot_32 = (uint32_t)(quot_64 & 0xFFFFFFFF);
 
-    if (d == 0) {
-        std::cout << "Division by zero: " << v << " " << d << std::endl;
-        reg[EAX] = 0xFFFFFFFF;
-        reg[EDX] = 0;
-    } else {
-        uint64_t quot_64  = v / d;
-        uint32_t rem_32 = (uint32_t) (v % d);
-        uint32_t quot_32 = (uint32_t)(quot_64 & 0xFFFFFFFF);
-
-        reg[EAX] = quot_32;
-        reg[EDX] = rem_32;
-    }
+    reg[EAX] = quot_32;
+    reg[EDX] = rem_32;
 }
 
 inline void CPU::idiv_dword(uint32_t d)
@@ -606,6 +599,20 @@ inline uint32_t CPU::xadd_dword(uint32_t a, uint32_t & b)
     uint32_t res = a + b;
     b = a;
     set_lazy_add<uint32_t>(a, b, res);
+    return res;
+}
+
+inline uint32_t CPU::xor_dword(uint32_t a, uint32_t b)
+{
+    uint32_t res = a ^ b;
+    set_lazy<uint32_t>(res);
+    return res;
+}
+
+inline uint8_t CPU::xor_byte(uint8_t a, uint8_t b)
+{
+    uint8_t res = a ^ b;
+    set_lazy<uint8_t>(res);
     return res;
 }
 
