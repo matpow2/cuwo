@@ -201,10 +201,9 @@ inline double to_sd(uint64_t v)
     return *((double*)&v);
 }
 
-inline uint32_t ss_to_si(uint32_t v)
+inline uint32_t ss_to_si(float v)
 {
-    float * fv = (float*)&v;
-    int32_t res = int32_t(*fv);
+    int32_t res = int32_t(v);
     return (uint32_t)(res);
 }
 
@@ -256,6 +255,7 @@ inline void pd_to_ps(XMMReg & dst, XMMReg src)
     double b = to_sd(src.u64(1));
     dst.u32(0) = d_to_ss(a);
     dst.u32(1) = d_to_ss(b);
+    dst.u64(1) = 0;
 }
 
 inline void dq_to_ps(XMMReg & dst, XMMReg & src)

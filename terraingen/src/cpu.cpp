@@ -61,8 +61,12 @@ inline CPU::CPU()
 
     // init fpu
     fpu_top = 0;
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 8; i++) {
         fpu[i] = 0.0;
+#ifdef DEBUG_FPU
+        fpu_empty[i] = true;
+#endif
+    }
 
     reset_stack();
 }
@@ -243,6 +247,13 @@ inline void CPU::set_flags(bool of, bool sf, bool zf, bool af, bool pf,
 
     // set cf
     set_of_cf(get_of(), cf);
+
+#ifdef DEBUG_CPU
+    if (get_of() != of || get_sf() != sf || get_cf() != cf || get_zf() != zf) {
+        std::cout << "CPU::set_flags failed" << std::endl;
+        exit(0);
+    }
+#endif
 }
 
 inline void CPU::test_dword(uint32_t a, uint32_t b)
@@ -853,18 +864,38 @@ inline uint8_t CPU::get_byte(uint32_t off)
 
 inline long double & CPU::get_fpu(RegisterST index)
 {
+#ifdef DEBUG_FPU
+    if (fpu_empty[(fpu_top+index) & 7]) {
+        std::cout << "FPU index empty" << std::endl;
+        exit(0);
+    }
+#endif
     return fpu[(fpu_top+index) & 7];
 }
 
 inline void CPU::push_fpu(long double value)
 {
     fpu_top = (fpu_top-1) & 7;
+#ifdef DEBUG_FPU
+    if (!fpu_empty[fpu_top]) {
+        std::cout << "FPU index not empty" << std::endl;
+        exit(0);
+    }
+    fpu_empty[fpu_top] = false;
+#endif
     fpu[fpu_top] = value;
 }
 
 inline long double CPU::pop_fpu()
 {
     long double ret = fpu[fpu_top];
+#ifdef DEBUG_FPU
+    if (fpu_empty[fpu_top]) {
+        std::cout << "FPU index empty" << std::endl;
+        exit(0);
+    }
+    fpu_empty[fpu_top] = true;
+#endif
     fpu_top = (fpu_top+1) & 7;
     return ret;
 }
@@ -872,12 +903,12 @@ inline long double CPU::pop_fpu()
 inline void CPU::compare_ss(float a, float b)
 {
     bool zf, pf, cf;
-    if (a != a || b != b)
+    if (a != a || b != b) {
         // nan
         zf = pf = cf = true;
-    else if (a > b)
+    } else if (a > b) {
         zf = pf = cf = false;
-    else if (a < b) {
+    } else if (a < b) {
         zf = pf = false;
         cf = true;
     } else if (a == b) {

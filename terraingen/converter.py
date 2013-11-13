@@ -350,6 +350,8 @@ class Operand(object):
     base_reg = None
     displacement = None
 
+    reg_type = None
+
     def __init__(self, inst, op, offset):
         self.op = op
         self.type = op.type
@@ -755,8 +757,8 @@ size_types = {
 signed_types = {
     8: 'int64_t',
     4: 'int32_t',
-    2: 'uint16_t',
-    1: 'uint8_t'
+    2: 'int16_t',
+    1: 'int8_t'
 }
 
 float_types = {
@@ -772,6 +774,9 @@ def prettify_value(value):
 
 def get_flag(value):
     return 'cpu.get_%s()' % value.lower()
+
+def get_fpu():
+    return get_register(REG_ST0, REG_FPU)
 
 class CPU(object):
     eip = None
@@ -939,8 +944,8 @@ class CPU(object):
         self.set_op(i.op1, i.op2.get())
 
     def on_movsx(self, i):
-        signed1 = signed_types[i.op2.size]
-        unsigned1 = size_types[i.op2.size]
+        signed1 = signed_types[i.op1.size]
+        unsigned1 = size_types[i.op1.size]
         signed2 = signed_types[i.op2.size]
         self.set_op(i.op1, '(%s)((%s)((%s)(%s)))' % (unsigned1, signed1,
                                                      signed2, i.op2.get()))
@@ -999,8 +1004,8 @@ class CPU(object):
 
     def on_cvtsd2sd(self, i):
         # actually cvtss2sd, probably libdasm messing up
-        i.op1.size = 4
-        i.op2.size = 8
+        i.op1.size = 8
+        i.op2.size = 4
         self.set_op(i.op1, 'ss_to_sd(to_ss(%s))' % i.op2.get())
 
     def on_cvtsd2ss(self, i):
@@ -1010,7 +1015,7 @@ class CPU(object):
 
     def on_cvttss2si(self, i):
         i.op1.size = i.op2.size = 4
-        self.set_op(i.op1, 'ss_to_si(%s)' % i.op2.get())
+        self.set_op(i.op1, 'ss_to_si(to_ss(%s))' % i.op2.get())
 
     def on_cvtdq2pd(self, i):
         self.writer.putlnc('dq_to_pd(%s, %s);', i.op1.get(), i.op2.get())
@@ -1025,6 +1030,8 @@ class CPU(object):
         self.writer.putlnc('dq_to_ps(%s, %s);', i.op1.get(), i.op2.get())
 
     def on_fst(self, i):
+        if i.op1.reg_type == REG_FPU:
+            return False
         st0 = get_register(REG_ST0, REG_FPU)
         self.set_op(i.op1, 'to_dword(float(%s))' % st0)
 
@@ -1032,22 +1039,20 @@ class CPU(object):
         if i.fpuindex != 7:
             return False
         i.op1.size = 8
-        self.set_op(i.op1, 'int64_t(%s)' % self.pop_float())
+        self.set_op(i.op1, 'int64_t(%s)' % get_fpu())
+        self.pop_float()
 
     def push_float(self, value):
         self.writer.putlnc('cpu.push_fpu(%s);', value)
 
-    def pop_float(self, write=False):
-        if write:
-            self.writer.putln('cpu.pop_fpu();')
-            return
-        return 'cpu.pop_fpu()'
+    def pop_float(self):
+        self.writer.putln('cpu.pop_fpu();')
 
     def on_fsubp(self, i):
         if not i.op2:
             return False
         self.set_op(i.op1, '%s - %s' % (i.op1.get(), i.op2.get()))
-        self.pop_float(True)
+        self.pop_float()
 
     def on_fld1(self, i):
         self.push_float('1.0')
@@ -1072,12 +1077,18 @@ class CPU(object):
         self.push_float('to_ld(%s(%s))' % (size_type, i.op1.get()))
 
     def on_fstp(self, i):
-        func = 'ld_to_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s)' % (func, self.pop_float()))
+        if i.op1.reg_type == REG_FPU:
+            value = get_fpu()
+        else:
+            func = 'ld_to_%s' % size_names[i.op1.size]
+            value = '%s(%s)' % (func, get_fpu())
+        self.set_op(i.op1, value)
+        self.pop_float()
 
     def on_fstpl(self, i):
         func = 'ld_to_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s)' % (func, self.pop_float()))
+        self.set_op(i.op1, '%s(%s)' % (func, get_fpu()))
+        self.pop_float()
 
     def on_comiss(self, i):
         i.op1.size = i.op2.size = 4
@@ -1090,15 +1101,19 @@ class CPU(object):
             i.op1.get(), i.op2.get()))
 
     def on_movapd(self, i):
+        i.op1.size = i.op2.size = 16
         self.set_op(i.op1, i.op2.get())
 
     def on_movaps(self, i):
+        i.op1.size = i.op2.size = 16
         self.set_op(i.op1, i.op2.get())
 
     def on_movlpd(self, i):
+        i.op1.size = i.op2.size = 8
         self.set_op(i.op1, i.op2.get())
 
     def on_movq(self, i):
+        i.op1.size = i.op2.size = 8
         self.set_op(i.op1, i.op2.get())
 
     def on_movss(self, i):
@@ -1400,8 +1415,7 @@ class CPU(object):
         self.writer.dedent()
 
     def on_int3(self, i):
-        # self.log('int3 at %s' % self.eip)
-        pass
+        self.log('int3 at %s' % self.eip)
 
     def on_nop(self, i):
         pass

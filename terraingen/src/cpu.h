@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <boost/unordered_map.hpp>
 #include "sse.h"
+#include "config.h"
 
 enum Register32
 {
@@ -116,6 +117,9 @@ public:
     XMMReg xmm[8];
     size_t fpu_top;
     long double fpu[8];
+#ifdef DEBUG_FPU
+    bool fpu_empty[8];
+#endif
 
     // saved for lazy eflags
     uint32_t res;

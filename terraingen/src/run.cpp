@@ -79,8 +79,8 @@ int main(int argc, const char ** argv)
     add_ret();
     generator_func();
 
-    save_chunk_now();
-    return 0;
+    // save_chunk_now();
+    // return 0;
     // address 405E30 is
     // void * __thiscall get_sector_chunk_data(__int64 chunk_pos)
     cpu.push_dword(0x8020);
