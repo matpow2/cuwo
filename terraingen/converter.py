@@ -784,6 +784,27 @@ def get_flag(value):
 def get_fpu():
     return get_register(REG_ST0, REG_FPU)
 
+def format_cond(v):
+    for flag in ('OF', 'ZF', 'SF', 'CF'):
+        v = v.replace(flag, get_flag(flag))
+    return v
+
+COND_NZ = COND_NE = format_cond('!ZF')
+COND_L = format_cond('SF != OF')
+COND_NLE = format_cond('!ZF && SF == OF')
+COND_NBE = format_cond('!CF && !ZF')
+COND_BE = COND_NA = format_cond('CF || ZF')
+COND_O = format_cond('OF')
+COND_Z = COND_E = format_cond('ZF')
+COND_AE = COND_NC = format_cond('!CF')
+COND_A = format_cond('!CF && !ZF')
+COND_B = COND_C = format_cond('CF')
+COND_G = format_cond('!ZF && SF == OF')
+COND_GE = COND_NL = format_cond('SF == OF')
+COND_LE = COND_NG = format_cond('ZF || SF != OF')
+COND_S = format_cond('SF')
+COND_NS = format_cond('!SF')
+
 class CPU(object):
     eip = None
     sub = None
@@ -879,17 +900,6 @@ class CPU(object):
     def set_register(self, dest, src):
         self.writer.putlnc('%s = %s;', dest, src)
 
-    def push_size(self, value, size):
-        getattr(self, 'push_%s' % size_names[size])(value)
-
-    def push_byte(self, value):
-        value = prettify_value(value)
-        self.writer.putlnc('cpu.push_byte(%s);', value)
-
-    def push_word(self, value):
-        value = prettify_value(value)
-        self.writer.putlnc('cpu.push_word(%s);', value)
-
     def push_dword(self, value):
         value = prettify_value(value)
         self.writer.putlnc('cpu.push_dword(%s);' % value)
@@ -911,33 +921,12 @@ class CPU(object):
         else:
             is_call = False
             call = 'goto %s' % get_label_name(address)
-        self.writer.putln('if (%s) %s;' % (test, call))
+        self.writer.putlnc('if (%s) {', test)
+        self.writer.indent()
+        self.writer.putlnc('%s;' % call)
         if is_call:
             self.writer.putln('return;')
-
-    def test_flag(self, flag, value, goto):
-        test = get_flag(flag)
-        if not value:
-            test = '!%s' % test
-        self.goto(test, goto)
-
-    def test_eq_flag(self, flag1, flag2, value, goto):
-        if value:
-            comp = '=='
-        else:
-            comp = '!='
-        test1 = get_flag(flag1)
-        test2 = get_flag(flag2)
-        self.goto('%s %s %s' % (test1, comp, test2), goto)
-
-    def test_and_flag(self, flag1, flag2, value, goto):
-        test1 = get_flag(flag1)
-        test2 = get_flag(flag2)
-        if value:
-            test = '%s && %s' % (test1, test2)
-        else:
-            test = '!%s && !%s' % (test1, test2)
-        self.goto(test, goto)
+        self.writer.end_brace()
 
     def call_dynamic(self, value):
         self.writer.putln('cpu.call_dynamic(%s);' % value)
@@ -1099,6 +1088,7 @@ class CPU(object):
         self.pop_float()
 
     def on_fstpl(self, i):
+        print i.fpuindex
         func = 'ld_to_%s' % size_names[i.op1.size]
         self.set_op(i.op1, '%s(%s)' % (func, get_fpu()))
         self.pop_float()
@@ -1300,44 +1290,31 @@ class CPU(object):
         self.set_register(eax, 'uint32_t(int32_t(int16_t(%s)))' % ax)
 
     def on_setnz(self, i):
-        test = get_flag('ZF')
-        self.set_register(i.op1.value, 'int(!%s)' % test)
+        self.set_op(i.op1, 'int(%s)' % COND_NZ)
 
     def on_sets(self, i):
-        test = get_flag('SF')
-        self.set_register(i.op1.value, 'int(%s)' % test)
+        self.set_op(i.op1, 'int(%s)' % COND_S)
 
     def on_setl(self, i):
-        sf = get_flag('SF')
-        of = get_flag('OF')
-        self.set_register(i.op1.value, 'int(%s != %s)' % (sf, of))
+        self.set_op(i.op1, 'int(%s)' % COND_L)
 
     def on_setnle(self, i):
-        zf = get_flag('ZF')
-        sf = get_flag('SF')
-        of = get_flag('OF')
-        self.set_register(i.op1.value, 'int(!%s && %s == %s)' % (zf, sf, of))
+        self.set_op(i.op1, 'int(%s)' % COND_NLE)
 
     def on_setnbe(self, i):
-        cf = get_flag('CF')
-        zf = get_flag('ZF')
-        self.set_register(i.op1.value, 'int(!%s && !%s)' % (cf, zf))
+        self.set_op(i.op1, 'int(%s)' % COND_NBE)
 
     def on_setbe(self, i):
-        cf = get_flag('CF')
-        zf = get_flag('ZF')
-        self.set_register(i.op1.value, 'int(%s || %s)' % (cf, zf))
+        self.set_op(i.op1, 'int(%s)' % COND_BE)
 
     def on_seto(self, i):
-        test = get_flag('OF')
-        self.set_register(i.op1.value, 'int(%s)' % test)
+        self.set_op(i.op1, 'int(%s)' % COND_O)
 
     def on_setns(self, i):
-        test = get_flag('SF')
-        self.set_register(i.op1.value, 'int(!%s)' % test)
+        self.set_op(i.op1, 'int(%s)' % COND_NS)
 
     def on_setz(self, i):
-        self.set_op(i.op1, 'int(%s)' % get_flag('ZF'))
+        self.set_op(i.op1, 'int(%s)' % COND_Z)
 
     def on_movzx(self, i):
         src = i.op2
@@ -1348,94 +1325,56 @@ class CPU(object):
             try:
                 section = self.converter.get_section(displacement)
                 if section.section_name == 'text':
+                    self.writer.putln('// movzx ignored here')
                     return
             except NotImplementedError:
                 pass
         self.set_register(i.op1.value, i.op2.get())
 
-    def on_cmovae(self, i):
-        self.writer.putlnc('if (!%s)', get_flag('CF'))
+    def set_op_if(self, op, src, cond):
+        self.writer.putlnc('if (%s)', cond)
         self.writer.indent()
-        self.set_op(i.op1, i.op2.get())
+        self.set_op(op, src)
         self.writer.dedent()
+
+    def on_cmovae(self, i):
+        self.set_op_if(i.op1, i.op2.get(), COND_AE)
 
     def on_cmova(self, i):
-        cf = get_flag('CF')
-        zf = get_flag('ZF')
-        self.writer.putlnc('if (!%s && !%s)', cf, zf)
-        self.writer.indent()
-        self.set_op(i.op1, i.op2.get())
-        self.writer.dedent()
+        self.set_op_if(i.op1, i.op2.get(), COND_A)
 
     def on_cmovbe(self, i):
-        cf = get_flag('CF')
-        zf = get_flag('ZF')
-        self.writer.putlnc('if (%s || %s)', cf, zf)
-        self.writer.indent()
-        self.set_op(i.op1, i.op2.get())
-        self.writer.dedent()
+        self.set_op_if(i.op1, i.op2.get(), COND_BE)
 
     def on_cmovb(self, i):
-        cf = get_flag('CF')
-        self.writer.putlnc('if (%s)', cf)
-        self.writer.indent()
-        self.set_op(i.op1, i.op2.get())
-        self.writer.dedent()
+        self.set_op_if(i.op1, i.op2.get(), COND_B)
 
     def on_cmovg(self, i):
-        zf = get_flag('ZF')
-        sf = get_flag('SF')
-        of = get_flag('OF')
-        self.writer.putlnc('if (!%s && %s == %s)', zf, sf, of)
-        self.writer.indent()
-        self.set_op(i.op1, i.op2.get())
-        self.writer.dedent()
+        self.set_op_if(i.op1, i.op2.get(), COND_G)
 
     def on_cmovge(self, i):
-        zf = get_flag('ZF')
-        cf = get_flag('CF')
-        self.writer.putlnc('if (%s || %s)', zf, cf)
-        self.writer.indent()
-        self.set_op(i.op1, i.op2.get())
-        self.writer.dedent()
+        self.set_op_if(i.op1, i.op2.get(), COND_GE)
 
     def on_cmovl(self, i):
-        self.writer.putln('if (%s == %s)' % (get_flag('SF'), get_flag('OF')))
-        self.writer.indent()
-        self.set_op(i.op1, i.op2.get())
-        self.writer.dedent()
+        self.set_op_if(i.op1, i.op2.get(), COND_L)
 
     def on_cmovle(self, i):
-        sf = get_flag('SF')
-        of = get_flag('OF')
-        zf = get_flag('ZF')
-        self.writer.putln('if (%s || %s != %s)' % (zf, sf, of))
-        self.writer.indent()
-        self.set_op(i.op1, i.op2.get())
-        self.writer.dedent()
+        self.set_op_if(i.op1, i.op2.get(), COND_LE)
 
     def on_cmove(self, i):
-        test = get_flag('ZF')
-        self.writer.putln('if (%s)' % test)
-        self.writer.indent()
-        self.set_op(i.op1, i.op2.get())
-        self.writer.dedent()
+        self.set_op_if(i.op1, i.op2.get(), COND_E)
 
     def on_cmovne(self, i):
-        test = get_flag('ZF')
-        self.writer.putln('if (!%s)' % test)
-        self.writer.indent()
-        self.set_op(i.op1, i.op2.get())
-        self.writer.dedent()
+        self.set_op_if(i.op1, i.op2.get(), COND_NE)
 
     def on_int3(self, i):
-        self.log('int3 at %s' % self.eip)
+        # self.log('int3 at %s' % self.eip)
 
     def on_nop(self, i):
         pass
 
     def on_fstcw(self, i):
-        print 'fstcw nop at %X' % self.eip
+        self.log('fstcw nop')
 
     def on_jmp(self, i):
         op = i.op1
@@ -1510,42 +1449,40 @@ class CPU(object):
             self.writer.putln('return;')
 
     def on_jz(self, i):
-        self.test_flag('ZF', True, i.op1.value)
+        self.goto(COND_Z, i.op1.value)
 
     def on_jc(self, i):
-        self.test_flag('CF', True, i.op1.value)
+        self.goto(COND_C, i.op1.value)
 
     def on_js(self, i):
-        self.test_flag('SF', True, i.op1.value)
+        self.goto(COND_S, i.op1.value)
 
     def on_jns(self, i):
-        self.test_flag('SF', False, i.op1.value)
+        self.goto(COND_NS, i.op1.value)
 
     def on_jnl(self, i):
-        self.test_eq_flag('SF', 'OF', True, i.op1.value)
+        self.goto(COND_NL, i.op1.value)
 
     def on_jl(self, i):
-        self.test_eq_flag('SF', 'OF', False, i.op1.value)
+        self.goto(COND_L, i.op1.value)
 
     def on_jng(self, i):
-        self.test_flag('ZF', True, i.op1.value)
-        self.test_eq_flag('SF', 'OF', False, i.op1.value)
+        self.goto(COND_NG, i.op1.value)
 
     def on_jnc(self, i):
-        self.test_flag('CF', False, i.op1.value)
+        self.goto(COND_NC, i.op1.value)
 
     def on_ja(self, i):
-        self.test_and_flag('CF', 'ZF', False, i.op1.value)
+        self.goto(COND_A, i.op1.value)
 
     def on_jg(self, i):
-        zf = get_flag('ZF')
-        sf = get_flag('SF')
-        of = get_flag('OF')
-        self.goto('!%s && %s == %s' % (zf, sf, of), i.op1.value)
+        self.goto(COND_G, i.op1.value)
 
     def on_jna(self, i):
-        for name in ('CF', 'ZF'):
-            self.test_flag(name, True, i.op1.value)
+        self.goto(COND_NA, i.op1.value)
+
+    def on_jnz(self, i):
+        self.goto(COND_NZ, i.op1.value)
 
     def on_shl(self, i):
         func = 'cpu.shl_%s' % size_names[i.op1.size]
@@ -1645,9 +1582,6 @@ class CPU(object):
     def on_cmp(self, i):
         name = 'cpu.cmp_%s' % size_names[i.op1.size]
         self.writer.putln('%s(%s, %s);' % (name, i.op1.get(), i.op2.get()))
-
-    def on_jnz(self, i):
-        self.test_flag('ZF', False, i.op1.value)
 
 import struct
 

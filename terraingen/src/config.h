@@ -30,9 +30,9 @@
 #define MEMORY_SIZE (STACK_END - MEMORY_OFFSET)
 
 // debug?
-#define DEBUG_MEMORY
-#define DEBUG_CPU
-#define DEBUG_STACK
-#define DEBUG_FPU
+// #define DEBUG_MEMORY
+// #define DEBUG_CPU
+// #define DEBUG_STACK
+// #define DEBUG_FPU
 
 #endif // TERRAINGEN_CONFIG_H

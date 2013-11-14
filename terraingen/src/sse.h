@@ -141,7 +141,8 @@ public:
 
     inline XMMReg & operator=(uint32_t v)
     {
-        u64(0) = v;
+        u32(0) = v;
+        u32(1) = 0;
         u64(1) = 0;
         return *this;
     }
@@ -258,7 +259,7 @@ inline void pd_to_ps(XMMReg & dst, XMMReg src)
     dst.u64(1) = 0;
 }
 
-inline void dq_to_ps(XMMReg & dst, XMMReg & src)
+inline void dq_to_ps(XMMReg & dst, XMMReg src)
 {
     dst.u32(0) = si_to_ss(src.u32(0));
     dst.u32(1) = si_to_ss(src.u32(1));
@@ -314,7 +315,7 @@ inline uint64_t ld_to_qword(long double v)
     return to_qword(vv);
 }
 
-inline void and_pd(XMMReg & dst, const XMMReg & src)
+inline void and_pd(XMMReg & dst, XMMReg src)
 {
     dst.u64(0) &= ((XMMReg&)src).u64(0);
     dst.u64(1) &= ((XMMReg&)src).u64(1);

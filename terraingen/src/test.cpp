@@ -1,7 +1,6 @@
 #include "main.h"
 #include <iostream>
 #include <string>
-#include <boost/lexical_cast.hpp>
 
 // inline includes
 #include "cpu.cpp"
@@ -144,19 +143,35 @@ inline void test_idiv_dword(uint32_t a, uint32_t b, uint32_t c)
     test_edx();
 }
 
+inline void test_div_dword(uint32_t a, uint32_t b, uint32_t c)
+{
+    std::cout << "Testing div dword with " << a << " " << b << " " << c
+        << std::endl;
+    cpu.reg[EAX] = a;
+    cpu.reg[EDX] = b;
+    cpu.div_dword(c);
+    PUSH_REGS();
+    asm("movl %0, %%eax" : : "g" (a));
+    asm("movl %0, %%edx" : : "g" (b));
+    asm("divl %0" : : "g" (c));
+    POP_REGS();
+    // test_flags();
+    test_eax();
+    test_edx();
+}
+
 #define LOG(v) current_line = __LINE__; v;
 
 int main(int argc, const char ** argv)
 {
     std::cout << "Running tests" << std::endl;
 
-    // add
-    // dword
+    // add dword
     LOG(test_add_dword(-2, 2));
     LOG(test_add_dword(500, 2));
     LOG(test_add_dword(0xFFFFFFFF, 1));
 
-    // byte
+    // add byte
     LOG(test_add_byte(-2, 2));
     LOG(test_add_byte(255, 2));
     LOG(test_add_byte(-73, 1));
@@ -166,6 +181,18 @@ int main(int argc, const char ** argv)
     LOG(test_idiv_dword(500, 0, 2));
     LOG(test_idiv_dword(500, 5, 0x7FFFFFFF));
     LOG(test_idiv_dword(500, 5, -0x6FFFFFFF));
+
+    // div dword
+    LOG(test_div_dword(0, 1, 500));
+    LOG(test_div_dword(500, 0, 2));
+    LOG(test_div_dword(500, 5, 0x7FFFFFFF));
+    LOG(test_div_dword(500, 5, -0x6FFFFFFF));
+
+    // mul dword
+    LOG(test_mul_dword(0, 1, 500));
+    LOG(test_mul_dword(500, 0, 2));
+    LOG(test_mul_dword(500, 5, 0x7FFFFFFF));
+    LOG(test_mul_dword(500, 5, -0x6FFFFFFF));
 
     std::cout << "Done" << std::endl;
     return 0;
