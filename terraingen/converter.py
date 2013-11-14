@@ -1368,6 +1368,7 @@ class CPU(object):
         self.set_op_if(i.op1, i.op2.get(), COND_NE)
 
     def on_int3(self, i):
+        pass
         # self.log('int3 at %s' % self.eip)
 
     def on_nop(self, i):

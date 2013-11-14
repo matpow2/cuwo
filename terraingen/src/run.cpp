@@ -55,16 +55,8 @@ void save_chunk(uint32_t addr)
     fp.close();
 }
 
-void save_chunk_now()
-{
-    // static bool should_save = true;
-    // if (!should_save)
-    //     return;
-    // should_save = false;
-
-    // hardcoded, for debug
-    save_chunk(101495531);
-}
+#define GEN_X (0x8020+1)
+#define GEN_Y (0x8020+1)
 
 int main(int argc, const char ** argv)
 {
@@ -73,8 +65,8 @@ int main(int argc, const char ** argv)
     std::cout << "Generator setup!" << std::endl;
 
     cpu.reset_stack();
-    cpu.push_dword(0x8020);
-    cpu.push_dword(0x8020);
+    cpu.push_dword(GEN_X);
+    cpu.push_dword(GEN_Y);
     get_self() = MANAGER_ADDRESS;
     add_ret();
     generator_func();
@@ -83,8 +75,8 @@ int main(int argc, const char ** argv)
     // return 0;
     // address 405E30 is
     // void * __thiscall get_sector_chunk_data(__int64 chunk_pos)
-    cpu.push_dword(0x8020);
-    cpu.push_dword(0x8020);
+    cpu.push_dword(GEN_X);
+    cpu.push_dword(GEN_Y);
     get_self() = MANAGER_ADDRESS;
     add_ret();
     sub_405E30();
