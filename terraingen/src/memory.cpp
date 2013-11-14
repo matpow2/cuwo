@@ -43,7 +43,7 @@ inline void Memory::write_section(uint32_t address, const char * filename)
         std::cout << "Could not read " << filename << std::endl;
         return;
     }
-    std::ifstream::pos_type size = fp.tellg();
+    size_t size = size_t(fp.tellg());
     char * data = new char[size];
     fp.seekg(0, std::ios::beg);
     fp.read(data, size);
@@ -59,7 +59,7 @@ inline void Memory::write_file(uint32_t address, const char * filename)
         std::cout << "Could not read " << filename << std::endl;
         return;
     }
-    std::ifstream::pos_type size = fp.tellg();
+    size_t size = size_t(fp.tellg());
     char * data = new char[size];
     fp.seekg(0, std::ios::beg);
     fp.read(data, size);
@@ -328,8 +328,8 @@ inline uint32_t Memory::heap_alloc(uint32_t size)
     // char * data = new char[size]();
     uint32_t ret = STACK_END+heap_offset;
     // add size to heap offset and align to 8-byte boundary
-    // heap_offset = (heap_offset + size + 8 - 1) & ~(8 - 1);
-    heap_offset = heap_offset+size;
+    heap_offset = (heap_offset + size + 8 - 1) & ~(8 - 1);
+    // heap_offset = heap_offset+size;
     set_size(MEMORY_SIZE+heap_offset);
 
 #ifdef DEBUG_MEMORY

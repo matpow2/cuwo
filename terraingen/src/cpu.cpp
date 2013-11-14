@@ -108,7 +108,7 @@ inline uint32_t sub_vec(uint32_t a, uint32_t b, uint32_t res)
 template <class T>
 inline void set_lazy(uint32_t res)
 {
-    cpu.res = (uint32_t)((T)(typename boost::make_signed<T>::type(res)));
+    cpu.res = (uint32_t)(int32_t)(typename boost::make_signed<T>::type(res));
     cpu.aux = 0;
 }
 
@@ -129,7 +129,7 @@ inline void set_lazy(uint32_t res)
 template <typename T>
 inline void set_lazy(uint32_t aux, uint32_t res)
 {
-    cpu.res = (uint32_t)(typename boost::make_signed<T>::type(res));
+    cpu.res = (uint32_t)(int32_t)(typename boost::make_signed<T>::type(res));
     const uint32_t size = sizeof(T)*8;
     uint32_t temp = (aux & (LF_MASK_AF)) | ((aux >> (size - 2)) << LF_BIT_PO);
     if (size == 32)
@@ -144,7 +144,7 @@ inline void set_lazy(uint32_t aux, uint32_t res)
 template <typename T>
 inline void set_lazy_incdec(uint32_t aux, uint32_t res)
 {
-    cpu.res = (uint32_t)(typename boost::make_signed<T>::type(res));
+    cpu.res = (uint32_t)(int32_t)(typename boost::make_signed<T>::type(res));
     const uint32_t size = sizeof(T)*8;
     uint32_t temp = (aux & (LF_MASK_AF)) | ((aux >> (size - 2)) << LF_BIT_PO);
     if (size == 32)
@@ -285,7 +285,7 @@ inline uint8_t CPU::sub_byte(uint8_t a, uint8_t b)
 {
     uint32_t res = uint32_t(a) - uint32_t(b);
     set_lazy_sub<uint8_t>(a, b, res);
-    return res;
+    return uint8_t(res);
 }
 
 inline uint32_t CPU::add_dword(uint32_t a, uint32_t b)
@@ -323,21 +323,21 @@ inline uint8_t CPU::sbb_byte(uint8_t a, uint8_t b)
     bool cf = get_cf();
     uint32_t res = uint32_t(a) - (uint32_t(b) + uint32_t(cf));
     set_lazy_sub<uint8_t>(a, b, res);
-    return res;
+    return uint8_t(res);
 }
 
 inline uint32_t CPU::neg_dword(uint32_t value)
 {
     uint32_t res = -(int32_t)(value);
-    set_lazy_sub<uint32_t>(0, value, res);
+    set_lazy_sub<uint32_t>(0, 0 - res, res);
     return res;
 }
 
 inline uint8_t CPU::neg_byte(uint8_t value)
 {
     uint32_t res = -(int8_t)(value);
-    set_lazy_sub<uint8_t>(0, value, res);
-    return res;
+    set_lazy_sub<uint8_t>(0, 0 - res, res);
+    return uint8_t(res);
 }
 
 inline uint32_t CPU::shl_dword(uint32_t value, uint32_t count)
@@ -361,13 +361,13 @@ inline uint16_t CPU::shl_word(uint16_t value, uint16_t count)
     uint32_t of = 0;
     uint32_t cf = 0;
 
-    count &= 0x1f; /* use only 5 LSB's */
+    count &= 0x1f;
 
     if (!count)
         return value;
 
     if (count <= 16) {
-        res = (value << count);
+        res = uint16_t(value << count);
         cf = (value >> (16 - count)) & 0x1;
         of = cf ^ (res >> 15);
     } else {
@@ -392,7 +392,7 @@ inline uint8_t CPU::shl_byte(uint8_t value, uint8_t count)
         return value;
 
     if (count <= 8) {
-        res = (value << count);
+        res = uint8_t(value << count);
         cf = (value >> (8 - count)) & 0x1;
         of = cf ^ (res >> 7);
     } else {
@@ -459,7 +459,7 @@ inline uint16_t CPU::rol_word(uint16_t v, uint16_t count)
         }
     } else {
         count &= 0x0f;
-        uint16_t res = (v << count) | (v >> (16 - count));
+        uint16_t res = uint16_t((v << count) | (v >> (16 - count)));
         uint32_t bit0  = res & 0x1;
         uint32_t bit15 = res >> 15;
         set_of_cf((bit0 ^ bit15)==1, bit0==1);
@@ -510,7 +510,7 @@ inline uint16_t CPU::shr_word(uint16_t v, uint16_t count)
 
     if (!count)
         return v;
-    uint16_t res = v >> count;
+    uint16_t res = uint16_t(v >> count);
     uint32_t cf = (v >> (count - 1)) & 0x1;
     uint32_t of = ((uint16_t)((res << 1) ^ res) >> 15) & 0x1;
     set_lazy<uint16_t>(res);
@@ -525,7 +525,7 @@ inline uint8_t CPU::shr_byte(uint8_t v, uint8_t count)
     if (!count)
         return v;
 
-    uint8_t res = v >> count;
+    uint8_t res = uint8_t(v >> count);
     unsigned cf = (v >> (count - 1)) & 0x1;
     unsigned of = (((res << 1) ^ res) >> 7) & 0x1;
     set_lazy<uint8_t>(res);
@@ -645,7 +645,7 @@ inline uint8_t CPU::dec_byte(uint8_t a)
 {
     uint32_t res = uint32_t(a) - 1;
     set_lazy_dec<uint8_t>(res + 1, 0, res);
-    return res;
+    return uint8_t(res);
 }
 
 inline uint32_t CPU::inc_dword(uint32_t a)

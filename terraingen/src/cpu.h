@@ -249,9 +249,9 @@ memcpy(((char *)&to)+4,&upper,4);
 
 inline uint32_t cdq_x86(uint32_t v)
 {
-    if (((int32_t)v) < 0)
-        return std::numeric_limits<uint32_t>::max();
-    return 0;
+    if (v & 0x80000000)
+        return 0xFFFFFFFF;
+    return 0x00000000;
 }
 
 // custom/import helpers
@@ -285,8 +285,8 @@ inline void set_ret(int v)
 
 inline void set_ret(uint64_t v)
 {
-    cpu.reg[EAX] = v & 0xFFFFFFFF;
-    cpu.reg[EDX] = v >> 32;
+    cpu.reg[EAX] = uint32_t(v & 0xFFFFFFFF);
+    cpu.reg[EDX] = uint32_t(v >> 32);
 }
 
 inline void ret_self()

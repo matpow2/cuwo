@@ -16,6 +16,10 @@ set(SRCS
     ${SRC_DIR}/sqlite3.c
 )
 
+set(TEST_SRCS
+    ${SRC_DIR}/test.cpp
+)
+
 # dependencies
 
 find_package(Boost REQUIRED) 
@@ -30,7 +34,7 @@ set(CMAKE_LIBRARY_PATH "${ROOT_DIR}/lib" ${CMAKE_LIBRARY_PATH})
 set(CMAKE_INCLUDE_PATH ${SRC_DIR} "${ROOT_DIR}/include"
     ${CMAKE_INCLUDE_PATH})
 
-if(WIN32)
+if(MSVC)
     set(CMAKE_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/include/win32"
         ${CMAKE_INCLUDE_PATH})
 endif()
@@ -46,6 +50,12 @@ include_directories(
     ${CMAKE_INCLUDE_PATH}
 )
 
-# editor build
+# build
 add_executable(gen ${SRCS})
 target_link_libraries(gen ${GEN_LIBS})
+
+if (CMAKE_COMPILER_IS_GNUCC OR MINGW)
+    # build test
+    add_executable(testx86 ${TEST_SRCS})
+    target_link_libraries(testx86 ${GEN_LIBS})
+endif()

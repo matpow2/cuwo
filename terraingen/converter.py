@@ -253,8 +253,8 @@ reg_table = {
 
 reg_ref_table = {
     REG_GEN_DWORD: 'cpu.reg[%s]',
-    REG_GEN_WORD: '*cpu.reg16[%s]',
-    REG_GEN_BYTE: '*cpu.reg8[%s]',
+    REG_GEN_WORD: '(*cpu.reg16[%s])',
+    REG_GEN_BYTE: '(*cpu.reg8[%s])',
     REG_SEGMENT: 'mem.segment_table[%s]',
     REG_XMM: 'cpu.xmm[%s]',
     REG_FPU: 'cpu.get_fpu(%s)'
@@ -421,6 +421,8 @@ class Operand(object):
                         tmp = ~tmp & 0xffff
                     elif op.dispbytes == 4:
                         tmp = ~tmp & 0xffffffff
+                    else:
+                        raise NotImplementedError()
                     self.displacement = '(-0x%x)' % (tmp + 1)
                 # Positive displacement
                 else:
@@ -471,6 +473,8 @@ class Operand(object):
     def get(self):
         if self.is_memory:
             return get_memory(self.value, self.size)
+        if self.is_immediate:
+            return '%sU' % self.value
         return self.value
 
 def get_memory(addr, size):
@@ -513,6 +517,8 @@ class Instruction(object):
         mnemonic = mnemonic.strip()
         if mnemonic == 'rep retn':
             mnemonic = 'retn'
+        elif mnemonic == 'rep ret':
+            mnemonic = 'ret'
         mnemonic = mnemonic.split()
 
         if mnemonic[0] in ["rep", "repe", "repne", "lock"]:
@@ -833,7 +839,9 @@ class CPU(object):
 
         rep_reg = None
         if instruction.prefix == 'rep':
-            rep_reg = get_register(REG_CX, REG_GEN_WORD)
+            if instruction.get_address_mode() != MODE_32:
+                raise NotImplementedError()
+            rep_reg = get_register(REG_ECX, REG_GEN_DWORD)
         elif instruction.prefix is not None:
             raise NotImplementedError()
 
@@ -898,10 +906,14 @@ class CPU(object):
 
     def goto(self, test, address):
         if address < self.sub.start or address >= self.sub.end:
+            is_call = True
             call = '%s()' % self.get_function_name(address)
         else:
+            is_call = False
             call = 'goto %s' % get_label_name(address)
         self.writer.putln('if (%s) %s;' % (test, call))
+        if is_call:
+            self.writer.putln('return;')
 
     def test_flag(self, flag, value, goto):
         test = get_flag(flag)
@@ -941,6 +953,7 @@ class CPU(object):
     def on_mov(self, i):
         # since we don't want to bother with setting up import table, just
         # set function pointers directly
+        i.op2.size = i.op1.size
         self.set_op(i.op1, i.op2.get())
 
     def on_movsx(self, i):
@@ -1153,7 +1166,7 @@ class CPU(object):
             reg_type = REG_GEN_WORD
             size = 2
         eax = get_register(REG_EAX, reg_type)
-        es = get_register(REG_DS, REG_SEGMENT)
+        es = get_register(REG_ES, REG_SEGMENT)
         edi = get_register(REG_EDI, reg_type)
         self.set_memory('%s+%s' % (es, edi), eax, size)
         df = '(int(!%s)*2-1)*%s' % (get_flag('DF'), size)
@@ -1193,7 +1206,8 @@ class CPU(object):
 
     def on_not(self, i):
         # eflags not affected
-        self.set_op(i.op1, '~%s' % i.op1.get())
+        size_type = size_types[i.op1.size]
+        self.set_op(i.op1, '%s(~%s)' % (size_type, i.op1.get()))
 
     def on_xorps(self, i):
         # eflags not affected
@@ -1283,7 +1297,7 @@ class CPU(object):
             return
         eax = get_register(REG_EAX, REG_GEN_DWORD)
         ax = get_register(REG_AX, REG_GEN_WORD)
-        self.set_register(eax, 'uint32_t(int16_t(%s))' % ax)
+        self.set_register(eax, 'uint32_t(int32_t(int16_t(%s)))' % ax)
 
     def on_setnz(self, i):
         test = get_flag('ZF')
@@ -1453,7 +1467,7 @@ class CPU(object):
                     raise NotImplementedError()
                 table_size = comp.op2.value+1
                 if indirect:
-                    if indirect.op1.get() != reg:
+                    if indirect.op1.value != reg:
                         raise NotImplementedError()
                     ind_op = indirect.op2
                     ind_addr = eval(ind_op.displacement)
@@ -1597,19 +1611,17 @@ class CPU(object):
     def on_imul(self, i):
         if i.op3:
             func = 'cpu.imul_%s' % size_names[i.op1.size]
-            call = '%s(%s, %s);' % (func, i.op2.get(), i.op3.get())
+            call = '%s(%s, %s)' % (func, i.op2.get(), i.op3.get())
             self.set_op(i.op1, call)
         elif i.op2:
             func = 'cpu.imul_%s' % size_names[i.op1.size]
-            call = '%s(%s, %s);' % (func, i.op1.get(), i.op2.get())
+            call = '%s(%s, %s)' % (func, i.op1.get(), i.op2.get())
             self.set_op(i.op1, call)
         else:
             func = 'cpu.imul_%s' % size_names[i.op1.size]
             self.writer.putlnc('%s(%s);', func, i.op1.get())
 
     def on_mul(self, i):
-        if i.op2 or i.op3:
-            return False
         func = 'cpu.mul_%s' % size_names[i.op1.size]
         self.writer.putlnc('%s(%s);', func, i.op1.get())
 
