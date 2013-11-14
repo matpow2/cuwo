@@ -54,8 +54,8 @@ include_directories(
 add_executable(gen ${SRCS})
 target_link_libraries(gen ${GEN_LIBS})
 
-if (CMAKE_COMPILER_IS_GNUCC OR MINGW)
-    # build test
-    add_executable(testx86 ${TEST_SRCS})
-    target_link_libraries(testx86 ${GEN_LIBS})
-endif()
+# if (CMAKE_COMPILER_IS_GNUCC OR MINGW)
+#     # build test
+#     add_executable(testx86 ${TEST_SRCS})
+#     target_link_libraries(testx86 ${GEN_LIBS})
+# endif()
