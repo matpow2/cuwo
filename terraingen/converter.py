@@ -1088,7 +1088,6 @@ class CPU(object):
         self.pop_float()
 
     def on_fstpl(self, i):
-        print i.fpuindex
         func = 'ld_to_%s' % size_names[i.op1.size]
         self.set_op(i.op1, '%s(%s)' % (func, get_fpu()))
         self.pop_float()
@@ -1366,6 +1365,9 @@ class CPU(object):
 
     def on_cmovne(self, i):
         self.set_op_if(i.op1, i.op2.get(), COND_NE)
+
+    def on_cmovs(self, i):
+        self.set_op_if(i.op1, i.op2.get(), COND_S)
 
     def on_int3(self, i):
         pass

@@ -349,4 +349,13 @@ inline void _libm_sse2_sqrt_precise_imp()
     cpu.xmm[XMM0] = v;
 }
 
+inline void _libm_sse2_pow_precise_imp()
+{
+    pop_ret();
+    double v = to_sd(cpu.xmm[XMM0]);
+    double vv = to_sd(cpu.xmm[XMM0]);
+    v = pow(v, vv);
+    cpu.xmm[XMM0] = v;
+}
+
 #endif // TERRAINGEN_BASE_H
