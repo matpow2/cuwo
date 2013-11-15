@@ -25,8 +25,12 @@
 #include "main.h"
 
 inline Memory::Memory()
-: data_size(0), data(NULL), alloc_table(NULL)
+: data_size(0), data(NULL)
 {
+#ifdef DEBUG_MEMORY
+    alloc_table = NULL
+#endif
+
     for (int i = 0; i < 6; i++)
         segment_table[i] = 0;
     segment_table[FS] = FS_SEGMENT_OFFSET;
@@ -81,6 +85,7 @@ inline void log_access(uint32_t addr)
     exit(0);
 }
 
+#ifdef DEBUG_MEMORY
 inline bool test_alloc_table(uint32_t v, uint32_t addr, uint32_t size)
 {
     if (v == 0) {
@@ -99,6 +104,7 @@ inline bool test_alloc_table(uint32_t v, uint32_t addr, uint32_t size)
 
     return true;
 }
+#endif
 
 inline bool test_address(char * res, uint32_t addr, size_t size)
 {

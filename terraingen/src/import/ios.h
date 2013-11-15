@@ -162,12 +162,14 @@ inline void _Fiopen_imp()
     // returns FILE*
 }
 
+extern uint32_t get_seed();
+
 inline void basic_istream_char_read_int_imp()
 {
     pop_ret();
     uint32_t * v = (uint32_t*)mem.translate(cpu.pop_dword());
     // let's just give it a seed
-    *v = 626466;
+    *v = get_seed();
     ret_self();
     // std::cout << "basic_istream_char_read_int" << std::endl;
 }

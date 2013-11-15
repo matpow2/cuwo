@@ -46,7 +46,9 @@ public:
 
     uint32_t heap_offset;
 
+#ifdef DEBUG_MEMORY
     uint32_t * alloc_table;
+#endif
 
     Memory();
     void write_file(uint32_t address, const char * filename);

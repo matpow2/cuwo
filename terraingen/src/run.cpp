@@ -26,11 +26,16 @@ inline std::string to_str(const T & in)
     return boost::lexical_cast<std::string>(in);
 }
 
-void save_chunk(uint32_t addr, uint32_t x, uint32_t y)
+template <class T>
+inline int to_int(const T & in)
 {
-    std::string filename = "genout/" + to_str(x) + "_" + to_str(y) + ".bin";
+    return boost::lexical_cast<int>(in);
+}
+
+void save_chunk(uint32_t addr, const char * file)
+{
     std::cout << "Save chunk: " << addr << std::endl;
-    std::ofstream fp(filename.c_str(), std::ios::out | std::ios::binary);
+    std::ofstream fp(file, std::ios::out | std::ios::binary);
     uint32_t entry = mem.read_dword(addr + 168);
     for (int i = 0; i < 256*256; i++) {
         uint32_t vtable = mem.read_dword(entry);
@@ -62,10 +67,7 @@ void save_chunk(uint32_t addr, uint32_t x, uint32_t y)
 #define GEN_Y_BASE (0x8020)
 #define GEN_SQ 11
 
-#define GEN_TEST_X (GEN_X_BASE - GEN_SQ)
-#define GEN_TEST_Y (GEN_Y_BASE - GEN_SQ)
-
-inline void generate_chunk(uint32_t x, uint32_t y)
+inline void generate_chunk(uint32_t x, uint32_t y, const char * file)
 {
     cpu.reset_stack();
     cpu.push_dword(x);
@@ -83,32 +85,34 @@ inline void generate_chunk(uint32_t x, uint32_t y)
     get_self() = MANAGER_ADDRESS;
     add_ret();
     sub_405E30();
-    save_chunk(cpu.reg[EAX], x, y);
+    save_chunk(cpu.reg[EAX], file);
 }
 
-inline void save_chunk_now()
+static uint32_t global_seed = 626466;
+
+uint32_t get_seed()
 {
-    static bool saved = false;
-    if (saved)
-        return;
-    saved = true;
-    save_chunk(101548876, GEN_TEST_X, GEN_TEST_Y);
+    return global_seed;
 }
 
 int main(int argc, const char ** argv)
 {
+    if (argc != 5) {
+        std::cout << "Usage: gen.exe seed x y file" << std::endl;
+        return 0;
+    }
+
+    global_seed = (uint32_t)to_int(argv[1]);
+    int x = to_int(argv[2]);
+    int y = to_int(argv[3]);
+    const char * file = argv[4];
+
     init_function_map();
     init_emu();
     init_static();
     entry_point();
     std::cout << "Generator setup!" << std::endl;
 
-    // for (int x = GEN_X_BASE-GEN_SQ; x < GEN_X_BASE+GEN_SQ*2; x++)
-    // for (int y = GEN_Y_BASE-GEN_SQ; y < GEN_Y_BASE+GEN_SQ*2; y++) {
-    //     std::cout << "Generating chunk " << x << " " << y << std::endl;
-    //     generate_chunk(x, y);
-    // }
-    generate_chunk(GEN_TEST_X, GEN_TEST_Y);
-
+    generate_chunk(x, y, file);
     return 0;
 }
