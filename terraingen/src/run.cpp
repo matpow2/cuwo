@@ -20,12 +20,15 @@ Memory mem;
 // manager has been allocated
 #define MANAGER_ADDRESS STACK_END
 
-void save_chunk(uint32_t addr)
+template <class T>
+inline std::string to_str(const T & in)
 {
-    static int index = -1;
-    index++;
-    std::string filename = "genout" + boost::lexical_cast<std::string>(index)
-                           + ".bin";
+    return boost::lexical_cast<std::string>(in);
+}
+
+void save_chunk(uint32_t addr, uint32_t x, uint32_t y)
+{
+    std::string filename = "genout/" + to_str(x) + "_" + to_str(y) + ".bin";
     std::cout << "Save chunk: " << addr << std::endl;
     std::ofstream fp(filename.c_str(), std::ios::out | std::ios::binary);
     uint32_t entry = mem.read_dword(addr + 168);
@@ -55,18 +58,18 @@ void save_chunk(uint32_t addr)
     fp.close();
 }
 
-#define GEN_X (0x8020+1)
-#define GEN_Y (0x8020+1)
+#define GEN_X_BASE (0x8020)
+#define GEN_Y_BASE (0x8020)
+#define GEN_SQ 11
 
-int main(int argc, const char ** argv)
+#define GEN_TEST_X (GEN_X_BASE - GEN_SQ)
+#define GEN_TEST_Y (GEN_Y_BASE - GEN_SQ)
+
+inline void generate_chunk(uint32_t x, uint32_t y)
 {
-    init_function_map();
-    start();
-    std::cout << "Generator setup!" << std::endl;
-
     cpu.reset_stack();
-    cpu.push_dword(GEN_X);
-    cpu.push_dword(GEN_Y);
+    cpu.push_dword(x);
+    cpu.push_dword(y);
     get_self() = MANAGER_ADDRESS;
     add_ret();
     generator_func();
@@ -75,11 +78,37 @@ int main(int argc, const char ** argv)
     // return 0;
     // address 405E30 is
     // void * __thiscall get_sector_chunk_data(__int64 chunk_pos)
-    cpu.push_dword(GEN_X);
-    cpu.push_dword(GEN_Y);
+    cpu.push_dword(x);
+    cpu.push_dword(y);
     get_self() = MANAGER_ADDRESS;
     add_ret();
     sub_405E30();
-    save_chunk(cpu.reg[EAX]);
+    save_chunk(cpu.reg[EAX], x, y);
+}
+
+inline void save_chunk_now()
+{
+    static bool saved = false;
+    if (saved)
+        return;
+    saved = true;
+    save_chunk(101548876, GEN_TEST_X, GEN_TEST_Y);
+}
+
+int main(int argc, const char ** argv)
+{
+    init_function_map();
+    init_emu();
+    init_static();
+    entry_point();
+    std::cout << "Generator setup!" << std::endl;
+
+    // for (int x = GEN_X_BASE-GEN_SQ; x < GEN_X_BASE+GEN_SQ*2; x++)
+    // for (int y = GEN_Y_BASE-GEN_SQ; y < GEN_Y_BASE+GEN_SQ*2; y++) {
+    //     std::cout << "Generating chunk " << x << " " << y << std::endl;
+    //     generate_chunk(x, y);
+    // }
+    generate_chunk(GEN_TEST_X, GEN_TEST_Y);
+
     return 0;
 }

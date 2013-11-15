@@ -22,7 +22,8 @@ import collections
 import struct
 import os
 import math
-from alias import function_alias, import_alias, function_enders
+import config
+from config import function_alias, import_alias, function_enders
 from ctypes import c_int32
 
 LICENSE_TEXT = '''\
@@ -940,8 +941,6 @@ class CPU(object):
         self.pop_dword(i.op1.value)
 
     def on_mov(self, i):
-        # since we don't want to bother with setting up import table, just
-        # set function pointers directly
         i.op2.size = i.op1.size
         self.set_op(i.op1, i.op2.get())
 
@@ -1070,8 +1069,8 @@ class CPU(object):
         self.push_float('to_ld(%s(%s))' % (size_type, i.op1.get()))
 
     def on_fild(self, i):
-        if i.op1.size == 10:
-            i.op1.size = 8
+        if i.fpuindex != 7:
+            return False
         self.push_float('si_to_ld(%s)' % (i.op1.get()))
 
     def on_flds(self, i):
@@ -1088,6 +1087,9 @@ class CPU(object):
         self.pop_float()
 
     def on_fstpl(self, i):
+        if i.op1.reg_type == REG_FPU:
+            import code
+            code.interact(local=locals())
         func = 'ld_to_%s' % size_names[i.op1.size]
         self.set_op(i.op1, '%s(%s)' % (func, get_fpu()))
         self.pop_float()
@@ -1240,6 +1242,8 @@ class CPU(object):
 
     def on_call(self, i):
         test_ebp = False
+        # if self.eip in (0x54ABD5, 0x54AC12):
+        #     test_ebp = False
 
         op = i.op1
 
@@ -1442,6 +1446,8 @@ class CPU(object):
                 for i in xrange(table_size):
                     data = self.converter.get_memory(table_addr + i*scale, 4)
                     addr, = struct.unpack('<I', data)
+                    if addr > self.sub.end or addr < self.sub.start:
+                        raise NotImplementedError()
                     loc = get_label_name(addr)
                     self.writer.putln('case %s: goto %s;' % (i, loc))
                     self.sub.labels.add(addr)
@@ -1650,7 +1656,7 @@ class Converter(object):
         writer.putln('#include "functions.h"')
         writer.putln('')
 
-        writer.putmeth('inline void start')
+        writer.putmeth('inline void init_emu')
 
         for index, section in enumerate(pe.sections):
             self.sections.append(section)
@@ -1702,14 +1708,12 @@ class Converter(object):
                 off = section_base + data_len
                 writer.putlnc('mem.pad_section(%#x, %s);', off, extra)
 
-        writer.putln('entry_point();')
         writer.end_brace()
 
         # ensure custom sqlite3 is used
-        sqlite_table = self.image_base + 0x16A290
+        sqlite_table = config.sqlite_table
         for _ in xrange(712 / 4):
-            value = self.get_memory(sqlite_table, 4)
-            value, = struct.unpack('<I', value)
+            value = self.get_dword(sqlite_table)
             if value != 0:
                 func = self.get_function_name(value)
                 # XXX hack
@@ -1718,12 +1722,11 @@ class Converter(object):
             sqlite_table += 4
 
         # get current dynamic addresses
-        import dynamic
-        self.dynamic_addresses = dynamic.dynamic_addresses
+        self.dynamic_addresses = config.dynamic_addresses
 
         # write functions, starting from entry point
         # start at main()
-        self.entry_point = self.image_base + 0x149AD0
+        self.entry_point = config.entry_point
         self.function_stack = [self.entry_point]
         for address in self.dynamic_addresses:
             if (address in self.imports and
@@ -1731,6 +1734,17 @@ class Converter(object):
                 self.used_imports.add(address)
             else:
                 self.function_stack.insert(0, address)
+
+        # add initterm initializers to function stack
+        writer.putmeth('void init_static')
+        for addr in xrange(config.static_start, config.static_end, 4):
+            value = self.get_dword(addr)
+            if value in config.static_ignore:
+                continue
+            self.add_function(value)
+            writer.putln('add_ret();')
+            writer.putlnc('%s();', self.get_function_name(value))
+        writer.end_brace()
 
         while self.function_stack:
             address = self.function_stack.pop()
@@ -1911,6 +1925,11 @@ class Converter(object):
             raise NotImplementedError()
         address -= section.image_base
         return section.get_data(address, size)
+
+    def get_dword(self, addr):
+        value = self.get_memory(addr, 4)
+        value, = struct.unpack('<I', value)
+        return value
 
     def log(self, value):
         self.writer.putlnc('std::cout << %r << std::endl;', value)

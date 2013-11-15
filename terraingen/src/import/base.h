@@ -353,7 +353,7 @@ inline void _libm_sse2_pow_precise_imp()
 {
     pop_ret();
     double v = to_sd(cpu.xmm[XMM0]);
-    double vv = to_sd(cpu.xmm[XMM0]);
+    double vv = to_sd(cpu.xmm[XMM1]);
     v = pow(v, vv);
     cpu.xmm[XMM0] = v;
 }

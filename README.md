@@ -83,6 +83,8 @@ Perl - protocol RE
 
 ZeZeene - web interface for master server
 
+Lord_Nightmare - terraingen help and support with x86
+
 Kyle - master server JS
 
 MazeXD - master server JS and design

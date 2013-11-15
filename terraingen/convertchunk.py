@@ -4,14 +4,15 @@ sys.path.append('..')
 from cuwo.bytes import ByteReader, ByteWriter
 from cuwo.qmo import QubicleFile, QubicleModel
 from cuwo.cub import CubModel
+import os
 
 
 def switch_axes(x, y, z):
     return x, z, y
 
 
-def convert_qmo():
-    data = ByteReader(open('genout0.bin', 'rb').read())
+def convert_qmo(path):
+    data = ByteReader(open(path, 'rb').read())
 
     qmo_file = QubicleFile()
     qmo_model = QubicleModel()
@@ -63,7 +64,16 @@ def convert_qmo():
     qmo_file.models.append(qmo_model)
     writer = ByteWriter()
     qmo_file.write(writer)
-    open('testout.qmo', 'wb').write(writer.get())
+    name = os.path.splitext(os.path.basename(path))[0]
+    out_path = os.path.join('genqmo', name + '.qmo')
+    open(out_path, 'wb').write(writer.get())
 
+    print 'Converted', path
 
-convert_qmo()
+def main():
+    for f in os.listdir('genout'):
+        path = os.path.join('genout', f)
+        convert_qmo(path)
+
+if __name__ == '__main__':
+    main()

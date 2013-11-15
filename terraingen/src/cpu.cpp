@@ -108,7 +108,7 @@ inline uint32_t sub_vec(uint32_t a, uint32_t b, uint32_t res)
 template <class T>
 inline void set_lazy(uint32_t res)
 {
-    cpu.res = (uint32_t)(int32_t)(typename boost::make_signed<T>::type(res));
+    cpu.res = (uint32_t)((int32_t)(typename boost::make_signed<T>::type(res)));
     cpu.aux = 0;
 }
 
@@ -129,7 +129,7 @@ inline void set_lazy(uint32_t res)
 template <typename T>
 inline void set_lazy(uint32_t aux, uint32_t res)
 {
-    cpu.res = (uint32_t)(int32_t)(typename boost::make_signed<T>::type(res));
+    cpu.res = (uint32_t)((int32_t)(typename boost::make_signed<T>::type(res)));
     const uint32_t size = sizeof(T)*8;
     uint32_t temp = (aux & (LF_MASK_AF)) | ((aux >> (size - 2)) << LF_BIT_PO);
     if (size == 32)
@@ -144,7 +144,7 @@ inline void set_lazy(uint32_t aux, uint32_t res)
 template <typename T>
 inline void set_lazy_incdec(uint32_t aux, uint32_t res)
 {
-    cpu.res = (uint32_t)(int32_t)(typename boost::make_signed<T>::type(res));
+    cpu.res = (uint32_t)((int32_t)(typename boost::make_signed<T>::type(res)));
     const uint32_t size = sizeof(T)*8;
     uint32_t temp = (aux & (LF_MASK_AF)) | ((aux >> (size - 2)) << LF_BIT_PO);
     if (size == 32)

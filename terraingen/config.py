@@ -15,6 +15,36 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Contains configuration specific to this version of Server.exe
+Addresses are with the default image base (i.e. 0x400000)
+"""
+
+# XXX actually use this
+image_base = 0x400000
+
+entry_point = 0x549AD0
+static_start = 0x558414
+static_end = 0x558548
+static_ignore = set([
+    0x5566C0,
+    0x5566D0,
+    0x5566E0
+])
+sqlite_table = 0x16A290 + image_base
+
+
+
+dynamic_addresses = [
+    5119008,
+    4391216,
+    4269152,
+    5544464,
+    0x5183D0, # generator_func,
+    4271456,
+    5540240,
+]
+
 function_alias = {
     0x4C8580: 'initialize_manager',
     0x4D7FA0: 'initialize_seed',
@@ -29,7 +59,8 @@ import_alias = {
     '??0exception@std@@QAE@ABQBD@Z': 'exception_ctor',
     '??0bad_cast@std@@QAE@PBD@Z': 'bad_cast_ctor_charptr',
     '??_V@YAXPAX@Z': 'delete_arr_func',
-    '??0?$basic_istream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@_N@Z':
+    ('??0?$basic_istream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf'
+     '@DU?$char_traits@D@std@@@1@_N@Z'):
         'basic_istream_char_ctor',
     '??0?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAE@XZ':
         'basic_streambuf_char_ctor',
@@ -48,7 +79,8 @@ import_alias = {
         'basic_istream_char_read_int',
     '??0?$basic_ios@DU?$char_traits@D@std@@@std@@IAE@XZ':
         'basic_ios_char_ctor',
-    '??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z':
+    ('??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$'
+     'basic_streambuf@DU?$char_traits@D@std@@@1@@Z'):
         'basic_iostream_char_ctor',
     '??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@H@Z':
         'basic_ostream_char_print_int',

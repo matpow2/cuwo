@@ -117,7 +117,7 @@ public:
     }
 #endif
 
-    inline XMMReg & operator=(const uint64_t & v)
+    inline XMMReg & operator=(uint64_t v)
     {
         u64(0) = v;
         u64(1) = 0;
@@ -132,7 +132,7 @@ public:
         return *this;
     }
 
-    inline XMMReg & operator=(const double & v)
+    inline XMMReg & operator=(double v)
     {
         u64(0) = *((uint64_t*)&v);
         u64(1) = 0;

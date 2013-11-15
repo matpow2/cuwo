@@ -65,19 +65,6 @@ enum Register8
     BH
 };
 
-enum CPUFlag
-{
-    CF = 0,
-    PF = 2,
-    AF = 4,
-    ZF = 6,
-    SF = 7,
-    TF = 8,
-    IF = 9,
-    DF = 10,
-    OF = 11
-};
-
 enum RegisterXMM
 {
     XMM0 = 0,

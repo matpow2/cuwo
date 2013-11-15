@@ -325,7 +325,6 @@ inline void Memory::write_qword(uint32_t addr, uint64_t qword)
 
 inline uint32_t Memory::heap_alloc(uint32_t size)
 {
-    // char * data = new char[size]();
     uint32_t ret = STACK_END+heap_offset;
     // add size to heap offset and align to 8-byte boundary
     heap_offset = (heap_offset + size + 8 - 1) & ~(8 - 1);
@@ -339,8 +338,6 @@ inline uint32_t Memory::heap_alloc(uint32_t size)
         alloc_table[i] = ret;
     }
 #endif
-
-    // write(ret, data, size);
 // #ifdef DEBUG_MEMORY
 //     std::cout << "Allocated " << size << " at " << ret << std::endl;
 // #endif
