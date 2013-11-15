@@ -23,5 +23,6 @@
 #include "import/base.h"
 #include "import/ios.h"
 #include "import/sqlite.h"
+#include "import/noise.h"
 
 #endif // TERRAINGEN_IMPORTS_H

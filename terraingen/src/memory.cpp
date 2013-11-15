@@ -212,7 +212,10 @@ inline void Memory::read_word(uint32_t addr, uint16_t * arg)
            ((val & 0x00ff) << 8);
     *arg = val;
 #else
-    read(addr, (char*)arg, 2);
+    char * mem = translate(addr);
+    if (!test_address(mem, addr, 2))
+        return;
+    *arg = *((uint16_t*)mem);
 #endif
 }
 
@@ -234,7 +237,10 @@ inline void Memory::read_dword(uint32_t addr, uint32_t * dword)
            ((val & (0x000000ff)) << 24);
     *dword = val;
 #else
-    read(addr, (char*)dword, 4);
+    char * mem = translate(addr);
+    if (!test_address(mem, addr, 4))
+        return;
+    *dword = *((uint32_t*)mem);
 #endif
 }
 
@@ -260,7 +266,10 @@ inline void Memory::read_qword(uint32_t addr, uint64_t * qword)
           ((val & (0x00000000000000ff)) << 56);
     *qword = val;
 #else
-    read(addr, (char*)qword, 8);
+    char * mem = translate(addr);
+    if (!test_address(mem, addr, 8))
+        return;
+    *qword = *((uint64_t*)mem);
 #endif
 }
 
@@ -300,7 +309,10 @@ inline void Memory::write_word(uint32_t addr, uint16_t word)
     word = ((word & 0xff00) >> 8) | 
           ((word & 0x00ff) << 8);
 #endif
-    write(addr, (char*)&word, 2);
+    char *address = translate(addr);
+    if (!test_address(address, addr, 2))
+        return;
+    *((uint16_t*)address) = word;
 }
 
 inline void Memory::write_dword(uint32_t addr, uint32_t dword)
@@ -311,7 +323,10 @@ inline void Memory::write_dword(uint32_t addr, uint32_t dword)
             ((dword & (0x0000ff00)) << 8) |
             ((dword & (0x000000ff)) << 24);
 #endif
-    write(addr, (char*)&dword, 4);
+    char *address = translate(addr);
+    if (!test_address(address, addr, 4))
+        return;
+    *((uint32_t*)address) = dword;
 }
 
 inline void Memory::write_qword(uint32_t addr, uint64_t qword)
@@ -326,7 +341,10 @@ inline void Memory::write_qword(uint32_t addr, uint64_t qword)
             ((qword & (0x000000000000ff00)) << 40) |
             ((qword & (0x00000000000000ff)) << 56);
 #endif
-    write(addr, (char*)&qword, 8);
+    char *address = translate(addr);
+    if (!test_address(address, addr, 8))
+        return;
+    *((uint64_t*)address) = qword;
 }
 
 inline uint32_t Memory::heap_alloc(uint32_t size)
