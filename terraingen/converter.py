@@ -363,7 +363,6 @@ class Operand(object):
 
         if self.type == pydasm.OPERAND_TYPE_REGISTER:
             self.is_register = True
-
             self.reg_type = pydasm.get_register_type(op)
 
             if self.reg_type == REG_GEN:
@@ -482,39 +481,66 @@ def get_memory(addr, size):
     func = 'mem.read_%s' % size_names[size]
     return '%s(%s)' % (func, addr)
 
+
+EFL_CF = 1 << 0
+EFL_ZF = 1 << 6
+EFL_SF = 1 << 7
+EFL_OF = 1 << 11
+
+def get_eflags(value):
+    l = set()
+    if value & EFL_CF:
+        l.add('CF')
+    if value & EFL_ZF:
+        l.add('ZF')
+    if value & EFL_SF:
+        l.add('SF')
+    if value & EFL_OF:
+        l.add('OF')
+    return l
+
+
+eflags_affected = {
+    'comiss': EFL_CF | EFL_ZF | EFL_SF | EFL_OF,
+    'comisd': EFL_CF | EFL_ZF | EFL_SF | EFL_OF
+}
+
+eflags_used = {}
+
+
 class Instruction(object):
-    def __init__(self, instruction, offset, converter):
-        self.instruction = instruction
+    def __init__(self, i, offset, converter):
+        self.instruction = i
         self.converter = converter
         self.address = offset
 
-        self.length = instruction.length
-        self.type = instruction.type
-        self.mode = instruction.mode
-        self.opcode = instruction.opcode
-        self.modrm = instruction.modrm
-        self.sib = instruction.sib
-        self.extindex = instruction.extindex
-        self.fpuindex = instruction.fpuindex
-        self.dispbytes = instruction.dispbytes
-        self.immbytes = instruction.immbytes
-        self.sectionbytes = instruction.sectionbytes
-        self.flags = instruction.flags
+        self.length = i.length
+        self.type = i.type
+        self.mode = i.mode
+        self.opcode = i.opcode
+        self.modrm = i.modrm
+        self.sib = i.sib
+        self.extindex = i.extindex
+        self.fpuindex = i.fpuindex
+        self.dispbytes = i.dispbytes
+        self.immbytes = i.immbytes
+        self.sectionbytes = i.sectionbytes
+        self.flags = i.flags
 
-        if instruction.op1.type:
-            self.op1 = Operand(self, instruction.op1, offset)
+        if i.op1.type:
+            self.op1 = Operand(self, i.op1, offset)
         else:
             self.op1 = None
-        if instruction.op2.type:
-            self.op2 = Operand(self, instruction.op2, offset)
+        if i.op2.type:
+            self.op2 = Operand(self, i.op2, offset)
         else:
             self.op2 = None
-        if instruction.op3.type:
-            self.op3 = Operand(self, instruction.op3, offset)
+        if i.op3.type:
+            self.op3 = Operand(self, i.op3, offset)
         else:
             self.op3 = None
         
-        mnemonic = pydasm.get_mnemonic_string(instruction, pydasm.FORMAT_INTEL)
+        mnemonic = pydasm.get_mnemonic_string(i, pydasm.FORMAT_INTEL)
         mnemonic = mnemonic.strip()
         if mnemonic == 'rep retn':
             mnemonic = 'retn'
@@ -535,6 +561,12 @@ class Instruction(object):
 
         self.mnemonic = mnemonic[0]
 
+        affected = eflags_affected.get(self.mnemonic, i.eflags_affected)
+        used = eflags_used.get(self.mnemonic, i.eflags_used)
+        self.eflags_affected = get_eflags(affected)
+        self.eflags_used = get_eflags(used)
+        self.eflags_dependency = collections.defaultdict(list)
+
     def is_end(self):
         if self.mnemonic != 'call':
             return False
@@ -548,45 +580,9 @@ class Instruction(object):
         return pydasm.get_instruction_string(self.instruction,
                                              pydasm.FORMAT_INTEL,
                                              0).rstrip(" ")
-
-    def group1(self):
-        return bool(self.flags & 0xff000000)
     
     def group2(self):
         return (self.flags & 0x00ff0000) >> 16
-    
-    def group3(self):
-        return bool(self.flags & 0x0000ff00)
-
-    def lock(self):
-        return bool(self.flags & 0x01000000)
-    
-    def repne(self):
-        return bool(self.flags & 0x02000000)
-    
-    def rep(self):
-        return bool(self.flags & 0x03000000)
-        
-    def repe(self):
-        return bool(self.flags & 0x03000000)
-    
-    def es_override(self):
-        return bool(self.flags & 0x00010000)
-    
-    def cs_override(self):
-        return bool(self.flags & 0x00020000)
-    
-    def ss_override(self):
-        return bool(self.flags & 0x00030000)
-    
-    def ds_override(self):
-        return bool(self.flags & 0x00040000)
-    
-    def fs_override(self):
-        return bool(self.flags & 0x00050000)
-    
-    def gs_override(self):
-        return bool(self.flags & 0x00060000)
 
     def operand_so(self):
         return bool(self.flags & 0x00000100)
@@ -611,54 +607,6 @@ class Instruction(object):
             return 2
         else:
             return 4
-        
-    def get_rm(self):
-        if self.modrm:
-            return self.modrm & 0x7
-        else:
-            return False
-        
-        return False
-    
-    def get_reg_opcode(self):
-        if self.modrm:
-            return (self.modrm >> 3) & 0x7
-        else:
-            return False    
-        
-        return False
-    
-    def get_mod(self):
-        if self.modrm:
-            return (self.modrm >> 6) & 0x7
-        else:
-            return False
-        
-        return False
-
-    def get_base(self):
-        if self.sib:
-            return self.sib & 0x7
-        else:
-            return False
-        
-        return False
-        
-    def get_index(self):
-        if self.sib:
-            return (self.sib >> 3) & 0x7
-        else:
-            return False
-        
-        return False
-    
-    def get_scale(self):
-        if self.sib:
-            return (self.sib >> 6) & 0x7
-        else:
-            return False
-        
-        return False
 
 def get_label_name(address):
     return 'loc_%X' % address
@@ -688,6 +636,8 @@ class Subroutine(object):
         self.instruction_list = []
         self.labels = set()
 
+        eflags_cache = {}
+
         i = 0
         while True:
             try:
@@ -700,6 +650,17 @@ class Subroutine(object):
                 print 'Invalid instruction at %X' % address
                 break
             instruction = Instruction(raw_instruction, address, converter)
+            for flag in instruction.eflags_used:
+                try:
+                    dependency = eflags_cache[flag].eflags_dependency
+                except KeyError, e:
+                    print 'Could not find EFLAGS dependency for', flag
+                    print '%X' % instruction.address, instruction.get_disasm()
+                    raise e
+                dependency[flag].append(instruction)
+            for flag in instruction.eflags_affected:
+                eflags_cache[flag] = instruction
+
             opcode = instruction.opcode
             self.instructions[address] = instruction
             self.instruction_list.append(instruction)
@@ -1164,24 +1125,38 @@ class CPU(object):
         self.set_register(edi, '%s + %s' % (edi, df))
 
     def on_sbb(self, i):
-        func = 'cpu.sbb_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        if i.eflags_dependency:
+            func = 'cpu.sbb_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        else:
+            self.set_op(i.op1, '%s - (%s + int(%s))' % (i.op1.get(),
+                                                        i.op2.get(),
+                                                        COND_C))
 
     def on_sub(self, i):
-        func = 'cpu.sub_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        if i.eflags_dependency:
+            func = 'cpu.sub_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        else:
+            self.set_op(i.op1, '%s - %s' % (i.op1.get(), i.op2.get()))
 
     def on_adc(self, i):
         func = 'cpu.adc_%s' % size_names[i.op1.size]
         self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
 
     def on_dec(self, i):
-        func = 'cpu.dec_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s)' % (func, i.op1.get()))
+        if i.eflags_dependency:
+            func = 'cpu.dec_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s)' % (func, i.op1.get()))
+        else:
+            self.set_op(i.op1, '%s - 1' % i.op1.get())
 
     def on_inc(self, i):
-        func = 'cpu.inc_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s)' % (func, i.op1.get()))
+        if i.eflags_dependency:
+            func = 'cpu.inc_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s)' % (func, i.op1.get()))
+        else:
+            self.set_op(i.op1, '%s + 1' % i.op1.get())
 
     def on_and(self, i):
         func = 'cpu.and_%s' % size_names[i.op1.size]
@@ -1494,8 +1469,11 @@ class CPU(object):
         self.goto(COND_NZ, i.op1.value)
 
     def on_shl(self, i):
-        func = 'cpu.shl_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        if i.eflags_dependency:
+            func = 'cpu.shl_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        else:
+            self.set_op(i.op1, '%s << %s' % (i.op1.get(), i.op2.get()))
 
     def on_shld(self, i):
         func = 'cpu.shld_%s' % size_names[i.op1.size]
@@ -1519,8 +1497,11 @@ class CPU(object):
         self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
 
     def on_add(self, i):
-        func = 'cpu.add_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        if i.eflags_dependency:
+            func = 'cpu.add_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        else:
+            self.set_op(i.op1, '%s + %s' % (i.op1.get(), i.op2.get()))
 
     def on_xadd(self, i):
         func = 'cpu.xadd_%s' % size_names[i.op1.size]

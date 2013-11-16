@@ -25,6 +25,19 @@
 #include <iostream>
 #include "config.h"
 
+uint32_t CPU::reg[8];
+uint16_t *CPU::reg16[8];
+uint8_t *CPU::reg8[8];
+XMMReg CPU::xmm[8];
+size_t CPU::fpu_top;
+long double CPU::fpu[8];
+#ifdef DEBUG_FPU
+bool CPU::fpu_empty[8];
+#endif
+uint32_t CPU::res;
+uint32_t CPU::aux;
+FunctionMap CPU::functions;
+
 inline CPU::CPU()
 {
     int i = 1;
@@ -217,8 +230,8 @@ inline void CPU::set_of_cf(bool of, bool cf)
 inline void CPU::set_flags(bool of, bool sf, bool zf, bool af, bool pf,
                            bool cf)
 {
-    // set of
-    set_of_cf(of, get_cf());
+    // set of, cf
+    set_of_cf(of, cf);
 
     // set sf
     int old_sf = int(get_sf());
@@ -235,18 +248,15 @@ inline void CPU::set_flags(bool of, bool sf, bool zf, bool af, bool pf,
     }
 
     // set af
-    aux &= ~(LF_MASK_AF);
-    aux |= int(af) << LF_BIT_AF;
+    // aux &= ~(LF_MASK_AF);
+    // aux |= int(af) << LF_BIT_AF;
 
     // set pf
-    {
-        uint32_t pdb = (255 & res) ^ int(!pf);
-        aux &= ~(LF_MASK_PDB);
-        aux |= pdb << LF_BIT_PDB;
-    }
-
-    // set cf
-    set_of_cf(get_of(), cf);
+    // {
+    //     uint32_t pdb = (255 & res) ^ int(!pf);
+    //     aux &= ~(LF_MASK_PDB);
+    //     aux |= pdb << LF_BIT_PDB;
+    // }
 
 #ifdef DEBUG_CPU
     if (get_of() != of || get_sf() != sf || get_cf() != cf || get_zf() != zf) {

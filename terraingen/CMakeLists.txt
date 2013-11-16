@@ -37,6 +37,7 @@ set(CMAKE_INCLUDE_PATH ${SRC_DIR} "${ROOT_DIR}/include"
 if(MSVC)
     set(CMAKE_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/include/win32"
         ${CMAKE_INCLUDE_PATH})
+    add_definitions(/arch:SSE2)
 endif()
 
 if(UNIX)

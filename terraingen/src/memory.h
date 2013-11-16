@@ -40,49 +40,48 @@ enum SegmentRegister
 class Memory
 {
 public:
-    char * data;
-    size_t data_size;
-    uint32_t segment_table[6];
-
-    uint32_t heap_offset;
+    static char * data;
+    static size_t data_size;
+    static uint32_t segment_table[6];
+    static uint32_t heap_offset;
 
 #ifdef DEBUG_MEMORY
-    uint32_t * alloc_table;
+    static uint32_t * alloc_table;
 #endif
 
     Memory();
-    void write_file(uint32_t address, const char * filename);
-    void write_section(uint32_t address, const char * filename);
-    void pad_section(uint32_t address, size_t size);
-    void write(uint32_t address, const char * s, size_t len);
-    void read(uint32_t address, char * s, size_t len);
-    char * translate(uint32_t addr);
-    void set_size(size_t size);
+    static void write_file(uint32_t address, const char * filename);
+    static void write_section(uint32_t address, const char * filename);
+    static void pad_section(uint32_t address, size_t size);
+    static void write(uint32_t address, const char * s, size_t len);
+    static void read(uint32_t address, char * s, size_t len);
+    static char * translate(uint32_t addr);
+    static void set_size(size_t size);
 
     // read/write
-    void read_byte(uint32_t address, uint8_t * arg);
-    uint8_t read_byte(uint32_t address);
-    void read_word(uint32_t address, uint16_t * arg);
-    uint16_t read_word(uint32_t address);
-    void read_dword(uint32_t address, uint32_t * arg);
-    uint32_t read_dword(uint32_t address);
-    void read_qword(uint32_t address, uint64_t * arg);
-    uint64_t read_qword(uint32_t address);
-    void read_dqword(uint32_t address, XMMReg * arg);
-    XMMReg read_dqword(uint32_t address);
-    void write_byte(uint32_t address, uint8_t arg);
-    void write_word(uint32_t address, uint16_t arg);
-    void write_dword(uint32_t address, uint32_t arg);
-    void write_qword(uint32_t address, uint64_t arg);
+    static void read_byte(uint32_t address, uint8_t * arg);
+    static uint8_t read_byte(uint32_t address);
+    static void read_word(uint32_t address, uint16_t * arg);
+    static uint16_t read_word(uint32_t address);
+    static void read_dword(uint32_t address, uint32_t * arg);
+    static uint32_t read_dword(uint32_t address);
+    static void read_qword(uint32_t address, uint64_t * arg);
+    static uint64_t read_qword(uint32_t address);
+    static void read_dqword(uint32_t address, XMMReg * arg);
+    static XMMReg read_dqword(uint32_t address);
+    static void write_byte(uint32_t address, uint8_t arg);
+    static void write_word(uint32_t address, uint16_t arg);
+    static void write_dword(uint32_t address, uint32_t arg);
+    static void write_qword(uint32_t address, uint64_t arg);
 
     // heap
-    uint32_t heap_alloc(uint32_t size);
-    void heap_dealloc(uint32_t address);
+    static uint32_t heap_alloc(uint32_t size);
+    static void heap_dealloc(uint32_t address);
 
     // helper functions
-    void copy_mem(uint32_t dest, uint32_t src, uint32_t size);
-    void move_mem(uint32_t dest, uint32_t src, uint32_t size);
-    void set_mem(uint32_t ptr, uint32_t value, uint32_t size);
+    static void copy_mem(uint32_t dest, uint32_t src, uint32_t size);
+    static void move_mem(uint32_t dest, uint32_t src, uint32_t size);
+    static void set_mem(uint32_t ptr, uint32_t value, uint32_t size);
 
 };
 

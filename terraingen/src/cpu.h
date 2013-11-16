@@ -98,109 +98,110 @@ typedef boost::unordered_map<uint32_t, FuncPointer> FunctionMap;
 class CPU
 {
 public:
-    uint32_t reg[8];
-    uint16_t *reg16[8];
-    uint8_t *reg8[8];
-    XMMReg xmm[8];
-    size_t fpu_top;
-    long double fpu[8];
+    static uint32_t reg[8];
+    static uint16_t *reg16[8];
+    static uint8_t *reg8[8];
+    static XMMReg xmm[8];
+    static size_t fpu_top;
+    static long double fpu[8];
 #ifdef DEBUG_FPU
-    bool fpu_empty[8];
+    static bool fpu_empty[8];
 #endif
 
     // saved for lazy eflags
-    uint32_t res;
-    uint32_t aux;
+    static uint32_t res;
+    static uint32_t aux;
 
-    FunctionMap functions;
+    static FunctionMap functions;
 
     CPU();
-    void reset_stack();
+    static void reset_stack();
 
-    bool get_zf();
-    bool get_cf();
-    bool get_sf();
-    bool get_of();
-    bool get_df();
-    void set_of_cf(bool of, bool cf);
-    void set_flags(bool of, bool sf, bool zf, bool af, bool pf, bool cf);
+    static bool get_zf();
+    static bool get_cf();
+    static bool get_sf();
+    static bool get_of();
+    static bool get_df();
+    static void set_of_cf(bool of, bool cf);
+    static void set_flags(bool of, bool sf, bool zf, bool af, bool pf,
+                          bool cf);
 
-    uint32_t neg_dword(uint32_t v);
-    uint8_t neg_byte(uint8_t v);
-    uint32_t sub_dword(uint32_t a, uint32_t b);
-    uint8_t sub_byte(uint8_t a, uint8_t b);
-    uint32_t add_dword(uint32_t a, uint32_t b);
-    uint8_t add_byte(uint8_t a, uint8_t b);
-    uint32_t adc_dword(uint32_t a, uint32_t b);
-    uint32_t sbb_dword(uint32_t a, uint32_t b);
-    uint8_t sbb_byte(uint8_t a, uint8_t b);
-    uint32_t dec_dword(uint32_t v);
-    uint16_t dec_word(uint16_t v);
-    uint8_t dec_byte(uint8_t v);
-    uint32_t inc_dword(uint32_t v);
-    uint16_t inc_word(uint16_t v);
-    uint8_t inc_byte(uint8_t v);
-    uint32_t or_dword(uint32_t a, uint32_t b);
-    uint16_t or_word(uint16_t a, uint16_t b);
-    uint8_t or_byte(uint8_t a, uint8_t b);
-    uint32_t and_dword(uint32_t a, uint32_t b);
-    uint16_t and_word(uint16_t a, uint16_t b);
-    uint8_t and_byte(uint8_t a, uint8_t b);
-    uint32_t shl_dword(uint32_t v, uint32_t count);
-    uint16_t shl_word(uint16_t v, uint16_t count);
-    uint32_t shld_dword(uint32_t v, uint32_t op2, uint32_t count);
-    uint8_t shl_byte(uint8_t v, uint8_t count);
-    uint32_t shr_dword(uint32_t v, uint32_t count);
-    uint16_t shr_word(uint16_t v, uint16_t count);
-    uint8_t shr_byte(uint8_t v, uint8_t count);
-    uint32_t sar_dword(uint32_t v, uint32_t count);
-    uint32_t rol_dword(uint32_t v, uint32_t count);
-    uint16_t rol_word(uint16_t v, uint16_t count);
-    uint32_t rcr_dword(uint32_t v, uint32_t count);
-    void mul_dword(uint32_t v);
-    void imul_dword(uint32_t v);
-    uint32_t imul_dword(uint32_t v, uint32_t mul);
-    void idiv_dword(uint32_t v);
-    void div_dword(uint32_t v);
-    uint32_t xadd_dword(uint32_t a, uint32_t & b);
-    uint32_t xor_dword(uint32_t a, uint32_t b);
-    uint8_t xor_byte(uint8_t a, uint8_t b);
+    static uint32_t neg_dword(uint32_t v);
+    static uint8_t neg_byte(uint8_t v);
+    static uint32_t sub_dword(uint32_t a, uint32_t b);
+    static uint8_t sub_byte(uint8_t a, uint8_t b);
+    static uint32_t add_dword(uint32_t a, uint32_t b);
+    static uint8_t add_byte(uint8_t a, uint8_t b);
+    static uint32_t adc_dword(uint32_t a, uint32_t b);
+    static uint32_t sbb_dword(uint32_t a, uint32_t b);
+    static uint8_t sbb_byte(uint8_t a, uint8_t b);
+    static uint32_t dec_dword(uint32_t v);
+    static uint16_t dec_word(uint16_t v);
+    static uint8_t dec_byte(uint8_t v);
+    static uint32_t inc_dword(uint32_t v);
+    static uint16_t inc_word(uint16_t v);
+    static uint8_t inc_byte(uint8_t v);
+    static uint32_t or_dword(uint32_t a, uint32_t b);
+    static uint16_t or_word(uint16_t a, uint16_t b);
+    static uint8_t or_byte(uint8_t a, uint8_t b);
+    static uint32_t and_dword(uint32_t a, uint32_t b);
+    static uint16_t and_word(uint16_t a, uint16_t b);
+    static uint8_t and_byte(uint8_t a, uint8_t b);
+    static uint32_t shl_dword(uint32_t v, uint32_t count);
+    static uint16_t shl_word(uint16_t v, uint16_t count);
+    static uint32_t shld_dword(uint32_t v, uint32_t op2, uint32_t count);
+    static uint8_t shl_byte(uint8_t v, uint8_t count);
+    static uint32_t shr_dword(uint32_t v, uint32_t count);
+    static uint16_t shr_word(uint16_t v, uint16_t count);
+    static uint8_t shr_byte(uint8_t v, uint8_t count);
+    static uint32_t sar_dword(uint32_t v, uint32_t count);
+    static uint32_t rol_dword(uint32_t v, uint32_t count);
+    static uint16_t rol_word(uint16_t v, uint16_t count);
+    static uint32_t rcr_dword(uint32_t v, uint32_t count);
+    static void mul_dword(uint32_t v);
+    static void imul_dword(uint32_t v);
+    static uint32_t imul_dword(uint32_t v, uint32_t mul);
+    static void idiv_dword(uint32_t v);
+    static void div_dword(uint32_t v);
+    static uint32_t xadd_dword(uint32_t a, uint32_t & b);
+    static uint32_t xor_dword(uint32_t a, uint32_t b);
+    static uint8_t xor_byte(uint8_t a, uint8_t b);
 
     // sse
-    void compare_ss(float a, float b);
-    void compare_sd(double a, double b);
+    static void compare_ss(float a, float b);
+    static void compare_sd(double a, double b);
 
-    void test_dword(uint32_t a, uint32_t b);
-    void test_word(uint16_t a, uint16_t b);
-    void test_byte(uint8_t a, uint8_t b);
-    void cmp_dword(uint32_t a, uint32_t b);
-    void cmp_word(uint16_t a, uint16_t b);
-    void cmp_byte(uint8_t a, uint8_t b);
+    static void test_dword(uint32_t a, uint32_t b);
+    static void test_word(uint16_t a, uint16_t b);
+    static void test_byte(uint8_t a, uint8_t b);
+    static void cmp_dword(uint32_t a, uint32_t b);
+    static void cmp_word(uint16_t a, uint16_t b);
+    static void cmp_byte(uint8_t a, uint8_t b);
 
-    void add_function(uint32_t addr, FuncPointer value);
-    void call_dynamic(uint32_t addr);
+    static void add_function(uint32_t addr, FuncPointer value);
+    static void call_dynamic(uint32_t addr);
 
-    void push_byte(uint8_t arg);
-    void push_word(uint16_t arg);
-    void push_dword(uint32_t arg);
-    void pop_byte(uint8_t * arg);
-    uint8_t pop_byte();
-    void pop_word(uint16_t * arg);
-    uint16_t pop_word();
-    void pop_dword(uint32_t * arg);
-    uint32_t pop_dword();
-    void pop_qword(uint64_t * arg);
-    uint64_t pop_qword();
+    static void push_byte(uint8_t arg);
+    static void push_word(uint16_t arg);
+    static void push_dword(uint32_t arg);
+    static void pop_byte(uint8_t * arg);
+    static uint8_t pop_byte();
+    static void pop_word(uint16_t * arg);
+    static uint16_t pop_word();
+    static void pop_dword(uint32_t * arg);
+    static uint32_t pop_dword();
+    static void pop_qword(uint64_t * arg);
+    static uint64_t pop_qword();
 
-    long double & get_fpu(RegisterST index);
-    void push_fpu(long double value);
-    long double pop_fpu();
+    static long double & get_fpu(RegisterST index);
+    static void push_fpu(long double value);
+    static long double pop_fpu();
 
     // for stack
-    uint64_t get_qword(uint32_t off);
-    uint32_t get_dword(uint32_t off);
-    uint16_t get_word(uint32_t off);
-    uint8_t get_byte(uint32_t off);
+    static uint64_t get_qword(uint32_t off);
+    static uint32_t get_dword(uint32_t off);
+    static uint16_t get_word(uint32_t off);
+    static uint8_t get_byte(uint32_t off);
 };
 
 // helper functions

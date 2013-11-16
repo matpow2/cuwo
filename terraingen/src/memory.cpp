@@ -24,18 +24,19 @@
 #include "config.h"
 #include "main.h"
 
-inline Memory::Memory()
-: data_size(0), data(NULL)
-{
+char * Memory::data = NULL;
+size_t Memory::data_size = 0;
+uint32_t Memory::segment_table[6];
+uint32_t Memory::heap_offset = 0;
 #ifdef DEBUG_MEMORY
-    alloc_table = NULL
+uint32_t * Memory::alloc_table = NULL;
 #endif
 
+inline Memory::Memory()
+{
     for (int i = 0; i < 6; i++)
         segment_table[i] = 0;
     segment_table[FS] = FS_SEGMENT_OFFSET;
-
-    heap_offset = 0; // from stack end
 
     set_size(MEMORY_SIZE);
 }
@@ -163,7 +164,8 @@ inline void Memory::set_size(size_t size)
         alloc_table = test_alloc((uint32_t*)malloc(table_size));
         memset(alloc_table, 0, table_size);
     } else {
-        alloc_table = test_alloc((uint32_t*)realloc(alloc_table, table_size));
+        alloc_table = test_alloc((uint32_t*)realloc(alloc_table,
+                                                        table_size));
         size_t old_size = (data_size - ALLOC_TABLE_SUB) * sizeof(uint32_t);
         memset((char*)alloc_table+old_size, 0, table_size-old_size);
     }
@@ -174,33 +176,34 @@ inline void Memory::set_size(size_t size)
 
 inline void Memory::write(uint32_t addr, const char * src, size_t len)
 {
-    char * mem = translate(addr);
-    if (!test_address(mem, addr, len))
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, len))
         return;
-    memcpy(mem, src, len);
+    memcpy(ptr, src, len);
 }
 
 inline void Memory::read(uint32_t addr, char *dest, size_t len)
 {
-    char * mem = translate(addr);
-    if (!test_address(mem, addr, len))
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, len))
         return;
-    memcpy(dest, mem, len);
+    memcpy(dest, ptr, len);
 }
 
 inline void Memory::read_byte(uint32_t addr, uint8_t * byte)
 {
-    char * mem = translate(addr);
-    if (!test_address(mem, addr, 1))
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 1))
         return;
-    *byte = *((uint8_t*)mem);
+    *byte = *((uint8_t*)ptr);
 }
 
 inline uint8_t Memory::read_byte(uint32_t addr)
 {
-    uint8_t ret;
-    read_byte(addr, &ret);
-    return ret;
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 1))
+        return 0;
+    return *((uint8_t*)ptr);
 }
 
 inline void Memory::read_word(uint32_t addr, uint16_t * arg)
@@ -212,18 +215,27 @@ inline void Memory::read_word(uint32_t addr, uint16_t * arg)
            ((val & 0x00ff) << 8);
     *arg = val;
 #else
-    char * mem = translate(addr);
-    if (!test_address(mem, addr, 2))
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 2))
         return;
-    *arg = *((uint16_t*)mem);
+    *arg = *((uint16_t*)ptr);
 #endif
 }
 
 inline uint16_t Memory::read_word(uint32_t addr)
 {
-    uint16_t ret;
-    read_word(addr, &ret);
-    return ret;
+#ifdef IS_BIG_ENDIAN
+    uint16_t val;
+    read(addr, (char*)&val, 2);
+    val =  ((val & 0xff00) >> 8) | 
+           ((val & 0x00ff) << 8);
+    return val;
+#else
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 2))
+        return 0;
+    return *((uint16_t*)ptr);
+#endif
 }
 
 inline void Memory::read_dword(uint32_t addr, uint32_t * dword)
@@ -237,18 +249,29 @@ inline void Memory::read_dword(uint32_t addr, uint32_t * dword)
            ((val & (0x000000ff)) << 24);
     *dword = val;
 #else
-    char * mem = translate(addr);
-    if (!test_address(mem, addr, 4))
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 4))
         return;
-    *dword = *((uint32_t*)mem);
+    *dword = *((uint32_t*)ptr);
 #endif
 }
 
 inline uint32_t Memory::read_dword(uint32_t addr)
 {
-    uint32_t ret;
-    read_dword(addr, &ret);
-    return ret;
+#ifdef IS_BIG_ENDIAN
+    uint32_t val;
+    read(addr, (char*)&val, 4);
+    val =  ((val & (0xff000000)) >> 24) | 
+           ((val & (0x00ff0000)) >> 8)  | 
+           ((val & (0x0000ff00)) << 8) | 
+           ((val & (0x000000ff)) << 24);
+    *dword = val;
+#else
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 4))
+        return 0;
+    return *((uint32_t*)ptr);
+#endif
 }
 
 inline void Memory::read_qword(uint32_t addr, uint64_t * qword)
@@ -266,18 +289,33 @@ inline void Memory::read_qword(uint32_t addr, uint64_t * qword)
           ((val & (0x00000000000000ff)) << 56);
     *qword = val;
 #else
-    char * mem = translate(addr);
-    if (!test_address(mem, addr, 8))
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 8))
         return;
-    *qword = *((uint64_t*)mem);
+    *qword = *((uint64_t*)ptr);
 #endif
 }
 
 inline uint64_t Memory::read_qword(uint32_t addr)
 {
-    uint64_t ret;
-    read_qword(addr, &ret);
-    return ret;
+#ifdef IS_BIG_ENDIAN
+    uint64_t val;
+    read(addr, (char*)&val, 8);
+    val = ((val & (0xff00000000000000)) >> 56) |
+          ((val & (0x00ff000000000000)) >> 40) |
+          ((val & (0x0000ff0000000000)) >> 24) |
+          ((val & (0x000000ff00000000)) >> 8) |
+          ((val & (0x00000000ff000000)) << 8) |
+          ((val & (0x0000000000ff0000)) << 24) |
+          ((val & (0x000000000000ff00)) << 40) |
+          ((val & (0x00000000000000ff)) << 56);
+    *qword = val;
+#else
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 8))
+        return 0;
+    return *((uint64_t*)ptr);
+#endif
 }
 
 inline void Memory::read_dqword(uint32_t addr, XMMReg * dqword)
@@ -295,12 +333,10 @@ inline XMMReg Memory::read_dqword(uint32_t addr)
 
 inline void Memory::write_byte(uint32_t addr, uint8_t byte)
 {
-    char *address = translate(addr);
-    
-    if (!test_address(address, addr, 1))
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 1))
         return;
-    
-    *((uint8_t *)address) = byte;
+    *((uint8_t*)ptr) = byte;
 }
 
 inline void Memory::write_word(uint32_t addr, uint16_t word)
@@ -309,10 +345,10 @@ inline void Memory::write_word(uint32_t addr, uint16_t word)
     word = ((word & 0xff00) >> 8) | 
           ((word & 0x00ff) << 8);
 #endif
-    char *address = translate(addr);
-    if (!test_address(address, addr, 2))
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 2))
         return;
-    *((uint16_t*)address) = word;
+    *((uint16_t*)ptr) = word;
 }
 
 inline void Memory::write_dword(uint32_t addr, uint32_t dword)
@@ -323,10 +359,10 @@ inline void Memory::write_dword(uint32_t addr, uint32_t dword)
             ((dword & (0x0000ff00)) << 8) |
             ((dword & (0x000000ff)) << 24);
 #endif
-    char *address = translate(addr);
-    if (!test_address(address, addr, 4))
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 4))
         return;
-    *((uint32_t*)address) = dword;
+    *((uint32_t*)ptr) = dword;
 }
 
 inline void Memory::write_qword(uint32_t addr, uint64_t qword)
@@ -341,10 +377,10 @@ inline void Memory::write_qword(uint32_t addr, uint64_t qword)
             ((qword & (0x000000000000ff00)) << 40) |
             ((qword & (0x00000000000000ff)) << 56);
 #endif
-    char *address = translate(addr);
-    if (!test_address(address, addr, 8))
+    char * ptr = translate(addr);
+    if (!test_address(ptr, addr, 8))
         return;
-    *((uint64_t*)address) = qword;
+    *((uint64_t*)ptr) = qword;
 }
 
 inline uint32_t Memory::heap_alloc(uint32_t size)
@@ -382,7 +418,7 @@ inline void Memory::heap_dealloc(uint32_t address)
     while (true) {
         if (alloc_table[table_addr] != address)
             break;
-        mem.alloc_table[table_addr] = 0;
+        alloc_table[table_addr] = 0;
         table_addr++;
     }
     // std::cout << "Deleting " << address << std::endl;
