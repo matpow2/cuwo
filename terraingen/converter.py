@@ -1797,9 +1797,6 @@ class Converter(object):
         writer.putln(')')        
         writer.close()
 
-        # write import names
-        # open('importnames.txt', 'wb').write(repr(import_mappings))
-
     def is_custom(self, name):
         data = self.custom_code.replace('%s();' % name, '')
         return name in data

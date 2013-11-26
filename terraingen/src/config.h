@@ -35,11 +35,16 @@
 // #define DEBUG_STACK
 // #define DEBUG_FPU
 
+#define FAST_INLINE
+
+#ifdef FAST_INLINE
 #ifdef _MSC_VER
 #define FORCE_INLINE __forceinline
 #else
 #define FORCE_INLINE __attribute__((always_inline))
 #endif
-
+#else
+#define FORCE_INLINE inline
+#endif
 
 #endif // TERRAINGEN_CONFIG_H
