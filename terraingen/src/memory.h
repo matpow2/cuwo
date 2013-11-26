@@ -85,4 +85,6 @@ public:
 
 };
 
+#include "memory.cpp"
+
 #endif // TERRAINGEN_MEMORY_H

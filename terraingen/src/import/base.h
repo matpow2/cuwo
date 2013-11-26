@@ -135,13 +135,13 @@ inline void WSAStartup_imp()
     pop_ret();
     uint32_t version = cpu.pop_dword();
     uint32_t data = cpu.pop_dword();
-    std::cout << "WSAStartup: " << data << " " << version << std::endl;
+    // std::cout << "WSAStartup: " << data << " " << version << std::endl;
     set_ret(1);
 }
 
 inline void InitializeCriticalSectionAndSpinCount_imp()
 {
-    std::cout << "InitializeCriticalSectionAndSpinCount" << std::endl;
+    // std::cout << "InitializeCriticalSectionAndSpinCount" << std::endl;
     pop_ret();
     uint32_t critical_section = cpu.pop_dword();
     uint32_t spincount = cpu.pop_dword();
@@ -308,7 +308,7 @@ inline void _setjmp3_imp()
     pop_ret();
     uint32_t jmp_buf = cpu.get_dword(0);
     uint32_t count = cpu.get_dword(4);
-    std::cout << "_setjmp3" << count << std::endl;
+    // std::cout << "_setjmp3 " << count << std::endl;
 }
 
 /* _Container_base0 is used by apps compiled without iterator checking

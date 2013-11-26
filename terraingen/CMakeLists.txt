@@ -11,9 +11,13 @@ set(GEN_DIR "${ROOT_DIR}/gensrc")
 
 # sources
 
+include(gensrc/Routines.cmake)
+
 set(SRCS
     ${SRC_DIR}/run.cpp
     ${SRC_DIR}/sqlite3.c
+    ${GEN_DIR}/stubs.cpp
+    ${GEN_SRCS}
 )
 
 set(TEST_SRCS

@@ -1,17 +1,12 @@
-void save_chunk_now();
+#define TERRAINGEN_IS_RUN_CPP
 
 #include "main.h"
-#include "gensrc/stubs.h"
 #include "gensrc/out.cpp"
 #include "imports.h"
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <boost/lexical_cast.hpp>
-
-// inline includes
-#include "cpu.cpp"
-#include "memory.cpp"
 
 CPU cpu;
 Memory mem;
@@ -34,7 +29,7 @@ inline int to_int(const T & in)
 
 void save_chunk(uint32_t addr, const char * file)
 {
-    std::cout << "Save chunk: " << addr << std::endl;
+    // std::cout << "Save chunk: " << addr << std::endl;
     std::ofstream fp(file, std::ios::out | std::ios::binary);
     uint32_t entry = mem.read_dword(addr + 168);
     for (int i = 0; i < 256*256; i++) {
@@ -62,10 +57,6 @@ void save_chunk(uint32_t addr, const char * file)
     }
     fp.close();
 }
-
-#define GEN_X_BASE (0x8020)
-#define GEN_Y_BASE (0x8020)
-#define GEN_SQ 11
 
 inline void generate_chunk(uint32_t x, uint32_t y, const char * file)
 {
@@ -111,7 +102,7 @@ int main(int argc, const char ** argv)
     init_emu();
     init_static();
     entry_point();
-    std::cout << "Generator setup!" << std::endl;
+    // std::cout << "Generator setup!" << std::endl;
 
     generate_chunk(x, y, file);
     return 0;

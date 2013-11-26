@@ -20,6 +20,8 @@
 #ifndef TERRAINGEN_SSE_H
 #define TERRAINGEN_SSE_H
 
+#include "config.h"
+
 class XMMReg
 {
 public:
@@ -36,95 +38,95 @@ public:
     };
 
 #ifdef IS_BIG_ENDIAN
-    inline int8_t & s8(int i)
+    FORCE_INLINE int8_t & s8(int i)
     {
         return d_s8[15 - i];
     }
 
-    inline uint8_t & u8(int i)
+    FORCE_INLINE uint8_t & u8(int i)
     {
         return d_u8[15 - i];
     }
 
-    inline int16_t & s16(int i)
+    FORCE_INLINE int16_t & s16(int i)
     {
         return d_s16[7 - i];
     }
 
-    inline uint16_t & u16(int i)
+    FORCE_INLINE uint16_t & u16(int i)
     {
         return d_u16[7 - i];
     }
 
-    inline int32_t & s32(int i)
+    FORCE_INLINE int32_t & s32(int i)
     {
         return d_s32[3 - i];
     }
 
-    inline uint32_t & u32(int i)
+    FORCE_INLINE uint32_t & u32(int i)
     {
         return d_u32[3 - i];
     }
 
-    inline int64_t & s32(int i)
+    FORCE_INLINE int64_t & s32(int i)
     {
         return d_s64[1 - i];
     }
 
-    inline uint64_t & u64(int i)
+    FORCE_INLINE uint64_t & u64(int i)
     {
         return d_u64[1 - i];
     }
 #else
-    inline int8_t & s8(int i)
+    FORCE_INLINE int8_t & s8(int i)
     {
         return d_s8[i];
     }
 
-    inline uint8_t & u8(int i)
+    FORCE_INLINE uint8_t & u8(int i)
     {
         return d_u8[i];
     }
 
-    inline int16_t & s16(int i)
+    FORCE_INLINE int16_t & s16(int i)
     {
         return d_s16[i];
     }
 
-    inline uint16_t & u16(int i)
+    FORCE_INLINE uint16_t & u16(int i)
     {
         return d_u16[i];
     }
 
-    inline int32_t & s32(int i)
+    FORCE_INLINE int32_t & s32(int i)
     {
         return d_s32[i];
     }
 
-    inline uint32_t & u32(int i)
+    FORCE_INLINE uint32_t & u32(int i)
     {
         return d_u32[i];
     }
 
-    inline int64_t & s64(int i)
+    FORCE_INLINE int64_t & s64(int i)
     {
         return d_s64[i];
     }
 
-    inline uint64_t & u64(int i)
+    FORCE_INLINE uint64_t & u64(int i)
     {
         return d_u64[i];
     }
 #endif
 
-    inline XMMReg & operator=(uint64_t v)
+    FORCE_INLINE XMMReg & operator=(uint64_t v)
     {
         u64(0) = v;
         u64(1) = 0;
         return *this;
     }
 
-    inline XMMReg & operator=(float v)
+    FORCE_INLINE XMMReg & operator=(float v)
     {
         u32(0) = *((uint32_t*)&v);
         u32(1) = 0;
@@ -132,14 +134,14 @@ public:
         return *this;
     }
 
-    inline XMMReg & operator=(double v)
+    FORCE_INLINE XMMReg & operator=(double v)
     {
         u64(0) = *((uint64_t*)&v);
         u64(1) = 0;
         return *this;
     }
 
-    inline XMMReg & operator=(uint32_t v)
+    FORCE_INLINE XMMReg & operator=(uint32_t v)
     {
         u32(0) = v;
         u32(1) = 0;
@@ -147,48 +149,53 @@ public:
         return *this;
     }
 
-    inline XMMReg & operator=(XMMReg & v)
+    FORCE_INLINE XMMReg & operator=(XMMReg & v)
     {
         u64(0) = v.u64(0);
         u64(1) = v.u64(1);
         return *this;
     }
 
-    inline XMMReg & operator^(const XMMReg & v)
+    FORCE_INLINE XMMReg & operator^(const XMMReg & v)
     {
         u64(0) ^= ((XMMReg&)v).u64(0);
         u64(1) ^= ((XMMReg&)v).u64(1);
         return *this;
     }
 
-    inline operator uint8_t()
+    FORCE_INLINE operator uint8_t()
     {
         return u8(0);
     }
 
-    inline operator uint16_t()
+    FORCE_INLINE operator uint16_t()
     {
         return u16(0);
     }
 
-    inline operator uint32_t()
+    FORCE_INLINE operator uint32_t()
     {
         return u32(0);
     }
 
-    inline operator uint64_t()
+    FORCE_INLINE operator uint64_t()
     {
         return u64(0);
     }
 
-    inline operator double()
+    FORCE_INLINE operator double()
     {
         return *((double*)&u64(0));
     }
 
-    inline operator float()
+    FORCE_INLINE operator float()
     {
         return *((float*)&u32(0));
+    }
+
+    FORCE_INLINE void reset()
+    {
+        
     }
 };
 

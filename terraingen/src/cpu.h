@@ -99,8 +99,6 @@ class CPU
 {
 public:
     static uint32_t reg[8];
-    static uint16_t *reg16[8];
-    static uint8_t *reg8[8];
     static XMMReg xmm[8];
     static size_t fpu_top;
     static long double fpu[8];
@@ -116,6 +114,9 @@ public:
 
     CPU();
     static void reset_stack();
+
+    static uint8_t & get_reg8(Register8 i);
+    static uint16_t & get_reg16(Register16 i);
 
     static bool get_zf();
     static bool get_cf();
@@ -206,36 +207,10 @@ public:
 
 // helper functions
 
-#define WORD_UPPER_TO_BYTE(to,from) \
-memcpy(&(to),((uint8_t *)&(from))+1,1);
-
-#define WORD_LOWER_TO_BYTE(to,from) \
-memcpy(&(to),&(from),1);
-
-#define DWORD_UPPER_TO_WORD(to,from) \
-memcpy(&(to),((uint8_t *)&(from))+2,2);
-
-#define DWORD_LOWER_TO_WORD(to,from) \
-memcpy(&(to),&(from),2);
-
-#define QWORD_UPPER_TO_DWORD(to,from) \
-memcpy(&(to),((uint8_t *)&(from))+4,4);
-
-#define QWORD_LOWER_TO_DWORD(to,from) \
-memcpy(&(to),&(from),4);
-
-#define DWORD_FROM_WORDS(to, upper, lower) \
-memcpy(&to,&lower,2); \
-memcpy(((char *)&to)+2,&upper,2); 
-
-#define QWORD_FROM_DWORDS(to, upper, lower) \
-memcpy(&to,&lower,4); \
-memcpy(((char *)&to)+4,&upper,4); 
-
 #define GET32L(val) ((uint32_t)(((uint64_t)(val)) & 0xFFFFFFFF))
 #define GET32H(val) ((uint32_t)(((uint64_t)(val)) >> 32))
 
-inline uint32_t cdq_x86(uint32_t v)
+FORCE_INLINE uint32_t cdq_x86(uint32_t v)
 {
     if (v & 0x80000000)
         return 0xFFFFFFFF;
@@ -246,40 +221,42 @@ inline uint32_t cdq_x86(uint32_t v)
 
 extern CPU cpu;
 
-inline void pop_ret()
+FORCE_INLINE void pop_ret()
 {
     cpu.reg[ESP] += 4;
 }
 
-inline void add_ret()
+FORCE_INLINE void add_ret()
 {
     cpu.reg[ESP] -= 4;
 }
 
-inline uint32_t & get_self()
+FORCE_INLINE uint32_t & get_self()
 {
     return cpu.reg[ECX];
 }
 
-inline void set_ret(uint32_t v)
+FORCE_INLINE void set_ret(uint32_t v)
 {
     cpu.reg[EAX] = v;
 }
 
-inline void set_ret(int v)
+FORCE_INLINE void set_ret(int v)
 {
     set_ret(uint32_t(v));
 }
 
-inline void set_ret(uint64_t v)
+FORCE_INLINE void set_ret(uint64_t v)
 {
     cpu.reg[EAX] = uint32_t(v & 0xFFFFFFFF);
     cpu.reg[EDX] = uint32_t(v >> 32);
 }
 
-inline void ret_self()
+FORCE_INLINE void ret_self()
 {
     set_ret(get_self());
 }
+
+#include "cpu.cpp"
 
 #endif // TERRAINGEN_CPU_H

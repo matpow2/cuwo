@@ -58,7 +58,7 @@ struct basic_string_char
 
 std::stringstream * current_stream = NULL;
 
-inline void basic_istream_char_ctor_imp()
+void basic_istream_char_ctor_imp()
 {
     pop_ret();
     uint32_t self = get_self();
@@ -69,7 +69,7 @@ inline void basic_istream_char_ctor_imp()
     // std::cout << "basic_istream_char_ctor" << std::endl;
 }
 
-inline void basic_streambuf_char_ctor_imp()
+void basic_streambuf_char_ctor_imp()
 {
     pop_ret();
     uint32_t self = get_self();
@@ -77,37 +77,37 @@ inline void basic_streambuf_char_ctor_imp()
     ret_self();
 }
 
-inline void basic_streambuf_char__Init_empty_imp()
+void basic_streambuf_char__Init_empty_imp()
 {
     pop_ret();
     uint32_t self = get_self();
-    std::cout << "basic_streambuf_char__Init_empty" << std::endl;
+    // std::cout << "basic_streambuf_char__Init_empty" << std::endl;
 }
 
-inline void basic_ios_char_setstate_reraise_imp()
+void basic_ios_char_setstate_reraise_imp()
 {
     pop_ret();
     uint32_t self = get_self();
     uint32_t state = cpu.pop_dword();
     uint32_t reraise = cpu.pop_dword();
-    std::cout << "basic_ios_char_setstate_reraise" << std::endl;
+    // std::cout << "basic_ios_char_setstate_reraise" << std::endl;
 }
 
-inline void basic_streambuf_char_dtor_imp()
+void basic_streambuf_char_dtor_imp()
 {
     pop_ret();
     uint32_t self = get_self();
     // std::cout << "basic_streambuf_char_dtor" << std::endl;
 }
 
-inline void basic_istream_char_dtor_imp()
+void basic_istream_char_dtor_imp()
 {
     pop_ret();
     uint32_t self = get_self();
     // std::cout << "basic_istream_char_dtor" << std::endl;
 }
 
-inline void basic_ios_char_dtor_imp()
+void basic_ios_char_dtor_imp()
 {
     pop_ret();
     uint32_t self = get_self();
@@ -150,21 +150,21 @@ inline std::string get_open_mode(int mode)
     return val;
 }
 
-inline void _Fiopen_imp()
+void _Fiopen_imp()
 {
     pop_ret();
     char * name = mem.translate(cpu.get_dword(0));
     uint32_t mode = cpu.get_dword(4);
     uint32_t prot = cpu.get_dword(8);
     set_ret(0);
-    std::cout << "_Fiopen: " << name << " " << get_open_mode(mode) << " " 
-        << mode << " " << prot << std::endl;
+    // std::cout << "_Fiopen: " << name << " " << get_open_mode(mode) << " " 
+    //     << mode << " " << prot << std::endl;
     // returns FILE*
 }
 
 extern uint32_t get_seed();
 
-inline void basic_istream_char_read_int_imp()
+void basic_istream_char_read_int_imp()
 {
     pop_ret();
     uint32_t * v = (uint32_t*)mem.translate(cpu.pop_dword());
@@ -174,14 +174,14 @@ inline void basic_istream_char_read_int_imp()
     // std::cout << "basic_istream_char_read_int" << std::endl;
 }
 
-inline void basic_ios_char_ctor_imp()
+void basic_ios_char_ctor_imp()
 {
     pop_ret();
     ret_self();
     // std::cout << "basic_ios_char_ctor" << std::endl;
 }
 
-inline void basic_iostream_char_ctor_imp()
+void basic_iostream_char_ctor_imp()
 {
     pop_ret();
     uint32_t strbuf = cpu.pop_dword();
@@ -203,7 +203,7 @@ inline void basic_iostream_char_ctor_imp()
     // std::cout << "basic_iostream_char_ctor" << std::endl;
 }
 
-inline void basic_iostream_char_dtor_imp()
+void basic_iostream_char_dtor_imp()
 {
     pop_ret();
     delete current_stream;
@@ -211,14 +211,14 @@ inline void basic_iostream_char_dtor_imp()
     // std::cout << "basic_iostream_char_ctor" << std::endl;
 }
 
-inline void ios_base_Ios_base_dtor_imp()
+void ios_base_Ios_base_dtor_imp()
 {
     pop_ret();
     uint32_t obj = cpu.get_dword(0);
     // std::cout << "ios_base_Ios_base_dtor" << std::endl;
 }
 
-inline void basic_streambuf_char_sputn_imp()
+void basic_streambuf_char_sputn_imp()
 {
     pop_ret();
     char * ptr = mem.translate(cpu.pop_dword());
@@ -228,7 +228,7 @@ inline void basic_streambuf_char_sputn_imp()
     std::cout << "basic_streambuf_char_sputn: " << value << std::endl;
 }
 
-inline void __uncaught_exception_imp()
+void __uncaught_exception_imp()
 {
     // probably safe, seems to be called in IDA too
     // wine *always* returns false, so should be fine
@@ -237,14 +237,14 @@ inline void __uncaught_exception_imp()
     std::cout << "__uncaught_exception, this is fine" << std::endl;
 }
 
-inline void basic_ostream_char__Osfx_imp()
+void basic_ostream_char__Osfx_imp()
 {
     // flush ostream?
     pop_ret();
     std::cout << "basic_ostream_char__Osfx" << std::endl;
 }
 
-inline void basic_ostream_char_print_int_imp()
+void basic_ostream_char_print_int_imp()
 {
     pop_ret();
     int32_t val = (int32_t)cpu.pop_dword();
@@ -254,7 +254,7 @@ inline void basic_ostream_char_print_int_imp()
     // std::cout << "basic_ostream_char_print_int: " << val << std::endl;
 }
 
-inline void basic_streambuf_char_setg_imp()
+void basic_streambuf_char_setg_imp()
 {
     pop_ret();
     uint32_t self = get_self();
@@ -267,7 +267,7 @@ inline void basic_streambuf_char_setg_imp()
 }
 
 // ostream_writecstr
-inline void sub_4120D0()
+void sub_4120D0()
 {
     pop_ret();
     uint32_t stream = cpu.get_dword(0);
@@ -279,7 +279,7 @@ inline void sub_4120D0()
 }
 
 // ostream_writestr
-inline void sub_4C6970()
+void sub_4C6970()
 {
     pop_ret();
     uint32_t stream = cpu.get_dword(0);
@@ -292,7 +292,7 @@ inline void sub_4C6970()
 }
 
 // copy_iostream_to_str
-inline void sub_4D8B70()
+void sub_4D8B70()
 {
     pop_ret();
     uint32_t stream = get_self();

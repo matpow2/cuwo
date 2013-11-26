@@ -89,10 +89,11 @@ class CodeWriter(object):
     indentation = 0
     comment = None
 
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, license=True):
         self.fp = StringIO()
         self.filename = filename
-        self.putln(LICENSE_TEXT)
+        if license:
+            self.putln(LICENSE_TEXT)
     
     def format_line(self, line):
         return self.get_spaces() + line
@@ -192,6 +193,7 @@ class CodeWriter(object):
     def close_guard(self, name):
         self.putln('')
         self.putln('#endif # %s' % name)
+        self.putln('')
     
     def putend(self):
         self.putln('pass')
@@ -214,14 +216,14 @@ class CodeWriter(object):
         self.fp.close()
         if self.filename is None:
             return
-        # try:
-        #     fp = open(self.filename, 'rb')
-        #     original_data = fp.read()
-        #     fp.close()
-        #     if original_data == data:
-        #         return
-        # except IOError:
-        #     pass
+        try:
+            fp = open(self.filename, 'rb')
+            original_data = fp.read()
+            fp.close()
+            if original_data == data:
+                return
+        except IOError:
+            pass
         fp = open(self.filename, 'wb')
         fp.write(data)
         fp.close()
@@ -254,8 +256,8 @@ reg_table = {
 
 reg_ref_table = {
     REG_GEN_DWORD: 'cpu.reg[%s]',
-    REG_GEN_WORD: '(*cpu.reg16[%s])',
-    REG_GEN_BYTE: '(*cpu.reg8[%s])',
+    REG_GEN_WORD: 'cpu.get_reg16(%s)',
+    REG_GEN_BYTE: 'cpu.get_reg8(%s)',
     REG_SEGMENT: 'mem.segment_table[%s]',
     REG_XMM: 'cpu.xmm[%s]',
     REG_FPU: 'cpu.get_fpu(%s)'
@@ -781,7 +783,7 @@ class CPU(object):
         self.sub = sub
         self.eip = sub.start
         self.remaining_labels = sub.labels.copy()
-        self.unimplemented = False
+        self.unimplemented = None
         self.writer = self.converter.writer
 
     def find_instruction(self, mnemonic, steps):
@@ -799,7 +801,8 @@ class CPU(object):
 
     def on_fail(self, message, i):
         self.writer.comment = None
-        self.unimplemented = True
+        if self.unimplemented is None:
+            self.unimplemented = True
         print 'Conversion failed %X:' % (self.sub.start)
         print "%s: [%#x][%x] %s" % (message, self.eip, i.opcode,
                                     i.get_disasm())
@@ -1239,6 +1242,7 @@ class CPU(object):
             if op.value == 0x412FE0:
                 # startthread(), lets stop here
                 print 'Found startthread'
+                self.unimplemented = False
                 return False
         else:
             self.call_memory(op)
@@ -1595,6 +1599,32 @@ def filter_import_name(name):
     import_mappings[name] = v
     return v
 
+
+def write_data_header(data, name, filename):
+    if os.path.isfile(filename):
+        print 'Not writing data header for', filename
+        return
+    section_writer = CodeWriter(filename)
+    section_writer.putln('const unsigned char %s[] = {' % name)
+    section_writer.indent()
+
+    i = 0
+    data_len = len(data)
+    while i < data_len:
+        items = []
+        for ii in xrange(i, i+12):
+            items.append('0x%02X,' % ord(data[ii]))
+        items = ' '.join(items)
+        i += 12
+        if i >= data_len:
+            items = items[:-1]
+        section_writer.putln(items)
+
+    section_writer.end_brace(True)
+    section_writer.putln('')
+    section_writer.close()
+
+
 class Converter(object):
     def __init__(self, path):
         # setup
@@ -1613,6 +1643,7 @@ class Converter(object):
         self.cpu = CPU(self)
         self.load_sections = []
         self.load_images = []
+        self.sources = []
 
         self.base_dir = os.path.dirname(path)
         pe = pefile.PE(path)
@@ -1624,20 +1655,12 @@ class Converter(object):
         self.data_base = optional.ImageBase + optional.BaseOfData
         self.entry_point = optional.ImageBase + optional.AddressOfEntryPoint
 
-        print "Image Base Addr:  0x%08x" % (self.image_base)
-        print "Code Base Addr:   0x%08x" % (self.code_base)
-        print "Data Base Addr:   0x%08x" % (self.data_base)
-        print "Entry Point Addr: 0x%08x\n" % (self.entry_point)
-
-        print 'image header:', len(pe.header)
+        print "Image base: %X" % self.image_base
 
         writer = CodeWriter('gensrc/out.cpp')
         writer.putln('#include "main.h"')
         writer.putln('#include "memory.h"')
         writer.putln('#include "functions.h"')
-        writer.putln('')
-
-        writer.putmeth('inline void init_emu')
 
         for index, section in enumerate(pe.sections):
             self.sections.append(section)
@@ -1650,41 +1673,30 @@ class Converter(object):
 
         self.import_addresses = {}
         for entry in pe.DIRECTORY_ENTRY_IMPORT:
-            # should_load = entry.dll in ('MSVCP110.dll',)
-            should_load = False
-
-            if should_load:
-                path = os.path.abspath(os.path.join(self.base_dir, entry.dll))
-                dll_pe = self.load_dll(path, entry)
-
             for imp in entry.imports:
-                if should_load:
-                    self.setup_import(dll_pe, imp)
-                else:
-                    self.imports[imp.address] = (imp, entry)
-                # print '[*]  0x%08x [%20s]' % (imp.address, imp.name)
+                self.imports[imp.address] = (imp, entry)
 
         for section in self.load_sections:
-            name = section.Name.strip('\x00')[1:]
+            name = section.section_name
+            writer.putln('#include "%s_section.h"' % name)
+
+        writer.putln('')
+
+        writer.putmeth('void init_emu')
+
+        for section in self.load_sections:
+            name = section.section_name
             section_base = section.image_base + section.VirtualAddress
-            virtualsize = section.Misc_VirtualSize
             data = section.get_data()
             data_len = len(data)
 
-            print "[*] Base Addr: 0x%08x (vsize: %08x  dsize: %08x)" % (
-                section_base, virtualsize, data_len)
-
-            # for x in range(sectiondatalen):
-            #     c = section.data[x]
-            #     self.set_memory(sectionbase + x, int(ord(c)), size=1)
-            filename = 'gensrc/%s_section_%X.dat' % (name, section_base)
-            with open(filename, 'wb') as fp:
-                fp.write(data)
-            writer.putlnc('mem.write_section(%#x, %r);', section_base,
-                          filename)
+            name = '%s_section' % name
+            write_data_header(data, name, 'gensrc/%s.h' % name)
+            writer.putlnc('mem.write(0x%X, (const char*)%s, 0x%X);',
+                          section_base, name, data_len)
             
             # if we have a section without data lets fill nulls
-            extra = virtualsize - data_len
+            extra = section.Misc_VirtualSize - data_len
             if extra > 0:
                 off = section_base + data_len
                 writer.putlnc('mem.pad_section(%#x, %s);', off, extra)
@@ -1748,16 +1760,14 @@ class Converter(object):
         writer.close()
 
         writer = CodeWriter('gensrc/functions.h')
+        writer.start_guard('TERRAINGEN_FUNCTIONS_H')
         for address in addresses:
             name = self.get_function_name(address)
-            writer.putln('inline void %s();' % name)
-        for address in self.subs.keys():
-            name = self.get_function_name(address)
-            writer.putln('#include "gensrc/%s.h"' % name)
-        writer.putln('')
+            writer.putln('extern void %s();' % name)
+        writer.close_guard('TERRAINGEN_FUNCTIONS_H')
         writer.close()
 
-        writer = CodeWriter('gensrc/stubs.h')
+        writer = CodeWriter('gensrc/stubs.cpp')
         writer.putln('#include <iostream>')
         writer.putln('')
         stubs = self.used_imports
@@ -1769,11 +1779,22 @@ class Converter(object):
             if self.is_custom(name) or name in stub_names:
                 continue
             stub_names.add(name)
-            writer.putmeth('inline void %s' % name)
+            writer.putmeth('void %s' % name)
             import_name = self.get_import_name(imp)
             writer.putln('std::cout << "Stub: %s" << std::endl;' % import_name)
             writer.end_brace()
             writer.putln('')
+        writer.close()
+
+        writer = CodeWriter('gensrc/Routines.cmake', license=False)
+        writer.putln('set(GEN_SRCS')
+        writer.indent()
+        for f in self.sources:
+            name = os.path.basename(f)
+            name = '${GEN_DIR}/%s' % name
+            writer.putln(name)
+        writer.dedent()
+        writer.putln(')')        
         writer.close()
 
         # write import names
@@ -1787,35 +1808,6 @@ class Converter(object):
         ida_image_base = 0x200000
         ida_address = address - self.image_base + ida_image_base
         return ida_address
-
-    def setup_import(self, pe, imp):
-        addr = self.import_addresses[imp.name]
-        self.mem_writes[(imp.address, 4)] = DWORD(addr)
-
-    def load_dll(self, path, entry):
-        pe = pefile.PE(path)
-        print 'pe header size:', len(pe.header)
-        optional = pe.OPTIONAL_HEADER
-
-        image_base = optional.ImageBase
-
-        for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-            addr = image_base + exp.address
-            self.import_addresses[exp.name] = addr
-            self.imports[addr] = (exp, entry)
-
-        for section in pe.sections:
-            name = section.Name.strip('\x00')[1:]
-            section.image_base = image_base
-            section.section_name = name
-            self.sections.append(section)
-            if name in ('rsrc', 'reloc'):
-                continue
-            self.load_sections.append(section)
-
-        for entry in pe.DIRECTORY_ENTRY_IMPORT:
-            for imp in entry.imports:
-                self.imports[imp.address] = (imp, entry)
 
     def add_function(self, address):
         if address in self.subs or address in self.function_stack:
@@ -1865,14 +1857,16 @@ class Converter(object):
 
     def iterate_tree(self, sub):
         name = self.get_function_name(sub.start)
-        writer = self.writer = CodeWriter('gensrc/%s.h' % name)
+        cpp_name = 'gensrc/%s.cpp' % name
+        self.sources.append(cpp_name)
+        writer = self.writer = CodeWriter(cpp_name)
+        writer.putln('#include "main.h"')
+        writer.putln('#include "functions.h"')
+        writer.putln('#include <iostream>')
+        writer.putln('')
         self.cpu.set_sub(sub)
 
         writer.putmeth('void %s' % name)
-        is_aliased = sub.start in function_alias
-        if is_aliased:
-            writer.putlnc('std::cout << %r << std::endl;',
-                          '%s() start' % name)
         while True:
             if not self.cpu.next():
                 break
@@ -1881,9 +1875,6 @@ class Converter(object):
         if self.cpu.unimplemented:
             self.log('Not implemented, stack may be corrupted (%X)' % (
                 sub.start))
-        if is_aliased:
-            writer.putlnc('std::cout << %r << std::endl;',
-                               '%s() end' % name)
         writer.end_brace()
         writer.close()
 

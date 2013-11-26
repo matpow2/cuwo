@@ -35,7 +35,7 @@ public:
     : blob_mem(0)
     {
         int ret = sqlite3_open(filename, &db);
-        std::cout << "Open: " << ret << std::endl;
+        // std::cout << "Open: " << ret << std::endl;
     }
 
     int32_t exec(char * value)
@@ -104,7 +104,7 @@ inline SQLDatabase * get_db(uint32_t v)
 }
 
 // sqlite3_prepare
-inline void sub_469210()
+void sub_469210()
 {
     pop_ret();
     uint32_t db = cpu.get_dword(0);
@@ -119,7 +119,7 @@ inline void sub_469210()
 }
 
 // sqlite3_bind_text
-inline void sub_4698F0()
+void sub_4698F0()
 {
     pop_ret();
     uint32_t stm = cpu.get_dword(0);
@@ -132,7 +132,7 @@ inline void sub_4698F0()
 }
 
 // sqlite3_step
-inline void sub_46A090()
+void sub_46A090()
 {
     pop_ret();
     uint32_t stm = cpu.get_dword(0);
@@ -141,7 +141,7 @@ inline void sub_46A090()
 }
 
 // sqlite3_finalize
-inline void sub_46AE00()
+void sub_46AE00()
 {
     pop_ret();
     uint32_t stm = cpu.get_dword(0);
@@ -150,7 +150,7 @@ inline void sub_46AE00()
 }
 
 // sqlite3_column_bytes
-inline void sub_46A3A0()
+void sub_46A3A0()
 {
     pop_ret();
     uint32_t stm = cpu.get_dword(0);
@@ -160,7 +160,7 @@ inline void sub_46A3A0()
 }
 
 // sqlite3_column_blob
-inline void sub_46A320()
+void sub_46A320()
 {
     pop_ret();
     uint32_t stm = cpu.get_dword(0);
@@ -170,7 +170,7 @@ inline void sub_46A320()
 }
 
 // sqlite3_close
-inline void sub_4633C0()
+void sub_4633C0()
 {
     pop_ret();
     uint32_t db = cpu.get_dword(0);
@@ -178,11 +178,11 @@ inline void sub_4633C0()
     set_ret(p->close());
     delete p;
     databases[db] = NULL;
-    std::cout << "sqlite3_close" << std::endl;
+    // std::cout << "sqlite3_close" << std::endl;
 }
 
 // sqlite3_bind_blob
-inline void sub_469530()
+void sub_469530()
 {
     pop_ret();
     uint32_t stm = cpu.get_dword(0);
@@ -195,7 +195,7 @@ inline void sub_469530()
 }
 
 // sqlite3_open
-inline void sub_468330()
+void sub_468330()
 {
     pop_ret();
     char * filename = mem.translate(cpu.get_dword(0));
@@ -212,11 +212,11 @@ inline void sub_468330()
     mem.write_dword(db, i);
 
     set_ret(SQLITE_OK);
-    std::cout << "sqlite3_open: " << filename << std::endl;
+    // std::cout << "sqlite3_open: " << filename << std::endl;
 }
 
 // sqlite3_exec
-inline void sub_463500()
+void sub_463500()
 {
     pop_ret();
     uint32_t db = cpu.get_dword(0);
@@ -225,11 +225,11 @@ inline void sub_463500()
     uint32_t arg = cpu.get_dword(12);
     uint32_t err = cpu.get_dword(16);
     set_ret(get_db(db)->exec(sql));
-    std::cout << "sqlite3_exec: " << sql << std::endl;
+    // std::cout << "sqlite3_exec: " << sql << std::endl;
 }
 
 // sqlite3_thread_cleanup
-inline void sub_46B620()
+void sub_46B620()
 {
     pop_ret();
     // std::cout << "sqlite_thread_cleanup" << std::endl;
