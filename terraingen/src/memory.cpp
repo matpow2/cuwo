@@ -213,8 +213,8 @@ FORCE_INLINE void Memory::read_word(uint32_t addr, uint16_t * arg)
 #ifdef IS_BIG_ENDIAN
     uint16_t val;
     read(addr, (char*)&val, 2);
-    val =  ((val & 0xff00) >> 8) | 
-           ((val & 0x00ff) << 8);
+    val = ((val & 0xff00) >> 8) | 
+          ((val & 0x00ff) << 8);
     *arg = val;
 #else
     char * ptr = translate(addr);
@@ -245,10 +245,10 @@ FORCE_INLINE void Memory::read_dword(uint32_t addr, uint32_t * dword)
 #ifdef IS_BIG_ENDIAN
     uint32_t val;
     read(addr, (char*)&val, 4);
-    val =  ((val & (0xff000000) >> 24) | 
-           ((val & (0x00ff0000) >> 8)  | 
-           ((val & (0x0000ff00)) << 8) | 
-           ((val & (0x000000ff)) << 24);
+    val =  ((val & 0xff000000) >> 24) | 
+           ((val & 0x00ff0000) >> 8)  | 
+           ((val & 0x0000ff00) << 8) | 
+           ((val & 0x000000ff) << 24);
     *dword = val;
 #else
     char * ptr = translate(addr);
@@ -263,10 +263,10 @@ FORCE_INLINE uint32_t Memory::read_dword(uint32_t addr)
 #ifdef IS_BIG_ENDIAN
     uint32_t val;
     read(addr, (char*)&val, 4);
-    val =  ((val & (0xff000000) >> 24) | 
-           ((val & (0x00ff0000) >> 8)  | 
-           ((val & (0x0000ff00)) << 8) | 
-           ((val & (0x000000ff)) << 24);
+    val =  ((val & 0xff000000) >> 24) | 
+           ((val & 0x00ff0000) >> 8)  | 
+           ((val & 0x0000ff00) << 8) | 
+           ((val & 0x000000ff) << 24);
     *dword = val;
 #else
     char * ptr = translate(addr);
@@ -281,14 +281,14 @@ FORCE_INLINE void Memory::read_qword(uint32_t addr, uint64_t * qword)
 #ifdef IS_BIG_ENDIAN
     uint64_t val;
     read(addr, (char*)&val, 8);
-    val = ((val & (0xff00000000000000) >> 56) |
-          ((val & (0x00ff000000000000) >> 40) |
-          ((val & (0x0000ff0000000000) >> 24) |
-          ((val & (0x000000ff00000000) >> 8) |
-          ((val & (0x00000000ff000000)) << 8) |
-          ((val & (0x0000000000ff0000)) << 24) |
-          ((val & (0x000000000000ff00)) << 40) |
-          ((val & (0x00000000000000ff)) << 56);
+    val = ((val & 0xff00000000000000) >> 56) |
+          ((val & 0x00ff000000000000) >> 40) |
+          ((val & 0x0000ff0000000000) >> 24) |
+          ((val & 0x000000ff00000000) >> 8) |
+          ((val & 0x00000000ff000000) << 8) |
+          ((val & 0x0000000000ff0000) << 24) |
+          ((val & 0x000000000000ff00) << 40) |
+          ((val & 0x00000000000000ff) << 56);
     *qword = val;
 #else
     char * ptr = translate(addr);
@@ -303,14 +303,14 @@ FORCE_INLINE uint64_t Memory::read_qword(uint32_t addr)
 #ifdef IS_BIG_ENDIAN
     uint64_t val;
     read(addr, (char*)&val, 8);
-    val = ((val & (0xff00000000000000) >> 56) |
-          ((val & (0x00ff000000000000) >> 40) |
-          ((val & (0x0000ff0000000000) >> 24) |
-          ((val & (0x000000ff00000000) >> 8) |
-          ((val & (0x00000000ff000000)) << 8) |
-          ((val & (0x0000000000ff0000)) << 24) |
-          ((val & (0x000000000000ff00)) << 40) |
-          ((val & (0x00000000000000ff)) << 56);
+    val = ((val & 0xff00000000000000) >> 56) |
+          ((val & 0x00ff000000000000) >> 40) |
+          ((val & 0x0000ff0000000000) >> 24) |
+          ((val & 0x000000ff00000000) >> 8) |
+          ((val & 0x00000000ff000000) << 8) |
+          ((val & 0x0000000000ff0000) << 24) |
+          ((val & 0x000000000000ff00) << 40) |
+          ((val & 0x00000000000000ff) << 56);
     *qword = val;
 #else
     char * ptr = translate(addr);
@@ -345,7 +345,7 @@ FORCE_INLINE void Memory::write_word(uint32_t addr, uint16_t word)
 {
 #ifdef IS_BIG_ENDIAN
     word = ((word & 0xff00) >> 8) | 
-          ((word & 0x00ff) << 8);
+           ((word & 0x00ff) << 8);
 #endif
     char * ptr = translate(addr);
     if (!test_address(ptr, addr, 2))
@@ -356,10 +356,10 @@ FORCE_INLINE void Memory::write_word(uint32_t addr, uint16_t word)
 FORCE_INLINE void Memory::write_dword(uint32_t addr, uint32_t dword)
 {
 #ifdef IS_BIG_ENDIAN
-    dword = ((dword & (0xff000000) >> 24) |
-            ((dword & (0x00ff0000) >> 8) |
-            ((dword & (0x0000ff00)) << 8) |
-            ((dword & (0x000000ff)) << 24);
+    dword = ((dword & 0xff000000) >> 24) |
+            ((dword & 0x00ff0000) >> 8) |
+            ((dword & 0x0000ff00) << 8) |
+            ((dword & 0x000000ff) << 24);
 #endif
     char * ptr = translate(addr);
     if (!test_address(ptr, addr, 4))
