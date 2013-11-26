@@ -7,7 +7,7 @@
 
 
 #include <Python.h>
-#include "../libdasm.h"
+#include "libdasm.h"
 
 
 #define INSTRUCTION_STR_BUFFER_LENGTH   256
