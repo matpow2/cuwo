@@ -82,9 +82,13 @@ void save_chunk(uint32_t addr, ChunkData * data)
     }
 }
 
+static char * saved_memory;
+static size_t saved_size;
+
 ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
 {
     uint32_t heap_offset = mem.heap_offset;
+    memcpy(mem.data, saved_memory, saved_size);
 
     ChunkData * data = new ChunkData;
     data->x = x;
@@ -143,7 +147,7 @@ void tgen_set_seed(unsigned int seed)
 void tgen_set_path(const char * path)
 {
     data_path = path;
-}
+}   
 
 void tgen_init()
 {
@@ -155,4 +159,16 @@ void tgen_init()
     init_emu();
     init_static();
     entry_point();
+
+    // save memory state
+    saved_size = MEMORY_SIZE+mem.heap_offset;
+    saved_memory = new char[saved_size];
+    memcpy(saved_memory, mem.data, saved_size);
+}
+
+void tgen_dump_mem(const char * filename)
+{
+    std::ofstream fp(filename, std::ios::binary);
+    fp.write(mem.data, MEMORY_SIZE+mem.heap_offset);
+    fp.close();
 }

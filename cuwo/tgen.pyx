@@ -38,6 +38,7 @@ cdef extern from "terraingen.h":
     void tgen_set_seed(unsigned int seed) nogil
     ChunkData * tgen_generate_chunk(unsigned int, unsigned int) nogil
     void tgen_destroy_chunk(ChunkData *) nogil
+    void tgen_dump_mem(const char * filename) nogil
 
 
 def initialize():
@@ -51,6 +52,10 @@ def set_seed(value):
 
 def generate(x, y):
     return ChunkProxy(x, y)
+
+
+def dump_mem(filename):
+    tgen_dump_mem(filename)
 
 
 cdef class XYProxy:

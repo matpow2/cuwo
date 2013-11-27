@@ -3,7 +3,6 @@ sys.path.append('..')
 
 from cuwo.bytes import ByteReader, ByteWriter
 from cuwo.qmo import QubicleFile, QubicleModel
-from cuwo.cub import CubModel
 import os
 
 
