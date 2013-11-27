@@ -28,9 +28,16 @@ names = [
     'cuwo.entity'
 ]
 
+includes = ['./cuwo', './terraingen/include']
+lib_dirs = ['./lib']
+
 for name in names:
     ext_modules.append(Extension(name, ['./%s.pyx' % name.replace('.', '/')],
-                                 language='c++', include_dirs=['./cuwo']))
+                                 language='c++', include_dirs=includes))
+
+ext_modules.append(Extension('cuwo.tgen', ['./cuwo/tgen.pyx'],
+                             language='c++', include_dirs=includes,
+                             library_dirs=lib_dirs, libraries=['tgen']))
 
 setup(
     name='cuwo extensions',

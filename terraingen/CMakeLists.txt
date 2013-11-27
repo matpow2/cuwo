@@ -22,10 +22,6 @@ set(SRCS
     ${GEN_SRCS}
 )
 
-set(TEST_SRCS
-    ${SRC_DIR}/test.cpp
-)
-
 # dependencies
 
 if(MSVC)
@@ -45,6 +41,7 @@ if(MSVC)
     set(CMAKE_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/include/win32"
         ${CMAKE_INCLUDE_PATH})
     add_definitions(/arch:SSE2)
+    add_definitions(/MP)
 endif()
 
 if(UNIX)
@@ -59,11 +56,5 @@ include_directories(
 )
 
 # build
-add_executable(gen ${SRCS})
-target_link_libraries(gen ${GEN_LIBS})
-
-# if (CMAKE_COMPILER_IS_GNUCC OR MINGW)
-#     # build test
-#     add_executable(testx86 ${TEST_SRCS})
-#     target_link_libraries(testx86 ${GEN_LIBS})
-# endif()
+add_library(tgen ${SRCS})
+target_link_libraries(tgen ${GEN_LIBS})

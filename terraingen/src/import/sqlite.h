@@ -21,8 +21,12 @@
 #define TERRAINGEN_SQLITE_H
 
 #include "sqlite3.h"
+#include <string>
+#include <algorithm>
 
 #define MAX_DATABASE 8
+
+const std::string & get_data_path();
 
 class SQLDatabase
 {
@@ -34,7 +38,11 @@ public:
     SQLDatabase(char * filename)
     : blob_mem(0)
     {
-        int ret = sqlite3_open(filename, &db);
+        std::string fn = get_data_path() + filename;
+#ifndef _WIN32
+        std::replace(fn.begin(), fn.end(), '\\', '/');
+#endif
+        int ret = sqlite3_open(fn.c_str(), &db);
         // std::cout << "Open: " << ret << std::endl;
     }
 

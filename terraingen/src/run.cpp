@@ -20,22 +20,11 @@
 #include "main.h"
 #include "gensrc/out.cpp"
 #include "imports.h"
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
+#include "terraingen.h"
 
 // VERY specific address - this is the start of the heap, where the game
 // manager has been allocated
 #define MANAGER_ADDRESS STACK_END
-
-inline int to_int(const char * in)
-{
-    int v;
-    std::istringstream ss(in);
-    ss >> v;
-    return v;
-}
 
 void save_chunk(uint32_t addr, const char * file)
 {
@@ -68,8 +57,39 @@ void save_chunk(uint32_t addr, const char * file)
     fp.close();
 }
 
-inline void generate_chunk(uint32_t x, uint32_t y, const char * file)
+void save_chunk(uint32_t addr, ChunkData * data)
 {
+    uint32_t entry = mem.read_dword(addr + 168);
+    for (int i = 0; i < 256*256; i++) {
+        ChunkXY & c = data->items[i];
+        // uint32_t vtable = mem.read_dword(entry);
+        // float something = to_ss(mem.read_dword(entry+4));
+        // float something2 = to_ss(mem.read_dword(entry+8));
+        // float something3 = to_ss(mem.read_dword(entry+12));
+        uint32_t something4 = mem.read_dword(entry+16);
+        uint32_t something5 = mem.read_dword(entry+20);
+        uint32_t chunk_data = mem.read_dword(entry+24);
+        uint32_t data_size = mem.read_dword(entry+28); // * 4, size
+        char * out_data = new char[data_size*4];
+        mem.read(chunk_data, out_data, data_size*4);
+
+        // write it out
+        c.a = something4;
+        c.b = something5;
+        c.size = data_size;
+        c.items = (ChunkEntry*)out_data;
+        entry += 32;
+    }
+}
+
+ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
+{
+    uint32_t heap_offset = mem.heap_offset;
+
+    ChunkData * data = new ChunkData;
+    data->x = x;
+    data->y = y;
+
     cpu.reset_stack();
     cpu.push_dword(x);
     cpu.push_dword(y);
@@ -86,35 +106,53 @@ inline void generate_chunk(uint32_t x, uint32_t y, const char * file)
     get_self() = MANAGER_ADDRESS;
     add_ret();
     sub_405E30();
-    save_chunk(cpu.reg[EAX], file);
+    save_chunk(cpu.reg[EAX], data);
+
+    // restore heap offset
+    mem.heap_offset = heap_offset;
+
+    return data;
+}
+
+void tgen_destroy_chunk(ChunkData * data)
+{
+    for (int i = 0; i < 256*256; i++) {
+        delete[] data->items[i].items;
+    }
+    delete data;
 }
 
 static uint32_t global_seed = 626466;
+static std::string data_path;
 
 uint32_t get_seed()
 {
     return global_seed;
 }
 
-int main(int argc, const char ** argv)
+const std::string & get_data_path()
 {
-    if (argc != 5) {
-        std::cout << "Usage: gen.exe seed x y file" << std::endl;
-        return 0;
-    }
+    return data_path;
+}
 
-    global_seed = (uint32_t)to_int(argv[1]);
-    int x = to_int(argv[2]);
-    int y = to_int(argv[3]);
-    const char * file = argv[4];
+void tgen_set_seed(unsigned int seed)
+{
+    global_seed = seed;
+}
 
+void tgen_set_path(const char * path)
+{
+    data_path = path;
+}
+
+void tgen_init()
+{
+    static bool initialized = false;
+    if (initialized)
+        return;
+    initialized = true;
     init_function_map();
     init_emu();
     init_static();
     entry_point();
-
-    std::cout << "Generator setup" << std::endl;
-
-    generate_chunk(x, y, file);
-    return 0;
 }
