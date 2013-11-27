@@ -136,32 +136,40 @@ FORCE_INLINE void Memory::set_size(size_t size)
 FORCE_INLINE void Memory::write(uint32_t addr, const char * src, size_t len)
 {
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, len))
         return;
+#endif
     memcpy(ptr, src, len);
 }
 
 FORCE_INLINE void Memory::read(uint32_t addr, char *dest, size_t len)
 {
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, len))
         return;
+#endif
     memcpy(dest, ptr, len);
 }
 
 FORCE_INLINE void Memory::read_byte(uint32_t addr, uint8_t * byte)
 {
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 1))
         return;
+#endif
     *byte = *((uint8_t*)ptr);
 }
 
 FORCE_INLINE uint8_t Memory::read_byte(uint32_t addr)
 {
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 1))
         return 0;
+#endif
     return *((uint8_t*)ptr);
 }
 
@@ -175,8 +183,10 @@ FORCE_INLINE void Memory::read_word(uint32_t addr, uint16_t * arg)
     *arg = val;
 #else
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 2))
         return;
+#endif
     *arg = *((uint16_t*)ptr);
 #endif
 }
@@ -191,8 +201,10 @@ FORCE_INLINE uint16_t Memory::read_word(uint32_t addr)
     return val;
 #else
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 2))
         return 0;
+#endif
     return *((uint16_t*)ptr);
 #endif
 }
@@ -209,8 +221,10 @@ FORCE_INLINE void Memory::read_dword(uint32_t addr, uint32_t * dword)
     *dword = val;
 #else
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 4))
         return;
+#endif
     *dword = *((uint32_t*)ptr);
 #endif
 }
@@ -227,8 +241,10 @@ FORCE_INLINE uint32_t Memory::read_dword(uint32_t addr)
     *dword = val;
 #else
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 4))
         return 0;
+#endif
     return *((uint32_t*)ptr);
 #endif
 }
@@ -249,8 +265,10 @@ FORCE_INLINE void Memory::read_qword(uint32_t addr, uint64_t * qword)
     *qword = val;
 #else
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 8))
         return;
+#endif
     *qword = *((uint64_t*)ptr);
 #endif
 }
@@ -271,8 +289,10 @@ FORCE_INLINE uint64_t Memory::read_qword(uint32_t addr)
     *qword = val;
 #else
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 8))
         return 0;
+#endif
     return *((uint64_t*)ptr);
 #endif
 }
@@ -293,8 +313,10 @@ FORCE_INLINE XMMReg Memory::read_dqword(uint32_t addr)
 FORCE_INLINE void Memory::write_byte(uint32_t addr, uint8_t byte)
 {
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 1))
         return;
+#endif
     *((uint8_t*)ptr) = byte;
 }
 
@@ -305,8 +327,10 @@ FORCE_INLINE void Memory::write_word(uint32_t addr, uint16_t word)
            ((word & 0x00ff) << 8);
 #endif
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 2))
         return;
+#endif
     *((uint16_t*)ptr) = word;
 }
 
@@ -319,8 +343,10 @@ FORCE_INLINE void Memory::write_dword(uint32_t addr, uint32_t dword)
             ((dword & 0x000000ff) << 24);
 #endif
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 4))
         return;
+#endif
     *((uint32_t*)ptr) = dword;
 }
 
@@ -337,8 +363,10 @@ FORCE_INLINE void Memory::write_qword(uint32_t addr, uint64_t qword)
             ((qword & 0x00000000000000ff) << 56);
 #endif
     char * ptr = translate(addr);
+#ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 8))
         return;
+#endif
     *((uint64_t*)ptr) = qword;
 }
 
@@ -357,9 +385,6 @@ FORCE_INLINE uint32_t Memory::heap_alloc(uint32_t size)
         alloc_table[i] = ret;
     }
 #endif
-// #ifdef DEBUG_MEMORY
-//     std::cout << "Allocated " << size << " at " << ret << std::endl;
-// #endif
     return ret;
 }
 
@@ -390,12 +415,16 @@ FORCE_INLINE void Memory::copy_mem(uint32_t dest, uint32_t src, uint32_t size)
         return;
 
     char * addr1 = translate(dest);
+#ifdef DEBUG_MEMORY
     if (!test_address(addr1, dest, size))
         return;
+#endif
 
     char * addr2 = translate(src);
+#ifdef DEBUG_MEMORY
     if (!test_address(addr2, src, size))
         return;
+#endif
 
     memcpy(addr1, addr2, size);
 }
@@ -406,12 +435,16 @@ FORCE_INLINE void Memory::move_mem(uint32_t dest, uint32_t src, uint32_t size)
         return;
 
     char * addr1 = translate(dest);
+#ifdef DEBUG_MEMORY
     if (!test_address(addr1, dest, size))
         return;
+#endif
 
     char * addr2 = translate(src);
+#ifdef DEBUG_MEMORY
     if (!test_address(addr2, src, size))
         return;
+#endif
 
     memmove(addr1, addr2, size);
 }
@@ -422,8 +455,10 @@ FORCE_INLINE void Memory::set_mem(uint32_t ptr, uint32_t value, uint32_t size)
         return;
 
     char * addr = translate(ptr);
+#ifdef DEBUG_MEMORY
     if (!test_address(addr, ptr, size))
         return;
+#endif
 
     memset(addr, value, size);
 }

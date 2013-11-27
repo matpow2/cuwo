@@ -51,3 +51,8 @@ port = 12345
 # Server send rate. Change this to a lower value for high-traffic servers.
 # The vanilla server uses 50, but 20 or 25 may be more sensible.
 update_fps = 50
+
+# Turns on world simulation and enables terrain generation (depends on
+# cuwo.tgen). This may not be needed for barebones PvP servers.
+# (work-in-progress feature, turned off by default)
+use_world = False

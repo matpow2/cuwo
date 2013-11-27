@@ -41,13 +41,10 @@ cdef extern from "terraingen.h":
     void tgen_dump_mem(const char * filename) nogil
 
 
-def initialize():
+def initialize(seed):
+    tgen_set_seed(seed)
     tgen_set_path('./data/')
     tgen_init()
-
-
-def set_seed(value):
-    tgen_set_seed(value)
 
 
 def generate(x, y):

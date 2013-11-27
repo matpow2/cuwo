@@ -37,6 +37,12 @@ from cuwo.script import ScriptManager
 from cuwo.config import ConfigObject
 from cuwo import entity
 
+try:
+    from cuwo.world import World
+    has_world = True
+except ImportError:
+    has_world = False
+
 import collections
 import os
 import sys
@@ -63,6 +69,8 @@ class CubeWorldConnection(Protocol):
     entity_data = None
     disconnected = False
     scripts = None
+    chunk_pos = None
+    chunk = None
 
     def __init__(self, server, addr):
         self.address = addr
@@ -161,7 +169,7 @@ class CubeWorldConnection(Protocol):
         self.scripts.call('on_entity_update', mask=mask)
         # XXX clean this up
         if entity.is_pos_set(mask):
-            self.scripts.call('on_pos_update')
+            self.on_pos_update()
         if entity.is_mode_set(mask):
             self.scripts.call('on_mode_update')
         if entity.is_class_set(mask):
@@ -184,6 +192,17 @@ class CubeWorldConnection(Protocol):
             self.scripts.call('on_flags_update')
         if entity.is_consumable_set(mask):
             self.scripts.call('on_consumable_update')
+
+    def on_chunk(self, data):
+        self.chunk = data
+
+    def on_pos_update(self):
+        if self.server.world:
+            chunk = get_chunk(self.position)
+            if chunk != self.chunk_pos:
+                self.server.world.get_chunk(*chunk).addCallback(self.on_chunk)
+                self.chunk_pos = chunk
+        self.scripts.call('on_pos_update')
 
     def on_chat_packet(self, packet):
         message = filter_string(packet.value).strip()
@@ -335,6 +354,7 @@ class BanProtocol(Protocol):
 class CubeWorldServer(Factory):
     items_changed = False
     exit_code = None
+    world = None
 
     def __init__(self, config):
         self.config = config
@@ -369,6 +389,10 @@ class CubeWorldServer(Factory):
         self.extra_elapsed_time = 0.0
         self.start_time = reactor.seconds()
         self.set_clock('12:00')
+
+        # world
+        if has_world and base.use_world:
+            self.world = World(base.seed)
 
         # start listening
         self.listen_tcp(base.port, self)
