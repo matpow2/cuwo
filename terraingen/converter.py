@@ -88,6 +88,7 @@ def to_c(format_spec, *args):
 class CodeWriter(object):
     indentation = 0
     comment = None
+    line_count = 0
 
     def __init__(self, filename=None, license=True):
         self.fp = StringIO()
@@ -98,44 +99,17 @@ class CodeWriter(object):
     def format_line(self, line):
         return self.get_spaces() + line
     
-    def putln(self, *lines, **kw):
-        wrap = kw.get('wrap', False)
-        indent = kw.get('indent', True)
-        if wrap:
-            indent = self.get_spaces(1)
+    def putln(self, *lines):
         for line in lines:
-            if wrap:
-                line = ('\n' + indent).join(textwrap.wrap(line))
-            if indent:
-                line = self.format_line(line)
+            line = self.format_line(line)
             if self.comment:
                 line = '%s // %s' % (line, self.comment)
             self.fp.write(line + '\n')
+            self.line_count += 1
 
     def putlnc(self, line, *arg):
         line = to_c(line, *arg)
         self.putln(line)
-
-    def putraw(self, *arg, **kw):
-        indentation = self.indentation
-        self.indentation = 0
-        self.putln(*arg, **kw)
-        self.indentation = indentation
-
-    def putdefine(self, name, value):
-        if value is None:
-            return
-        if isinstance(value, str):
-            value = '"%s"' % value
-        self.putln('#define %s %s' % (name, value))
-    
-    def putindent(self, extra = 0):
-        self.fp.write(self.get_spaces(extra))
-    
-    def put(self, value, indent = False):
-        if indent:
-            self.putindent()
-        self.fp.write(value)
     
     def get_data(self):
         fp = self.fp
@@ -144,18 +118,6 @@ class CodeWriter(object):
         data = fp.read()
         fp.seek(pos)
         return data
-
-    def putcode(self, writer):
-        data = writer.get_data().splitlines()
-        for line in data:
-            self.putln(line)
-    
-    def putclass(self, name, subclass = None):
-        text = 'class %s' % name
-        if subclass is not None:
-            text += ' : public %s' % subclass
-        self.putln(text)
-        self.start_brace()
 
     def start_brace(self):
         self.putln('{')
@@ -167,10 +129,6 @@ class CodeWriter(object):
         if semicolon:
             text += ';'
         self.putln(text)
-    
-    def putdef(self, name, value, wrap = False):
-        new_value = '%r' % (value,)
-        self.putln('%s = %s' % (name, new_value), wrap = wrap)
 
     def putmeth(self, name, *arg, **kw):
         fullarg = list(arg)
@@ -180,11 +138,6 @@ class CodeWriter(object):
     def put_label(self, name):
         self.putln('%s: ;' % name)
 
-    def put_access(self, name):
-        self.dedent()
-        self.putln('%s:' % name)
-        self.indent()
-
     def start_guard(self, name):
         self.putln('#ifndef %s' % name)
         self.putln('#define %s' % name)
@@ -192,12 +145,7 @@ class CodeWriter(object):
 
     def close_guard(self, name):
         self.putln('')
-        self.putln('#endif # %s' % name)
-        self.putln('')
-    
-    def putend(self):
-        self.putln('pass')
-        self.dedent()
+        self.putln('#endif // %s' % name)
         self.putln('')
     
     def indent(self):
@@ -227,9 +175,6 @@ class CodeWriter(object):
         fp = open(self.filename, 'wb')
         fp.write(data)
         fp.close()
-
-    def get_line_count(self):
-        return self.get_data().count('\n')
 
 MODE_32 = 0
 MODE_16 = 1
@@ -803,7 +748,7 @@ class CPU(object):
         self.writer.comment = None
         if self.unimplemented is None:
             self.unimplemented = True
-        print 'Conversion failed %X:' % (self.sub.start)
+        print 'Conversion skipped %X:' % (self.sub.start)
         print "%s: [%#x][%x] %s" % (message, self.eip, i.opcode,
                                     i.get_disasm())
 
@@ -838,7 +783,7 @@ class CPU(object):
         self.writer.comment = '[%X] %s' % (self.eip, instruction.get_disasm())
 
         if handler(instruction) is False:
-            self.on_fail('Handler failed', instruction)
+            self.on_fail('Handler skipped', instruction)
             if rep_reg:
                 self.writer.end_brace()
             return False
@@ -1170,8 +1115,11 @@ class CPU(object):
         self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
 
     def on_xor(self, i):
-        func = 'cpu.xor_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        if i.eflags_dependency:
+            func = 'cpu.xor_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        else:
+            self.set_op(i.op1, '%s ^ %s' % (i.op1.get(), i.op2.get()))
 
     def on_not(self, i):
         # eflags not affected
@@ -1644,6 +1592,7 @@ class Converter(object):
         self.load_sections = []
         self.load_images = []
         self.sources = []
+        self.big_sources = set()
 
         self.base_dir = os.path.dirname(path)
         pe = pefile.PE(path)
@@ -1794,7 +1743,17 @@ class Converter(object):
             name = '${GEN_DIR}/%s' % name
             writer.putln(name)
         writer.dedent()
-        writer.putln(')')        
+        writer.putln(')')
+        writer.putln('')
+
+        writer.putln('set(GEN_BIG_SRCS')
+        writer.indent()
+        for f in self.big_sources:
+            name = os.path.basename(f)
+            name = '${GEN_DIR}/%s' % name
+            writer.putln(name)
+        writer.dedent()
+        writer.putln(')')
         writer.close()
 
     def is_custom(self, name):
@@ -1854,9 +1813,9 @@ class Converter(object):
 
     def iterate_tree(self, sub):
         name = self.get_function_name(sub.start)
-        cpp_name = 'gensrc/%s.cpp' % name
-        self.sources.append(cpp_name)
-        writer = self.writer = CodeWriter(cpp_name)
+        source_name = 'gensrc/%s.cpp' % name
+        self.sources.append(source_name)
+        writer = self.writer = CodeWriter(source_name)
         writer.putln('#include "main.h"')
         writer.putln('#include "functions.h"')
         writer.putln('#include <iostream>')
@@ -1874,6 +1833,10 @@ class Converter(object):
                 sub.start))
         writer.end_brace()
         writer.close()
+
+        # turn off optimizations for big routines
+        if writer.line_count >= 60000:
+            self.big_sources.add(source_name)
 
     def get_section(self, address):
         for section in self.sections:
@@ -1907,8 +1870,17 @@ class Converter(object):
 SERVER_HASH = 'A6FC5AA34068B5B80C53B2439C65BE3B'
 
 
-def main():
+def convert(filename):
     import hashlib
+
+    file_hash = hashlib.md5(open(filename, 'rb').read()).hexdigest()
+    if file_hash != SERVER_HASH.lower():
+        print 'Invalid Server.exe hash, should be %s' % SERVER_HASH
+        return
+
+    converter = Converter(filename)
+
+def main():
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -1916,13 +1888,7 @@ def main():
     parser.add_argument('file', help='path to Server.exe')
     args = parser.parse_args()
 
-    file_hash = hashlib.md5(open(args.file, 'rb').read()).hexdigest()
-
-    if file_hash != SERVER_HASH.lower():
-        print 'Invalid Server.exe hash, should be %s' % SERVER_HASH
-        return
-
-    converter = Converter(args.file)
+    convert(args.file)
 
 if __name__ == '__main__':
     main()

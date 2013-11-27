@@ -15,6 +15,8 @@ include(gensrc/Routines.cmake)
 
 set(SRCS
     ${SRC_DIR}/run.cpp
+    ${SRC_DIR}/memory.cpp
+    ${SRC_DIR}/cpu.cpp
     ${SRC_DIR}/sqlite3.c
     ${GEN_DIR}/stubs.cpp
     ${GEN_SRCS}
@@ -26,12 +28,13 @@ set(TEST_SRCS
 
 # dependencies
 
-find_package(Boost REQUIRED) 
-include_directories(${Boost_INCLUDE_DIR})
-
 if(MSVC)
     # silence some stupid warnings
     add_definitions("/wd4102")
+    set_source_files_properties(${GEN_BIG_SRCS} PROPERTIES COMPILE_FLAGS -Od)
+else()
+    # GCC-like
+    set_source_files_properties(${GEN_BIG_SRCS} PROPERTIES COMPILE_FLAGS -O0)
 endif()
 
 set(CMAKE_LIBRARY_PATH "${ROOT_DIR}/lib" ${CMAKE_LIBRARY_PATH})

@@ -21,9 +21,6 @@
 #define TERRAINGEN_CPU_H
 
 #include <inttypes.h>
-#include <limits>
-#include <string.h>
-#include <stdlib.h>
 #include <boost/unordered_map.hpp>
 #include "sse.h"
 #include "config.h"
@@ -210,53 +207,22 @@ public:
 #define GET32L(val) ((uint32_t)(((uint64_t)(val)) & 0xFFFFFFFF))
 #define GET32H(val) ((uint32_t)(((uint64_t)(val)) >> 32))
 
-FORCE_INLINE uint32_t cdq_x86(uint32_t v)
-{
-    if (v & 0x80000000)
-        return 0xFFFFFFFF;
-    return 0x00000000;
-}
+uint32_t cdq_x86(uint32_t v);
 
 // custom/import helpers
 
+void pop_ret();
+void add_ret();
+uint32_t & get_self();
+void set_ret(uint32_t v);
+void set_ret(int v);
+void set_ret(uint64_t v);
+void ret_self();
+
 extern CPU cpu;
 
-FORCE_INLINE void pop_ret()
-{
-    cpu.reg[ESP] += 4;
-}
-
-FORCE_INLINE void add_ret()
-{
-    cpu.reg[ESP] -= 4;
-}
-
-FORCE_INLINE uint32_t & get_self()
-{
-    return cpu.reg[ECX];
-}
-
-FORCE_INLINE void set_ret(uint32_t v)
-{
-    cpu.reg[EAX] = v;
-}
-
-FORCE_INLINE void set_ret(int v)
-{
-    set_ret(uint32_t(v));
-}
-
-FORCE_INLINE void set_ret(uint64_t v)
-{
-    cpu.reg[EAX] = uint32_t(v & 0xFFFFFFFF);
-    cpu.reg[EDX] = uint32_t(v >> 32);
-}
-
-FORCE_INLINE void ret_self()
-{
-    set_ret(get_self());
-}
-
-#include "cpu.cpp"
+#ifndef NO_INLINE
+#include "cpu.inl"
+#endif
 
 #endif // TERRAINGEN_CPU_H

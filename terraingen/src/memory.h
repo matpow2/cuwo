@@ -21,7 +21,7 @@
 #define TERRAINGEN_MEMORY_H
 
 #include <inttypes.h>
-#include <boost/unordered_map.hpp>
+#include <stdlib.h>
 #include "sse.h"
 
 enum SegmentRegister
@@ -50,8 +50,6 @@ public:
 #endif
 
     Memory();
-    static void write_file(uint32_t address, const char * filename);
-    static void write_section(uint32_t address, const char * filename);
     static void pad_section(uint32_t address, size_t size);
     static void write(uint32_t address, const char * s, size_t len);
     static void read(uint32_t address, char * s, size_t len);
@@ -82,9 +80,12 @@ public:
     static void copy_mem(uint32_t dest, uint32_t src, uint32_t size);
     static void move_mem(uint32_t dest, uint32_t src, uint32_t size);
     static void set_mem(uint32_t ptr, uint32_t value, uint32_t size);
-
 };
 
-#include "memory.cpp"
+extern Memory mem;
+
+#ifndef NO_INLINE
+#include "memory.inl"
+#endif
 
 #endif // TERRAINGEN_MEMORY_H

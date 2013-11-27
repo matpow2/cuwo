@@ -1,4 +1,21 @@
-#define TERRAINGEN_IS_RUN_CPP
+/*
+    Copyright (c) Mathias Kaerlev 2013.
+
+    This file is part of cuwo.
+
+    cuwo is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    cuwo is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include "main.h"
 #include "gensrc/out.cpp"
@@ -6,25 +23,18 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <boost/lexical_cast.hpp>
-
-CPU cpu;
-Memory mem;
+#include <sstream>
 
 // VERY specific address - this is the start of the heap, where the game
 // manager has been allocated
 #define MANAGER_ADDRESS STACK_END
 
-template <class T>
-inline std::string to_str(const T & in)
+inline int to_int(const char * in)
 {
-    return boost::lexical_cast<std::string>(in);
-}
-
-template <class T>
-inline int to_int(const T & in)
-{
-    return boost::lexical_cast<int>(in);
+    int v;
+    std::istringstream ss(in);
+    ss >> v;
+    return v;
 }
 
 void save_chunk(uint32_t addr, const char * file)
@@ -102,7 +112,8 @@ int main(int argc, const char ** argv)
     init_emu();
     init_static();
     entry_point();
-    // std::cout << "Generator setup!" << std::endl;
+
+    std::cout << "Generator setup" << std::endl;
 
     generate_chunk(x, y, file);
     return 0;

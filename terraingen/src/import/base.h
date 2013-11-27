@@ -26,7 +26,7 @@
 #include <cstdlib>
 #include <cmath>
 
-inline void free_imp()
+void free_imp()
 {
     // cdecl
     pop_ret();
@@ -34,7 +34,7 @@ inline void free_imp()
     mem.heap_dealloc(data);
 }
 
-inline void new_func_imp()
+void new_func_imp()
 {
     // cdecl
     pop_ret();
@@ -43,7 +43,7 @@ inline void new_func_imp()
     set_ret(ret);
 }
 
-inline void malloc_imp()
+void malloc_imp()
 {
     // cdecl
     pop_ret();
@@ -52,12 +52,12 @@ inline void malloc_imp()
     set_ret(ret);
 }
 
-inline void _malloc_crt_imp()
+void _malloc_crt_imp()
 {
     malloc_imp();
 }
 
-inline void _calloc_crt_imp()
+void _calloc_crt_imp()
 {
     // cdecl
     pop_ret();
@@ -69,7 +69,7 @@ inline void _calloc_crt_imp()
     set_ret(ret);
 }
 
-inline void delete_func_imp()
+void delete_func_imp()
 {
     // cdecl
     pop_ret();
@@ -78,7 +78,7 @@ inline void delete_func_imp()
     set_ret(0);
 }
 
-inline void delete_arr_func_imp()
+void delete_arr_func_imp()
 {
     // cdecl
     pop_ret();
@@ -87,7 +87,7 @@ inline void delete_arr_func_imp()
     set_ret(0);
 }
 
-inline void memcpy_imp()
+void memcpy_imp()
 {
     pop_ret();
     uint32_t dest = cpu.get_dword(0);
@@ -98,7 +98,7 @@ inline void memcpy_imp()
     set_ret(dest);
 }
 
-inline void strcmp_imp()
+void strcmp_imp()
 {
     pop_ret();
     uint32_t str1 = cpu.get_dword(0);
@@ -107,7 +107,7 @@ inline void strcmp_imp()
     set_ret(0);
 }
 
-inline void memcmp_imp()
+void memcmp_imp()
 {
     pop_ret();
     uint32_t str1 = cpu.get_dword(0);
@@ -117,19 +117,19 @@ inline void memcmp_imp()
     set_ret(0);
 }
 
-inline void abort_imp()
+void abort_imp()
 {
     pop_ret();
     std::cout << "Abort process" << std::endl;
 }
 
-inline void terminateYAXXZ_imp()
+void terminateYAXXZ_imp()
 {
     pop_ret();
     std::cout << "Terminate process" << std::endl;
 }
 
-inline void WSAStartup_imp()
+void WSAStartup_imp()
 {
     // stdcall
     pop_ret();
@@ -139,7 +139,7 @@ inline void WSAStartup_imp()
     set_ret(1);
 }
 
-inline void InitializeCriticalSectionAndSpinCount_imp()
+void InitializeCriticalSectionAndSpinCount_imp()
 {
     // std::cout << "InitializeCriticalSectionAndSpinCount" << std::endl;
     pop_ret();
@@ -147,14 +147,14 @@ inline void InitializeCriticalSectionAndSpinCount_imp()
     uint32_t spincount = cpu.pop_dword();
 }
 
-inline void DeleteCriticalSection_imp()
+void DeleteCriticalSection_imp()
 {
     std::cout << "DeleteCriticalSection" << std::endl;
     pop_ret();
     uint32_t critical_section = cpu.pop_dword();
 }
 
-inline void rand_imp()
+void rand_imp()
 {
     // cdecl
     pop_ret();
@@ -162,7 +162,7 @@ inline void rand_imp()
     set_ret(r);
 }
 
-inline void srand_imp()
+void srand_imp()
 {
     // cdecl
     pop_ret();
@@ -170,28 +170,28 @@ inline void srand_imp()
     cross_srand(value);
 }
 
-inline void IsProcessorFeaturePresent_imp()
+void IsProcessorFeaturePresent_imp()
 {
     pop_ret();
     uint32_t feature = cpu.pop_dword();
     set_ret(0);
 }
 
-inline void bad_cast_ctor_charptr_imp()
+void bad_cast_ctor_charptr_imp()
 {
     pop_ret();
     uint32_t name = cpu.pop_dword();
     std::cout << "Bad cast exception" << std::endl;
 }
 
-inline void exception_ctor_imp()
+void exception_ctor_imp()
 {
     pop_ret();
     uint32_t name = cpu.pop_dword();
     std::cout << "Exception constructor" << std::endl;
 }
 
-inline void exception_ctor_noalloc_imp()
+void exception_ctor_noalloc_imp()
 {
     // thiscall
     pop_ret();
@@ -200,13 +200,13 @@ inline void exception_ctor_noalloc_imp()
     std::cout << "Exception constructor noalloc" << std::endl;
 }
 
-inline void _beginthread_imp()
+void _beginthread_imp()
 {
     pop_ret();
-    std::cout << "_beginthread" << std::endl;
+    // std::cout << "_beginthread" << std::endl;
 }
 
-inline void EncodePointer_imp()
+void EncodePointer_imp()
 {
     // stdcall
     pop_ret();
@@ -214,7 +214,7 @@ inline void EncodePointer_imp()
     set_ret(val);
 }
 
-inline void memmove_imp()
+void memmove_imp()
 {
     pop_ret();
     uint32_t dest = cpu.get_dword(0);
@@ -225,7 +225,7 @@ inline void memmove_imp()
     set_ret(dest);
 }
 
-inline void memset_imp()
+void memset_imp()
 {
     pop_ret();
     uint32_t ptr = cpu.get_dword(0);
@@ -235,7 +235,7 @@ inline void memset_imp()
     mem.set_mem(ptr, value, num);
 }
 
-inline void fseek_imp()
+void fseek_imp()
 {
     pop_ret();
     uint32_t stream = cpu.get_dword(0);
@@ -246,13 +246,13 @@ inline void fseek_imp()
     set_ret(0);
 }
 
-inline void fwrite_imp()
+void fwrite_imp()
 {
     pop_ret();
     std::cout << "fclose" << std::endl;
 }
 
-inline void fclose_imp()
+void fclose_imp()
 {
     pop_ret();
     uint32_t stream = cpu.get_dword(0);
@@ -260,35 +260,35 @@ inline void fclose_imp()
     set_ret(0);
 }
 
-inline void _setjmp_imp()
+void _setjmp_imp()
 {
     pop_ret();
     uint32_t jmp_buf = cpu.get_dword(0);
     std::cout << "setjmp: " << jmp_buf << std::endl;
 }
 
-inline void InitializeCriticalSection_imp()
+void InitializeCriticalSection_imp()
 {
     pop_ret();
     uint32_t critical_section = cpu.pop_dword();
     std::cout << "Initialize critical section" << std::endl;
 }
 
-inline void EnterCriticalSection_imp()
+void EnterCriticalSection_imp()
 {
     pop_ret();
     uint32_t critical_section = cpu.pop_dword();
     std::cout << "Enter critical section" << std::endl;
 }
 
-inline void LeaveCriticalSection_imp()
+void LeaveCriticalSection_imp()
 {
     pop_ret();
     uint32_t critical_section = cpu.pop_dword();
     std::cout << "Leave critical section" << std::endl;
 }
 
-inline void InterlockedCompareExchange_imp()
+void InterlockedCompareExchange_imp()
 {
     std::cout << "InterlockedCompareExchange" << std::endl;
     pop_ret();
@@ -303,7 +303,7 @@ inline void InterlockedCompareExchange_imp()
     set_ret(val);
 }
 
-inline void _setjmp3_imp()
+void _setjmp3_imp()
 {
     pop_ret();
     uint32_t jmp_buf = cpu.get_dword(0);
@@ -316,16 +316,16 @@ inline void _setjmp3_imp()
  * It provides empty versions of methods used by visual c++'s stl's
  * iterator checking.
  * msvcr100 has to provide them in case apps are compiled with /Od
- * or the optimizer fails to inline those (empty) calls.
+ * or the optimizer fails to those (empty) calls.
  */
 
-inline void _Orphan_all_Container_base0stdQAEXXZ_imp()
+void _Orphan_all_Container_base0stdQAEXXZ_imp()
 {
     pop_ret();
     // std::cout << "_Orphan_all_Container_base0stdQAEXXZ" << std::endl;
 }
 
-inline void _libm_sse2_cos_precise_imp()
+void _libm_sse2_cos_precise_imp()
 {
     pop_ret();
     double v = to_sd(cpu.xmm[XMM0]);
@@ -333,7 +333,7 @@ inline void _libm_sse2_cos_precise_imp()
     cpu.xmm[XMM0] = v;
 }
 
-inline void _libm_sse2_sin_precise_imp()
+void _libm_sse2_sin_precise_imp()
 {
     pop_ret();
     double v = to_sd(cpu.xmm[XMM0]);
@@ -341,7 +341,7 @@ inline void _libm_sse2_sin_precise_imp()
     cpu.xmm[XMM0] = v;
 }
 
-inline void _libm_sse2_sqrt_precise_imp()
+void _libm_sse2_sqrt_precise_imp()
 {
     pop_ret();
     double v = to_sd(cpu.xmm[XMM0]);
@@ -349,7 +349,7 @@ inline void _libm_sse2_sqrt_precise_imp()
     cpu.xmm[XMM0] = v;
 }
 
-inline void _libm_sse2_pow_precise_imp()
+void _libm_sse2_pow_precise_imp()
 {
     pop_ret();
     double v = to_sd(cpu.xmm[XMM0]);

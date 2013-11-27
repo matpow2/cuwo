@@ -21,9 +21,6 @@
 #define TERRAINGEN_MAIN_H
 
 #include "memory.h"
-extern Memory mem;
-
 #include "cpu.h"
-extern CPU cpu;
 
 #endif
