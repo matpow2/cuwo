@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev 2013.
+# Copyright (c) Mathias Kaerlev 2013-2014.
 #
 # This file is part of cuwo.
 #
@@ -28,7 +28,7 @@ from ctypes import c_int32
 
 LICENSE_TEXT = '''\
 /*
-    Copyright (c) Mathias Kaerlev 2013.
+    Copyright (c) Mathias Kaerlev 2013-2014.
 
     This file is part of cuwo.
 

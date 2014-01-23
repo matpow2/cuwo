@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev 2013.
+# Copyright (c) Mathias Kaerlev 2013-2014.
 #
 # This file is part of cuwo.
 #
