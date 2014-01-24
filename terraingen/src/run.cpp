@@ -95,8 +95,8 @@ ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
     data->y = y;
 
     cpu.reset_stack();
-    cpu.push_dword(x);
     cpu.push_dword(y);
+    cpu.push_dword(x);
     get_self() = MANAGER_ADDRESS;
     add_ret();
     generator_func();
@@ -105,8 +105,8 @@ ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
     // return 0;
     // address 405E30 is
     // void * __thiscall get_sector_chunk_data(__int64 chunk_pos)
-    cpu.push_dword(x);
     cpu.push_dword(y);
+    cpu.push_dword(x);
     get_self() = MANAGER_ADDRESS;
     add_ret();
     sub_405E30();
