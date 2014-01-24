@@ -26,7 +26,7 @@
 
 #define MAX_DATABASE 8
 
-const std::string & get_data_path();
+const char * translate_path(char *);
 
 class SQLDatabase
 {
@@ -38,11 +38,7 @@ public:
     SQLDatabase(char * filename)
     : blob_mem(0)
     {
-        std::string fn = get_data_path() + filename;
-#ifndef _WIN32
-        std::replace(fn.begin(), fn.end(), '\\', '/');
-#endif
-        int ret = sqlite3_open(fn.c_str(), &db);
+        int ret = sqlite3_open(translate_path(filename), &db);
         // std::cout << "Open: " << ret << std::endl;
     }
 

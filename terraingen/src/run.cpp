@@ -127,6 +127,7 @@ void tgen_destroy_chunk(ChunkData * data)
 }
 
 static uint32_t global_seed = 626466;
+static std::string translated_path;
 static std::string data_path;
 
 uint32_t get_seed()
@@ -134,20 +135,27 @@ uint32_t get_seed()
     return global_seed;
 }
 
-const std::string & get_data_path()
+const char * translate_path(char * path)
 {
-    return data_path;
+    translated_path = path;
+    std::replace(translated_path.begin(), translated_path.end(), '\\', '/');
+    size_t pos = translated_path.find_last_of("/");
+    if (pos != std::string::npos) {
+        translated_path = translated_path.substr(pos + 1);
+    }
+    translated_path = data_path + translated_path;
+    return translated_path.c_str();
+}
+
+void tgen_set_path(const char * dir)
+{
+    data_path = dir;
 }
 
 void tgen_set_seed(unsigned int seed)
 {
     global_seed = seed;
 }
-
-void tgen_set_path(const char * path)
-{
-    data_path = path;
-}   
 
 void tgen_init()
 {

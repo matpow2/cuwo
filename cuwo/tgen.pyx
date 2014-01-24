@@ -34,7 +34,7 @@ cdef extern from "terraingen.h":
         ChunkXY items[256*256]
 
     void tgen_init() nogil
-    void tgen_set_path(const char * data)
+    void tgen_set_path(const char * dir)
     void tgen_set_seed(unsigned int seed) nogil
     ChunkData * tgen_generate_chunk(unsigned int, unsigned int) nogil
     void tgen_destroy_chunk(ChunkData *) nogil

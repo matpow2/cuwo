@@ -21,9 +21,9 @@ struct ChunkData
 
 void tgen_init();
 void tgen_set_seed(unsigned int seed);
-void tgen_set_path(const char * path);
 ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y);
 void tgen_destroy_chunk(ChunkData * data);
 void tgen_dump_mem(const char * filename);
+void tgen_set_path(const char * dir);
 
 #endif // TERRAINGEN_API
