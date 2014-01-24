@@ -195,6 +195,7 @@ class CubeWorldConnection(Protocol):
 
     def on_chunk(self, data):
         self.chunk = data
+        self.server.on_chunk(data)
 
     def on_pos_update(self):
         if self.server.world:
@@ -412,6 +413,14 @@ class CubeWorldServer(Factory):
         ret = items.pop(index)
         self.items_changed = True
         return ret.item_data
+
+    def on_chunk(self, chunk):
+        if not chunk.items:
+            return
+        chunk_pos = (chunk.x, chunk.y)
+        self.chunk_items[chunk_pos].extend(chunk.items)
+        chunk.items = []
+        self.items_changed = True
 
     def drop_item(self, item_data, pos):
         item = ChunkItemData()

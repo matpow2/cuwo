@@ -17,6 +17,8 @@ struct ChunkData
 {
     int x, y;
     ChunkXY items[256*256];
+    size_t item_size;
+    char * item_data;
 };
 
 void tgen_init();

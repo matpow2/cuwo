@@ -20,6 +20,10 @@ Terraingen wrapper
 """
 
 
+from cuwo.packet import ChunkItemData
+from cuwo.bytes cimport ByteReader
+
+
 cdef extern from "terraingen.h":
     cdef struct ChunkEntry:
         unsigned char r, g, b, a
@@ -32,6 +36,8 @@ cdef extern from "terraingen.h":
     cdef struct ChunkData:
         int x, y
         ChunkXY items[256*256]
+        size_t item_size
+        char * item_data
 
     void tgen_init() nogil
     void tgen_set_path(const char * dir)
@@ -105,9 +111,20 @@ cdef class XYProxy:
 
 cdef class ChunkProxy:
     cdef ChunkData * data
+    cdef public:
+        list items
     
     def __init__(self, x, y):
         self.data = tgen_generate_chunk(x, y)
+
+        # read items
+        self.items = []
+        cdef ByteReader reader
+        reader = ByteReader(self.data.item_data[:self.data.item_size])
+        while reader.get_left() > 0:
+            item = ChunkItemData()
+            item.read(reader)
+            self.items.append(item)
 
     property x:
         def __get__(self):

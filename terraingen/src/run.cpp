@@ -59,6 +59,13 @@ void save_chunk(uint32_t addr, const char * file)
 
 void save_chunk(uint32_t addr, ChunkData * data)
 {
+    // read items
+    uint32_t start_items = mem.read_dword(addr + 48);
+    uint32_t end_items = mem.read_dword(addr + 52);
+    data->item_size = end_items - start_items;
+    data->item_data = new char[data->item_size];
+    mem.read(start_items, data->item_data, data->item_size);
+
     uint32_t entry = mem.read_dword(addr + 168);
     for (int i = 0; i < 256*256; i++) {
         ChunkXY & c = data->items[i];
