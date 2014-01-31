@@ -201,6 +201,7 @@ class CubeWorldConnection(Protocol):
         if self.server.world:
             chunk = get_chunk(self.position)
             if chunk != self.chunk_pos:
+                print 'Generating', chunk
                 self.server.world.get_chunk(*chunk).addCallback(self.on_chunk)
                 self.chunk_pos = chunk
         self.scripts.call('on_pos_update')

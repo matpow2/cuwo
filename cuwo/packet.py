@@ -336,7 +336,7 @@ class MissionData(Loader):
         self.something11 = reader.read_float()
         self.chunk_x = reader.read_uint32()
         self.chunk_y = reader.read_uint32()
-        print vars(self)
+        # print vars(self)
 
     def write(self, writer):
         writer.write_int32(self.section_x * 8.0)
@@ -357,6 +357,51 @@ class MissionData(Loader):
         writer.write_uint32(self.chunk_y)
 
 
+class StaticEntityData(Loader):
+    def read(self, reader):
+        self.chunk_x = reader.read_uint32()
+        self.chunk_y = reader.read_uint32()
+        self.entity_id = reader.read_uint32()
+        reader.skip(4)
+        # memory header starts here (size 72)
+        self.entity_type = reader.read_uint32()
+        reader.skip(4) # 64bit struct padding
+        self.pos = reader.read_qvec3()
+        self.something2 = reader.read_uint32() # 0, 1, 2, 3
+        self.something3 = reader.read_float()
+        self.something4 = reader.read_float()
+        self.something5 = reader.read_float()
+        self.something6 = reader.read_uint8()
+        reader.skip(3)
+        self.something7 = reader.read_uint32()
+        self.something8 = reader.read_uint32()
+        reader.skip(4) # 64bit padding
+        # following may be 64bit number?
+        self.something9 = reader.read_uint32()
+        self.something10 = reader.read_uint32()
+        # print vars(self)
+
+    def write(self, writer):
+        writer.write_uint32(self.chunk_x)
+        writer.write_uint32(self.chunk_y)
+        writer.write_uint32(self.entity_id)
+        writer.pad(4)
+        writer.write_uint32(self.entity_type)
+        writer.pad(4)
+        writer.write_qvec3(self.pos)
+        writer.write_uint32(self.something2)
+        writer.write_float(self.something3)
+        writer.write_float(self.something4)
+        writer.write_float(self.something5)
+        writer.write_uint8(self.something6)
+        writer.pad(3)
+        writer.write_uint32(self.something7)
+        writer.write_uint32(self.something8)
+        writer.pad(4)
+        writer.write_uint32(self.something9)
+        writer.write_uint32(self.something10)
+
+
 class ServerUpdate(Packet):
     def reset(self):
         self.items_1 = []
@@ -364,7 +409,7 @@ class ServerUpdate(Packet):
         self.particles = []
         self.sound_actions = []
         self.shoot_actions = []
-        self.items_6 = []
+        self.static_entities = []
         self.chunk_items = []
         self.items_8 = []
         self.pickups = []
@@ -383,11 +428,7 @@ class ServerUpdate(Packet):
         self.particles = read_list(reader, ParticleData)
         self.sound_actions = read_list(reader, SoundAction)
         self.shoot_actions = read_list(reader, ShootPacket)
-
-        self.items_6 = []
-        for _ in xrange(reader.read_uint32()):
-            self.items_6.append(reader.read(88))
-
+        self.static_entities = read_list(reader, StaticEntityData)
         self.chunk_items = read_list(reader, ChunkItems)
 
         self.items_8 = []
@@ -409,15 +450,15 @@ class ServerUpdate(Packet):
         # objective/quests? not sure
         self.missions = read_list(reader, MissionData)
 
-        debug = True
+        debug = False
         if debug:
             v = vars(self).copy()
-            del v['pickups']
             # del v['kill_actions']
+            # del v['player_hits']
+            del v['pickups']
             del v['damage_actions']
             del v['sound_actions']
             del v['shoot_actions']
-            # del v['player_hits']
             del v['chunk_items']
             for k, v in v.iteritems():
                 if not v:
@@ -429,17 +470,12 @@ class ServerUpdate(Packet):
 
     def write(self, writer):
         data = ByteWriter()
-
         write_list(data, self.items_1)
         write_list(data, self.player_hits)
         write_list(data, self.particles)
         write_list(data, self.sound_actions)
         write_list(data, self.shoot_actions)
-
-        data.write_uint32(len(self.items_6))
-        for item in self.items_6:
-            data.write(item)
-
+        write_list(data, self.static_entities)
         write_list(data, self.chunk_items)
 
         data.write_uint32(len(self.items_8))
@@ -490,7 +526,7 @@ class InteractPacket(Packet):
         self.chunk_y = reader.read_int32()
         # index of item in ChunkItems
         self.item_index = reader.read_int32()
-        #
+        print 'interact:', self.item_index
         self.something4 = reader.read_uint32()
         self.interact_type = reader.read_uint8()
         self.something6 = reader.read_uint8()
@@ -538,7 +574,7 @@ class HitPacket(Packet):
         writer.write_uint32(self.stun_duration)
         writer.write_uint32(self.something8)
         writer.write_qvec3(self.pos)
-        self.hit_dir = writer.write_vec3(self.hit_dir)
+        writer.write_vec3(self.hit_dir)
         writer.write_uint8(self.skill_hit)
         writer.write_uint8(self.hit_type)
         writer.write_uint8(self.show_light)

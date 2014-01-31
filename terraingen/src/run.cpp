@@ -26,36 +26,64 @@
 // manager has been allocated
 #define MANAGER_ADDRESS STACK_END
 
-void save_chunk(uint32_t addr, const char * file)
-{
-    // std::cout << "Save chunk: " << addr << std::endl;
-    std::ofstream fp(file, std::ios::out | std::ios::binary);
-    uint32_t entry = mem.read_dword(addr + 168);
-    for (int i = 0; i < 256*256; i++) {
-        uint32_t vtable = mem.read_dword(entry);
-        float something = to_ss(mem.read_dword(entry+4));
-        float something2 = to_ss(mem.read_dword(entry+8));
-        float something3 = to_ss(mem.read_dword(entry+12));
-        uint32_t something4 = mem.read_dword(entry+16);
-        uint32_t something5 = mem.read_dword(entry+20);
-        uint32_t chunk_data = mem.read_dword(entry+24);
-        uint32_t data_size = mem.read_dword(entry+28); // * 4, size
-        char * out_data = new char[data_size*4];
-        mem.read(chunk_data, out_data, data_size*4);
+/*
+Some3Data:
+    88: ItemData
 
-        // write it out
-        fp.write((char*)&something, 4);
-        fp.write((char*)&something2, 4);
-        fp.write((char*)&something3, 4);
-        fp.write((char*)&something4, 4);
-        fp.write((char*)&something5, 4);
-        fp.write((char*)&data_size, 4);
-        fp.write(out_data, data_size*4);
-        delete[] out_data;
-        entry += 32;
-    }
-    fp.close();
-}
+struct ChunkParent, size 200
+{
+  int vtable;
+  int b;
+  int c;
+  Some3Data * some3_start;
+  Some3Data * some3_end;
+  _DWORD some3_something;
+  _DWORD some1_4bytep_start;
+  _DWORD some1_4bytep_end;
+  _DWORD some1_something;
+  _DWORD some4_start;
+  _DWORD some4_end;
+  _DWORD some4_something;
+  _DWORD chunkitems_start;
+  _DWORD chunkitems_end;
+  _DWORD chunkitems_something;
+  _DWORD some9_start;
+  _DWORD some9_end;
+  _DWORD some9_something;
+  _DWORD some8_start;
+  _DWORD some8_end;
+  _DWORD some8_something;
+  _DWORD some7_start;
+  _DWORD some7_end;
+  _DWORD some7_something;
+  _DWORD chunk_x;
+  _DWORD chunk_y;
+  _DWORD some2_20byte_start;
+  _DWORD some2_20byte_end;
+  _DWORD some2_something;
+  _BYTE word74;
+  _BYTE has_chunkitems;
+  _BYTE byte76;
+  _BYTE pad;
+  _DWORD dword78;
+  _DWORD dword7C;
+  _DWORD dword80;
+  _BYTE byte84;
+  _BYTE pad2[3];
+  _DWORD some5_start;
+  _DWORD some5_end;
+  _DWORD some5_something;
+  _DWORD some6_start;
+  _DWORD some6_end;
+  _DWORD some6_something;
+  _DWORD dwordA0;
+  _DWORD dwordA4;
+  ChunkEntry *chunk_data;
+  _DWORD other_chunk_data;
+  struct _RTL_CRITICAL_SECTION rtl_critical_sectionB0;
+};
+
+*/
 
 void save_chunk(uint32_t addr, ChunkData * data)
 {
@@ -123,6 +151,41 @@ ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
     mem.heap_offset = heap_offset;
 
     return data;
+}
+
+unsigned int tgen_generate_debug_chunk(const char * filename,
+                                       unsigned int x, unsigned int y)
+{
+    uint32_t heap_offset = mem.heap_offset;
+    memcpy(mem.data, saved_memory, saved_size);
+
+    ChunkData * data = new ChunkData;
+    data->x = x;
+    data->y = y;
+
+    cpu.reset_stack();
+    cpu.push_dword(y);
+    cpu.push_dword(x);
+    get_self() = MANAGER_ADDRESS;
+    add_ret();
+    generator_func();
+
+    // save_chunk_now();
+    // return 0;
+    // address 405E30 is
+    // void * __thiscall get_sector_chunk_data(__int64 chunk_pos)
+    cpu.push_dword(y);
+    cpu.push_dword(x);
+    get_self() = MANAGER_ADDRESS;
+    add_ret();
+    sub_405E30();
+    uint32_t chunk_offset = cpu.reg[EAX];
+    tgen_dump_mem(filename);
+
+    // restore heap offset
+    mem.heap_offset = heap_offset;
+
+    return chunk_offset;
 }
 
 void tgen_destroy_chunk(ChunkData * data)

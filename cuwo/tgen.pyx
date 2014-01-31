@@ -40,11 +40,13 @@ cdef extern from "terraingen.h":
         char * item_data
 
     void tgen_init() nogil
-    void tgen_set_path(const char * dir)
+    void tgen_set_path(const char * dir) nogil
     void tgen_set_seed(unsigned int seed) nogil
     ChunkData * tgen_generate_chunk(unsigned int, unsigned int) nogil
     void tgen_destroy_chunk(ChunkData *) nogil
     void tgen_dump_mem(const char * filename) nogil
+    unsigned int tgen_generate_debug_chunk(const char *,
+                                           unsigned int, unsigned int)
 
 
 # alpha:
@@ -57,7 +59,7 @@ cdef extern from "terraingen.h":
 #   - 8: trees
 # - 1 bit, unknown (not used in mesh renderer?)
 # - 1 bit, used in mesh renderer (caves, darkness? should be empty)
-
+# - 1 bit, ?
 
 cdef enum:
     EMPTY_TYPE = 0
@@ -76,6 +78,10 @@ def initialize(seed):
 
 def generate(x, y):
     return ChunkProxy(x, y)
+
+
+def generate_debug(filename, x, y):
+    return tgen_generate_debug_chunk(filename, x, y)
 
 
 def dump_mem(filename):

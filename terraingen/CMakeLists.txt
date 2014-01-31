@@ -6,8 +6,12 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 project(Terraingen)
 
 set(ROOT_DIR "${PROJECT_SOURCE_DIR}")
+set(LIB_DIR "${ROOT_DIR}/../lib")
 set(SRC_DIR "${ROOT_DIR}/src")
 set(GEN_DIR "${ROOT_DIR}/gensrc")
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIB_DIR})
 
 # sources
 

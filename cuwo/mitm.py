@@ -15,14 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-from cuwo.twistedreactor import install_reactor
-install_reactor()
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from cuwo.packet import (PacketHandler, write_packet, ServerChatMessage,
                          CS_PACKETS, SC_PACKETS, EntityUpdate,
-                         create_entity_data, JoinPacket, CurrentTime)
+                         create_entity_data, JoinPacket, CurrentTime,
+                         ClientChatMessage, UpdateFinished, ServerUpdate)
 from cuwo import constants
 
 
@@ -47,6 +46,7 @@ class CubeWorldProtocol(Protocol):
     relay_packets = None
     entity_id = None
     disconnected = False
+    update_index = 0
 
     def __init__(self, server):
         self.server = server
@@ -77,6 +77,11 @@ class CubeWorldProtocol(Protocol):
         packet.value = value
         self.transport.write(write_packet(packet))
 
+    def send_client_chat(self, value):
+        packet = ClientChatMessage()
+        packet.value = value
+        self.relay_client.transport.write(write_packet(packet))
+
     def on_entity_update(self, packet):
         if packet.entity_id not in self.entities:
             entity = create_entity_data()
@@ -104,7 +109,10 @@ class CubeWorldProtocol(Protocol):
             # I hate darkness
             packet.time = constants.MAX_TIME / 2
         self.transport.write(write_packet(packet))
-        if packet.packet_id not in (0, 2, 4, 5):
+        if packet.packet_id not in (EntityUpdate.packet_id,
+                                    UpdateFinished.packet_id,
+                                    CurrentTime.packet_id,
+                                    ServerUpdate.packet_id):
             print 'Got server packet:', packet.packet_id
 
     def got_relay_client(self, p):
@@ -126,9 +134,14 @@ class CubeWorldProtocol(Protocol):
             self.relay_client.transport.loseConnection()
 
     def serverDataReceived(self, data):
+        # self.transport.write(data)
         self.server_handler.feed(data)
 
     def dataReceived(self, data):
+        # if self.relay_client is None:
+        #     self.relay_packets.append(data)
+        #     return
+        # self.relay_client.transport.write(data)
         self.client_handler.feed(data)
 
 

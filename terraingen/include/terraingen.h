@@ -27,5 +27,7 @@ ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y);
 void tgen_destroy_chunk(ChunkData * data);
 void tgen_dump_mem(const char * filename);
 void tgen_set_path(const char * dir);
+unsigned int tgen_generate_debug_chunk(const char * filename,
+                                       unsigned int x, unsigned int y);
 
 #endif // TERRAINGEN_API
