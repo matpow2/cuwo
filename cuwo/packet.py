@@ -336,7 +336,6 @@ class MissionData(Loader):
         self.something11 = reader.read_float()
         self.chunk_x = reader.read_uint32()
         self.chunk_y = reader.read_uint32()
-        # print vars(self)
 
     def write(self, writer):
         writer.write_int32(self.section_x * 8.0)
@@ -379,7 +378,6 @@ class StaticEntityData(Loader):
         # following may be 64bit number?
         self.something9 = reader.read_uint32()
         self.something10 = reader.read_uint32()
-        # print vars(self)
 
     def write(self, writer):
         writer.write_uint32(self.chunk_x)
@@ -526,7 +524,6 @@ class InteractPacket(Packet):
         self.chunk_y = reader.read_int32()
         # index of item in ChunkItems
         self.item_index = reader.read_int32()
-        print 'interact:', self.item_index
         self.something4 = reader.read_uint32()
         self.interact_type = reader.read_uint8()
         self.something6 = reader.read_uint8()
