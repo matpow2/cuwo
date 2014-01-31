@@ -74,10 +74,12 @@ max_hit_counter_strikes = 3
 # Max difference between estimated hit counter and actual hit counter
 max_hit_counter_difference = 4
 
-# max times someones hp can exceed actual max hp, used to avoid kicks when
+# Max times someones hp can exceed actual max hp, used to avoid kicks when
 # switch items, and gaining above max hp from unholy spirits
 max_max_hp_strikes = 4
 
+# Max damage a player can hit another player with
+max_damage = 10000
 
 log_message = "{playername}({ip}) was removed for: {reason}."
 disconnect_message = "{name} - You are being removed for: {reason}."

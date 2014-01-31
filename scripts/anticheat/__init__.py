@@ -36,6 +36,10 @@ def is_similar(float1, float2):
     return float1 > float2 - 0.1 and float1 < float2 + 0.1
 
 
+def is_valid_float(v):
+    return not math.isnan(v) and not math.isinf(v)
+
+
 class AntiCheatConnection(ConnectionScript):
 
     def on_load(self):
@@ -103,6 +107,7 @@ class AntiCheatConnection(ConnectionScript):
         self.max_hit_counter_difference = config.max_hit_counter_difference
         self.max_max_hp_strikes = config.max_max_hp_strikes
         self.max_last_hit_time_catchup = config.max_last_hit_time_catchup
+        self.max_damage = config.max_damage
 
     def on_join(self, event):
         if self.on_name_update() is False:
@@ -237,7 +242,8 @@ class AntiCheatConnection(ConnectionScript):
         self.last_health = self.health
 
         self.mana = entity_data.mp
-        self.health = entity_data.hp
+        self.health = max(0, entity_data.hp)
+        entity_data.hp = self.health
         
         if is_bit_set(event.mask, 7):
             if self.check_hostile_type() is False:
@@ -284,11 +290,18 @@ class AntiCheatConnection(ConnectionScript):
         if packet.entity_id != self.connection.entity_id:
             # These packets are often send on join, apparently the client
             # saves his old hitpackets and sends it as soon as it connects..
-            # possibly just a bug where wollay doesnt clear a list.
+            # possibly just a bug where wollay doesn't clear a list.
             return False
 
+        damage = event.packet.damage
+
+        # sanitize damage value
+        if not is_valid_float(damage) or math.fabs(damage) > self.max_damage:
+            self.remove_cheater('invalid hit damage (%s)' % damage)
+            return
+
         # just damage packets, not healing would be negative
-        if event.packet.damage >= 0:
+        if damage >= 0:
             self.last_hit_time = reactor.seconds()
             self.hit_counter += 1
 
