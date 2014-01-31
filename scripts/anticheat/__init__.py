@@ -242,8 +242,7 @@ class AntiCheatConnection(ConnectionScript):
         self.last_health = self.health
 
         self.mana = entity_data.mp
-        self.health = max(0, entity_data.hp)
-        entity_data.hp = self.health
+        self.health = entity_data.hp
         
         if is_bit_set(event.mask, 7):
             if self.check_hostile_type() is False:
