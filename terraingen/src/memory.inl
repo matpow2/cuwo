@@ -89,7 +89,7 @@ FORCE_INLINE char * Memory::translate(uint32_t val)
     return *(char**)&val;
 }
 
-void print_fail(uint64_t v)
+inline void print_fail(uint64_t v)
 {
     std::cout << "Translation failing on " << v << std::endl;
 }
