@@ -1905,7 +1905,6 @@ class Converter(object):
 
     def iterate_tree(self, sub):
         name = self.get_function_name(sub.start)
-        print 'Writing %r' % name
         source_name = 'gensrc/%s.cpp' % name
         self.sources.append(source_name)
         writer = self.writer = CodeWriter(source_name)

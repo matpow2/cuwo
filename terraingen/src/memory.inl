@@ -86,12 +86,12 @@ FORCE_INLINE bool test_address(char * res, uint32_t addr, size_t size)
 
 FORCE_INLINE char * Memory::translate(uint32_t val)
 {
-    return (char*)val;
+    return *(char**)&val;
 }
 
 FORCE_INLINE uint32_t Memory::translate(char * address)
 {
-    return (uint32_t)address;
+    return *(uint32_t*)&address;
 }
 
 template <class T>
