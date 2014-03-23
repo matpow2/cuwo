@@ -1629,7 +1629,7 @@ class Converter(object):
         self.used_imports = set()
         self.custom_subs = set()
         self.cached_names = {}
-        self.subs = {}
+        self.subs = set()
         self.cpu = CPU(self)
         self.load_sections = []
         self.load_images = []
@@ -1773,11 +1773,11 @@ class Converter(object):
             address = self.function_stack.pop()
             ida = self.get_ida_address(address)
             sub = Subroutine(self, address)
-            self.subs[address] = sub
+            self.subs.add(address)
             self.iterate_tree(sub)
 
         addresses = set()
-        addresses.update(self.subs.keys())
+        addresses.update(self.subs)
         addresses.update(self.used_imports)
         addresses.update(self.custom_subs)
 
@@ -1802,7 +1802,7 @@ class Converter(object):
         writer.putln('')
         stubs = self.used_imports
         stubs -= set(self.import_addresses.values())
-        stubs -= set(self.subs.keys())
+        stubs -= self.subs
         stub_names = set()
         for imp in stubs:
             name = self.get_function_name(imp)
