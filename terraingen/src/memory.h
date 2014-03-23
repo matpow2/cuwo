@@ -39,7 +39,7 @@ class Memory
 public:
     static char stack[STACK_SIZE];
     static char * heap;
-    static size_t heap_size, heap_offset;
+    static uint32_t heap_size, heap_offset;
     static uint32_t segment_table[6];
     static char fs_segment[FS_SEGMENT_SIZE];
 
