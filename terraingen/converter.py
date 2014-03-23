@@ -1608,6 +1608,13 @@ def write_data_header(data, name, filename):
     section_writer.close()
 
 
+def makedirs(path):
+    try:
+        os.makedirs(path)
+    except OSError:
+        return
+
+
 class Converter(object):
     def __init__(self, path):
         # setup
@@ -1641,6 +1648,7 @@ class Converter(object):
 
         print "Image base: %X" % self.image_base
 
+        makedirs('gensrc')
         writer = CodeWriter('gensrc/out.cpp')
         writer.putln('#include "main.h"')
         writer.putln('#include "memory.h"')
