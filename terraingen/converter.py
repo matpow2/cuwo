@@ -1637,7 +1637,7 @@ class Converter(object):
         self.big_sources = set()
 
         self.base_dir = os.path.dirname(path)
-        pe = self.pe = pefile.PE(path)
+        pe = pefile.PE(path)
 
         optional = pe.OPTIONAL_HEADER
 
@@ -1905,6 +1905,7 @@ class Converter(object):
 
     def iterate_tree(self, sub):
         name = self.get_function_name(sub.start)
+        print 'Writing %r' % name
         source_name = 'gensrc/%s.cpp' % name
         self.sources.append(source_name)
         writer = self.writer = CodeWriter(source_name)
