@@ -21,14 +21,26 @@
 #define TERRAINGEN_CONFIG_H
 
 // #define IS_BIG_ENDIAN
-#define IMAGE_BASE 0x400000
-#define MEMORY_OFFSET 0x558000
-#define FS_SEGMENT_OFFSET 0x584698
-#define FS_SEGMENT_SIZE 0x4
-#define STACK_BASE (FS_SEGMENT_OFFSET+FS_SEGMENT_SIZE)
+
+#if _WIN32 || _WIN64
+#if _WIN64
+#define IS_64_BIT
+#else
+#define IS_32_BIT
+#endif
+#endif
+
+// Check GCC
+#if __GNUC__
+#if __x86_64__ || __ppc64__
+#define IS_64_BIT
+#else
+#define IS_32_BIT
+#endif
+#endif
+
 #define STACK_SIZE 0x100000
-#define STACK_END (STACK_BASE + STACK_SIZE)
-#define MEMORY_SIZE (STACK_END - MEMORY_OFFSET)
+#define FS_SEGMENT_SIZE 0x4
 
 // debug?
 // #define DEBUG_MEMORY

@@ -27,9 +27,9 @@ FORCE_INLINE Memory::Memory()
 {
     for (int i = 0; i < 6; i++)
         segment_table[i] = 0;
-    segment_table[FS] = FS_SEGMENT_OFFSET;
+    segment_table[FS] = translate(fs_segment);
 
-    set_size(MEMORY_SIZE);
+    set_heap_size(64 * 1024 * 1024); // allocate 64 mb
 }
 
 FORCE_INLINE void Memory::pad_section(uint32_t address, size_t size)
@@ -84,14 +84,14 @@ FORCE_INLINE bool test_address(char * res, uint32_t addr, size_t size)
 #endif
 }
 
-FORCE_INLINE char * Memory::translate(uint32_t addr)
+FORCE_INLINE char * Memory::translate(uint32_t val)
 {
-#ifdef DEBUG_MEMORY
-    if (addr < MEMORY_OFFSET || addr >= HEAP_BASE+heap_offset)
-        return NULL;
-#endif
+    return (char*)val;
+}
 
-    return &offset_data[addr];
+FORCE_INLINE uint32_t Memory::translate(char * address)
+{
+    return (uint32_t)address;
 }
 
 template <class T>
@@ -105,18 +105,17 @@ FORCE_INLINE T * test_alloc(T * out)
     return out;
 }
 
-FORCE_INLINE void Memory::set_size(size_t size)
+FORCE_INLINE void Memory::set_heap_size(size_t size)
 {
-    if (size <= data_size)
+    if (size <= heap_size)
         return;
     size_t new_size = (size*3)/2; // * 1.5
-    if (data == NULL) {
-        data = test_alloc((char*)malloc(new_size));
-        memset(data, 0, new_size);
-    } else {
-        data = test_alloc((char*)realloc(data, new_size));
+    if (heap == NULL) {
+        heap = test_alloc((char*)malloc(new_size));
     }
-    offset_data = data - MEMORY_OFFSET;
+    // else {
+    //     heap = test_alloc((char*)realloc(heap, new_size));
+    // }
 
 #ifdef DEBUG_MEMORY
     size_t table_size = (new_size - ALLOC_TABLE_SUB) * sizeof(uint32_t);
@@ -127,12 +126,12 @@ FORCE_INLINE void Memory::set_size(size_t size)
     } else {
         alloc_table = test_alloc((uint32_t*)realloc(alloc_table,
                                                         table_size));
-        size_t old_size = (data_size - ALLOC_TABLE_SUB) * sizeof(uint32_t);
+        size_t old_size = (heap_size - ALLOC_TABLE_SUB) * sizeof(uint32_t);
         memset((char*)alloc_table+old_size, 0, table_size-old_size);
     }
 #endif
 
-    data_size = new_size;
+    heap_size = new_size;
 }
 
 FORCE_INLINE void Memory::write(uint32_t addr, const char * src, size_t len)
@@ -143,6 +142,11 @@ FORCE_INLINE void Memory::write(uint32_t addr, const char * src, size_t len)
         return;
 #endif
     memcpy(ptr, src, len);
+}
+
+FORCE_INLINE void Memory::read(char * addr, char *dest, size_t len)
+{
+    memcpy(dest, addr, len);
 }
 
 FORCE_INLINE void Memory::read(uint32_t addr, char *dest, size_t len)
@@ -211,6 +215,21 @@ FORCE_INLINE uint16_t Memory::read_word(uint32_t addr)
 #endif
 }
 
+FORCE_INLINE void Memory::read_dword(char * addr, uint32_t * dword)
+{
+#ifdef IS_BIG_ENDIAN
+    uint32_t val;
+    read(addr, (char*)&val, 4);
+    val =  ((val & 0xff000000) >> 24) | 
+           ((val & 0x00ff0000) >> 8)  | 
+           ((val & 0x0000ff00) << 8) | 
+           ((val & 0x000000ff) << 24);
+    *dword = val;
+#else
+    *dword = *((uint32_t*)addr);
+#endif
+}
+
 FORCE_INLINE void Memory::read_dword(uint32_t addr, uint32_t * dword)
 {
 #ifdef IS_BIG_ENDIAN
@@ -248,6 +267,21 @@ FORCE_INLINE uint32_t Memory::read_dword(uint32_t addr)
         return 0;
 #endif
     return *((uint32_t*)ptr);
+#endif
+}
+
+FORCE_INLINE uint32_t Memory::read_dword(char * addr)
+{
+#ifdef IS_BIG_ENDIAN
+    uint32_t val;
+    read(addr, (char*)&val, 4);
+    val =  ((val & 0xff000000) >> 24) | 
+           ((val & 0x00ff0000) >> 8)  | 
+           ((val & 0x0000ff00) << 8) | 
+           ((val & 0x000000ff) << 24);
+    *dword = val;
+#else
+    return *((uint32_t*)addr);
 #endif
 }
 
@@ -336,7 +370,7 @@ FORCE_INLINE void Memory::write_word(uint32_t addr, uint16_t word)
     *((uint16_t*)ptr) = word;
 }
 
-FORCE_INLINE void Memory::write_dword(uint32_t addr, uint32_t dword)
+FORCE_INLINE void Memory::write_dword(char * address, uint32_t dword)
 {
 #ifdef IS_BIG_ENDIAN
     dword = ((dword & 0xff000000) >> 24) |
@@ -344,12 +378,17 @@ FORCE_INLINE void Memory::write_dword(uint32_t addr, uint32_t dword)
             ((dword & 0x0000ff00) << 8) |
             ((dword & 0x000000ff) << 24);
 #endif
+    *((uint32_t*)address) = dword;
+}
+
+FORCE_INLINE void Memory::write_dword(uint32_t addr, uint32_t dword)
+{
     char * ptr = translate(addr);
 #ifdef DEBUG_MEMORY
     if (!test_address(ptr, addr, 4))
         return;
 #endif
-    *((uint32_t*)ptr) = dword;
+    write_dword(ptr, dword);
 }
 
 FORCE_INLINE void Memory::write_qword(uint32_t addr, uint64_t qword)
@@ -374,11 +413,16 @@ FORCE_INLINE void Memory::write_qword(uint32_t addr, uint64_t qword)
 
 FORCE_INLINE uint32_t Memory::heap_alloc(uint32_t size)
 {
-    uint32_t ret = STACK_END+heap_offset;
+    uint32_t ret = translate(heap + heap_offset);
     // add size to heap offset and align to 8-byte boundary
     heap_offset = (heap_offset + size + 8 - 1) & ~(8 - 1);
-    // heap_offset = heap_offset+size;
-    set_size(MEMORY_SIZE+heap_offset);
+    // heap_size = heap_size+size;
+    if (heap_offset > heap_size) {
+        std::cout << "Heap too small: " << heap_offset << " " << heap_size
+            << std::endl;
+        exit(0);
+    }
+    // set_heap_size(heap_offset);
 
 #ifdef DEBUG_MEMORY
     // set allocation table

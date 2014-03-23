@@ -25,7 +25,7 @@
 
 // VERY specific address - this is the start of the heap, where the game
 // manager has been allocated
-#define MANAGER_ADDRESS STACK_END
+#define MANAGER_ADDRESS mem.translate(mem.heap)
 
 /*
 Some3Data:
@@ -118,13 +118,15 @@ void save_chunk(uint32_t addr, ChunkData * data)
     }
 }
 
-static char * saved_memory;
-static size_t saved_size;
+static char * saved_heap;
+static size_t saved_heap_size;
+static char saved_stack[STACK_SIZE];
 
 ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
 {
     uint32_t heap_offset = mem.heap_offset;
-    memcpy(mem.data, saved_memory, saved_size);
+    memcpy(mem.heap, saved_heap, saved_heap_size);
+    memcpy(mem.stack, saved_stack, STACK_SIZE);
 
     ChunkData * data = new ChunkData;
     data->x = x;
@@ -158,7 +160,8 @@ unsigned int tgen_generate_debug_chunk(const char * filename,
                                        unsigned int x, unsigned int y)
 {
     uint32_t heap_offset = mem.heap_offset;
-    memcpy(mem.data, saved_memory, saved_size);
+    memcpy(mem.heap, saved_heap, saved_heap_size);
+    memcpy(mem.stack, saved_stack, STACK_SIZE);
 
     ChunkData * data = new ChunkData;
     data->x = x;
@@ -234,20 +237,21 @@ void tgen_init()
     if (initialized)
         return;
     initialized = true;
+    rebase_data();
     init_function_map();
-    init_emu();
     init_static();
     entry_point();
 
     // save memory state
-    saved_size = MEMORY_SIZE+mem.heap_offset;
-    saved_memory = new char[saved_size];
-    memcpy(saved_memory, mem.data, saved_size);
+    saved_heap_size = mem.heap_offset;
+    saved_heap = new char[saved_heap_size];
+    memcpy(saved_heap, mem.heap, saved_heap_size);
+    memcpy(saved_stack, mem.stack, STACK_SIZE);
 }
 
 void tgen_dump_mem(const char * filename)
 {
     std::ofstream fp(filename, std::ios::binary);
-    fp.write(mem.data, MEMORY_SIZE+mem.heap_offset);
+    fp.write(mem.heap, mem.heap_offset);
     fp.close();
 }

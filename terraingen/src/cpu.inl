@@ -68,7 +68,7 @@ FORCE_INLINE uint8_t & CPU::get_reg8(Register8 i)
 
 FORCE_INLINE void CPU::reset_stack()
 {
-    reg[EBP] = reg[ESP] = STACK_END;
+    reg[EBP] = reg[ESP] = mem.translate(mem.stack+STACK_SIZE);
 }
 
 FORCE_INLINE void CPU::add_function(uint32_t addr, FuncPointer value)

@@ -291,6 +291,7 @@ class Operand(object):
     is_memory = False
     is_register = False
     is_immediate = False
+    is_reloc = False
     has_import_alias = False
 
     index_reg = None
@@ -360,6 +361,10 @@ class Operand(object):
                 sum_list.append(index)
             # INTEL displacement
             if inst.dispbytes:
+                addr = op.displacement
+                if inst.has_reloc and addr in inst.converter.reloc_values:
+                    self.reloc_displacement = inst.converter.get_reloc(addr)
+                    self.is_reloc = True
                 if op.displacement & (1<<(op.dispbytes*8-1)):
                     tmp = op.displacement
                     if op.dispbytes == 1:
@@ -376,17 +381,22 @@ class Operand(object):
                     self.displacement = '0x%x' % op.displacement
                 sum_list.append(self.displacement)
 
-            # check for import alias
             if len(sum_list) == 1 and inst.dispbytes:
                 addr = op.displacement
+
                 if (addr in inst.converter.imports
                     and addr not in inst.converter.import_addresses.values()):
+                    self.displacement = str(addr)
                     self.is_memory = False
                     self.is_immediate = True
+                    self.is_reloc = False
                     self.value = self.get_import_alias(addr, inst)
                     return
 
             self.value = '+'.join(sum_list)
+            if self.is_reloc:
+                self.reloc_value = '+'.join(sum_list[:-1]
+                                            + [self.reloc_displacement])
 
         elif self.type == pydasm.OPERAND_TYPE_IMMEDIATE:
             self.is_immediate = True
@@ -399,6 +409,11 @@ class Operand(object):
             elif mask == AM_A:
                 raise NotImplementedError()
                 string += '0x%x:0x%x' % (op.section, op.displacement)
+
+            if inst.has_reloc and value in inst.converter.reloc_values:
+                self.reloc_value = inst.converter.get_reloc(value)
+                self.is_reloc = True
+
             self.value = value
 
     def get_import_alias(self, addr, inst):
@@ -417,12 +432,17 @@ class Operand(object):
         # data alias
         return dll_addr
 
-    def get(self):
+    def get(self, as_reloc=True):
+        as_reloc = self.is_reloc and as_reloc
+        if as_reloc:
+            value = self.reloc_value
+        else:
+            value = self.value
         if self.is_memory:
-            return get_memory(self.value, self.size)
-        if self.is_immediate:
-            return '%sU' % self.value
-        return self.value
+            return get_memory(value, self.size)
+        if self.is_immediate and not as_reloc:
+            return '%sU' % value
+        return value
 
 def get_memory(addr, size):
     func = 'mem.read_%s' % size_names[size]
@@ -460,6 +480,13 @@ class Instruction(object):
         self.instruction = i
         self.converter = converter
         self.address = offset
+
+        self.has_reloc = False
+
+        for pos in xrange(offset, offset+i.length):
+            if pos in converter.reloc_addresses:
+                self.has_reloc = True
+                break
 
         self.length = i.length
         self.type = i.type
@@ -820,9 +847,12 @@ class CPU(object):
 
     def set_op(self, op, value):
         if op.is_memory:
-            self.set_memory(op.value, value, op.size)
+            if op.is_reloc:
+                self.set_memory(op.reloc_value, value, op.size)
+            else:
+                self.set_memory(op.value, value, op.size)
         else:
-            self.set_register(op.value, value)
+            self.set_register(op.get(), value)
 
     def goto(self, test, address):
         if address < self.sub.start or address >= self.sub.end:
@@ -1251,13 +1281,13 @@ class CPU(object):
         if src.is_memory and src.displacement:
             # test for jumptable in text segment
             # let on_jmp handle this
-            displacement = eval(src.displacement)
             try:
+                displacement = eval(src.displacement)
                 section = self.converter.get_section(displacement)
                 if section.section_name == 'text':
                     self.writer.putln('// movzx ignored here')
                     return
-            except NotImplementedError:
+            except (NotImplementedError, NameError):
                 pass
         self.set_register(i.op1.value, i.op2.get())
 
@@ -1553,17 +1583,22 @@ def write_data_header(data, name, filename):
         print 'Not writing data header for', filename
         return
     section_writer = CodeWriter(filename)
-    section_writer.putln('const unsigned char %s[] = {' % name)
+    section_writer.putlnc('char %s[%s] = {', name, len(data))
     section_writer.indent()
 
     i = 0
     data_len = len(data)
     while i < data_len:
         items = []
-        for ii in xrange(i, i+12):
-            items.append('0x%02X,' % ord(data[ii]))
+        for ii in xrange(i, min(i+10, len(data))):
+            v = struct.unpack('b', data[ii])[0]
+            if v < 0:
+                v = '-0x%02X,' % -v
+            else:
+                v = ' 0x%02X,' % v
+            items.append(v)
         items = ' '.join(items)
-        i += 12
+        i += 10
         if i >= data_len:
             items = items[:-1]
         section_writer.putln(items)
@@ -1631,43 +1666,23 @@ class Converter(object):
 
         writer.putln('')
 
-        writer.putmeth('void init_emu')
+        # writer.putmeth('void init_emu')
+
+        sections_header = CodeWriter('gensrc/sections.h')
+        sections_header.start_guard('TERRAINGEN_SECTIONS_H')
 
         for section in self.load_sections:
             name = section.section_name
             section_base = section.image_base + section.VirtualAddress
             data = section.get_data()
-            data_len = len(data)
-
+            extra = section.Misc_VirtualSize - len(data)
+            data += '\x00' * extra
             name = '%s_section' % name
             write_data_header(data, name, 'gensrc/%s.h' % name)
-            writer.putlnc('mem.write(0x%X, (const char*)%s, 0x%X);',
-                          section_base, name, data_len)
-            
-            # if we have a section without data lets fill nulls
-            extra = section.Misc_VirtualSize - data_len
-            if extra > 0:
-                off = section_base + data_len
-                writer.putlnc('mem.pad_section(%#x, %s);', off, extra)
+            sections_header.putlnc('extern char %s[%s];', name, len(data))
 
-        writer.end_brace()
-
-        # self.relocs = set()
-
-        # writer.putmeth('void rebase_data', 'int delta')
-        # # iterate reloc section
-        # for data in pe.DIRECTORY_ENTRY_BASERELOC:
-        #     for entry in data.entries:
-        #         t = entry.type
-        #         if t == 0:
-        #             continue
-        #         if t != 3:
-        #             print 'has unsupported reloctype', t
-        #             continue
-        #         self.relocs.add(entry.rva + self.image_base)
-        #         section = self.get_section(entry.rva + self.image_base)
-        #         writer.putln('mem.read_dword(')
-
+        sections_header.close_guard('TERRAINGEN_SECTIONS_H')
+        sections_header.close()
         # writer.end_brace()
 
         # ensure custom sqlite3 is used
@@ -1705,6 +1720,46 @@ class Converter(object):
             writer.putln('add_ret();')
             writer.putlnc('%s();', self.get_function_name(value))
         writer.end_brace()
+
+        # get reloc ready
+        self.reloc_addresses = set()
+        self.reloc_values = set()
+
+        writer.putmeth('void rebase_data')
+        # iterate reloc section
+        for data in pe.DIRECTORY_ENTRY_BASERELOC:
+            for entry in data.entries:
+                t = entry.type
+                if t == 0:
+                    continue
+                if t != 3:
+                    print 'has unsupported reloctype', t
+                    continue
+                addr = entry.rva + self.image_base
+                dword = self.get_dword(addr)
+                is_text = False
+                if self.get_section(addr).section_name == 'text':
+                    is_text = True
+                if dword in (self.image_base, 
+                             self.image_base+0x3c,
+                             self.image_base+0x18,
+                             self.image_base+0x74,
+                             self.image_base+0xe8): 
+                    # dos headers
+                    continue
+                if self.get_section(dword).section_name == 'text':
+                    continue
+                self.reloc_values.add(dword)
+                self.reloc_addresses.add(addr)
+                if is_text:
+                    continue
+                src = self.get_reloc(dword, True)
+                dst = self.get_reloc(addr, False)
+                writer.putlnc('mem.write_dword(%s, %s);', dst, src)
+        writer.end_brace()
+        # return
+
+        # iterate function stack
 
         while self.function_stack:
             address = self.function_stack.pop()
@@ -1774,6 +1829,17 @@ class Converter(object):
         writer.putln(')')
         writer.close()
 
+    def get_reloc(self, addr, as_guest=True):
+        section = self.get_section(addr)
+        if section.section_name == 'text':
+            raise NotImplementedError()
+        data_name = '%s_section' % section.section_name
+        offset = addr - (section.image_base + section.VirtualAddress)
+        ret = '%s+%s' % (data_name, offset)
+        if as_guest:
+            ret = 'mem.translate(%s)' % ret
+        return ret
+
     def is_custom(self, name):
         data = self.custom_code.replace('%s();' % name, '')
         return name in data
@@ -1836,6 +1902,7 @@ class Converter(object):
         writer = self.writer = CodeWriter(source_name)
         writer.putln('#include "main.h"')
         writer.putln('#include "functions.h"')
+        writer.putln('#include "sections.h"')
         writer.putln('#include <iostream>')
         writer.putln('')
         self.cpu.set_sub(sub)
@@ -1859,7 +1926,7 @@ class Converter(object):
     def get_section(self, address):
         for section in self.sections:
             section_base = section.image_base + section.VirtualAddress
-            section_end = section_base + section.SizeOfRawData
+            section_end = section_base + section.Misc_VirtualSize 
             if address < section_base or address >= section_end:
                 continue
             return section

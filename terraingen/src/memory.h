@@ -34,35 +34,31 @@ enum SegmentRegister
     GS
 };
 
-#define HEAP_BASE STACK_END
-#define ALLOC_TABLE_SUB (HEAP_BASE - MEMORY_OFFSET)
-
 class Memory
 {
 public:
-    static char * data;
-    static char * offset_data;
-    static size_t data_size;
+    static char stack[STACK_SIZE];
+    static char * heap;
+    static size_t heap_size, heap_offset;
     static uint32_t segment_table[6];
-    static uint32_t heap_offset;
-
-#ifdef DEBUG_MEMORY
-    static uint32_t * alloc_table;
-#endif
+    static char fs_segment[FS_SEGMENT_SIZE];
 
     Memory();
     static void pad_section(uint32_t address, size_t size);
     static void write(uint32_t address, const char * s, size_t len);
+    static void read(char * address, char * s, size_t len);
     static void read(uint32_t address, char * s, size_t len);
     static char * translate(uint32_t addr);
-    static void set_size(size_t size);
+    static uint32_t translate(char * address);
 
     // read/write
     static void read_byte(uint32_t address, uint8_t * arg);
     static uint8_t read_byte(uint32_t address);
     static void read_word(uint32_t address, uint16_t * arg);
     static uint16_t read_word(uint32_t address);
+    static void read_dword(char * address, uint32_t * arg);
     static void read_dword(uint32_t address, uint32_t * arg);
+    static uint32_t read_dword(char * address);
     static uint32_t read_dword(uint32_t address);
     static void read_qword(uint32_t address, uint64_t * arg);
     static uint64_t read_qword(uint32_t address);
@@ -71,11 +67,13 @@ public:
     static void write_byte(uint32_t address, uint8_t arg);
     static void write_word(uint32_t address, uint16_t arg);
     static void write_dword(uint32_t address, uint32_t arg);
+    static void write_dword(char * address, uint32_t arg);
     static void write_qword(uint32_t address, uint64_t arg);
 
     // heap
     static uint32_t heap_alloc(uint32_t size);
     static void heap_dealloc(uint32_t address);
+    static void set_heap_size(size_t size);
 
     // helper functions
     static void copy_mem(uint32_t dest, uint32_t src, uint32_t size);
