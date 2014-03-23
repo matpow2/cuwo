@@ -97,7 +97,7 @@ void print_fail(uint64_t v)
 FORCE_INLINE uint32_t Memory::translate(char * address)
 {
 #ifdef IS_64_BIT
-    uint64_t v = *(uint64_t*)addr;
+    uint64_t v = (uint64_t)address;
     if (v > 0xFFFFFFFF) {
         print_fail(v);
     }
