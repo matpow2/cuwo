@@ -1,6 +1,8 @@
 #ifndef TERRAINGEN_API
 #define TERRAINGEN_API
 
+#include <stddef.h>
+
 struct ChunkEntry
 {
     unsigned char r, g, b, a;
