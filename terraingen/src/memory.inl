@@ -122,6 +122,14 @@ FORCE_INLINE T * test_alloc(T * out)
     return out;
 }
 
+#ifndef IS_32_BIT
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/mman.h>
+#endif // _WIN32
+#endif // IS_32_BIT
+
 #define MMAP_FLAGS (MAP_PRIVATE | MAP_ANONYMOUS)
 #define LOW_ADDR 0xFF
 
@@ -136,7 +144,8 @@ FORCE_INLINE void Memory::set_heap_size(size_t size)
 #else
     heap = mmap((void *)LOW_ADDR, size, PROT_NONE,
                 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-#endif
+#endif // _WIN32
+#endif // IS_32_BIT
 
 #ifdef DEBUG_MEMORY
     size_t table_size = (new_size - ALLOC_TABLE_SUB) * sizeof(uint32_t);
