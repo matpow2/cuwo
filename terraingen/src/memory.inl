@@ -122,17 +122,21 @@ FORCE_INLINE T * test_alloc(T * out)
     return out;
 }
 
+#define MMAP_FLAGS (MAP_PRIVATE | MAP_ANONYMOUS)
+#define LOW_ADDR 0xFF
+
 FORCE_INLINE void Memory::set_heap_size(size_t size)
 {
-    if (size <= heap_size)
-        return;
-    size_t new_size = (size*3)/2; // * 1.5
-    if (heap == NULL) {
-        heap = test_alloc((char*)malloc(new_size));
-    }
-    // else {
-    //     heap = test_alloc((char*)realloc(heap, new_size));
-    // }
+#ifdef IS_32_BIT
+    heap = test_alloc((char*)malloc(size));
+#else
+#ifdef _WIN32
+    heap = VirtualAlloc(LOW_ADDR, size, MEM_COMMIT | MEM_RESERVE,
+                        PAGE_READWRITE);
+#else
+    heap = mmap((void *)LOW_ADDR, size, PROT_NONE,
+                MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+#endif
 
 #ifdef DEBUG_MEMORY
     size_t table_size = (new_size - ALLOC_TABLE_SUB) * sizeof(uint32_t);
