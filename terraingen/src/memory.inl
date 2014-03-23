@@ -142,8 +142,11 @@ FORCE_INLINE void Memory::set_heap_size(size_t size)
     heap = VirtualAlloc(LOW_ADDR, size, MEM_COMMIT | MEM_RESERVE,
                         PAGE_READWRITE);
 #else
-    heap = (char*)mmap((void*)LOW_ADDR, size, PROT_NONE,
+    heap = (char*)mmap((void*)LOW_ADDR, size, PROT_READ | PROT_WRITE,
                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if ((void*)heap == MAP_FAILED) {
+        std::cout << "mmap failed!" << std::endl;
+    }
 #endif // _WIN32
 #endif // IS_32_BIT
 
