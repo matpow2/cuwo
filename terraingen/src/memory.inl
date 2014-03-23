@@ -29,7 +29,7 @@ FORCE_INLINE Memory::Memory()
         segment_table[i] = 0;
     segment_table[FS] = translate(fs_segment);
 
-    set_heap_size(64 * 1024 * 1024); // allocate 64 mb
+    set_heap_size(72 * 1024 * 1024); // allocate 72 mb
 }
 
 FORCE_INLINE void Memory::pad_section(uint32_t address, size_t size)
