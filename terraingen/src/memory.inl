@@ -142,8 +142,8 @@ FORCE_INLINE void Memory::set_heap_size(size_t size)
     heap = VirtualAlloc(LOW_ADDR, size, MEM_COMMIT | MEM_RESERVE,
                         PAGE_READWRITE);
 #else
-    heap = mmap((void *)LOW_ADDR, size, PROT_NONE,
-                MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    heap = (char*)mmap((void*)LOW_ADDR, size, PROT_NONE,
+                       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 #endif // _WIN32
 #endif // IS_32_BIT
 
@@ -161,7 +161,7 @@ FORCE_INLINE void Memory::set_heap_size(size_t size)
     }
 #endif
 
-    heap_size = new_size;
+    heap_size = size;
 }
 
 FORCE_INLINE void Memory::write(uint32_t addr, const char * src, size_t len)
