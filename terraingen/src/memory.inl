@@ -86,7 +86,11 @@ FORCE_INLINE bool test_address(char * res, uint32_t addr, size_t size)
 
 FORCE_INLINE char * Memory::translate(uint32_t val)
 {
-    return *(char**)&val;
+#ifdef IS_64_BIT
+    return (char*)uint64_t(val);
+#else
+    return (char*)val;
+#endif
 }
 
 inline void print_fail(uint64_t v)
