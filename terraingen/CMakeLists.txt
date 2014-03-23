@@ -62,3 +62,6 @@ include_directories(
 # build
 add_library(tgen ${SRCS})
 target_link_libraries(tgen ${GEN_LIBS})
+
+add_executable(tgen_example ${SRC_DIR}/example.cpp)
+target_link_libraries(tgen_example tgen)

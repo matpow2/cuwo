@@ -21,6 +21,7 @@
 #include "gensrc/out.cpp"
 #include "imports.h"
 #include "terraingen.h"
+#include <fstream>
 
 // VERY specific address - this is the start of the heap, where the game
 // manager has been allocated
@@ -32,35 +33,35 @@ Some3Data:
 
 struct ChunkParent, size 200
 {
-  int vtable;
-  int b;
-  int c;
+  int vtable; - pointer
+  int b; - pointer
+  int c; - value (size?)
   Some3Data * some3_start;
   Some3Data * some3_end;
-  _DWORD some3_something;
+  _DWORD some3_capacity;
   _DWORD some1_4bytep_start;
   _DWORD some1_4bytep_end;
-  _DWORD some1_something;
+  _DWORD some1_capacity;
   _DWORD some4_start;
   _DWORD some4_end;
-  _DWORD some4_something;
+  _DWORD some4_capacity;
   _DWORD chunkitems_start;
   _DWORD chunkitems_end;
-  _DWORD chunkitems_something;
+  _DWORD chunkitems_capacity;
   _DWORD some9_start;
   _DWORD some9_end;
-  _DWORD some9_something;
+  _DWORD some9_capacity;
   _DWORD some8_start;
   _DWORD some8_end;
-  _DWORD some8_something;
+  _DWORD some8_capacity;
   _DWORD some7_start;
   _DWORD some7_end;
-  _DWORD some7_something;
+  _DWORD some7_capacity;
   _DWORD chunk_x;
   _DWORD chunk_y;
   _DWORD some2_20byte_start;
   _DWORD some2_20byte_end;
-  _DWORD some2_something;
+  _DWORD some2_capacity;
   _BYTE word74;
   _BYTE has_chunkitems;
   _BYTE byte76;
@@ -72,10 +73,10 @@ struct ChunkParent, size 200
   _BYTE pad2[3];
   _DWORD some5_start;
   _DWORD some5_end;
-  _DWORD some5_something;
+  _DWORD some5_capacity;
   _DWORD some6_start;
   _DWORD some6_end;
-  _DWORD some6_something;
+  _DWORD some6_capacity;
   _DWORD dwordA0;
   _DWORD dwordA4;
   ChunkEntry *chunk_data;

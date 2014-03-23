@@ -25,6 +25,7 @@
 #endif
 
 char * Memory::data = NULL;
+char * Memory::offset_data = NULL;
 size_t Memory::data_size = 0;
 uint32_t Memory::segment_table[6];
 uint32_t Memory::heap_offset = 0;

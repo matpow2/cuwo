@@ -1,5 +1,5 @@
 /*
-    Copyright (c) Mathias Kaerlev 2013.
+    Copyright (c) Mathias Kaerlev 2013-2014.
 
     This file is part of cuwo.
 
@@ -111,6 +111,8 @@ FORCE_INLINE void set_lazy_8(uint32_t res)
     cpu.res = uint32_t(int32_t(int8_t(res)));
     cpu.aux = 0;
 }
+
+
 
 #define LF_BIT_SD      (0)          /* lazy Sign Flag Delta            */
 #define LF_BIT_AF      (3)          /* lazy Adjust flag                */
@@ -795,7 +797,7 @@ FORCE_INLINE uint8_t CPU::and_byte(uint8_t a, uint8_t b)
 
 FORCE_INLINE void CPU::cmp_dword(uint32_t a, uint32_t b)
 {
-    uint32_t res = uint32_t(a) - uint32_t(b);
+    uint32_t res = a - b;
     set_lazy_sub_32(a, b, res);
 }
 

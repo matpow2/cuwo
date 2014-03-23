@@ -90,7 +90,8 @@ FORCE_INLINE char * Memory::translate(uint32_t addr)
     if (addr < MEMORY_OFFSET || addr >= HEAP_BASE+heap_offset)
         return NULL;
 #endif
-    return &data[addr-MEMORY_OFFSET];
+
+    return &offset_data[addr];
 }
 
 template <class T>
@@ -115,6 +116,7 @@ FORCE_INLINE void Memory::set_size(size_t size)
     } else {
         data = test_alloc((char*)realloc(data, new_size));
     }
+    offset_data = data - MEMORY_OFFSET;
 
 #ifdef DEBUG_MEMORY
     size_t table_size = (new_size - ALLOC_TABLE_SUB) * sizeof(uint32_t);

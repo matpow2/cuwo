@@ -1595,7 +1595,7 @@ class Converter(object):
         self.big_sources = set()
 
         self.base_dir = os.path.dirname(path)
-        pe = pefile.PE(path)
+        pe = self.pe = pefile.PE(path)
 
         optional = pe.OPTIONAL_HEADER
 
@@ -1651,6 +1651,24 @@ class Converter(object):
                 writer.putlnc('mem.pad_section(%#x, %s);', off, extra)
 
         writer.end_brace()
+
+        # self.relocs = set()
+
+        # writer.putmeth('void rebase_data', 'int delta')
+        # # iterate reloc section
+        # for data in pe.DIRECTORY_ENTRY_BASERELOC:
+        #     for entry in data.entries:
+        #         t = entry.type
+        #         if t == 0:
+        #             continue
+        #         if t != 3:
+        #             print 'has unsupported reloctype', t
+        #             continue
+        #         self.relocs.add(entry.rva + self.image_base)
+        #         section = self.get_section(entry.rva + self.image_base)
+        #         writer.putln('mem.read_dword(')
+
+        # writer.end_brace()
 
         # ensure custom sqlite3 is used
         sqlite_table = config.sqlite_table

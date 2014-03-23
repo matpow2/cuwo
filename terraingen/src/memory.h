@@ -41,6 +41,7 @@ class Memory
 {
 public:
     static char * data;
+    static char * offset_data;
     static size_t data_size;
     static uint32_t segment_table[6];
     static uint32_t heap_offset;
