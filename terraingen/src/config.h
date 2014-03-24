@@ -43,7 +43,7 @@
 #define FS_SEGMENT_SIZE 0x4
 
 // debug?
-// #define DEBUG_MEMORY
+#define DEBUG_MEMORY
 // #define DEBUG_CPU
 // #define DEBUG_STACK
 // #define DEBUG_FPU

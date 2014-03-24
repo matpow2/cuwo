@@ -424,7 +424,11 @@ FORCE_INLINE uint32_t Memory::heap_alloc(uint32_t size)
 {
     uint32_t ret = translate(heap + heap_offset);
     // add size to heap offset and align to 8-byte boundary
+#ifdef IS_32_BIT
     heap_offset = (heap_offset + size + 8 - 1) & ~(8 - 1);
+#else
+    heap_offset = (heap_offset + size + 16 - 1) & ~(16 - 1);
+#endif
     // heap_size = heap_size+size;
     if (heap_offset > heap_size) {
         std::cout << "Heap too small: " << heap_offset << " " << heap_size

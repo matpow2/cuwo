@@ -288,21 +288,24 @@ def uint32_to_int32(v):
 
 
 class Operand(object):
-    is_memory = False
-    is_register = False
-    is_immediate = False
-    is_reloc = False
-    has_import_alias = False
-
-    index_reg = None
-    scale = None
-    base_reg = None
-    displacement = None
-
-    reg_type = None
+    __slots__ = ['is_memory', 'is_register', 'is_immediate', 'is_reloc',
+                 'has_import_alias', 'index_reg', 'scale', 'base_reg',
+                 'displacement', 'reg_type', 'reloc_value', 'type', 'size',
+                 'value', 'reloc_displacement']
 
     def __init__(self, inst, op, offset):
-        self.op = op
+        # default init
+        self.is_memory = False
+        self.is_register = False
+        self.is_immediate = False
+        self.is_reloc = False
+        self.has_import_alias = False
+        self.index_reg = None
+        self.scale = None
+        self.base_reg = None
+        self.displacement = None
+        self.reg_type = None
+
         self.type = op.type
 
         mode = inst.get_operand_mode()
@@ -476,8 +479,13 @@ eflags_used = {}
 
 
 class Instruction(object):
+    __slots__ = ['converter', 'address', 'has_reloc', 'length', 'type', 'mode',
+                 'opcode', 'modrm', 'sib', 'extindex', 'fpuindex', 'dispbytes',
+                 'immbytes', 'sectionbytes', 'flags', 'op1', 'op2', 'op3',
+                 'prefix', 'eflags_affected', 'eflags_used',
+                 'eflags_dependency', 'disasm', 'mnemonic']
+
     def __init__(self, i, offset, converter):
-        self.instruction = i
         self.converter = converter
         self.address = offset
 
@@ -541,6 +549,9 @@ class Instruction(object):
         self.eflags_used = get_eflags(used)
         self.eflags_dependency = collections.defaultdict(list)
 
+        self.disasm = pydasm.get_instruction_string(i, pydasm.FORMAT_INTEL,
+                                                    0).rstrip(" ")
+
     def is_end(self):
         if self.mnemonic != 'call':
             return False
@@ -551,9 +562,7 @@ class Instruction(object):
         return name in function_enders
 
     def get_disasm(self):
-        return pydasm.get_instruction_string(self.instruction,
-                                             pydasm.FORMAT_INTEL,
-                                             0).rstrip(" ")
+        return self.disasm
     
     def group2(self):
         return (self.flags & 0x00ff0000) >> 16
@@ -604,6 +613,9 @@ label_makers = set([
 ])
 
 class Subroutine(object):
+    __slots__ = ['start', 'instructions', 'instruction_list', 'labels',
+                 'end']
+
     def __init__(self, converter, address):
         self.start = address
         self.instructions = {}
@@ -1615,6 +1627,41 @@ def makedirs(path):
         return
 
 
+class Section(object):
+    def __init__(self, pe, pe_section):
+        self.VirtualAddress = pe_section.VirtualAddress
+        self.SizeOfRawData = pe_section.SizeOfRawData
+        self.Misc_VirtualSize = pe_section.Misc_VirtualSize
+        self.PointerToRawData = pe_section.PointerToRawData
+        self.Name = pe_section.Name
+        self.data_adj = pe.adjust_FileAlignment(
+            pe_section.PointerToRawData, pe.OPTIONAL_HEADER.FileAlignment)
+        self.virtual_adj = pe.adjust_SectionAlignment(
+            pe_section.VirtualAddress,
+            pe.OPTIONAL_HEADER.SectionAlignment,
+            pe.OPTIONAL_HEADER.FileAlignment)
+        self.data = pe.__data__
+
+
+    def get_data(self, start=None, length=None):
+        if start is None:
+            offset = self.data_adj
+        else:
+            offset = (start - self.virtual_adj) + self.data_adj
+
+        if length is not None:
+            end = offset + length
+        else:
+            end = offset + self.SizeOfRawData
+
+        # PointerToRawData is not adjusted here as we might want to read any possible extra bytes
+        # that might get cut off by aligning the start (and hence cutting something off the end)
+        #
+        if end > self.PointerToRawData + self.SizeOfRawData:
+            end = self.PointerToRawData + self.SizeOfRawData
+        return self.data[offset:end]
+
+
 class Converter(object):
     def __init__(self, path):
         # setup
@@ -1655,6 +1702,7 @@ class Converter(object):
         writer.putln('#include "functions.h"')
 
         for index, section in enumerate(pe.sections):
+            section = Section(pe, section)
             self.sections.append(section)
             section.image_base = self.image_base
             name = section.Name.strip('\x00')[1:]
@@ -1765,7 +1813,8 @@ class Converter(object):
                 dst = self.get_reloc(addr, False)
                 writer.putlnc('mem.write_dword(%s, %s);', dst, src)
         writer.end_brace()
-        # return
+
+        del pe # garbage collect
 
         # iterate function stack
 
