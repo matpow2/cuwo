@@ -34,7 +34,8 @@ if(MSVC)
     set_source_files_properties(${GEN_BIG_SRCS} PROPERTIES COMPILE_FLAGS -Od)
 else()
     # GCC-like
-    set_source_files_properties(${GEN_BIG_SRCS} PROPERTIES COMPILE_FLAGS -O0)
+    set_source_files_properties(${GEN_BIG_SRCS} PROPERTIES COMPILE_FLAGS
+                                "-O0 -g0")
 endif()
 
 set(CMAKE_LIBRARY_PATH "${ROOT_DIR}/lib" ${CMAKE_LIBRARY_PATH})

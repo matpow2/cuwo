@@ -33,8 +33,6 @@ static_ignore = set([
 ])
 sqlite_table = 0x16A290 + image_base
 
-
-
 dynamic_addresses = [
     5119008,
     4391216,
@@ -48,8 +46,11 @@ dynamic_addresses = [
 function_alias = {
     0x4C8580: 'initialize_manager',
     0x4D7FA0: 'initialize_seed',
-    0x5183D0: 'generator_func'
+    0x5183D0: 'generator_func',
+    0x431880 : 'setup_func'
 }
+
+
 
 import_alias = {
     '??2@YAPAXI@Z': 'new_func',

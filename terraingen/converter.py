@@ -614,13 +614,19 @@ label_makers = set([
 
 class Subroutine(object):
     __slots__ = ['start', 'instructions', 'instruction_list', 'labels',
-                 'end']
+                 'end', 'jumps', 'child_sub', 'enders', 'name']
 
     def __init__(self, converter, address):
+        self.child_sub = None
+        if converter is None:
+            return
+        self.name = None
         self.start = address
         self.instructions = {}
         self.instruction_list = []
         self.labels = set()
+        self.jumps = {}
+        self.enders = set()
 
         eflags_cache = {}
 
@@ -656,14 +662,15 @@ class Subroutine(object):
             keys = set([(mnemonic, opcode), mnemonic])
 
             if self.is_end(instruction, i):
+                self.enders.add(instruction.address)
                 if self.labels:
                     if max(self.labels) < address:
+                        # do we still have labels to process?
                         break
                 else:
                     break
             elif not keys.isdisjoint(label_makers):
-                result = instruction.op1.value
-                self.labels.add(result)
+                self.add_jump(instruction.address, instruction.op1.value)
 
             i += 1
 
@@ -684,13 +691,71 @@ class Subroutine(object):
         #     i += 1
         # self.instruction_list = new_list
 
+    def can_split_direct(self):
+        return len(self.enders) == 1
+
+    def can_split(self, address):
+        """
+        Can only be called after initial decode
+        """
+        for src, dst in self.jumps.iteritems():
+            minimum = min(src, dst)
+            maximum = max(src, dst)
+            if address >= minimum and address < maximum:
+                return False
+        return True
+
+    def set_instruction_list(self, items, jumps, enders):
+        self.instructions = {}
+        self.instruction_list = items
+        for instruction in items:
+            self.instructions[instruction.address] = instruction
+        self.start = items[0].address
+        self.end = items[-1].address + items[-1].length
+        self.jumps = {}
+        for src, dst in jumps.iteritems():
+            if src not in self.instructions:
+                continue
+            self.jumps[src] = dst
+        self.labels = set(self.jumps.values())
+        self.enders = set()
+        for ender in enders:
+            if ender not in self.instructions:
+                continue
+            self.enders.add(ender)
+
+    def split(self, address):
+        other_sub = Subroutine(None, None)
+        instruction = self.instructions[address]
+        index = self.instruction_list.index(instruction)
+        items = self.instruction_list[:index]
+        other_items = self.instruction_list[index:]
+        jumps = self.jumps
+        enders = self.enders
+        self.set_instruction_list(items, jumps, enders)
+        other_sub.set_instruction_list(other_items, jumps, enders)
+        self.child_sub = other_sub
+        return other_sub
+
+    def add_jump(self, src, dst):
+        self.jumps[src] = dst
+        self.labels.add(dst)
+
     def is_end(self, inst, index):
         mnemonic = inst.mnemonic
         opcode = inst.opcode
-        return ((mnemonic in ('retn', 'ret', 'int3')) or
-                (mnemonic == 'jmp' and opcode in (0xFF,)) or
-                (mnemonic == "jmp" and index == 0) or
-                inst.is_end())
+        if mnemonic in ('retn', 'ret', 'int3'):
+            return True
+        if mnemonic == 'jmp' and opcode in (0xFF,):
+            # far jumps
+            return True
+        if mnemonic == "jmp" and index == 0:
+            # wrapper functions
+            return True
+        if inst.is_end():
+            # special 'call's, checks config.py for function enders
+            return True
+        return False
 
 
 size_names = {
@@ -1391,10 +1456,10 @@ class CPU(object):
                         raise NotImplementedError()
                     indexes = collections.defaultdict(list)
                     # find the max value
-                    for i in xrange(table_size):
-                        data = self.converter.get_memory(ind_addr + i, 1)
+                    for ii in xrange(table_size):
+                        data = self.converter.get_memory(ind_addr + ii, 1)
                         index, = struct.unpack('<B', data)
-                        indexes[index].append(i)
+                        indexes[index].append(ii)
 
                     self.writer.putln('switch (%s) {' % ind_reg)
                     self.writer.indent()
@@ -1412,14 +1477,14 @@ class CPU(object):
 
                 self.writer.putln('switch (%s) {' % reg)
                 self.writer.indent()
-                for i in xrange(table_size):
-                    data = self.converter.get_memory(table_addr + i*scale, 4)
+                for ii in xrange(table_size):
+                    data = self.converter.get_memory(table_addr + ii*scale, 4)
                     addr, = struct.unpack('<I', data)
                     if addr > self.sub.end or addr < self.sub.start:
                         raise NotImplementedError()
                     loc = get_label_name(addr)
-                    self.writer.putln('case %s: goto %s;' % (i, loc))
-                    self.sub.labels.add(addr)
+                    self.writer.putln('case %s: goto %s;' % (ii, loc))
+                    self.sub.add_jump(i.address, addr)
                     self.remaining_labels.add(addr)
                 self.writer.end_brace()
                 return
@@ -1642,7 +1707,6 @@ class Section(object):
             pe.OPTIONAL_HEADER.FileAlignment)
         self.data = pe.__data__
 
-
     def get_data(self, start=None, length=None):
         if start is None:
             offset = self.data_adj
@@ -1654,9 +1718,9 @@ class Section(object):
         else:
             end = offset + self.SizeOfRawData
 
-        # PointerToRawData is not adjusted here as we might want to read any possible extra bytes
-        # that might get cut off by aligning the start (and hence cutting something off the end)
-        #
+        # PointerToRawData is not adjusted here as we might want to read any
+        # possible extra bytes that might get cut off by aligning the start
+        # (and hence cutting something off the end)
         if end > self.PointerToRawData + self.SizeOfRawData:
             end = self.PointerToRawData + self.SizeOfRawData
         return self.data[offset:end]
@@ -1821,9 +1885,10 @@ class Converter(object):
         while self.function_stack:
             address = self.function_stack.pop()
             ida = self.get_ida_address(address)
-            sub = Subroutine(self, address)
-            self.subs.add(address)
-            self.iterate_tree(sub)
+            subs = self.get_subs(address)
+            self.subs.add(subs[0].start)
+            for sub in subs:
+                self.iterate_tree(sub)
 
         addresses = set()
         addresses.update(self.subs)
@@ -1952,8 +2017,58 @@ class Converter(object):
         self.cached_names[address] = func_name
         return func_name
 
-    def iterate_tree(self, sub):
+    def get_subs(self, address):
+        """
+        Since some routines can get massive, we need to split some of them
+        so MSVC/GCC won't choke on them.
+        """
+        sub = Subroutine(self, address)
+        size = len(sub.instruction_list)
+        # init func is 51048
+        if size <= 50000 or not sub.can_split_direct():
+            return [sub]
+
         name = self.get_function_name(sub.start)
+        start_sub = sub
+        subs = [start_sub]
+        split_dist = 4000
+        jumps = start_sub.jumps
+
+        next_offset = split_dist
+
+        split_points = sorted(sub.instructions.keys())
+        for pos in split_points:
+            offset = pos - start_sub.start
+            if offset < next_offset:
+                continue
+            if not sub.can_split(pos):
+                continue
+            sub = sub.split(pos)
+            subs.append(sub)
+            next_offset += split_dist
+
+        for index, sub in enumerate(subs):
+            sub.name = '%s_%s' % (name, index+1)
+
+        # generate wrapper code
+        source_name = 'gensrc/%s.cpp' % name
+        self.sources.append(source_name)
+        writer = CodeWriter(source_name)
+        for sub in subs:
+            writer.putln('extern void %s();' % sub.name)
+        writer.putln('')
+        writer.putmeth('void %s' % name)
+        for sub in subs:
+            writer.putln('%s();' % sub.name)
+        writer.end_brace()
+        writer.close()
+        return subs
+
+    def iterate_tree(self, sub):
+        if sub.name:
+            name = sub.name
+        else:
+            name = self.get_function_name(sub.start)
         source_name = 'gensrc/%s.cpp' % name
         self.sources.append(source_name)
         writer = self.writer = CodeWriter(source_name)
@@ -1968,6 +2083,8 @@ class Converter(object):
         while True:
             if not self.cpu.next():
                 break
+        if sub.child_sub:
+            writer.putln('return;')
         for label in self.cpu.remaining_labels:
             writer.put_label(get_label_name(label))
         if self.cpu.unimplemented:
@@ -1975,10 +2092,6 @@ class Converter(object):
                 sub.start))
         writer.end_brace()
         writer.close()
-
-        # turn off optimizations for big routines
-        if writer.line_count >= 60000:
-            self.big_sources.add(source_name)
 
     def get_section(self, address):
         for section in self.sections:
