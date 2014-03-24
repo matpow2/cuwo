@@ -46,25 +46,6 @@ void log_access(uint32_t addr)
     std::cout << "Could not translate address " << addr << std::endl;
     exit(0);
 }
-
-FORCE_INLINE bool test_alloc_table(uint32_t v, uint32_t addr, uint32_t size)
-{
-    if (v == 0) {
-        log_access(addr);
-        return false;
-    }
-
-    uint32_t test_addr = addr - HEAP_BASE;
-
-    for (uint32_t i = test_addr; i < test_addr+size; i++) {
-        if (v != mem.alloc_table[i]) {
-            log_access(addr);
-            return false;
-        }
-    }
-
-    return true;
-}
 #endif
 
 bool test_range(char * res, char * start, int size)
@@ -159,21 +140,6 @@ FORCE_INLINE void Memory::set_heap_size(size_t size)
     }
 #endif // _WIN32
 #endif // IS_32_BIT
-
-#ifdef DEBUG_MEMORY
-    size_t table_size = (new_size - ALLOC_TABLE_SUB) * sizeof(uint32_t);
-
-    if (alloc_table == NULL) {
-        alloc_table = test_alloc((uint32_t*)malloc(table_size));
-        memset(alloc_table, 0, table_size);
-    } else {
-        alloc_table = test_alloc((uint32_t*)realloc(alloc_table,
-                                                        table_size));
-        size_t old_size = (heap_size - ALLOC_TABLE_SUB) * sizeof(uint32_t);
-        memset((char*)alloc_table+old_size, 0, table_size-old_size);
-    }
-#endif
-
     heap_size = size;
 }
 
@@ -466,36 +432,12 @@ FORCE_INLINE uint32_t Memory::heap_alloc(uint32_t size)
         exit(0);
     }
     // set_heap_size(heap_offset);
-
-#ifdef DEBUG_MEMORY
-    // set allocation table
-    uint32_t table_addr = ret - STACK_END;
-    for (uint32_t i = table_addr; i < table_addr+size; i++) {
-        alloc_table[i] = ret;
-    }
-#endif
     return ret;
 }
 
 FORCE_INLINE void Memory::heap_dealloc(uint32_t address)
 {
     // do nothing right now
-#ifdef DEBUG_MEMORY
-    uint32_t table_addr = address - STACK_END;
-
-    if (alloc_table[table_addr] != address) {
-        std::cout << "Invalid dealloc address: " << address << std::endl;
-        exit(0);
-    }
-
-    while (true) {
-        if (alloc_table[table_addr] != address)
-            break;
-        alloc_table[table_addr] = 0;
-        table_addr++;
-    }
-    // std::cout << "Deleting " << address << std::endl;
-#endif
 }
 
 FORCE_INLINE void Memory::copy_mem(uint32_t dest, uint32_t src, uint32_t size)
