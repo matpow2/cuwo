@@ -22,6 +22,7 @@
 #include <iostream>
 #include "config.h"
 #include "main.h"
+#include "../gensrc/sections.h"
 
 FORCE_INLINE Memory::Memory()
 {
@@ -40,7 +41,7 @@ FORCE_INLINE void Memory::pad_section(uint32_t address, size_t size)
 }
 
 #ifdef DEBUG_MEMORY
-FORCE_INLINE void log_access(uint32_t addr)
+void log_access(uint32_t addr)
 {
     std::cout << "Could not translate address " << addr << std::endl;
     exit(0);
@@ -66,19 +67,28 @@ FORCE_INLINE bool test_alloc_table(uint32_t v, uint32_t addr, uint32_t size)
 }
 #endif
 
-FORCE_INLINE bool test_address(char * res, uint32_t addr, size_t size)
+bool test_range(char * res, char * start, int size)
+{
+    return res >= start || res < (start+size);
+}
+
+bool test_address(char * res, uint32_t addr, size_t size)
 {
 #ifdef DEBUG_MEMORY
-    bool ret = res != NULL;
-    if (!ret) {
+    if (res == NULL) {
         log_access(addr);
         return false;
     }
-    if (addr < HEAP_BASE)
+    if (test_range(res, data_section, sizeof(data_section)))
         return true;
-
-    // search allocation table
-    return test_alloc_table(mem.alloc_table[addr-HEAP_BASE], addr, size);
+    if (test_range(res, rdata_section, sizeof(rdata_section)))
+        return true;
+    if (test_range(res, mem.stack, sizeof(mem.stack)))
+        return true;
+    if (test_range(res, mem.heap, heap_size))
+        return true;
+    log_access(addr);
+    return false;
 #else
     return true;
 #endif
@@ -107,7 +117,7 @@ FORCE_INLINE uint32_t Memory::translate(char * address)
     }
     return uint32_t(v);
 #else
-    return *(uint32_t*)&address;
+    return (uint32_t)address;
 #endif
 }
 
