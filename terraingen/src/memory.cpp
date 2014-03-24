@@ -30,8 +30,5 @@ char Memory::fs_segment[FS_SEGMENT_SIZE];
 uint32_t Memory::segment_table[6];
 uint32_t Memory::heap_offset = 0;
 uint32_t Memory::heap_size = 0;
-#ifdef DEBUG_MEMORY
-uint32_t * Memory::alloc_table = NULL;
-#endif
 
 Memory mem;
