@@ -66,7 +66,7 @@ bool test_address(char * res, uint32_t addr, size_t size)
         return true;
     if (test_range(res, mem.stack, sizeof(mem.stack)))
         return true;
-    if (test_range(res, mem.heap, heap_size))
+    if (test_range(res, mem.heap, mem.heap_size))
         return true;
     log_access(addr);
     return false;
