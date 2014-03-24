@@ -41,19 +41,19 @@ FORCE_INLINE void Memory::pad_section(uint32_t address, size_t size)
 }
 
 #ifdef DEBUG_MEMORY
-void log_access(uint32_t addr)
+inline void log_access(uint32_t addr)
 {
     std::cout << "Could not translate address " << addr << std::endl;
     exit(0);
 }
 #endif
 
-bool test_range(char * res, char * start, int size)
+inline bool test_range(char * res, char * start, int size)
 {
     return res >= start || res < (start+size);
 }
 
-bool test_address(char * res, uint32_t addr, size_t size)
+inline bool test_address(char * res, uint32_t addr, size_t size)
 {
 #ifdef DEBUG_MEMORY
     if (res == NULL) {
