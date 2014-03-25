@@ -75,7 +75,7 @@ inline bool test_address(char * res, uint32_t addr, size_t size)
 #endif
 }
 
-#define MEMORY_BASE_POINTER data_section
+#define MEMORY_BASE_POINTER (&data_section[0])
 
 FORCE_INLINE char * Memory::translate(uint32_t val)
 {
