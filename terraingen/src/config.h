@@ -30,7 +30,6 @@
 #endif
 #endif
 
-// Check GCC
 #if __GNUC__
 #if __x86_64__ || __ppc64__
 #define IS_64_BIT
@@ -49,14 +48,14 @@
 #endif
 
 // debug?
-#define DEBUG_MEMORY
+// #define DEBUG_MEMORY
 // #define DEBUG_CPU
 // #define DEBUG_STACK
 // #define DEBUG_FPU
 // #define DEBUG_FUNC
 
-#define NO_INLINE
-// #define FAST_INLINE
+// #define NO_INLINE
+#define FAST_INLINE
 
 #if defined(NO_INLINE)
     #define FORCE_INLINE
