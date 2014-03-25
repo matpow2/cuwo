@@ -48,26 +48,36 @@ FORCE_INLINE uint16_t & CPU::get_reg16(Register16 i)
         uint32_t* in;
         uint16_t* out;
     };
-#ifdef IS_BIG_ENDIAN
-    in = &reg[i] + 1;
-#else
     in = &reg[i];
-#endif
+#ifdef IS_BIG_ENDIAN
+    return *(out + 1);
+#else
     return *out;
+#endif
 }
 
 FORCE_INLINE uint8_t & CPU::get_reg8(Register8 i)
 {
+    union {
+        uint32_t* in;
+        uint8_t* out;
+    };
 #ifdef IS_BIG_ENDIAN
-    if (i < 4)
-        return *((uint8_t*)&reg[i] + 3);
-    else
-        return *((uint8_t*)&reg[i & 3] + 2);
+    if (i < 4) {
+        in = &reg[i];
+        return *(out + 3);
+    } else {
+        in = &reg[i & 3];
+        return *(out + 2);
+    }
 #else
-    if (i < 4)
-        return *((uint8_t*)&reg[i]);
-    else
-        return *((uint8_t*)&reg[i & 3] + 1);
+    if (i < 4) {
+        in = &reg[i];
+        return *out;
+    } else {
+        in = &reg[i + 3];
+        return *(out + 1);
+    }
 #endif
 }
 
@@ -1006,6 +1016,7 @@ FORCE_INLINE void CPU::compare_ss(float a, float b)
         pf = cf = false;
     } else {
         std::cout << "Unknown float relation!" << std::endl;
+        zf = pf = cf = false;
     }
     set_flags(false, false, zf, false, pf, cf);
 }

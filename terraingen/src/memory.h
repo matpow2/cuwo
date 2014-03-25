@@ -45,9 +45,10 @@ public:
 
     Memory();
     static void pad_section(uint32_t address, size_t size);
-    static void write(uint32_t address, const char * s, size_t len);
-    static void read(char * address, char * s, size_t len);
-    static void read(uint32_t address, char * s, size_t len);
+    static void write(char * address, const void * s, size_t len);
+    static void write(uint32_t address, const void * s, size_t len);
+    static void read(char * address, void * s, size_t len);
+    static void read(uint32_t address, void * s, size_t len);
     static char * translate(uint32_t addr);
     static uint32_t translate(char * address);
 

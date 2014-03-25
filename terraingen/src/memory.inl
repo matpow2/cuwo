@@ -80,7 +80,12 @@ FORCE_INLINE char * Memory::translate(uint32_t val)
 #ifdef IS_64_BIT
     return MEMORY_BASE_POINTER + int32_t(val);
 #else
-    return (char*)val;
+    union {
+        uint32_t in;
+        char * out;
+    };
+    in = val;
+    return out;
 #endif
 }
 
@@ -100,7 +105,12 @@ FORCE_INLINE uint32_t Memory::translate(char * address)
 #endif
     return uint32_t(int32_t(v));
 #else
-    return (uint32_t)address;
+    union {
+        char * in;
+        uint32_t out;
+    };
+    in = address;
+    return out;
 #endif
 }
 
@@ -115,7 +125,12 @@ FORCE_INLINE T * test_alloc(T * out)
     return out;
 }
 
-FORCE_INLINE void Memory::write(uint32_t addr, const char * src, size_t len)
+FORCE_INLINE void Memory::write(char * addr, const void * src, size_t len)
+{
+    memcpy(addr, src, len);
+}
+
+FORCE_INLINE void Memory::write(uint32_t addr, const void * src, size_t len)
 {
     char * ptr = translate(addr);
 #ifdef DEBUG_MEMORY
@@ -125,12 +140,12 @@ FORCE_INLINE void Memory::write(uint32_t addr, const char * src, size_t len)
     memcpy(ptr, src, len);
 }
 
-FORCE_INLINE void Memory::read(char * addr, char *dest, size_t len)
+FORCE_INLINE void Memory::read(char * addr, void *dest, size_t len)
 {
     memcpy(dest, addr, len);
 }
 
-FORCE_INLINE void Memory::read(uint32_t addr, char *dest, size_t len)
+FORCE_INLINE void Memory::read(uint32_t addr, void *dest, size_t len)
 {
     char * ptr = translate(addr);
 #ifdef DEBUG_MEMORY
@@ -142,159 +157,86 @@ FORCE_INLINE void Memory::read(uint32_t addr, char *dest, size_t len)
 
 FORCE_INLINE void Memory::read_byte(uint32_t addr, uint8_t * byte)
 {
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 1))
-        return;
-#endif
-    *byte = *((uint8_t*)ptr);
+    *byte = read_byte(addr);
 }
 
 FORCE_INLINE uint8_t Memory::read_byte(uint32_t addr)
 {
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 1))
-        return 0;
-#endif
-    return *((uint8_t*)ptr);
+    uint8_t val;
+    read(addr, &val, sizeof(uint8_t));
+    return val;
 }
 
 FORCE_INLINE void Memory::read_word(uint32_t addr, uint16_t * arg)
 {
-#ifdef IS_BIG_ENDIAN
-    uint16_t val;
-    read(addr, (char*)&val, 2);
-    val = ((val & 0xff00) >> 8) | 
-          ((val & 0x00ff) << 8);
-    *arg = val;
-#else
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 2))
-        return;
-#endif
-    *arg = *((uint16_t*)ptr);
-#endif
+    *arg = read_word(addr);
 }
 
 FORCE_INLINE uint16_t Memory::read_word(uint32_t addr)
 {
-#ifdef IS_BIG_ENDIAN
     uint16_t val;
-    read(addr, (char*)&val, 2);
-    val =  ((val & 0xff00) >> 8) | 
-           ((val & 0x00ff) << 8);
+    read(addr, &val, sizeof(uint16_t));
+#ifdef IS_BIG_ENDIAN
+    val = ((val & 0xff00) >> 8) | 
+          ((val & 0x00ff) << 8);
+#endif
     return val;
-#else
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 2))
-        return 0;
-#endif
-    return *((uint16_t*)ptr);
-#endif
 }
 
 FORCE_INLINE void Memory::read_dword(char * addr, uint32_t * dword)
 {
-#ifdef IS_BIG_ENDIAN
     uint32_t val;
-    read(addr, (char*)&val, 4);
+    read(addr, &val, sizeof(uint32_t));
+#ifdef IS_BIG_ENDIAN
     val =  ((val & 0xff000000) >> 24) | 
            ((val & 0x00ff0000) >> 8)  | 
            ((val & 0x0000ff00) << 8) | 
            ((val & 0x000000ff) << 24);
-    *dword = val;
-#else
-    *dword = *((uint32_t*)addr);
 #endif
+    *dword = val;
 }
 
 FORCE_INLINE void Memory::read_dword(uint32_t addr, uint32_t * dword)
 {
-#ifdef IS_BIG_ENDIAN
-    uint32_t val;
-    read(addr, (char*)&val, 4);
-    val =  ((val & 0xff000000) >> 24) | 
-           ((val & 0x00ff0000) >> 8)  | 
-           ((val & 0x0000ff00) << 8) | 
-           ((val & 0x000000ff) << 24);
-    *dword = val;
-#else
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 4))
-        return;
-#endif
-    *dword = *((uint32_t*)ptr);
-#endif
+    *dword = read_dword(addr);
 }
 
 FORCE_INLINE uint32_t Memory::read_dword(uint32_t addr)
 {
-#ifdef IS_BIG_ENDIAN
     uint32_t val;
-    read(addr, (char*)&val, 4);
+    read(addr, &val, sizeof(uint32_t));
+#ifdef IS_BIG_ENDIAN
     val =  ((val & 0xff000000) >> 24) | 
            ((val & 0x00ff0000) >> 8)  | 
            ((val & 0x0000ff00) << 8) | 
            ((val & 0x000000ff) << 24);
-    *dword = val;
-#else
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 4))
-        return 0;
 #endif
-    return *((uint32_t*)ptr);
-#endif
+    return val;
 }
 
 FORCE_INLINE uint32_t Memory::read_dword(char * addr)
 {
-#ifdef IS_BIG_ENDIAN
     uint32_t val;
-    read(addr, (char*)&val, 4);
+    read(addr, &val, sizeof(uint32_t));
+#ifdef IS_BIG_ENDIAN
     val =  ((val & 0xff000000) >> 24) | 
            ((val & 0x00ff0000) >> 8)  | 
            ((val & 0x0000ff00) << 8) | 
            ((val & 0x000000ff) << 24);
-    *dword = val;
-#else
-    return *((uint32_t*)addr);
 #endif
+    return val;
 }
 
 FORCE_INLINE void Memory::read_qword(uint32_t addr, uint64_t * qword)
 {
-#ifdef IS_BIG_ENDIAN
-    uint64_t val;
-    read(addr, (char*)&val, 8);
-    val = ((val & 0xff00000000000000) >> 56) |
-          ((val & 0x00ff000000000000) >> 40) |
-          ((val & 0x0000ff0000000000) >> 24) |
-          ((val & 0x000000ff00000000) >> 8) |
-          ((val & 0x00000000ff000000) << 8) |
-          ((val & 0x0000000000ff0000) << 24) |
-          ((val & 0x000000000000ff00) << 40) |
-          ((val & 0x00000000000000ff) << 56);
-    *qword = val;
-#else
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 8))
-        return;
-#endif
-    *qword = *((uint64_t*)ptr);
-#endif
+    *qword = read_qword(addr);
 }
 
 FORCE_INLINE uint64_t Memory::read_qword(uint32_t addr)
 {
-#ifdef IS_BIG_ENDIAN
     uint64_t val;
-    read(addr, (char*)&val, 8);
+    read(addr, &val, sizeof(uint64_t));
+#ifdef IS_BIG_ENDIAN
     val = ((val & 0xff00000000000000) >> 56) |
           ((val & 0x00ff000000000000) >> 40) |
           ((val & 0x0000ff0000000000) >> 24) |
@@ -303,15 +245,8 @@ FORCE_INLINE uint64_t Memory::read_qword(uint32_t addr)
           ((val & 0x0000000000ff0000) << 24) |
           ((val & 0x000000000000ff00) << 40) |
           ((val & 0x00000000000000ff) << 56);
-    *qword = val;
-#else
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 8))
-        return 0;
 #endif
-    return *((uint64_t*)ptr);
-#endif
+    return val;
 }
 
 FORCE_INLINE void Memory::read_dqword(uint32_t addr, XMMReg * dqword)
@@ -329,12 +264,7 @@ FORCE_INLINE XMMReg Memory::read_dqword(uint32_t addr)
 
 FORCE_INLINE void Memory::write_byte(uint32_t addr, uint8_t byte)
 {
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 1))
-        return;
-#endif
-    *((uint8_t*)ptr) = byte;
+    write(addr, &byte, sizeof(uint8_t));
 }
 
 FORCE_INLINE void Memory::write_word(uint32_t addr, uint16_t word)
@@ -343,12 +273,7 @@ FORCE_INLINE void Memory::write_word(uint32_t addr, uint16_t word)
     word = ((word & 0xff00) >> 8) | 
            ((word & 0x00ff) << 8);
 #endif
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 2))
-        return;
-#endif
-    *((uint16_t*)ptr) = word;
+    write(addr, &word, sizeof(uint16_t));
 }
 
 FORCE_INLINE void Memory::write_dword(char * address, uint32_t dword)
@@ -359,17 +284,18 @@ FORCE_INLINE void Memory::write_dword(char * address, uint32_t dword)
             ((dword & 0x0000ff00) << 8) |
             ((dword & 0x000000ff) << 24);
 #endif
-    *((uint32_t*)address) = dword;
+    write(address, &dword, sizeof(uint32_t));
 }
 
 FORCE_INLINE void Memory::write_dword(uint32_t addr, uint32_t dword)
 {
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 4))
-        return;
+#ifdef IS_BIG_ENDIAN
+    dword = ((dword & 0xff000000) >> 24) |
+            ((dword & 0x00ff0000) >> 8) |
+            ((dword & 0x0000ff00) << 8) |
+            ((dword & 0x000000ff) << 24);
 #endif
-    write_dword(ptr, dword);
+    write(addr, &dword, sizeof(uint32_t));
 }
 
 FORCE_INLINE void Memory::write_qword(uint32_t addr, uint64_t qword)
@@ -384,12 +310,7 @@ FORCE_INLINE void Memory::write_qword(uint32_t addr, uint64_t qword)
             ((qword & 0x000000000000ff00) << 40) |
             ((qword & 0x00000000000000ff) << 56);
 #endif
-    char * ptr = translate(addr);
-#ifdef DEBUG_MEMORY
-    if (!test_address(ptr, addr, 8))
-        return;
-#endif
-    *((uint64_t*)ptr) = qword;
+    write(addr, &qword, sizeof(uint64_t));
 }
 
 FORCE_INLINE uint32_t Memory::heap_alloc(uint32_t size)
