@@ -41,6 +41,8 @@ public:
         uint16_t d_u16[8];
         uint32_t d_u32[4];
         uint64_t d_u64[2];
+        float d_f32[4];
+        double d_f64[2];
     };
 
 #ifdef IS_BIG_ENDIAN
@@ -74,7 +76,7 @@ public:
         return d_u32[3 - i];
     }
 
-    SSE_INLINE int64_t & s32(int i)
+    SSE_INLINE int64_t & s64(int i)
     {
         return d_s64[1 - i];
     }
@@ -82,6 +84,16 @@ public:
     SSE_INLINE uint64_t & u64(int i)
     {
         return d_u64[1 - i];
+    }
+
+    SSE_INLINE float & f32(int i)
+    {
+        return d_f32[3 - i];
+    }
+
+    SSE_INLINE float & f64(int i)
+    {
+        return d_f64[1 - i];
     }
 #else
     SSE_INLINE int8_t & s8(int i)
@@ -123,6 +135,16 @@ public:
     {
         return d_u64[i];
     }
+
+    SSE_INLINE float & f32(int i)
+    {
+        return d_f32[i];
+    }
+
+    SSE_INLINE double & f64(int i)
+    {
+        return d_f64[i];
+    }
 #endif
 
     SSE_INLINE XMMReg & operator=(uint64_t v)
@@ -134,7 +156,7 @@ public:
 
     SSE_INLINE XMMReg & operator=(float v)
     {
-        u32(0) = *((uint32_t*)&v);
+        f32(0) = v;
         u32(1) = 0;
         u64(1) = 0;
         return *this;
@@ -142,7 +164,7 @@ public:
 
     SSE_INLINE XMMReg & operator=(double v)
     {
-        u64(0) = *((uint64_t*)&v);
+        f64(0) = v;
         u64(1) = 0;
         return *this;
     }
@@ -191,12 +213,12 @@ public:
 
     SSE_INLINE operator double()
     {
-        return *((double*)&u64(0));
+        return f64(0);
     }
 
     SSE_INLINE operator float()
     {
-        return *((float*)&u32(0));
+        return f32(0);
     }
 
     SSE_INLINE void reset()
@@ -207,12 +229,22 @@ public:
 
 SSE_INLINE float to_ss(uint32_t v)
 {
-    return *((float*)&v);
+    union {
+        uint32_t in;
+        float out;
+    };
+    in = v;
+    return out;
 }
 
 SSE_INLINE double to_sd(uint64_t v)
 {
-    return *((double*)&v);
+    union {
+        uint64_t in;
+        double out;
+    };
+    in = v;
+    return out;
 }
 
 SSE_INLINE uint32_t ss_to_si(float v)
@@ -223,28 +255,44 @@ SSE_INLINE uint32_t ss_to_si(float v)
 
 SSE_INLINE uint64_t ss_to_d(float v)
 {
-    double vv = double(v);
-    return *((uint64_t*)&vv);
+    union {
+        double in;
+        uint64_t out;
+    };
+    in = double(v);
+    return out;
 }
 
 SSE_INLINE uint32_t d_to_ss(double v)
 {
-    float vv = float(v);
-    return *((uint32_t*)&vv);
+    union {
+        float in;
+        uint32_t out;
+    };
+    in = float(v);
+    return out;
 }
 
 SSE_INLINE uint64_t si_to_d(uint32_t a)
 {
+    union {
+        double in;
+        uint64_t out;
+    };
     int32_t aa = (int32_t)a;
-    double v = double(aa);
-    return *((uint64_t*)&v);
+    in = double(aa);
+    return out;
 }
 
 SSE_INLINE uint32_t si_to_ss(uint32_t a)
 {
+    union {
+        float in;
+        uint32_t out;
+    };
     int32_t aa = (int32_t)a;
-    float v = float(aa);
-    return *((uint32_t*)&v);
+    in = float(aa);
+    return out;
 }
 
 SSE_INLINE void dq_to_pd(XMMReg & dst, XMMReg src)
@@ -308,12 +356,22 @@ SSE_INLINE long double to_ld(uint64_t v)
 
 SSE_INLINE uint32_t to_dword(float v)
 {
-    return *((uint32_t*)&v);
+    union {
+        float in;
+        uint32_t out;
+    };
+    in = v;
+    return out;
 }
 
 SSE_INLINE uint64_t to_qword(double v)
 {
-    return *((uint64_t*)&v);
+    union {
+        double in;
+        uint64_t out;
+    };
+    in = v;
+    return out;
 }
 
 SSE_INLINE uint32_t ld_to_dword(long double v)
