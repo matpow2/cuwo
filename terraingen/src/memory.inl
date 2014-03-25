@@ -93,9 +93,11 @@ FORCE_INLINE uint32_t Memory::translate(char * address)
 {
 #ifdef IS_64_BIT
     int64_t v = (int64_t)(address - MEMORY_BASE_POINTER);
+#ifdef DEBUG_MEMORY
     if ((uint64_t)v > 0xFFFFFFFF) {
         print_fail(v);
     }
+#endif
     return uint32_t(int32_t(v));
 #else
     return (uint32_t)address;
