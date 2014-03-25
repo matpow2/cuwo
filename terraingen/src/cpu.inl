@@ -51,7 +51,7 @@ FORCE_INLINE uint16_t & CPU::get_reg16(Register16 i)
 #ifdef IS_BIG_ENDIAN
     in = &reg[i] + 1;
 #else
-    in = reg[i];
+    in = &reg[i];
 #endif
     return *out;
 }
