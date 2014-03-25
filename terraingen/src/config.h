@@ -49,8 +49,8 @@
 // #define DEBUG_FPU
 // #define DEBUG_FUNC
 
-// #define NO_INLINE
-#define FAST_INLINE
+#define NO_INLINE
+// #define FAST_INLINE
 
 #if defined(NO_INLINE)
     #define FORCE_INLINE

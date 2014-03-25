@@ -135,9 +135,13 @@ FORCE_INLINE void Memory::set_heap_size(size_t size)
     heap = (char*)mmap((void*)MEMORY_BASE_POINTER, size,
                        PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
                        -1, 0);
+    if (uint64_t(heap) > 0xFFFFFFFF) {
+        std::cout << "Heap alloc out of range" << std::endl;
+    }
     if ((void*)heap == MAP_FAILED) {
         std::cout << "mmap failed!" << std::endl;
     }
+
 #endif // _WIN32
 #endif // IS_32_BIT
     heap_size = size;
