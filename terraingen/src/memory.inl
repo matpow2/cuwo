@@ -80,7 +80,7 @@ inline bool test_address(char * res, uint32_t addr, size_t size)
 FORCE_INLINE char * Memory::translate(uint32_t val)
 {
 #ifdef IS_64_BIT
-    return MEMORY_BASE_OFFSET + (char*)int32_t(val);
+    return MEMORY_BASE_POINTER + (char*)int32_t(val);
 #else
     return (char*)val;
 #endif
@@ -94,7 +94,7 @@ inline void print_fail(uint64_t v)
 FORCE_INLINE uint32_t Memory::translate(char * address)
 {
 #ifdef IS_64_BIT
-    int64_t v = (int64_t)(address - MEMORY_BASE_OFFSET);
+    int64_t v = (int64_t)(address - MEMORY_BASE_POINTER);
     if ((uint64_t)v > 0xFFFFFFFF) {
         print_fail(v);
     }
