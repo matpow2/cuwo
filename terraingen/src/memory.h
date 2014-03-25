@@ -38,8 +38,8 @@ class Memory
 {
 public:
     static char stack[STACK_SIZE];
-    static char * heap;
-    static uint32_t heap_size, heap_offset;
+    static char heap[HEAP_SIZE];
+    static uint32_t heap_offset;
     static uint32_t segment_table[6];
     static char fs_segment[FS_SEGMENT_SIZE];
 
@@ -73,7 +73,6 @@ public:
     // heap
     static uint32_t heap_alloc(uint32_t size);
     static void heap_dealloc(uint32_t address);
-    static void set_heap_size(size_t size);
 
     // helper functions
     static void copy_mem(uint32_t dest, uint32_t src, uint32_t size);

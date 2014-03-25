@@ -29,8 +29,6 @@ FORCE_INLINE Memory::Memory()
     for (int i = 0; i < 6; i++)
         segment_table[i] = 0;
     segment_table[FS] = translate(fs_segment);
-
-    set_heap_size(96 * 1024 * 1024); // allocate 96 mb
 }
 
 FORCE_INLINE void Memory::pad_section(uint32_t address, size_t size)
@@ -66,7 +64,7 @@ inline bool test_address(char * res, uint32_t addr, size_t size)
         return true;
     if (test_range(res, mem.stack, sizeof(mem.stack)))
         return true;
-    if (test_range(res, mem.heap, mem.heap_size))
+    if (test_range(res, mem.heap, sizeof(mem.heap)))
         return true;
     log_access(addr);
     return false;
@@ -113,38 +111,6 @@ FORCE_INLINE T * test_alloc(T * out)
         return NULL;
     }
     return out;
-}
-
-#ifndef IS_32_BIT
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/mman.h>
-#endif // _WIN32
-#endif // IS_32_BIT
-
-FORCE_INLINE void Memory::set_heap_size(size_t size)
-{
-#ifdef IS_32_BIT
-    heap = test_alloc((char*)malloc(size));
-#else
-#ifdef _WIN32
-    heap = VirtualAlloc(MEMORY_BASE_POINTER, size, MEM_COMMIT | MEM_RESERVE,
-                        PAGE_READWRITE);
-#else
-    heap = (char*)mmap((void*)MEMORY_BASE_POINTER, size,
-                       PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
-                       -1, 0);
-    std::cout << "Heap address: " << uint64_t(heap) << std::endl;
-    std::cout << "Data section address: " << uint64_t(MEMORY_BASE_POINTER)
-        << std::endl;
-    if ((void*)heap == MAP_FAILED) {
-        std::cout << "mmap failed!" << std::endl;
-    }
-
-#endif // _WIN32
-#endif // IS_32_BIT
-    heap_size = size;
 }
 
 FORCE_INLINE void Memory::write(uint32_t addr, const char * src, size_t len)
@@ -433,13 +399,11 @@ FORCE_INLINE uint32_t Memory::heap_alloc(uint32_t size)
 #else
     heap_offset = (heap_offset + size + 16 - 1) & ~(16 - 1);
 #endif
-    // heap_size = heap_size+size;
-    if (heap_offset > heap_size) {
-        std::cout << "Heap too small: " << heap_offset << " " << heap_size
+    if (heap_offset > HEAP_SIZE) {
+        std::cout << "Heap too small: " << heap_offset << " " << HEAP_SIZE
             << std::endl;
         exit(0);
     }
-    // set_heap_size(heap_offset);
     return ret;
 }
 

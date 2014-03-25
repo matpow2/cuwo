@@ -24,11 +24,10 @@
 #include "memory.inl"
 #endif
 
-char * Memory::heap = NULL;
+char Memory::heap[HEAP_SIZE];
 char Memory::stack[STACK_SIZE];
 char Memory::fs_segment[FS_SEGMENT_SIZE];
 uint32_t Memory::segment_table[6];
 uint32_t Memory::heap_offset = 0;
-uint32_t Memory::heap_size = 0;
 
 Memory mem;

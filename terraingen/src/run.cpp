@@ -125,8 +125,6 @@ static char saved_stack[STACK_SIZE];
 ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
 {
     uint32_t heap_offset = mem.heap_offset;
-    memcpy(mem.heap, saved_heap, saved_heap_size);
-    memcpy(mem.stack, saved_stack, STACK_SIZE);
 
     ChunkData * data = new ChunkData;
     data->x = x;
@@ -150,8 +148,10 @@ ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
     sub_405E30();
     save_chunk(cpu.reg[EAX], data);
 
-    // restore heap offset
+    // restore heap
     mem.heap_offset = heap_offset;
+    memcpy(mem.heap, saved_heap, saved_heap_size);
+    memcpy(mem.stack, saved_stack, STACK_SIZE);
 
     return data;
 }
