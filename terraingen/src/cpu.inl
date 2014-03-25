@@ -1027,6 +1027,7 @@ FORCE_INLINE void CPU::compare_sd(double a, double b)
         pf = cf = false;
     } else {
         std::cout << "Unknown float relation!" << std::endl;
+        zf = pf = cf = false;
     }
     set_flags(false, false, zf, false, pf, cf);
 }
