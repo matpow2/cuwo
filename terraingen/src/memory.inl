@@ -80,7 +80,7 @@ inline bool test_address(char * res, uint32_t addr, size_t size)
 FORCE_INLINE char * Memory::translate(uint32_t val)
 {
 #ifdef IS_64_BIT
-    return MEMORY_BASE_POINTER + (char*)int32_t(val);
+    return MEMORY_BASE_POINTER + int32_t(val);
 #else
     return (char*)val;
 #endif
