@@ -44,11 +44,16 @@ FORCE_INLINE CPU::CPU()
 
 FORCE_INLINE uint16_t & CPU::get_reg16(Register16 i)
 {
+    union {
+        uint32_t* in;
+        uint16_t* out;
+    };
 #ifdef IS_BIG_ENDIAN
-    return *((uint16_t*)&reg[i] + 1);
+    in = &reg[i] + 1;
 #else
-    return *((uint16_t*)&reg[i]);
+    in = reg[i];
 #endif
+    return *out;
 }
 
 FORCE_INLINE uint8_t & CPU::get_reg8(Register8 i)
