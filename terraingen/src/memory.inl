@@ -75,10 +75,12 @@ inline bool test_address(char * res, uint32_t addr, size_t size)
 #endif
 }
 
+#define MEMORY_BASE_POINTER data_section
+
 FORCE_INLINE char * Memory::translate(uint32_t val)
 {
 #ifdef IS_64_BIT
-    return data_section + (char*)int32_t(val);
+    return MEMORY_BASE_OFFSET + (char*)int32_t(val);
 #else
     return (char*)val;
 #endif
@@ -92,7 +94,7 @@ inline void print_fail(uint64_t v)
 FORCE_INLINE uint32_t Memory::translate(char * address)
 {
 #ifdef IS_64_BIT
-    int64_t v = (int64_t)(address - data_section);
+    int64_t v = (int64_t)(address - MEMORY_BASE_OFFSET);
     if ((uint64_t)v > 0xFFFFFFFF) {
         print_fail(v);
     }
@@ -121,20 +123,18 @@ FORCE_INLINE T * test_alloc(T * out)
 #endif // _WIN32
 #endif // IS_32_BIT
 
-#define MMAP_FLAGS (MAP_PRIVATE | MAP_ANONYMOUS)
-#define LOW_ADDR 0xFF
-
 FORCE_INLINE void Memory::set_heap_size(size_t size)
 {
 #ifdef IS_32_BIT
     heap = test_alloc((char*)malloc(size));
 #else
 #ifdef _WIN32
-    heap = VirtualAlloc(LOW_ADDR, size, MEM_COMMIT | MEM_RESERVE,
+    heap = VirtualAlloc(MEMORY_BASE_POINTER, size, MEM_COMMIT | MEM_RESERVE,
                         PAGE_READWRITE);
 #else
-    heap = (char*)mmap((void*)LOW_ADDR, size, PROT_READ | PROT_WRITE,
-                       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    heap = (char*)mmap((void*)MEMORY_BASE_POINTER, size,
+                       PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
+                       -1, 0);
     if ((void*)heap == MAP_FAILED) {
         std::cout << "mmap failed!" << std::endl;
     }
