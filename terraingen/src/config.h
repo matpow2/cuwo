@@ -40,8 +40,13 @@
 #endif
 
 #define STACK_SIZE 0x100000
-#define HEAP_SIZE (96 * 1024 * 1024)
 #define FS_SEGMENT_SIZE 0x4
+
+#ifdef IS_32_BIT
+#define HEAP_SIZE (96 * 1024 * 1024)
+#else
+#define HEAP_SIZE (128 * 1024 * 1024)
+#endif
 
 // debug?
 #define DEBUG_MEMORY
