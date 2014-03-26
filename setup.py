@@ -29,6 +29,14 @@ from distutils.sysconfig import get_config_vars
 from distutils import spawn
 import subprocess
 
+data_dir = './data'
+data_files = ['data1.db', 'data4.db', 'Server.exe']
+for filename in data_files:
+    path = os.path.join(data_dir, filename)
+    if os.path.isfile(path):
+        continue
+    raise SystemExit('Missing data file %r' % path)
+
 # suppress warnings about -Wstrict-prototypes
 opt, = get_config_vars('OPT')
 if opt:
@@ -110,7 +118,7 @@ class build_ext(_build_ext.build_ext):
         if is_msvc:
             extra_args += ['/wd4102', '/EHsc', '/MP']
         else:
-            extra_args += ['-Wunused-label']
+            extra_args += ['-Wno-unused-label']
 
         class compile_state:
             index = 0
@@ -151,6 +159,7 @@ class build_ext(_build_ext.build_ext):
                                         output_dir=os.path.relpath(lib_dir),
                                         debug=self.debug)
         self.compiler.force = old_force
+
 
 setup(
     name='cuwo extensions',
