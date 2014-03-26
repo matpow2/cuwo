@@ -36,7 +36,10 @@ names = [
 includes = ['./cuwo', './terraingen/include']
 lib_dir = './lib'
 
-macros = [('_CRT_SECURE_NO_WARNINGS', None)]
+macros = []
+
+if os.name == 'nt':
+    macros += [('_CRT_SECURE_NO_WARNINGS', None)]
 
 incdir = os.path.join(get_python_inc(plat_specific=1))
 ext_modules.append(Extension('terraingen.pydasm', include_dirs=[incdir],
