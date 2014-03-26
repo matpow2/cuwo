@@ -141,7 +141,7 @@ class build_ext(_build_ext.build_ext):
         if os.name == 'nt':
             rsp_path = os.path.join(self.build_temp, 'link.rsp')
             fp = open(rsp_path, 'wb')
-            fp.write(' '.join(objects))
+            fp.write(' '.join(objects).replace('\\', '/'))
             fp.close()
             objects = ['@' + rsp_path]
 

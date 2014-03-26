@@ -49,7 +49,7 @@ class World(object):
         except KeyError:
             pass
         data = GenerateData(x, y)
-        self.gen_queue.put(data)
+        self.gen_queue.put(data, False)
         return data.d
 
     def run_gen(self, seed):

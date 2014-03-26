@@ -70,9 +70,11 @@ cdef enum:
     TREE_TYPE = 8
 
 
-def initialize(seed):
+def initialize(seed, path=None):
+    if path is None:
+        path = './data'
     tgen_set_seed(seed)
-    tgen_set_path('./data/')
+    tgen_set_path(path)
     with nogil:
         tgen_init()
 
