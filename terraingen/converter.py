@@ -90,7 +90,7 @@ class CodeWriter(object):
     comment = None
     line_count = 0
 
-    def __init__(self, filename=None, license=True):
+    def __init__(self, filename, license=True):
         self.fp = StringIO()
         self.filename = filename
         if license:
@@ -1296,7 +1296,7 @@ class CPU(object):
             self.writer.putln('%s();' % self.get_function_name(op.value))
             if op.value == 0x412FE0:
                 # startthread(), lets stop here
-                print 'Found startthread'
+                # print 'Found startthread'
                 self.unimplemented = False
                 return False
         else:
@@ -1655,36 +1655,6 @@ def filter_import_name(name):
     return v
 
 
-def write_data_header(data, name, filename):
-    if os.path.isfile(filename):
-        print 'Not writing data header for', filename
-        return
-    section_writer = CodeWriter(filename)
-    section_writer.putlnc('char %s[%s] = {', name, len(data))
-    section_writer.indent()
-
-    i = 0
-    data_len = len(data)
-    while i < data_len:
-        items = []
-        for ii in xrange(i, min(i+10, len(data))):
-            v = struct.unpack('b', data[ii])[0]
-            if v < 0:
-                v = '-0x%02X,' % -v
-            else:
-                v = ' 0x%02X,' % v
-            items.append(v)
-        items = ' '.join(items)
-        i += 10
-        if i >= data_len:
-            items = items[:-1]
-        section_writer.putln(items)
-
-    section_writer.end_brace(True)
-    section_writer.putln('')
-    section_writer.close()
-
-
 def makedirs(path):
     try:
         os.makedirs(path)
@@ -1729,9 +1699,13 @@ class Section(object):
 class Converter(object):
     def __init__(self, path):
         # setup
+        self.base_dir = os.path.dirname(__file__)
+        self.gen_dir = os.path.join(self.base_dir, 'gensrc')
+
         self.custom_code = ''
-        for f in os.listdir('src/import'):
-            code_path = os.path.join('src/import', f)
+        import_dir = os.path.join(self.base_dir, 'src', 'import')
+        for f in os.listdir(import_dir):
+            code_path = os.path.join(import_dir, f)
             self.custom_code += open(code_path, 'rb').read()
 
         self.mem_writes = {}
@@ -1746,8 +1720,6 @@ class Converter(object):
         self.load_images = []
         self.sources = []
         self.big_sources = set()
-
-        self.base_dir = os.path.dirname(path)
         pe = pefile.PE(path)
 
         optional = pe.OPTIONAL_HEADER
@@ -1759,8 +1731,8 @@ class Converter(object):
 
         print "Image base: %X" % self.image_base
 
-        makedirs('gensrc')
-        writer = CodeWriter('gensrc/out.cpp')
+        makedirs(self.gen_dir)
+        writer = self.open_code('out.cpp')
         writer.putln('#include "main.h"')
         writer.putln('#include "memory.h"')
         writer.putln('#include "functions.h"')
@@ -1788,7 +1760,7 @@ class Converter(object):
 
         # writer.putmeth('void init_emu')
 
-        sections_header = CodeWriter('gensrc/sections.h')
+        sections_header = self.open_code('sections.h')
         sections_header.start_guard('TERRAINGEN_SECTIONS_H')
 
         for section in self.load_sections:
@@ -1798,12 +1770,11 @@ class Converter(object):
             extra = section.Misc_VirtualSize - len(data)
             data += '\x00' * extra
             name = '%s_section' % name
-            write_data_header(data, name, 'gensrc/%s.h' % name)
+            self.write_data_header(data, name, '%s.h' % name)
             sections_header.putlnc('extern char %s[%s];', name, len(data))
 
         sections_header.close_guard('TERRAINGEN_SECTIONS_H')
         sections_header.close()
-        # writer.end_brace()
 
         # ensure custom sqlite3 is used
         sqlite_table = config.sqlite_table
@@ -1903,7 +1874,7 @@ class Converter(object):
 
         writer.close()
 
-        writer = CodeWriter('gensrc/functions.h')
+        writer = self.open_code('functions.h')
         writer.start_guard('TERRAINGEN_FUNCTIONS_H')
         for address in addresses:
             name = self.get_function_name(address)
@@ -1911,7 +1882,7 @@ class Converter(object):
         writer.close_guard('TERRAINGEN_FUNCTIONS_H')
         writer.close()
 
-        writer = CodeWriter('gensrc/stubs.cpp')
+        writer = self.open_code('stubs.cpp')
         writer.putln('#include <iostream>')
         writer.putln('')
         stubs = self.used_imports
@@ -1930,7 +1901,7 @@ class Converter(object):
             writer.putln('')
         writer.close()
 
-        writer = CodeWriter('gensrc/Routines.cmake', license=False)
+        writer = self.open_code('Routines.cmake', license=False)
         writer.putln('set(GEN_SRCS')
         writer.indent()
         for f in self.sources:
@@ -1950,6 +1921,35 @@ class Converter(object):
         writer.dedent()
         writer.putln(')')
         writer.close()
+
+    def write_data_header(self, data, name, filename):
+        if os.path.isfile(self.get_path(filename)):
+            print 'Not writing data header for', filename
+            return
+        section_writer = self.open_code(filename)
+        section_writer.putlnc('char %s[%s] = {', name, len(data))
+        section_writer.indent()
+
+        i = 0
+        data_len = len(data)
+        while i < data_len:
+            items = []
+            for ii in xrange(i, min(i+10, len(data))):
+                v = struct.unpack('b', data[ii])[0]
+                if v < 0:
+                    v = '-0x%02X,' % -v
+                else:
+                    v = ' 0x%02X,' % v
+                items.append(v)
+            items = ' '.join(items)
+            i += 10
+            if i >= data_len:
+                items = items[:-1]
+            section_writer.putln(items)
+
+        section_writer.end_brace(True)
+        section_writer.putln('')
+        section_writer.close()
 
     def get_reloc(self, addr, as_guest=True):
         section = self.get_section(addr)
@@ -2051,9 +2051,9 @@ class Converter(object):
             sub.name = '%s_%s' % (name, index+1)
 
         # generate wrapper code
-        source_name = 'gensrc/%s.cpp' % name
+        source_name = '%s.cpp' % name
         self.sources.append(source_name)
-        writer = CodeWriter(source_name)
+        writer = self.open_code(source_name)
         for sub in subs:
             writer.putln('extern void %s();' % sub.name)
         writer.putln('')
@@ -2069,9 +2069,9 @@ class Converter(object):
             name = sub.name
         else:
             name = self.get_function_name(sub.start)
-        source_name = 'gensrc/%s.cpp' % name
+        source_name = '%s.cpp' % name
         self.sources.append(source_name)
-        writer = self.writer = CodeWriter(source_name)
+        writer = self.writer = self.open_code(source_name)
         writer.putln('#include "main.h"')
         writer.putln('#include "functions.h"')
         writer.putln('#include "sections.h"')
@@ -2121,6 +2121,27 @@ class Converter(object):
     def log(self, value):
         self.writer.putlnc('std::cout << %r << std::endl;', value)
 
+    def get_path(self, filename):
+        return os.path.join(self.gen_dir, filename)
+
+    def open_code(self, filename, *arg, **kw):
+        return CodeWriter(self.get_path(filename), *arg, **kw)
+
+    def get_sources(self):
+        srcs = [self.get_path(src) for src in self.sources]
+        srcs += [self.get_path('stubs.cpp')]
+        srcs += [os.path.join(self.base_dir, 'src', item) for item in
+                 ('run.cpp', 'memory.cpp', 'cpu.cpp', 'sqlite3.c')]
+        return srcs
+
+    def get_includes(self, msvc=False):
+        includes = [self.base_dir,
+                    os.path.join(self.base_dir, 'include'),
+                    os.path.join(self.base_dir, 'src')]
+        if msvc:
+            includes += [os.path.join(self.base_dir, 'include', 'win32')]
+        return includes
+
 
 SERVER_HASH = 'A6FC5AA34068B5B80C53B2439C65BE3B'
 
@@ -2134,6 +2155,7 @@ def convert(filename):
         return
 
     converter = Converter(filename)
+    return converter
 
 def main():
     import argparse

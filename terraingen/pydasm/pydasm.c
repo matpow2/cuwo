@@ -360,7 +360,7 @@ void fill_operand_structure(PyObject *pOperand, OPERAND *op)
     op->immbytes = get_long_attribute(pOperand, "immbytes");
     op->immoffset = get_long_attribute(pOperand, "immoffset");
     op->sectionbytes = get_long_attribute(pOperand, "sectionbytes");
-    op->section = get_long_attribute(pOperand, "section");
+    op->section = (WORD)get_long_attribute(pOperand, "section");
     op->displacement = get_long_attribute(pOperand, "displacement");
     op->immediate = get_long_attribute(pOperand, "immediate");
     op->flags = get_long_attribute(pOperand, "flags");
@@ -408,9 +408,9 @@ void fill_instruction_structure(PyObject *pInstruction, INSTRUCTION *insn)
     insn->length = get_long_attribute(pInstruction, "length");
     insn->type = get_long_attribute(pInstruction, "type");
     insn->mode = get_long_attribute(pInstruction, "mode");
-    insn->opcode = get_long_attribute(pInstruction, "opcode");
-    insn->modrm = get_long_attribute(pInstruction, "modrm");
-    insn->sib = get_long_attribute(pInstruction, "sib");
+    insn->opcode = (BYTE)get_long_attribute(pInstruction, "opcode");
+    insn->modrm = (BYTE)get_long_attribute(pInstruction, "modrm");
+    insn->sib = (BYTE)get_long_attribute(pInstruction, "sib");
     insn->extindex = get_long_attribute(pInstruction, "extindex");
     insn->fpuindex = get_long_attribute(pInstruction, "fpuindex");
     insn->dispbytes = get_long_attribute(pInstruction, "dispbytes");
