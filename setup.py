@@ -118,7 +118,7 @@ class build_ext(_build_ext.build_ext):
         if is_msvc:
             extra_args += ['/wd4102', '/EHsc', '/MP']
         else:
-            extra_args += ['-Wno-unused-label']
+            extra_args += ['-Wno-unused-label', '-fPIC']
 
         class compile_state:
             index = 0
