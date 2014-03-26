@@ -139,7 +139,6 @@ class build_ext(_build_ext.build_ext):
         # convert to list, imap is evaluated on-demand
         pool = multiprocessing.pool.ThreadPool(multiprocessing.cpu_count())
         objects = list(pool.imap(compile_single, sources))
-        log.set_threshold(old)
         spawn._spawn_nt = _spawn_nt
 
         if os.name == 'nt':
@@ -159,6 +158,7 @@ class build_ext(_build_ext.build_ext):
                                         output_dir=os.path.relpath(lib_dir),
                                         debug=self.debug)
         self.compiler.force = old_force
+        log.set_threshold(old)
 
 
 setup(
