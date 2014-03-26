@@ -21,7 +21,6 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
 from distutils.command import build_ext as _build_ext
-from distutils.sysconfig import get_python_inc
 from distutils.sysconfig import customize_compiler
 import multiprocessing.pool
 from distutils import log
@@ -58,9 +57,7 @@ macros = []
 if os.name == 'nt':
     macros += [('_CRT_SECURE_NO_WARNINGS', None)]
 
-incdir = os.path.join(get_python_inc(plat_specific=1))
-ext_modules.append(Extension('terraingen.pydasm', include_dirs=[incdir],
-                             define_macros=macros,
+ext_modules.append(Extension('terraingen.pydasm', define_macros=macros,
                              sources=['./terraingen/pydasm/libdasm.c',
                                       './terraingen/pydasm/pydasm.c']))
 
