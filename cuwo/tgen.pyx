@@ -73,7 +73,8 @@ cdef enum:
 def initialize(seed):
     tgen_set_seed(seed)
     tgen_set_path('./data/')
-    tgen_init()
+    with nogil:
+        tgen_init()
 
 
 def generate(x, y):
@@ -121,7 +122,11 @@ cdef class ChunkProxy:
         list items
     
     def __init__(self, x, y):
-        self.data = tgen_generate_chunk(x, y)
+        cdef unsigned int x_int = x
+        cdef unsigned int y_int = y
+
+        with nogil:
+            self.data = tgen_generate_chunk(x_int, y_int)
 
         # read items
         self.items = []
