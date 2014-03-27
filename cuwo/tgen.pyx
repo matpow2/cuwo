@@ -159,7 +159,7 @@ cdef class RenderBuffer:
             x = i % 256
             y = i / 256
             xy = &proxy.data.items[i]
-            for z in range(xy.b, <int>(xy.a + xy.size)):
+            for z in range(min(xy.b, 0), <int>(xy.a + xy.size)):
                 if proxy.get_neighbor_solid_c(x, y, z):
                     continue
                 if z < xy.a:
@@ -312,7 +312,7 @@ cdef class ChunkProxy:
                 self.get_solid_c(x, y, z - 1))
 
     def get_neighbor_solid(self, x, y, z):
-        return self.get_neighbor_solid_c(   x, y, z)
+        return self.get_neighbor_solid_c(x, y, z)
 
     def get_dict(self):
         cdef dict blocks = {}

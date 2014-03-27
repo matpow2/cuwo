@@ -86,7 +86,7 @@ class ChunkManager(object):
 
     def __init__(self, parent):
         self.parent = parent
-        self.gen_queue = PriorityQueue(3)
+        self.gen_queue = PriorityQueue(1)
         self.cache = {}
         threading.Thread(target=self.run).start()
 
@@ -118,7 +118,7 @@ class ChunkManager(object):
         while self.running:
             key = self.gen_queue.get()
             x, y = key
-            print 'Generating chunk', x, y
+            # print 'Generating chunk', x, y
             off_x = (x - self.parent.chunk_x) * 256.0
             off_y = (y - self.parent.chunk_y) * 256.0
             data = tgen.generate(x, y).get_render(off_x, off_y)
@@ -280,6 +280,7 @@ class MapViewer(object):
     old_render_size = None
     znear = 0.1
     zfar = 512.0
+    old_chunk = None
 
     def __init__(self, x, y, seed):
         self.chunk_x = x
@@ -527,6 +528,11 @@ class MapViewer(object):
         x = self.chunk_x + int(pos.x / 256.0)
         y = self.chunk_y + int(pos.y / 256.0)
 
+        chunk = (x, y)
+        if chunk != self.old_chunk:
+            print 'Current chunk:', x, y
+            self.old_chunk = chunk
+
         ChunkData.begin()
 
         self.chunks.get(x, y)
@@ -545,7 +551,7 @@ class MapViewer(object):
         ChunkData.end()
 
 def main():
-    viewer = MapViewer(32700, 32700, 26879)
+    viewer = MapViewer(32800, 32800, 26879)
     viewer.run()
 
 if __name__ == '__main__':
