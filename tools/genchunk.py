@@ -39,9 +39,21 @@ def convert_qmo(data, path):
     qmo_model.z_offset = -z_size / 2
 
     blocks = data.get_dict()
+
+    min_z = max_z = None
+    for pos in blocks.iterkeys():
+        x, y, z = pos
+        if min_z is None:
+            min_z = max_z = z
+        min_z = min(min_z, z)
+        max_z = max(max_z, z)
+
+    qmo_model.y_size = max_z - min_z
+
     for pos, color in blocks.iteritems():
-        pos = switch_axes(*pos)
-        qmo_model.blocks[pos] = color
+        x, y, z = switch_axes(*pos)
+        y -= min_z
+        qmo_model.blocks[(x, y, z)] = color
 
     qmo_file.models.append(qmo_model)
     writer = ByteWriter()

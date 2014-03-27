@@ -151,6 +151,12 @@ class ScriptManager(object):
     def __getattr__(self, name):
         return self.items[name]
 
+    def __getitem__(self, name):
+        return self.items[name]
+
+    def __contains__(self, name):
+        return name in self.items
+
     def add(self, script):
         self.items[script.script_name] = script
         self.cached_calls.clear()
@@ -271,7 +277,7 @@ class ServerScript(BaseScript):
         self.children = []
         self.on_load()
         for connection in server.connections:
-            self.on_existing_connection(connection)
+            self.call('on_existing_connection', connection=connection)
 
     def on_new_connection(self, event):
         if self.connection_class is None:

@@ -148,7 +148,7 @@ cdef class ChunkProxy:
             return self.data.y
 
     cpdef bint get_solid(self, int x, int y, int z):
-        if x < 0 or x >= 256 or y < 0 or y >= 256 or z < 0 or z >= 256:
+        if x < 0 or x >= 256 or y < 0 or y >= 256 or z < 0:
             return True
         cdef ChunkXY * data = self.get_xy(x, y)
         if z < data.a:

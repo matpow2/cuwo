@@ -494,6 +494,10 @@ class CubeWorldServer(Factory):
 
     def load_script(self, name):
         try:
+            return self.scripts[name]
+        except KeyError:
+            pass
+        try:
             mod = __import__('scripts.%s' % name, globals(), locals(), [name])
         except ImportError, e:
             traceback.print_exc(e)
@@ -501,6 +505,14 @@ class CubeWorldServer(Factory):
         script = mod.get_class()(self)
         print 'Loaded script %r' % name
         return script
+
+    def unload_script(self, name):
+        try:
+            self.scripts[name].unload()
+        except KeyError:
+            return False
+        print 'Unloaded script %r' % name
+        return True
 
     def call_command(self, user, command, args):
         """

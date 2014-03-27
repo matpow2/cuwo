@@ -207,6 +207,27 @@ def player(script, name):
 
 
 @command
+@admin
+def load(script, name):
+    """Loads a script at runtime."""
+    name = str(name)
+    if name in script.server.scripts:
+        return 'Script %r already loaded' % name
+    script.server.load_script(name)
+    return 'Script %r loaded' % name
+
+
+@command
+@admin
+def unload(script, name):
+    """Unloads a script at runtime."""
+    name = str(name)
+    if not script.server.unload_script(name):
+        return 'Script %r is not loaded' % name
+    return 'Script %r unloaded' % name
+
+
+@command
 def scripts(script):
     """Lists the currently loaded scripts."""
     return 'Scripts: ' + ', '.join(script.server.scripts.items)
