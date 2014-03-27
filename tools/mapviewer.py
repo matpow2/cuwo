@@ -23,10 +23,13 @@ import sdl2
 import sdl2.ext
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from OpenGL.constants import GLfloat_3, GLfloat_4
+from OpenGL.GL import shaders
 import threading
 from Queue import Queue
 from ctypes import *
 import math
+import os
 
 
 class ChunkData(object):
@@ -139,7 +142,6 @@ def draw_cube(x, y, z, r, g, b):
     glVertex3f(gl_x1, gl_y2, gl_z2)
     glVertex3f(gl_x2, gl_y2, gl_z2)
     glVertex3f(gl_x2, gl_y2, gl_z1)
-    
 
     # Right face
     glNormal3f(0.0, -1.0, 0.0)
@@ -147,7 +149,6 @@ def draw_cube(x, y, z, r, g, b):
     glVertex3f(gl_x2, gl_y1, gl_z1) # Top left
     glVertex3f(gl_x2, gl_y1, gl_z2) # Bottom left
     glVertex3f(gl_x1, gl_y1, gl_z2) # Bottom right
-    
 
     # Top face
     glNormal3f(0.0, 0.0, -1.0)
@@ -155,7 +156,6 @@ def draw_cube(x, y, z, r, g, b):
     glVertex3f(gl_x2, gl_y1, gl_z2) # Bottom right
     glVertex3f(gl_x2, gl_y2, gl_z2) # Top right
     glVertex3f(gl_x1, gl_y2, gl_z2) # Top left
-    
 
     # Bottom face
     glNormal3f(0.0, 0.0, 1.0)
@@ -164,7 +164,6 @@ def draw_cube(x, y, z, r, g, b):
     glVertex3f(gl_x2, gl_y2, gl_z1) # Top left
     glVertex3f(gl_x2, gl_y1, gl_z1) # Bottom left
     
-
     # Right face
     glNormal3f(1.0, 0.0, 0.0)
     glVertex3f(gl_x2, gl_y1, gl_z1) # Bottom right
@@ -172,7 +171,6 @@ def draw_cube(x, y, z, r, g, b):
     glVertex3f(gl_x2, gl_y2, gl_z2) # Top left
     glVertex3f(gl_x2, gl_y1, gl_z2) # Bottom left
     
-
     # Left Face
     glNormal3f(-1.0, 0.0, 0.0)
     glVertex3f(gl_x1, gl_y1, gl_z1) # Bottom left
@@ -183,19 +181,159 @@ def draw_cube(x, y, z, r, g, b):
     glEnd()
 
 
+class GLSLShader(object):
+    def __init__(self, name):
+        shader_dir = os.path.join(os.path.dirname(__file__), 'shaders')
+        vert_path = os.path.join(shader_dir, '%s.vert' % name)
+        frag_path = os.path.join(shader_dir, '%s.frag' % name)
+        vert_data = open(vert_path, 'rb').read()
+        frag_data = open(frag_path, 'rb').read()
+        vert_shader = shaders.compileShader(vert_data, GL_VERTEX_SHADER)
+        frag_shader = shaders.compileShader(frag_data, GL_FRAGMENT_SHADER)
+        self.program = shaders.compileProgram(vert_shader, frag_shader)
+
+    def bind(self):
+        shaders.glUseProgram(self.program)
+
+    def uniform1i(self, name, value):
+        loc = glGetUniformLocation(self.program, name)
+        shaders.glUniform1i(loc, value)
+
+    def uniform1f(self, name, value):
+        loc = glGetUniformLocation(self.program, name)
+        shaders.glUniform1f(loc, value)
+
+    def uniform2f(self, name, val1, val2):
+        loc = glGetUniformLocation(self.program, name)
+        shaders.glUniform2f(loc, val1, val2)
+
+    def unbind(self):
+        shaders.glUseProgram(0)
+
+
 class MapViewer(object):
     running = False
     time = 0.0
+    use_ssao = True
+    old_render_size = None
+    znear = 0.1
+    zfar = 512.0
 
     def __init__(self):
         sdl2.ext.init()
         flags = sdl2.SDL_WINDOW_OPENGL | sdl2.SDL_WINDOW_RESIZABLE
+
+        sdl2.video.SDL_GL_SetAttribute(sdl2.video.SDL_GL_MULTISAMPLEBUFFERS, 1)
+        sdl2.video.SDL_GL_SetAttribute(sdl2.video.SDL_GL_MULTISAMPLESAMPLES, 4)
         self.window = sdl2.ext.Window("cuwo - map viewer", size=(640, 480),
                                       flags=flags)
         self.context = sdl2.video.SDL_GL_CreateContext(self.window.window)
         sdl2.mouse.SDL_SetRelativeMouseMode(True)
         self.chunks = ChunkManager(26879)
         self.camera = Camera()
+        self.init_ssao()
+
+    def init_ssao(self):
+        if not self.use_ssao:
+            return
+        self.ssao_shader = GLSLShader('ssao')
+
+        self.depth_texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self.depth_texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP)
+        glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY)
+
+        self.color_texture = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, self.color_texture)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+
+        self.ssao_shader.bind()
+        self.ssao_shader.uniform1i("color_texture", 0)
+        self.ssao_shader.uniform1i("depth_texture", 1)
+        self.ssao_shader.uniform1f("znear", self.znear * 0.02)
+        self.ssao_shader.uniform1f("zfar", self.zfar * 0.02)
+        self.ssao_shader.unbind()
+
+    def update_ssao(self):
+        if self.old_render_size == self.render_size:
+            return
+        w, h = self.render_size
+        glBindTexture(GL_TEXTURE_2D, self.color_texture)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_BGRA,
+                     GL_UNSIGNED_BYTE, None)
+        glBindTexture(GL_TEXTURE_2D, self.depth_texture)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+                     w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
+
+        self.ssao_shader.bind()
+        self.ssao_shader.uniform2f("texture_size", float(w), float(h))
+        self.ssao_shader.unbind()
+        self.old_render_size = self.render_size
+
+    def apply_ssao(self):
+        if not self.use_ssao:
+            return
+        w, h = self.render_size
+        self.update_ssao()
+
+        glPushAttrib(GL_ENABLE_BIT)
+        glMatrixMode(GL_PROJECTION)
+        glPushMatrix()
+        glLoadIdentity()
+        gluOrtho2D(0, w, 0, h)
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        glDisable(GL_DEPTH_TEST)
+        glLoadIdentity()
+
+        # texture 0, color
+        glActiveTexture(GL_TEXTURE0)
+        glEnable(GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, self.color_texture)
+        glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, w, h, 0)
+
+        # texture 1, depth
+        glActiveTexture(GL_TEXTURE1)
+        glEnable(GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, self.depth_texture)
+        glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 0, 0, w, h, 0)
+
+        off_x = off_y = 0
+        x2 = off_x + w
+        y2 = off_y + h
+
+        self.ssao_shader.bind()
+
+        glColor4f(1.0, 1.0, 1.0, 1.0)
+        glDisable(GL_BLEND)
+        glBegin(GL_QUADS)
+        glTexCoord2f(0.0, 0.0)
+        glVertex2i(off_x, off_y)
+        glTexCoord2f(1.0, 0.0)
+        glVertex2i(x2, off_y)
+        glTexCoord2f(1.0, 1.0)
+        glVertex2i(x2, y2)
+        glTexCoord2f(0.0, 1.0)
+        glVertex2i(off_x, y2)
+        glEnd()
+        glEnable(GL_BLEND)
+
+        glBindTexture(GL_TEXTURE_2D, 0)
+        glActiveTexture(GL_TEXTURE0)
+        glDisable(GL_TEXTURE_2D)
+        self.ssao_shader.unbind()
+
+        glPopMatrix()
+        glMatrixMode(GL_PROJECTION)
+        glPopMatrix()
+        glMatrixMode(GL_MODELVIEW)
+        glPopAttrib()
 
     def run(self):
         self.running = True
@@ -231,6 +369,7 @@ class MapViewer(object):
         self.start_time = new_time
         self.update(dt)
         self.draw()
+        self.apply_ssao()
         sdl2.video.SDL_GL_SwapWindow(self.window.window)
 
     def on_mouse_event(self, event):
@@ -251,23 +390,61 @@ class MapViewer(object):
     def update(self, dt):
         self.camera.update(dt)
 
+    def set_lighting(self):
+        v1 = euclid.Vector3(0.3, -0.7, -0.6).normalized()
+        light1_position = GLfloat_4(v1.x, v1.y, v1.z, 0.0)
+        diffuse = 0.6;
+        light_diffuse = GLfloat_4(diffuse, diffuse, diffuse, 1.0)
+        light_ambient = GLfloat_4(0.0, 0.0, 0.0, 1.0)
+        specular = 0.0
+        light_specular = GLfloat_4(specular, specular, specular, 1.0)
+        glLightfv(GL_LIGHT0, GL_POSITION, light1_position)
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse)
+        glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient)
+        glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular)
+        v2 = euclid.Vector3(-0.3, 0.7, -0.6).normalized()
+        light2_position = GLfloat_4(v2.x, v2.y, v2.z, 0.0)
+        glLightfv(GL_LIGHT1, GL_POSITION, light2_position)
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse)
+        glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient)
+        glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular)
+        f = 0.6
+        light_model = GLfloat_4(f, f, f, 1.0)
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, light_model)
+
     def draw(self):
-        w, h = self.get_size()
+        w, h = self.render_size = self.get_size()
 
         glViewport(0, 0, w, h)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluPerspective(60.0, w / float(h), 0.1, 10000.0)
+        gluPerspective(60.0, w / float(h), self.znear, self.zfar)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_TEXTURE_2D)
+        glEnable(GL_CULL_FACE)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glClearDepth(1.0)
+        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
+        glEnable(GL_LINE_SMOOTH)
+
+        # lighting
+        glShadeModel(GL_FLAT)
+        glEnable(GL_NORMALIZE)
+        glEnable(GL_LIGHTING)
+        glEnable(GL_LIGHT0)
+        glEnable(GL_LIGHT1)
+        glEnable(GL_COLOR_MATERIAL)
+        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
 
         glClearColor(0.61, 0.949, 1.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         self.camera.set()
+        self.set_lighting()
 
         glColor4f(0.0, 1.0, 1.0, 1.0)
         glBegin(GL_QUADS)
@@ -294,22 +471,17 @@ class MapViewer(object):
         voxels = chunk.data.get_dict()
         glBegin(GL_QUADS)
 
-        x_offset = y_offset = z_offset = 0
-
         for k, v in voxels.iteritems():
             x, y, z = k
             r, g, b = v
 
-            # print 'Pos:', x, y, z
-            # print 'Color:', r, g, b
-
             glColor4ub(r, g, b, 255)
 
-            gl_x1 = x + x_offset
+            gl_x1 = x
             gl_x2 = gl_x1 + 1.0
-            gl_y1 = y + y_offset
+            gl_y1 = y
             gl_y2 = gl_y1 + 1.0
-            gl_z1 = z + z_offset
+            gl_z1 = z
             gl_z2 = gl_z1 + 1.0
 
             # Left Face
