@@ -19,31 +19,76 @@ import sys
 sys.path.append('.')
 from cuwo import tgen
 from cuwo import euclid
+from cuwo import constants
 import sdl2
 import sdl2.ext
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.constants import GLfloat_3, GLfloat_4
 from OpenGL.GL import shaders
+from OpenGL.GL.ARB.vertex_buffer_object import *
 import threading
-from Queue import Queue
+from Queue import PriorityQueue, Full
 from ctypes import *
 import math
 import os
 
 
+FLOAT_SIZE = 4
+VERTEX_SIZE = 6 * FLOAT_SIZE + 4
+QUAD_SIZE = VERTEX_SIZE * 4
+
+
 class ChunkData(object):
-    draw_list = None
+    data = None
+    vbo = None
 
     def __init__(self, data):
         self.data = data
 
+    def create_vbo(self):
+        data, size = self.data.get_data_pointer()
+        self.vertex_count = size * 4
+        size *= QUAD_SIZE
+        self.vbo = glGenBuffersARB(1)
+        p = c_void_p(data)
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, self.vbo)
+        glBufferDataARB(GL_ARRAY_BUFFER_ARB, size, p, GL_STATIC_DRAW)
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0)
+        self.data = None
+
+    @staticmethod
+    def begin():
+        glEnableClientState(GL_VERTEX_ARRAY)
+        glEnableClientState(GL_NORMAL_ARRAY)
+        glEnableClientState(GL_COLOR_ARRAY)
+
+    @staticmethod
+    def end():
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0)
+        glDisableClientState(GL_VERTEX_ARRAY)
+        glDisableClientState(GL_NORMAL_ARRAY)
+        glDisableClientState(GL_COLOR_ARRAY)
+
+    def draw(self):
+        if self.vbo is None:
+            self.create_vbo()
+        glBindBufferARB(GL_ARRAY_BUFFER_ARB, self.vbo)
+        glVertexPointer(3, GL_FLOAT, VERTEX_SIZE, c_void_p(0))
+        glNormalPointer(GL_FLOAT, VERTEX_SIZE, c_void_p(FLOAT_SIZE * 3))
+        glColorPointer(4, GL_UNSIGNED_BYTE, VERTEX_SIZE,
+                       c_void_p(FLOAT_SIZE * 6))
+        glDrawArrays(GL_QUADS, 0, self.vertex_count)
+
 
 class ChunkManager(object):
-    def __init__(self, seed):
-        self.gen_queue = Queue()
+    running = True
+
+    def __init__(self, parent):
+        self.parent = parent
+        self.gen_queue = PriorityQueue(3)
         self.cache = {}
-        threading.Thread(target=self.run, args=(seed,)).start()
+        threading.Thread(target=self.run).start()
 
     def get(self, x, y):
         key = (x, y)
@@ -51,28 +96,39 @@ class ChunkManager(object):
             return self.cache[key]
         except KeyError:
             pass
+        try:
+            self.gen_queue.put(key, False)
+        except Full:
+            return None
         self.cache.setdefault(key, None)
-        self.gen_queue.put(key, False)
         return None
 
-    def stop(self):
-        self.gen_queue.put(None)
+    def get_all(self):
+        for value in self.cache.itervalues():
+            if value is None:
+                continue
+            yield value
 
-    def run(self, seed):
+    def stop(self):
+        self.running = False
+
+    def run(self):
         print 'Initializing tgen...'
-        tgen.initialize(seed)
-        while True:
+        tgen.initialize(self.parent.seed, './data/')
+        while self.running:
             key = self.gen_queue.get()
-            if key is None:
-                break
             x, y = key
             print 'Generating chunk', x, y
-            res = ChunkData(tgen.generate(x, y))
+            off_x = (x - self.parent.chunk_x) * 256.0
+            off_y = (y - self.parent.chunk_y) * 256.0
+            data = tgen.generate(x, y).get_render(off_x, off_y)
+            res = ChunkData(data)
             self.cache[key] = res
 
 
 class Camera(object):
     up = down = left = right = False
+    shift = False
     x_rot = -27.0
     z_rot = 244
 
@@ -96,7 +152,9 @@ class Camera(object):
             sdl2.keycode.SDLK_w: 'up',
             sdl2.keycode.SDLK_s: 'down',
             sdl2.keycode.SDLK_a: 'left',
-            sdl2.keycode.SDLK_d: 'right'
+            sdl2.keycode.SDLK_d: 'right',
+            sdl2.keycode.SDLK_LSHIFT: 'shift',
+            sdl2.keycode.SDLK_RSHIFT: 'shift'
         }
         if key not in keys:
             return
@@ -112,7 +170,11 @@ class Camera(object):
             move.x = -1.0
         elif self.right:
             move.x = 1.0
-        speed = dt * 20.0
+        if self.shift:
+            speed = 150
+        else:
+            speed = 50
+        speed *= dt
         self.pos += self.get_rot() * (move * speed)
 
     def set(self):
@@ -219,7 +281,10 @@ class MapViewer(object):
     znear = 0.1
     zfar = 512.0
 
-    def __init__(self):
+    def __init__(self, x, y, seed):
+        self.chunk_x = x
+        self.chunk_y = y
+        self.seed = seed
         sdl2.ext.init()
         flags = sdl2.SDL_WINDOW_OPENGL | sdl2.SDL_WINDOW_RESIZABLE
 
@@ -229,7 +294,7 @@ class MapViewer(object):
                                       flags=flags)
         self.context = sdl2.video.SDL_GL_CreateContext(self.window.window)
         sdl2.mouse.SDL_SetRelativeMouseMode(True)
-        self.chunks = ChunkManager(26879)
+        self.chunks = ChunkManager(self)
         self.camera = Camera()
         self.init_ssao()
 
@@ -446,105 +511,41 @@ class MapViewer(object):
         self.camera.set()
         self.set_lighting()
 
-        glColor4f(0.0, 1.0, 1.0, 1.0)
-        glBegin(GL_QUADS)
-        w = h = 0.5
-        y = -10
-        glVertex3f(-w, y, -h)
-        glVertex3f(w, y, -h)
-        glVertex3f(w, y, h)
-        glVertex3f(-w, y, h)
-        glEnd()
+        # glDisable(GL_TEXTURE_2D)
 
-        chunk = self.chunks.get(32797, 32810)
-        if chunk is None:
-            return
+        # glColor4f(1.0, 0.0, 0.0, 1.0)
+        # glBegin(GL_QUADS)
+        # w = h = 100
+        # y = -10
+        # glVertex3f(-w, y, -h)
+        # glVertex3f(w, y, -h)
+        # glVertex3f(w, y, h)
+        # glVertex3f(-w, y, h)
+        # glEnd()
 
-        if chunk.draw_list is not None:
-            glCallList(chunk.draw_list)
-            return
+        pos = self.camera.pos
+        x = self.chunk_x + int(pos.x / 256.0)
+        y = self.chunk_y + int(pos.y / 256.0)
 
-        print 'Generating display list'
-        chunk.draw_list = glGenLists(1)
-        glNewList(chunk.draw_list, GL_COMPILE_AND_EXECUTE)
+        ChunkData.begin()
 
-        voxels = chunk.data.get_dict()
-        glBegin(GL_QUADS)
+        self.chunks.get(x, y)
+        self.chunks.get(x-1, y)
+        self.chunks.get(x+1, y)
+        self.chunks.get(x, y+1)
+        self.chunks.get(x, y-1)
+        self.chunks.get(x-1, y+1)
+        self.chunks.get(x+1, y+1)
+        self.chunks.get(x-1, y-1)
+        self.chunks.get(x+1, y-1)
 
-        for k, v in voxels.iteritems():
-            x, y, z = k
-            r, g, b = v
+        for chunk in self.chunks.get_all():
+            chunk.draw()
 
-            glColor4ub(r, g, b, 255)
-
-            gl_x1 = x
-            gl_x2 = gl_x1 + 1.0
-            gl_y1 = y
-            gl_y2 = gl_y1 + 1.0
-            gl_z1 = z
-            gl_z2 = gl_z1 + 1.0
-
-            # Left Face
-            # if (!file->is_solid(x, y + 1, z)):
-            glNormal3f(0.0, 1.0, 0.0)
-            glVertex3f(gl_x1, gl_y2, gl_z1)
-            glVertex3f(gl_x1, gl_y2, gl_z2)
-            glVertex3f(gl_x2, gl_y2, gl_z2)
-            glVertex3f(gl_x2, gl_y2, gl_z1)
-            
-
-            # Right face
-            # if (!file->is_solid(x, y - 1, z)):
-            glNormal3f(0.0, -1.0, 0.0)
-            glVertex3f(gl_x1, gl_y1, gl_z1) # Top right
-            glVertex3f(gl_x2, gl_y1, gl_z1) # Top left
-            glVertex3f(gl_x2, gl_y1, gl_z2) # Bottom left
-            glVertex3f(gl_x1, gl_y1, gl_z2) # Bottom right
-            
-
-            # Top face
-            # if (!file->is_solid(x, y, z + 1)):
-            glNormal3f(0.0, 0.0, -1.0)
-            glVertex3f(gl_x1, gl_y1, gl_z2) # Bottom left
-            glVertex3f(gl_x2, gl_y1, gl_z2) # Bottom right
-            glVertex3f(gl_x2, gl_y2, gl_z2) # Top right
-            glVertex3f(gl_x1, gl_y2, gl_z2) # Top left
-            
-
-            # Bottom face
-            # if (!file->is_solid(x, y, z - 1)):
-            glNormal3f(0.0, 0.0, 1.0)
-            glVertex3f(gl_x1, gl_y1, gl_z1) # Bottom right
-            glVertex3f(gl_x1, gl_y2, gl_z1) # Top right
-            glVertex3f(gl_x2, gl_y2, gl_z1) # Top left
-            glVertex3f(gl_x2, gl_y1, gl_z1) # Bottom left
-            
-
-            # Right face
-            # if (!file->is_solid(x + 1, y, z)):
-            glNormal3f(1.0, 0.0, 0.0)
-            glVertex3f(gl_x2, gl_y1, gl_z1) # Bottom right
-            glVertex3f(gl_x2, gl_y2, gl_z1) # Top right
-            glVertex3f(gl_x2, gl_y2, gl_z2) # Top left
-            glVertex3f(gl_x2, gl_y1, gl_z2) # Bottom left
-            
-
-            # Left Face
-            # if (!file->is_solid(x - 1, y, z)):
-            glNormal3f(-1.0, 0.0, 0.0)
-            glVertex3f(gl_x1, gl_y1, gl_z1) # Bottom left
-            glVertex3f(gl_x1, gl_y1, gl_z2) # Bottom right
-            glVertex3f(gl_x1, gl_y2, gl_z2) # Top right
-            glVertex3f(gl_x1, gl_y2, gl_z1) # Top left
-        
-        glEnd()
-
-        glEndList()
-
-        print 'Display list generated'
+        ChunkData.end()
 
 def main():
-    viewer = MapViewer()
+    viewer = MapViewer(32700, 32700, 26879)
     viewer.run()
 
 if __name__ == '__main__':

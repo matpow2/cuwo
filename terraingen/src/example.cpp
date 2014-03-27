@@ -31,7 +31,7 @@ inline int to_int(const char * in)
 
 int main(int argc, const char ** argv)
 {
-    if (argc != 5) {
+    if (argc != 4) {
         std::cout << "Usage: gen.exe seed x y file" << std::endl;
         return 0;
     }
@@ -39,12 +39,12 @@ int main(int argc, const char ** argv)
     tgen_set_seed(to_int(argv[1]));
     int x = to_int(argv[2]);
     int y = to_int(argv[3]);
-    const char * file = argv[4];
 
     tgen_set_path("../data/");
     tgen_init();
     std::cout << "Generator setup" << std::endl;
     ChunkData * c = tgen_generate_chunk(x, y);
     std::cout << "Generated chunk" << std::endl;
+    
     return 0;
 }

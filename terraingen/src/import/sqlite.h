@@ -38,8 +38,11 @@ public:
     SQLDatabase(char * filename)
     : blob_mem(0)
     {
-        int ret = sqlite3_open(translate_path(filename), &db);
-        // std::cout << "Open: " << ret << std::endl;
+        const char * path = translate_path(filename);
+        int ret = sqlite3_open(path, &db);
+        if (ret == SQLITE_OK)
+            return;
+        std::cout << "DB open failed for " << path << ": " << ret << std::endl;
     }
 
     int32_t exec(char * value)

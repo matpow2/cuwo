@@ -48,7 +48,7 @@ def convert_qmo(data, path):
         min_z = min(min_z, z)
         max_z = max(max_z, z)
 
-    qmo_model.y_size = max_z - min_z
+    qmo_model.y_size = max_z - min_z + 1
 
     for pos, color in blocks.iteritems():
         x, y, z = switch_axes(*pos)
@@ -85,7 +85,8 @@ def main():
     args = parser.parse_args()
 
     print 'Initializing...'
-    tgen.initialize(args.seed)
+    val = './data/'
+    tgen.initialize(args.seed, val)
     for coord in args.coords:
         x, y = coord
         f = '%s_%s.qmo' % (x, y)
