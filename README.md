@@ -74,6 +74,13 @@ FAQ
          and inject packets. It's not really useful for the normal user, so
          use the regular cuwo server instead.
 
+* **Q.** Can I donate to the project?
+
+* **A.** Yes, of course! You don't have to, of course, but it will help bring
+         the server forward.
+
+[![Click here to lend your support to cuwo and make a donation at pledgie.com!](http://pledgie.com/campaigns/24724.png?skin_name=chrome)](http://pledgie.com/campaigns/24724)
+
 Special thanks
 ==============
 
