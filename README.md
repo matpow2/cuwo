@@ -79,7 +79,7 @@ FAQ
 * **A.** Yes, of course! You don't have to, of course, but it will help bring
          the server forward.
 
-[![Click here to lend your support to cuwo and make a donation at pledgie.com!](http://pledgie.com/campaigns/24724.png?skin_name=chrome)](http://pledgie.com/campaigns/24724)
+* [![Click here to lend your support to cuwo and make a donation at pledgie.com!](http://pledgie.com/campaigns/24724.png?skin_name=chrome)](http://pledgie.com/campaigns/24724)
 
 Special thanks
 ==============
