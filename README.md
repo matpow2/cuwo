@@ -36,24 +36,27 @@ Run build.sh and afterwards run_server.sh.
 Status
 ======
 
-In terms of gameplay, the following has been implemented:
+In terms of the protocol and features, the following has been implemented:
 * Player join/leave
 * Player movement and animations
 * Magic/arrows/etc. relay
 * Player hits on entities/other players
 * Item pickup/drop
 * Time management
+* Terrain generator
 
 A lot is still to be implemented gameplay-wise. Most importantly, NPCs and mobs
-have not been implemented yet. We still need to rip out the terrain generator,
-and once that's done, NPCs and mobs should be completely doable.
+have not been implemented yet. The terrain generator is completely working now,
+but work still needs to be put into creating intelligent AI and proper
+behaviour.
 
-There is also a working MITM proxy that can inject packets. It's useful for
-reverse-engineering the protocol and can be used as an alternative to a
-standalone server.
+Also, interactive objects (like doors, beds), have not been implemented
+yet, but with the terrain generator, it should be a fairly simple feature.
 
-There is also a working Cube World/Qubicle model converter. Find it in the 
-'tools' folder.
+Other features include
+* MITM proxy (for reverse-engineering)
+* Cube World/Qubicle model converter (tools/convertqmo.py)
+* Map viewer (tools/mapviewer.py)
 
 FAQ
 ===
