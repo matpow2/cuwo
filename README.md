@@ -69,17 +69,17 @@ FAQ
          I help?
 
 * **A.** We need people who can create end-user documentation as well! Have a
-         look around, and see if anything is missing in the wiki.
+         look around, and see if anything is missing on the wiki.
 
 * **Q.** What is a MITM proxy?
 
 * **A.** A MITM proxy sits between your client and server, and can manipulate
-         and inject packets. It's not really useful for the normal user, so
+         and inject packets. It's not really useful to the normal user, so
          use the regular cuwo server instead.
 
-* **Q.** Can I donate to the project?
+* **Q.** Can I donate to the project somehow?
 
-* **A.** Yes, of course! You don't have to, of course, but it will help bring
+* **A.** Yes! You don't have to, of course, but it will help bring
          the server forward.
 
 * [![Click here to lend your support to cuwo and make a donation at pledgie.com!](http://pledgie.com/campaigns/24724.png?skin_name=chrome)](http://pledgie.com/campaigns/24724)
