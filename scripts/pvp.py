@@ -1,4 +1,6 @@
 # Copyright (c) Bjoern Lange 2014.
+# Copyright (c) Mathias Kaerlev 2013-2014
+# Based on the pvp script by Mathias Kaerlev
 #
 # This file is part of cuwo.
 #
@@ -15,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+
+import os.path
+
+
 from cuwo.entity import FLAGS_1_HOSTILE
 from cuwo.packet import EntityUpdate
 from cuwo.packet import KillAction
@@ -24,35 +30,41 @@ from cuwo.script import ServerScript
 from cuwo.script import command
 from cuwo.script import admin
 
-import os.path
 
 """
 Player versus player!
 """
 
+
 ENTITY_HOSTILITY_FRIENDLY_PLAYER = 0
 ENTITY_HOSTILITY_HOSTILE = 1
 ENTITY_HOSTILITY_FRIENDLY = 2
 
+
 SAVE_FILE = os.path.join('config', 'pvp')
+
 
 KEY_PVP_ENABLED = 'pvp_enabled'
 KEY_NOTIFY_ON_KILL = 'notify_on_kill'
 KEY_GAIN_XP = 'gain_xp'
 KEY_PVP_DISPLAY = 'pvp_display'
 
+
 MASK_HOSTILITY = 1 << 7
 MASK_FLAGS = 1 << 14
 MASK_MULTIPLIERS = 1 << 30
 MASK_TRANSFER = MASK_HOSTILITY | MASK_FLAGS | MASK_MULTIPLIERS
 
+
 class PVPConnectionScript(ConnectionScript):
-    max_hp = 100 # hp multiplier
-    joined = False
     
-    # events
+    # Events
     def on_join(self, event):
-        self.parent.entity_id_mapping[self.connection.entity_data] = self.connection.entity_id
+        self.joined = False
+        entity_id_mapping = self.parent.entity_id_mapping
+        entity_data = self.connection.entity_data
+        entity_id = self.connection.entity_id
+        entity_id_mapping[entity_data] = entity_id
         self.max_hp = self.connection.entity_data.max_hp_multiplier
         if self.parent.pvp_enabled():
             self.make_hostile()
@@ -65,26 +77,34 @@ class PVPConnectionScript(ConnectionScript):
         del self.parent.entity_id_mapping[self.connection.entity_data]
             
     def on_kill(self, event):
-        # event is not called if an entity with a friendly display is killed
+        # on_kill event is not called if an entity with a friendly
+        # display is killed
         if self.parent.gain_xp():
             kill_action = KillAction()
             kill_action.entity_id = self.connection.entity_id
-            kill_action.target_id = self.parent.entity_id_mapping[event.target]
-            kill_action.xp_gained = self.calculate_xp(self.connection.entity_data.level, event.target.level)
+            target_id = self.parent.entity_id_mapping[event.target] 
+            kill_action.target_id = target_id
+            killer_level = self.connection.entity_data.level
+            xp = self.calculate_xp(killer_level, event.target.level)
+            kill_action.xp_gained = xp
         
-            self.parent.server_update_packet.kill_actions = [kill_action]
-            self.server.broadcast_packet(self.parent.server_update_packet)
+            sup = self.server.update_packet
+            sup.kill_actions.append(kill_action)
         
         if self.parent.notify_on_kill():
-            self.server.send_chat('%s killed %s!' % (self.connection.name, event.target.name))
+            self.server.send_chat('%s killed %s!' %
+                (self.connection.name, event.target.name))
             
     def on_entity_update(self, event):
         if not self.joined:
             self.joined = True
             self.on_joined(event)
         
-        if (event.mask & MASK_MULTIPLIERS) != 0 and self.connection.entity_data.max_hp_multiplier != self.max_hp:
-            self.max_hp = self.connection.entity_data.max_hp_multiplier
+        entity_data = self.connection.entity_data
+        max_hp_multiplier = entity_data.max_hp_multiplier
+        if (event.mask & MASK_MULTIPLIERS) != 0 and \
+            max_hp_multiplier != self.max_hp:
+            self.max_hp = max_hp_multiplier
             if self.parent.pvp_enabled():
                 make_hostile()
             else:
@@ -94,7 +114,7 @@ class PVPConnectionScript(ConnectionScript):
         if self.parent.pvp_enabled():
             self.connection.entity_data.flags_1 |= FLAGS_1_HOSTILE
         
-    # helper methods
+    # Helper methods and functions
     def make_hostile(self):
         entity_data = self.connection.entity_data
         entity_data.flags_1 |= FLAGS_1_HOSTILE
@@ -108,34 +128,46 @@ class PVPConnectionScript(ConnectionScript):
         self.force_entity_update()
         
     def force_entity_update(self):
-        # seems to be a client bug, the maximum health is not displayed correctly, so adapt it
+        # Seems to be a client bug, the maximum health is not
+        # displayed correctly, so adapt it
         entity_update = self.parent.entity_update_packet
         entity_data = self.connection.entity_data
+        entity_id = self.connection.entity_id
         
-        if self.parent.pvp_enabled() and self.parent.get_pvp_display_mode() != ENTITY_HOSTILITY_FRIENDLY_PLAYER:
+        pvp_display_mode = self.parent.get_pvp_display_mode()
+        if self.parent.pvp_enabled() and \
+            pvp_display_mode != ENTITY_HOSTILITY_FRIENDLY_PLAYER:
             entity_data.max_hp_multiplier = self.max_hp * 2.0
-            entity_update.set_entity(entity_data, self.connection.entity_id, MASK_TRANSFER)
+            entity_update.set_entity(entity_data, entity_id,
+                                     MASK_TRANSFER)
             self.broadcast_except_self(entity_update)
             entity_data.max_hp_multiplier = self.max_hp
-            entity_update.set_entity(entity_data, self.connection.entity_id, MASK_TRANSFER)
+            entity_update.set_entity(entity_data, entity_id,
+                                     MASK_TRANSFER)
             self.connection.send_packet(entity_update)
         else:
             entity_data.max_hp_multiplier = self.max_hp
-            entity_update.set_entity(self.connection.entity_data, self.connection.entity_id, MASK_TRANSFER)
+            entity_update.set_entity(entity_data, entity_id,
+                                     MASK_TRANSFER)
             self.server.broadcast_packet(entity_update)
         
     def send_entity_update(self, player):
         entity_update = self.parent.entity_update_packet
         entity_data = self.connection.entity_data
+        entity_id = self.connection.entity_id
         
-        if self.parent.pvp_enabled() and self.parent.get_pvp_display_mode() != ENTITY_HOSTILITY_FRIENDLY_PLAYER:
+        pvp_display_mode = self.parent.get_pvp_display_mode()
+        if self.parent.pvp_enabled() and \
+            pvp_display_mode != ENTITY_HOSTILITY_FRIENDLY_PLAYER:
             entity_data.max_hp_multiplier = self.max_hp * 2.0
-            entity_update.set_entity(entity_data, self.connection.entity_id, MASK_TRANSFER)
+            entity_update.set_entity(entity_data, entity_id,
+                                     MASK_TRANSFER)
             player.send_packet(entity_update)
             entity_data.max_hp_multiplier = self.max_hp
         else:
             entity_data.max_hp_multiplier = self.max_hp
-            entity_update.set_entity(entity_data, self.connection.entity_id, MASK_TRANSFER)
+            entity_update.set_entity(entity_data, entity_id,
+                                     MASK_TRANSFER)
             player.send_packet(entity_update)
         
     def broadcast_except_self(self, packet):
@@ -144,19 +176,17 @@ class PVPConnectionScript(ConnectionScript):
                 player.send_packet(packet)
             
     def calculate_xp(self, killer_level, killed_level):
-        return max(1, int(10.0 * float(killed_level) / float(killer_level)))        
+        value = int(10.0*float(killed_level)/float(killer_level))
+        return max(1, value)
+
 
 class PVPScript(ServerScript):
     connection_class = PVPConnectionScript
     
-    entity_update_packet = EntityUpdate()
-    server_update_packet = ServerUpdate()
-    
-    entity_id_mapping = {}
-    
-    # events
+    # Events
     def on_load(self):
-        self.server_update_packet.reset()
+        self.entity_id_mapping = {}
+        self.entity_update_packet = EntityUpdate()
         self.settings = self.server.load_data(SAVE_FILE, {})
         if KEY_PVP_ENABLED not in self.settings:
             self.settings[KEY_PVP_ENABLED] = True
@@ -173,10 +203,13 @@ class PVPScript(ServerScript):
                 c.send_entity_update(child.connection)
             
     def update(self, event):
-        if self.pvp_enabled() and self.get_pvp_display_mode() != ENTITY_HOSTILITY_HOSTILE:
-            # the client doesn't allow friendly display and hostile behaviour, so have a little workaround...
-            for player in self.server.players.values():
-                player.entity_data.flags_1 |= FLAGS_1_HOSTILE
+        if self.pvp_enabled():
+            pvp_dm = self.get_pvp_display_mode()
+            if pvp_dm != ENTITY_HOSTILITY_HOSTILE:
+                # The client doesn't allow friendly display and hostile
+                # behaviour, so have a little workaround...
+                for player in self.server.players.values():
+                    player.entity_data.flags_1 |= FLAGS_1_HOSTILE
     
     def get_mode(self, event):
         if self.pvp_enabled():
@@ -184,7 +217,7 @@ class PVPScript(ServerScript):
         else:
             return 'default'
             
-    # helper methods
+    # Helper methods
     def save_settings(self):
         self.server.save_data(SAVE_FILE, self.settings)
         
@@ -196,7 +229,7 @@ class PVPScript(ServerScript):
         for child in self.children:
             child.make_hostile()
     
-    # setters for settings
+    # Setters for settings
     def set_pvp_enabled(self, enabled):
         self.settings[KEY_PVP_ENABLED] = enabled
         self.save_settings()
@@ -219,7 +252,7 @@ class PVPScript(ServerScript):
         if self.pvp_enabled():
             self.make_players_hostile()
     
-    # getters for settings
+    # Getters for settings
     def pvp_enabled(self):
         return self.settings[KEY_PVP_ENABLED]
         
@@ -232,149 +265,173 @@ class PVPScript(ServerScript):
     def get_pvp_display_mode(self):
         return self.settings[KEY_PVP_DISPLAY]
 
+
 def get_class():
     return PVPScript
- 
-# pvp commands
+
+    
+# PVP commands
 @command
 def pvp(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if pvp_script.pvp_enabled():
         return 'PVP mode is active.'
     else:
         return 'PVP mode is not active'
 
+
 @command
 @admin
 def enablepvp(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if pvp_script.pvp_enabled():
         return 'PVP is already enabled.'
     else:
         pvp_script.set_pvp_enabled(True)
         return 'PVP has been enabled.'
 
+
 @command
 @admin
 def disablepvp(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if not pvp_script.pvp_enabled():
         return 'PVP is already disabled.'
     else:
         pvp_script.set_pvp_enabled(False)
         return 'PVP has been disabled'
 
+
 @command
 @admin
 def togglepvp(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if pvp_script.pvp_enabled():
         return disablepvp(script)
     else:
         return enablepvp(script)
+
         
-# notify on kill commands
+# Notify on kill commands
 @command
 def notifyonkill(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if pvp_script.notify_on_kill():
         return 'Kills are notified.'
     else:
         return 'Kills are not notified.'
         
+
 @command
 @admin
 def enablenotifyonkill(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if pvp_script.notify_on_kill():
         return 'Kills are already notified.'
     else:
         pvp_script.set_notify_on_kill(True)
         return 'Kills are now notified.'
+
         
 @command
 @admin
 def disablenotifyonkill(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if not pvp_script.notify_on_kill():
         return 'Kills are already not notified.'
     else:
         pvp_script.set_notify_on_kill(False)
         return 'Kills are no longer notified.'
+
         
 @command
 @admin
 def togglenotifyonkill(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if pvp_script.notify_on_kill():
         return disablenotifyonkill(script)
     else:
         return enablenotifyonkill(script)
 
-# gain xp commands        
+
+# Gain XP commands        
 @command
 def gainxp(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if pvp_script.gain_xp():
         return 'Players gain xp on player kills.'
     else:
         return "Players don't gain xp on player kills."
+
         
 @command
 @admin
 def enablegainxp(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if pvp_script.gain_xp():
         return 'Players already gain xp on player kills.'
     else:
         pvp_script.set_gain_xp(True)
         return 'Players will now gain xp on player kills.'
+
         
 @command
 @admin
 def disablegainxp(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if not pvp_script.gain_xp():
         return "Players already don't gain xp on player kills."
     else:
         pvp_script.set_gain_xp(False)
         return 'Players will no longer gain xp on player kills.'
+
         
 @command
 @admin
 def togglegainxp(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if pvp_script.gain_xp():
         return disablegainxp(script)
     else:
         return enablegainxp(script)
 
-# pvp displaymode command        
+
+# PVP displaymode commands
 @command
 def pvpdisplaymode(script):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     dm = pvp_script.get_pvp_display_mode()
     if dm == ENTITY_HOSTILITY_FRIENDLY_PLAYER:
-        return 'In pvp mode, players are displayed as friendly entities and are shown on the map (setting: friendlyplayer).'
+        return ('In pvp mode, players are displayed as friendly ' +
+            'entities and are shown on the map (setting: ' +
+            'friendlyplayer).')
     elif dm == ENTITY_HOSTILITY_FRIENDLY:
-        return 'In pvp mode, players are displayed as friendly entities (setting: friendly).'
+        return ('In pvp mode, players are displayed as friendly ' +
+            'entities (setting: friendly).')
     elif dm == ENTITY_HOSTILITY_HOSTILE:
-        return 'In pvp mode, players are displayed as hostile entities (setting: hostile).'
+        return ('In pvp mode, players are displayed as hostile ' +
+            'entities (setting: hostile).')
     else:
         return 'Unknown setting, value=%i' % dm
+
 
 @command
 @admin
 def setpvpdisplaymode(script, display):
-    pvp_script = script.server.scripts.advanced_pvp
+    pvp_script = script.server.scripts.pvp
     if display == 'friendlyplayer':
-        pvp_script.set_pvp_display_mode(ENTITY_HOSTILITY_FRIENDLY_PLAYER)
-        return 'In pvp mode, players are now displayed as friendly entities and are shown on the map.'
+        pvp_script.set_pvp_display_mode(
+            ENTITY_HOSTILITY_FRIENDLY_PLAYER)
+        return ('In pvp mode, players are now displayed as friendly' +
+            ' entities and are shown on the map.')
     elif display == 'friendly':
-        pvp_script.set_pvp_display_mode(ENTITY_HOSTILITY_FRIENDLY)
-        return 'In pvp mode, players are now displayed as friendly entities.'
+        pvp_script.set_pvp_display_mode(
+            ENTITY_HOSTILITY_FRIENDLY)
+        return ('In pvp mode, players are now displayed as friendly' +
+            ' entities.')
     elif display == 'hostile':
         pvp_script.set_pvp_display_mode(ENTITY_HOSTILITY_HOSTILE)
-        return 'In pvp mode, players are now displayed as hostile entities.'
+        return ('In pvp mode, players are now displayed as hostile' +
+            ' entities.')
     else:
         return 'Unknown mode: %s' % display
