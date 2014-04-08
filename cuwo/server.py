@@ -79,6 +79,8 @@ class CubeWorldConnection(Protocol):
     # connection methods
 
     def connectionMade(self):
+        self.transport.setTcpNoDelay(True)
+
         server = self.server
         if len(server.connections) >= server.config.base.max_players:
             self.send_packet(server_full_packet)
