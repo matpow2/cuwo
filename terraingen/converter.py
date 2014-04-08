@@ -452,32 +452,6 @@ def get_memory(addr, size):
     return '%s(%s)' % (func, addr)
 
 
-EFL_CF = 1 << 0
-EFL_ZF = 1 << 6
-EFL_SF = 1 << 7
-EFL_OF = 1 << 11
-
-def get_eflags(value):
-    l = set()
-    if value & EFL_CF:
-        l.add('CF')
-    if value & EFL_ZF:
-        l.add('ZF')
-    if value & EFL_SF:
-        l.add('SF')
-    if value & EFL_OF:
-        l.add('OF')
-    return l
-
-
-eflags_affected = {
-    'comiss': EFL_CF | EFL_ZF | EFL_SF | EFL_OF,
-    'comisd': EFL_CF | EFL_ZF | EFL_SF | EFL_OF
-}
-
-eflags_used = {}
-
-
 class Instruction(object):
     __slots__ = ['converter', 'address', 'has_reloc', 'length', 'type', 'mode',
                  'opcode', 'modrm', 'sib', 'extindex', 'fpuindex', 'dispbytes',
@@ -797,6 +771,26 @@ def get_flag(value):
 def get_fpu():
     return get_register(REG_ST0, REG_FPU)
 
+
+EFL_CF = 1 << 0
+EFL_ZF = 1 << 6
+EFL_SF = 1 << 7
+EFL_OF = 1 << 11
+
+
+def get_eflags(value):
+    l = set()
+    if value & EFL_CF:
+        l.add('CF')
+    if value & EFL_ZF:
+        l.add('ZF')
+    if value & EFL_SF:
+        l.add('SF')
+    if value & EFL_OF:
+        l.add('OF')
+    return l
+
+
 def format_cond(v):
     for flag in ('OF', 'ZF', 'SF', 'CF'):
         v = v.replace(flag, get_flag(flag))
@@ -818,6 +812,45 @@ COND_LE = COND_NG = format_cond('ZF || SF != OF')
 COND_S = format_cond('SF')
 COND_NS = format_cond('!SF')
 
+
+NAME_TO_EFL = {
+    'OF': EFL_OF,
+    'CF': EFL_CF,
+    'ZF': EFL_ZF,
+    'SF': EFL_SF
+}
+
+
+def get_cond_eflags(v):
+    flags = 0
+    for flag in ('OF', 'ZF', 'SF', 'CF'):
+        if get_flag(flag) not in v:
+            continue
+        flags |= NAME_TO_EFL[flag]
+    return flags
+
+
+eflags_affected = {
+    'comiss': EFL_CF | EFL_ZF | EFL_SF | EFL_OF,
+    'comisd': EFL_CF | EFL_ZF | EFL_SF | EFL_OF
+}
+
+
+eflags_used = {
+    'cmovae': get_cond_eflags(COND_AE),
+    'cmova': get_cond_eflags(COND_A),
+    'cmovbe': get_cond_eflags(COND_BE),
+    'cmovb': get_cond_eflags(COND_B),
+    'cmovg': get_cond_eflags(COND_G),
+    'cmovge': get_cond_eflags(COND_GE),
+    'cmovl': get_cond_eflags(COND_L),
+    'cmovle': get_cond_eflags(COND_LE),
+    'cmove': get_cond_eflags(COND_E),
+    'cmovne': get_cond_eflags(COND_NE),
+    'cmovs': get_cond_eflags(COND_S)
+}
+
+
 class CPU(object):
     eip = None
     sub = None
@@ -826,6 +859,7 @@ class CPU(object):
         self.converter = converter
         self.log = converter.log
         self.get_function_name = converter.get_function_name
+        self.mnemonic_stats = collections.Counter()
 
     def set_sub(self, sub):
         self.index = 0
@@ -865,7 +899,7 @@ class CPU(object):
             self.remaining_labels.discard(self.eip)
 
         name = 'on_%s' % instruction.mnemonic
-
+        self.mnemonic_stats[instruction.mnemonic] += 1
         handler = getattr(self, name, None)
 
         if handler is None:
@@ -1181,6 +1215,7 @@ class CPU(object):
 
     def on_sbb(self, i):
         if i.eflags_dependency:
+            raise NotImplementedError()
             func = 'cpu.sbb_%s' % size_names[i.op1.size]
             self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
         else:
@@ -1196,8 +1231,13 @@ class CPU(object):
             self.set_op(i.op1, '%s - %s' % (i.op1.get(), i.op2.get()))
 
     def on_adc(self, i):
-        func = 'cpu.adc_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        if i.eflags_dependency:
+            raise NotImplementedError()
+            func = 'cpu.adc_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        else:
+            self.set_op(i.op1, '%s + %s + int(%s)' % (i.op1.get(), i.op2.get(),
+                                                      COND_C))
 
     def on_dec(self, i):
         if i.eflags_dependency:
@@ -1214,12 +1254,18 @@ class CPU(object):
             self.set_op(i.op1, '%s + 1' % i.op1.get())
 
     def on_and(self, i):
-        func = 'cpu.and_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        if i.eflags_dependency:
+            func = 'cpu.and_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        else:
+            self.set_op(i.op1, '%s & %s' % (i.op1.get(), i.op2.get()))
 
     def on_or(self, i):
-        func = 'cpu.or_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        if i.eflags_dependency:
+            func = 'cpu.or_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        else:
+            self.set_op(i.op1, '%s | %s' % (i.op1.get(), i.op2.get()))
 
     def on_xor(self, i):
         if i.eflags_dependency:
@@ -1540,8 +1586,11 @@ class CPU(object):
                                                i.op3.get()))
 
     def on_shr(self, i):
-        func = 'cpu.shr_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        if i.eflags_dependency:
+            func = 'cpu.shr_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        else:
+            self.set_op(i.op1, '%s >> %s' % (i.op1.get(), i.op2.get()))
 
     def on_rcr(self, i):
         func = 'cpu.rcr_%s' % size_names[i.op1.size]
@@ -1552,8 +1601,14 @@ class CPU(object):
         self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
 
     def on_sar(self, i):
-        func = 'cpu.sar_%s' % size_names[i.op1.size]
-        self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        if i.eflags_dependency:
+            func = 'cpu.sar_%s' % size_names[i.op1.size]
+            self.set_op(i.op1, '%s(%s, %s)' % (func, i.op1.get(), i.op2.get()))
+        else:
+            signed_type = signed_types[i.op1.size]
+            op1 = i.op1.get()
+            op2 = i.op2.get()
+            self.set_op(i.op1, '((%s)%s) >> %s' % (signed_type, op1, op2))
 
     def on_add(self, i):
         if i.eflags_dependency:
@@ -1629,8 +1684,23 @@ class CPU(object):
         self.set_register(ebp, 'cpu.pop_dword();')
 
     def on_cmp(self, i):
-        name = 'cpu.cmp_%s' % size_names[i.op1.size]
-        self.writer.putln('%s(%s, %s);' % (name, i.op1.get(), i.op2.get()))
+        # name = 'cpu.cmp_%s' % size_names[i.op1.size]
+        # self.writer.putln('%s(%s, %s);' % (name, i.op1.get(), i.op2.get()))
+        # if not i.eflags_dependency:
+        #     print hex(self.eip), i.get_disasm()
+        # return
+        if not i.eflags_dependency:
+            raise NotImplementedError()
+        self.writer.start_brace()
+        size_type = size_types[i.op1.size]
+        self.writer.putlnc('%s cmp_a = %s;', size_type, i.op1.get())
+        self.writer.putlnc('%s cmp_b = %s;', size_type, i.op2.get())
+        self.writer.putlnc('%s cmp_res = cmp_a - cmp_b;', size_type)
+        bits = 8*i.op1.size
+        for flag in i.eflags_dependency.keys():
+            func = 'set_eflags_cmp_%s_%s' % (flag.lower(), bits)
+            self.writer.putlnc('%s(cmp_a, cmp_b, cmp_res);', func)
+        self.writer.end_brace()
 
 import struct
 
@@ -1921,6 +1991,8 @@ class Converter(object):
         writer.dedent()
         writer.putln(')')
         writer.close()
+
+        print 'Instruction stats:', self.cpu.mnemonic_stats.most_common(10)
 
     def write_data_header(self, data, name, filename):
         if os.path.isfile(self.get_path(filename)):

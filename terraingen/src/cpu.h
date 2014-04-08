@@ -97,15 +97,12 @@ class CPU
 public:
     static uint32_t reg[8];
     static XMMReg xmm[8];
-    static size_t fpu_top;
+    static int fpu_top;
     static long double fpu[8];
 #ifdef DEBUG_FPU
     static bool fpu_empty[8];
 #endif
-
-    // saved for lazy eflags
-    static uint32_t res;
-    static uint32_t aux;
+    static bool of, sf, zf, cf;
 
     static FunctionMap functions;
 

@@ -26,13 +26,12 @@
 
 uint32_t CPU::reg[8];
 XMMReg CPU::xmm[8];
-size_t CPU::fpu_top;
+int CPU::fpu_top;
 long double CPU::fpu[8];
 #ifdef DEBUG_FPU
 bool CPU::fpu_empty[8];
 #endif
-uint32_t CPU::res;
-uint32_t CPU::aux;
+bool CPU::zf, CPU::cf, CPU::sf, CPU::of;
 FunctionMap CPU::functions;
 
 CPU cpu;
