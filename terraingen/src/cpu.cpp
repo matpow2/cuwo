@@ -31,7 +31,6 @@ long double CPU::fpu[8];
 #ifdef DEBUG_FPU
 bool CPU::fpu_empty[8];
 #endif
-bool CPU::zf, CPU::cf, CPU::sf, CPU::of;
 FunctionMap CPU::functions;
 
 CPU cpu;

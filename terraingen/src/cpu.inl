@@ -107,330 +107,28 @@ FORCE_INLINE void CPU::call_dynamic(uint32_t addr)
     f();
 }
 
-#define BITS 8
-#include "eflags.h"
-#undef BITS
-
-#define BITS 16
-#include "eflags.h"
-#undef BITS
-
-#define BITS 32
-#include "eflags.h"
-#undef BITS
-
 // CPU
-
-FORCE_INLINE bool CPU::get_df()
-{
-    return false;
-}
-
-FORCE_INLINE bool CPU::get_zf()
-{
-    return zf;
-}
-
-FORCE_INLINE bool CPU::get_cf()
-{
-    return cf;
-}
-
-FORCE_INLINE bool CPU::get_sf()
-{
-    return sf;
-}
-
-FORCE_INLINE bool CPU::get_of()
-{
-    return of;
-}
-
-FORCE_INLINE void CPU::set_of_cf(bool in_of, bool in_cf)
-{
-    of = in_of;
-    cf = in_cf;
-}
-
-FORCE_INLINE void CPU::set_flags(bool in_of, bool in_sf, bool in_zf,
-                                 bool in_af, bool in_pf, bool in_cf)
-{
-    of = in_of;
-    sf = in_sf;
-    zf = in_zf;
-    cf = in_cf;
-}
-
-FORCE_INLINE void CPU::test_dword(uint32_t a, uint32_t b)
-{
-    set_eflags_32(a & b);
-}
-
-FORCE_INLINE void CPU::test_word(uint16_t a, uint16_t b)
-{
-    set_eflags_16(a & b);
-}
-
-FORCE_INLINE void CPU::test_byte(uint8_t a, uint8_t b)
-{
-    set_eflags_8(a & b);
-}
-
-FORCE_INLINE uint32_t CPU::sub_dword(uint32_t a, uint32_t b)
-{
-    uint32_t res = a - b;
-    set_eflags_sub_32(a, b, res);
-    return res;
-}
-
-FORCE_INLINE uint8_t CPU::sub_byte(uint8_t a, uint8_t b)
-{
-    uint8_t res = a - b;
-    set_eflags_sub_8(a, b, res);
-    return res;
-}
-
-FORCE_INLINE uint32_t CPU::add_dword(uint32_t a, uint32_t b)
-{
-    uint32_t res = a + b;
-    set_eflags_add_32(a, b, res);
-    return res;
-}
-
-FORCE_INLINE uint8_t CPU::add_byte(uint8_t a, uint8_t b)
-{
-    uint8_t res = a + b;
-    set_eflags_add_8(a, b, res);
-    return res;
-}
-
-FORCE_INLINE uint32_t CPU::adc_dword(uint32_t a, uint32_t b)
-{
-    uint32_t res = a + b + uint32_t(get_cf());
-    set_eflags_adc_32(a, b, res);
-    return res;
-}
-
-FORCE_INLINE uint32_t CPU::sbb_dword(uint32_t a, uint32_t b)
-{
-    uint32_t res = a - b - uint32_t(get_cf());
-    set_eflags_sbb_32(a, b, res);
-    return res;
-}
-
-FORCE_INLINE uint8_t CPU::sbb_byte(uint8_t a, uint8_t b)
-{
-    uint8_t res = a - b - uint8_t(get_cf());
-    set_eflags_sbb_8(a, b, res);
-    return res;
-}
-
-FORCE_INLINE uint32_t CPU::neg_dword(uint32_t value)
-{
-    uint32_t res = -(int32_t)(value);
-    set_eflags_sub_32(0, value, res);
-    return res;
-}
-
-FORCE_INLINE uint8_t CPU::neg_byte(uint8_t value)
-{
-    uint8_t res = -(int8_t)(value);
-    set_eflags_sub_8(0, value, res);
-    return res;
-}
-
-FORCE_INLINE uint32_t CPU::shl_dword(uint32_t value, uint32_t count)
-{
-    count &= 0x1f;
-
-    if (!count)
-        return value;
-    uint32_t res = value << count;
-    uint32_t cf = (value >> (32 - count)) & 0x1;
-    uint32_t of = cf ^ (res >> 31);
-    set_eflags_32(res);
-    set_of_cf(of == 1, cf == 1);
-    return res;
-}
-
-FORCE_INLINE uint16_t CPU::shl_word(uint16_t value, uint16_t count)
-{
-    uint16_t res;
-
-    uint32_t of = 0;
-    uint32_t cf = 0;
-
-    count &= 0x1f;
-
-    if (!count)
-        return value;
-
-    if (count <= 16) {
-        res = uint16_t(value << count);
-        cf = (value >> (16 - count)) & 0x1;
-        of = cf ^ (res >> 15);
-    } else {
-        res = 0;
-    }
-
-    set_eflags_16(res);
-    set_of_cf(of==1, cf==1);
-
-    return res;
-}
-
-FORCE_INLINE uint8_t CPU::shl_byte(uint8_t value, uint8_t count)
-{
-    uint8_t res;
-    uint32_t of = 0;
-    uint32_t cf = 0;
-
-    count &= 0x1f;
-
-    if (!count)
-        return value;
-
-    if (count <= 8) {
-        res = uint8_t(value << count);
-        cf = (value >> (8 - count)) & 0x1;
-        of = cf ^ (res >> 7);
-    } else {
-        res = 0;
-    }
-
-    set_eflags_8(res);
-    set_of_cf(of==1, cf==1);
-
-    return res;
-}
 
 FORCE_INLINE uint32_t CPU::shld_dword(uint32_t value, uint32_t shr,
                                       uint32_t count)
 {
-    count &= 0x1F;
-
-    if (!count)
-        return value;
-
-    uint32_t res = (value << count) | (shr >> (32 - count));
-    set_eflags_32(res);
-    uint32_t cf = (value >> (32 - count)) & 0x1;
-    uint32_t of = cf ^ (res >> 31);
-    set_of_cf(of==1, cf==1);
-
-    return res;
-}
-
-FORCE_INLINE uint32_t CPU::sar_dword(uint32_t v, uint32_t count)
-{
-    count &= 0x1f;
-
-    if (!count)
-        return v;
-
-    uint32_t res = ((int32_t)v) >> count;
-    set_eflags_32(res);
-    uint32_t cf = (v >> (count - 1)) & 1;
-    set_of_cf(false, cf==1);
-    return res;
+    return (value << count) | (shr >> (32 - count));
 }
 
 FORCE_INLINE uint32_t CPU::rol_dword(uint32_t v, uint32_t count)
 {
-    count &= 0x1f;
-
-    if (!count)
-        return v;
-
-    uint32_t res = (v << count) | (v >> (32 - count));
-    uint32_t bit0 = res & 0x1;
-    uint32_t bit31 = res >> 31;
-    set_of_cf((bit0 ^ bit31)==1, bit0==1);
-    return res;
+    return (v << count) | (v >> (32 - count));
 }
 
 FORCE_INLINE uint16_t CPU::rol_word(uint16_t v, uint16_t count)
 {
-    if ((count & 0x0f) == 0) {
-        if (count & 0x10) {
-            uint32_t bit0  = v & 0x1;
-            uint32_t bit15 = v >> 15;
-            set_of_cf((bit0 ^ bit15)==1, bit0==1);
-        }
-    } else {
-        count &= 0x0f;
-        uint16_t res = uint16_t((v << count) | (v >> (16 - count)));
-        uint32_t bit0  = res & 0x1;
-        uint32_t bit15 = res >> 15;
-        set_of_cf((bit0 ^ bit15)==1, bit0==1);
-        return res;
-    }
-    return v;
+    return (v << count) | (v >> (16 - count));
 }
 
-FORCE_INLINE uint32_t CPU::rcr_dword(uint32_t v, uint32_t count)
+FORCE_INLINE uint32_t CPU::rcr_dword(uint32_t v, uint32_t count, uint32_t cf)
 {
-    count &= 0x1f;
-
-    if (!count)
-        return v;
-
-    uint32_t res;
-
-    if (count == 1) {
-        res = (v >> 1) | (uint32_t(get_cf()) << 31);
-    } else {
-        res = (v >> count) | (uint32_t(get_cf()) << (32 - count)) |
-              (v << (33 - count));
-    }
-
-    uint32_t cf = (v >> (count - 1)) & 0x1;
-    uint32_t of = ((res << 1) ^ res) >> 31;
-    set_of_cf(of==1, cf==1);
-    return res;
-}
-
-FORCE_INLINE uint32_t CPU::shr_dword(uint32_t v, uint32_t count)
-{
-    count &= 0x1f;
-
-    if (!count)
-        return v;
-    uint32_t res = v >> count;
-    unsigned cf = (v >> (count - 1)) & 0x1;
-    unsigned of = ((res << 1) ^ res) >> 31;
-    set_eflags_32(res);
-    set_of_cf(of==1, cf==1);
-    return res;
-}
-
-FORCE_INLINE uint16_t CPU::shr_word(uint16_t v, uint16_t count)
-{
-    count &= 0x1f;
-
-    if (!count)
-        return v;
-    uint16_t res = uint16_t(v >> count);
-    uint32_t cf = (v >> (count - 1)) & 0x1;
-    uint32_t of = ((uint16_t)((res << 1) ^ res) >> 15) & 0x1;
-    set_eflags_16(res);
-    set_of_cf(of==1, cf==1);
-    return res;
-}
-
-FORCE_INLINE uint8_t CPU::shr_byte(uint8_t v, uint8_t count)
-{
-    count &= 0x1f;
-
-    if (!count)
-        return v;
-
-    uint8_t res = uint8_t(v >> count);
-    unsigned cf = (v >> (count - 1)) & 0x1;
-    unsigned of = (((res << 1) ^ res) >> 7) & 0x1;
-    set_eflags_8(res);
-    set_of_cf(of==1, cf==1);
-    return res;
+    return (v >> count) | (cf << (32 - count)) |
+           (v << (33 - count));
 }
 
 FORCE_INLINE void CPU::mul_dword(uint32_t v)
@@ -443,10 +141,6 @@ FORCE_INLINE void CPU::mul_dword(uint32_t v)
 
     reg[EAX] = product_low;
     reg[EDX] = product_high;
-
-    set_eflags_32(product_low);
-    if (product_high != 0)
-        set_of_cf(true, true);
 }
 
 FORCE_INLINE void CPU::imul_dword(uint32_t v)
@@ -460,10 +154,6 @@ FORCE_INLINE void CPU::imul_dword(uint32_t v)
 
     reg[EAX] = product_low;
     reg[EDX] = product_high;
-
-    set_eflags_32(product_low);
-    if (product != (int32_t)product)
-        set_of_cf(true, true);
 }
 
 FORCE_INLINE uint32_t CPU::imul_dword(uint32_t v, uint32_t mul)
@@ -473,11 +163,6 @@ FORCE_INLINE uint32_t CPU::imul_dword(uint32_t v, uint32_t mul)
 
     int64_t product = ((int64_t)a)*((int64_t)vv);
     uint32_t product_32 = (uint32_t)(product & 0xFFFFFFFF);
-
-    set_eflags_32(product_32);
-    if (product != (int32_t)product)
-        set_of_cf(true, true);
-
     return product_32;
 }
 
@@ -508,122 +193,8 @@ FORCE_INLINE void CPU::idiv_dword(uint32_t d)
 FORCE_INLINE uint32_t CPU::xadd_dword(uint32_t a, uint32_t & b)
 {
     uint32_t res = a + b;
-    set_eflags_add_32(a, b, res);
     b = a;
     return res;
-}
-
-FORCE_INLINE uint32_t CPU::xor_dword(uint32_t a, uint32_t b)
-{
-    uint32_t res = a ^ b;
-    set_eflags_32(res);
-    return res;
-}
-
-FORCE_INLINE uint8_t CPU::xor_byte(uint8_t a, uint8_t b)
-{
-    uint8_t res = a ^ b;
-    set_eflags_8(res);
-    return res;
-}
-
-FORCE_INLINE uint32_t CPU::dec_dword(uint32_t a)
-{
-    uint32_t res = a - 1;
-    set_eflags_dec_32(res);
-    return res;
-}
-
-FORCE_INLINE uint16_t CPU::dec_word(uint16_t a)
-{
-    uint16_t res = a - 1;
-    set_eflags_dec_16(res);
-    return res;
-}
-
-FORCE_INLINE uint8_t CPU::dec_byte(uint8_t a)
-{
-    uint8_t res = a - 1;
-    set_eflags_dec_8(res);
-    return res;
-}
-
-FORCE_INLINE uint32_t CPU::inc_dword(uint32_t a)
-{
-    uint32_t res = a + 1;
-    set_eflags_inc_32(res);
-    return res;
-}
-
-FORCE_INLINE uint16_t CPU::inc_word(uint16_t a)
-{
-    uint16_t res = a + 1;
-    set_eflags_inc_16(res);
-    return res;
-}
-
-FORCE_INLINE uint8_t CPU::inc_byte(uint8_t a)
-{
-    uint8_t res = a + 1;
-    set_eflags_inc_8(res);
-    return res;
-}
-
-FORCE_INLINE uint32_t CPU::or_dword(uint32_t a, uint32_t b)
-{
-    uint32_t res = a | b;
-    set_eflags_32(res);
-    return res;
-}
-
-FORCE_INLINE uint16_t CPU::or_word(uint16_t a, uint16_t b)
-{
-    uint16_t res = a | b;
-    set_eflags_16(a | b);
-    return res;
-}
-
-FORCE_INLINE uint8_t CPU::or_byte(uint8_t a, uint8_t b)
-{
-    uint8_t res = a | b;
-    set_eflags_8(res);
-    return res;
-}
-
-FORCE_INLINE uint32_t CPU::and_dword(uint32_t a, uint32_t b)
-{
-    uint32_t res = a & b;
-    set_eflags_32(res);
-    return res;
-}
-
-FORCE_INLINE uint16_t CPU::and_word(uint16_t a, uint16_t b)
-{
-    uint16_t res = a & b;
-    set_eflags_16(res);
-    return res;
-}
-
-FORCE_INLINE uint8_t CPU::and_byte(uint8_t a, uint8_t b)
-{
-    uint8_t res = a & b;
-    set_eflags_8(res);
-    return res;
-}
-
-FORCE_INLINE void CPU::cmp_dword(uint32_t a, uint32_t b)
-{
-    set_eflags_sub_32(a, b, a - b);
-}
-
-FORCE_INLINE void CPU::cmp_word(uint16_t a, uint16_t b)
-{
-    set_eflags_sub_16(a, b, a - b);
-}
-
-FORCE_INLINE void CPU::cmp_byte(uint8_t a, uint8_t b)
-{
-    set_eflags_sub_8(a, b, a - b);
 }
 
 #ifdef DEBUG_STACK
@@ -640,24 +211,6 @@ FORCE_INLINE void test_stack()
 }
 #endif
 
-FORCE_INLINE void CPU::push_byte(uint8_t arg)
-{
-    reg[ESP] -= 1;
-    mem.write_byte(reg[ESP], arg);
-#ifdef DEBUG_STACK
-    test_stack();
-#endif
-}
-
-FORCE_INLINE void CPU::push_word(uint16_t arg)
-{
-    reg[ESP] -= 2;
-    mem.write_word(reg[ESP], arg);
-#ifdef DEBUG_STACK
-    test_stack();
-#endif
-}
-
 FORCE_INLINE void CPU::push_dword(uint32_t arg)
 {
     reg[ESP] -= 4;
@@ -665,38 +218,6 @@ FORCE_INLINE void CPU::push_dword(uint32_t arg)
 #ifdef DEBUG_STACK
     test_stack();
 #endif
-}
-
-FORCE_INLINE void CPU::pop_byte(uint8_t * arg)
-{
-    mem.read_byte(reg[ESP], arg);
-    reg[ESP] += 1;
-#ifdef DEBUG_STACK
-    test_stack();
-#endif
-}
-
-FORCE_INLINE uint8_t CPU::pop_byte()
-{
-    uint8_t v;
-    pop_byte(&v);
-    return v;
-}
-
-FORCE_INLINE void CPU::pop_word(uint16_t * arg)
-{
-    mem.read_word(reg[ESP], arg);
-    reg[ESP] += 2;
-#ifdef DEBUG_STACK
-    test_stack();
-#endif
-}
-
-FORCE_INLINE uint16_t CPU::pop_word()
-{
-    uint16_t v;
-    pop_word(&v);
-    return v;
 }
 
 FORCE_INLINE void CPU::pop_dword(uint32_t * arg)
@@ -797,59 +318,11 @@ FORCE_INLINE long double CPU::pop_fpu()
     return ret;
 }
 
-FORCE_INLINE void CPU::compare_ss(float a, float b)
-{
-    bool zf, pf, cf;
-    if (a != a || b != b) {
-        // nan
-        zf = pf = cf = true;
-    } else if (a > b) {
-        zf = pf = cf = false;
-    } else if (a < b) {
-        zf = pf = false;
-        cf = true;
-    } else if (a == b) {
-        // equal
-        zf = true;
-        pf = cf = false;
-    } else {
-#ifdef DEBUG_CPU
-        std::cout << "Unknown float relation!" << std::endl;
-#endif
-        zf = pf = cf = false;
-    }
-    set_flags(false, false, zf, false, pf, cf);
-}
-
-FORCE_INLINE void CPU::compare_sd(double a, double b)
-{
-    bool zf, pf, cf;
-    if (a != a || b != b)
-        // nan
-        zf = pf = cf = true;
-    else if (a > b)
-        zf = pf = cf = false;
-    else if (a < b) {
-        zf = pf = false;
-        cf = true;
-    } else if (a == b) {
-        // equal
-        zf = true;
-        pf = cf = false;
-    } else {
-#ifdef DEBUG_CPU
-        std::cout << "Unknown float relation!" << std::endl;  
-#endif
-        zf = pf = cf = false;
-    }
-    set_flags(false, false, zf, false, pf, cf);
-}
-
 FORCE_INLINE uint32_t cdq_x86(uint32_t v)
 {
-    if (v & 0x80000000)
+    if ((int32_t)v < 0)
         return 0xFFFFFFFF;
-    return 0x00000000;
+    return 0;
 }
 
 // custom/import helpers
