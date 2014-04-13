@@ -36,11 +36,29 @@ for filename in data_files:
         continue
     raise SystemExit('Missing data file %r' % path)
 
-# suppress warnings about -Wstrict-prototypes
-opt, = get_config_vars('OPT')
-if opt:
-    os.environ['OPT'] = ' '.join(flag for flag in opt.split()
-                                 if flag != '-Wstrict-prototypes')
+# suppress warnings
+IGNORE_FLAGS = ('-Wstrict-prototypes', '-mno-fused-madd')
+
+def filter_flags(name):
+    value, = get_config_vars(name)
+    if not value:
+        return
+    flags = value.split()
+    for flag in flags[:]:
+        print flag
+        if flag in IGNORE_FLAGS:
+            flags.remove(flag)
+            continue
+        if flag in ('-Os', '-O2', '-O1'):
+            flags.append('-O3')
+            flags.remove(flag)
+            continue
+    os.environ[name] = ' '.join(flags)
+
+filter_flags('OPT')
+filter_flags('CFLAGS')
+filter_flags('CXXFLAGS')
+filter_flags('ARCHFLAGS')
 
 ext_modules = []
 

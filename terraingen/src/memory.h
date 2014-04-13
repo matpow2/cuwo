@@ -34,6 +34,13 @@ enum SegmentRegister
     GS
 };
 
+struct SavedHeap
+{
+    char * heap;
+    size_t heap_size;
+    void * state;
+};
+
 class Memory
 {
 public:
@@ -42,6 +49,7 @@ public:
     static uint32_t heap_offset;
     static uint32_t segment_table[6];
     static char fs_segment[FS_SEGMENT_SIZE];
+    static uint32_t manager;
 
     Memory();
     static void pad_section(uint32_t address, size_t size);
@@ -79,6 +87,8 @@ public:
     static void copy_mem(uint32_t dest, uint32_t src, uint32_t size);
     static void move_mem(uint32_t dest, uint32_t src, uint32_t size);
     static void set_mem(uint32_t ptr, uint32_t value, uint32_t size);
+    static void save_heap(SavedHeap & heap);
+    static void restore_heap(const SavedHeap & heap);
 };
 
 extern Memory mem;

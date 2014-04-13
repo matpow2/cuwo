@@ -313,26 +313,20 @@ FORCE_INLINE void Memory::write_qword(uint32_t addr, uint64_t qword)
     write(addr, &qword, sizeof(uint64_t));
 }
 
+extern "C" void * dlmalloc(size_t);
+extern "C" void dlfree(void *);
+
 FORCE_INLINE uint32_t Memory::heap_alloc(uint32_t size)
 {
-    uint32_t ret = translate(heap + heap_offset);
-    // add size to heap offset and align to 8-byte boundary
-#ifdef IS_32_BIT
-    heap_offset = (heap_offset + size + 8 - 1) & ~(8 - 1);
-#else
-    heap_offset = (heap_offset + size + 16 - 1) & ~(16 - 1);
-#endif
-    if (heap_offset > HEAP_SIZE) {
-        std::cout << "Heap too small: " << heap_offset << " " << HEAP_SIZE
-            << std::endl;
-        exit(0);
-    }
+    uint32_t ret = translate((char*)dlmalloc(size));
+    if (manager == 0)
+        manager = ret;
     return ret;
 }
 
 FORCE_INLINE void Memory::heap_dealloc(uint32_t address)
 {
-    // do nothing right now
+    dlfree((void*)translate(address));
 }
 
 FORCE_INLINE void Memory::copy_mem(uint32_t dest, uint32_t src, uint32_t size)

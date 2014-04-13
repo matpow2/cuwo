@@ -29,5 +29,47 @@ char Memory::stack[STACK_SIZE];
 char Memory::fs_segment[FS_SEGMENT_SIZE];
 uint32_t Memory::segment_table[6];
 uint32_t Memory::heap_offset = 0;
+uint32_t Memory::manager = 0;
 
 Memory mem;
+
+// dlmalloc
+
+extern "C" {
+    #define HAVE_MORECORE 1
+    #define HAVE_MMAP 0
+    #define USE_DL_PREFIX
+    #define MORECORE heap_morecore
+    void * heap_morecore(int size);
+    #include "dlmalloc.c"
+
+    void * heap_morecore(int size)
+    {
+        void * ret = (void*)(mem.heap + mem.heap_offset);
+        mem.heap_offset += size;
+
+        if (mem.heap_offset >= HEAP_SIZE) {
+            std::cout << "Heap too small: " << mem.heap_offset << " "
+                << HEAP_SIZE << std::endl;
+            exit(0);
+        }
+        return ret;
+    }
+}
+
+void Memory::save_heap(SavedHeap & data)
+{
+    data.heap = new char[heap_offset];
+    data.heap_size = heap_offset;
+    memcpy(data.heap, heap, heap_offset);
+    data.state = new malloc_state;
+    memcpy(data.state, gm, sizeof(malloc_state));
+}
+
+void Memory::restore_heap(const SavedHeap & data)
+{
+    memcpy(heap, data.heap, data.heap_size);
+    heap_offset = data.heap_size;
+    memcpy(gm, data.state, sizeof(malloc_state));
+}
+

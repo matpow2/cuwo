@@ -23,9 +23,7 @@
 #include "terraingen.h"
 #include <fstream>
 
-// VERY specific address - this is the start of the heap, where the game
-// manager has been allocated
-#define MANAGER_ADDRESS mem.translate(mem.heap)
+#define MANAGER_ADDRESS mem.manager
 
 /*
 Some3Data:
@@ -118,14 +116,11 @@ void save_chunk(uint32_t addr, ChunkData * data)
     }
 }
 
-static char * saved_heap;
-static size_t saved_heap_size;
+static SavedHeap saved_heap;
 static char saved_stack[STACK_SIZE];
 
 ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
 {
-    uint32_t heap_offset = mem.heap_offset;
-
     ChunkData * data = new ChunkData;
     data->x = x;
     data->y = y;
@@ -149,9 +144,8 @@ ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
     save_chunk(cpu.reg[EAX], data);
 
     // restore heap
-    mem.heap_offset = heap_offset;
-    memcpy(mem.heap, saved_heap, saved_heap_size);
-    memcpy(mem.stack, saved_stack, STACK_SIZE);
+    mem.restore_heap(saved_heap);
+    // memcpy(mem.stack, saved_stack, STACK_SIZE);
 
     return data;
 }
@@ -159,10 +153,6 @@ ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
 unsigned int tgen_generate_debug_chunk(const char * filename,
                                        unsigned int x, unsigned int y)
 {
-    uint32_t heap_offset = mem.heap_offset;
-    memcpy(mem.heap, saved_heap, saved_heap_size);
-    memcpy(mem.stack, saved_stack, STACK_SIZE);
-
     ChunkData * data = new ChunkData;
     data->x = x;
     data->y = y;
@@ -186,8 +176,9 @@ unsigned int tgen_generate_debug_chunk(const char * filename,
     uint32_t chunk_offset = cpu.reg[EAX];
     tgen_dump_mem(filename);
 
-    // restore heap offset
-    mem.heap_offset = heap_offset;
+    // restore heap
+    mem.restore_heap(saved_heap);
+    // memcpy(mem.stack, saved_stack, STACK_SIZE);
 
     return chunk_offset;
 }
@@ -243,10 +234,8 @@ void tgen_init()
     entry_point();
 
     // save memory state
-    saved_heap_size = mem.heap_offset;
-    saved_heap = new char[saved_heap_size];
-    memcpy(saved_heap, mem.heap, saved_heap_size);
-    memcpy(saved_stack, mem.stack, STACK_SIZE);
+    mem.save_heap(saved_heap);
+    // memcpy(saved_stack, mem.stack, STACK_SIZE);
 }
 
 void tgen_dump_mem(const char * filename)
