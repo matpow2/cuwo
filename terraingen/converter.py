@@ -1746,7 +1746,12 @@ class CPU(object):
         self.set_eflags(i, a=0, b=b, res=(res, i.op1.size))
 
     def on_test(self, i):
-        res = '(%s & %s)' % (i.op1.get(), i.op2.get())
+        op1 = i.op1.get()
+        op2 = i.op2.get()
+        if op1 == op2:
+            res = op1
+        else:
+            res = '(%s & %s)' % (i.op1.get(), i.op2.get())
         self.set_eflags(i, res=(res, i.op1.size))
 
     def on_cwd(self, i):
