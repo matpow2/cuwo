@@ -45,7 +45,6 @@ def filter_flags(name):
         return
     flags = value.split()
     for flag in flags[:]:
-        print flag
         if flag in IGNORE_FLAGS:
             flags.remove(flag)
             continue

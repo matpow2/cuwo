@@ -297,6 +297,8 @@ class MapViewer(object):
         sdl2.mouse.SDL_SetRelativeMouseMode(True)
         self.chunks = ChunkManager(self)
         self.camera = Camera()
+        renderer = glGetString(GL_RENDERER)
+        self.use_ssao = 'Intel HD' not in renderer
         self.init_ssao()
 
     def init_ssao(self):

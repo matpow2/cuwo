@@ -117,7 +117,6 @@ void save_chunk(uint32_t addr, ChunkData * data)
 }
 
 static SavedHeap saved_heap;
-static char saved_stack[STACK_SIZE];
 
 ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
 {
@@ -145,7 +144,6 @@ ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
 
     // restore heap
     mem.restore_heap(saved_heap);
-    // memcpy(mem.stack, saved_stack, STACK_SIZE);
 
     return data;
 }
@@ -178,7 +176,6 @@ unsigned int tgen_generate_debug_chunk(const char * filename,
 
     // restore heap
     mem.restore_heap(saved_heap);
-    // memcpy(mem.stack, saved_stack, STACK_SIZE);
 
     return chunk_offset;
 }
@@ -228,6 +225,7 @@ void tgen_init()
     if (initialized)
         return;
     initialized = true;
+    init_noise();
     rebase_data();
     init_function_map();
     init_static();
@@ -235,7 +233,6 @@ void tgen_init()
 
     // save memory state
     mem.save_heap(saved_heap);
-    // memcpy(saved_stack, mem.stack, STACK_SIZE);
 }
 
 void tgen_dump_mem(const char * filename)

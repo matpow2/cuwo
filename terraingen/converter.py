@@ -1806,7 +1806,7 @@ class CPU(object):
 
     def on_ret(self, i):
         reg = get_register(REG_ESP, REG_GEN_DWORD)
-        self.set_register(reg, '%s+%s' % (reg, 4))
+        self.set_register(reg, '%s+4' % reg)
         self.writer.putln('return;')
 
     def on_leave(self, i):

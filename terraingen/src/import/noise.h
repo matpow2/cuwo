@@ -30,10 +30,23 @@ inline double noise1(int x, int y)
     return 1.0 - (double(nn) / 1073741824.0);
 }
 
+static double cos_table[5000];
+
+void init_noise()
+{
+    for (int i = 0; i < 5000; i++) {
+        cos_table[i] = cos(i * 0.0002 * CW_PI);
+    }
+}
+
+inline double fast_cos(double t)
+{
+    return cos_table[int(t * 5000.01)];
+}
+
 inline double cos_interpolate(double a, double b, double t)
 {
-    double ft = t * CW_PI;
-    double f = (1.0 - cos(ft)) * 0.5;
+    double f = (1.0 - fast_cos(t)) * 0.5;
     return a*(1.0-f) + b*f;
 }
 
@@ -61,6 +74,74 @@ inline void sub_4D59F0()
     double y = to_sd(cpu.get_qword(8));
     double r = interpolated_noise(x, y);
     cpu.push_fpu((long double)(r));
+}
+
+inline uint64_t make_pair(uint32_t a, uint32_t b)
+{
+    return (uint64_t(a) << 32) | b;
+}
+
+void sub_4FE970()
+{
+    pop_ret();
+    uint32_t self = get_self();
+
+    uint32_t a2 = cpu.pop_dword();
+    uint32_t a3 = cpu.pop_dword();
+    uint32_t a4 = cpu.pop_dword();
+
+    int32_t v6_hi_max = int32_t(a3 + 128*128) / (128*128);
+    int32_t v6_hi = int32_t(a3 - 128*128) / (128*128);
+    mem.write_qword(a2, uint64_t(-1));
+    double v4 = interpolated_noise(double(a4) * 0.0005, 3423.0);
+    double v7 = interpolated_noise(double(a3) * 0.0005, 23421.0);
+    int v29 = 0;
+    int v22 = int(a3 + v4 * 3.0 * 256.0);
+    int v21 = int(a4 + v7 * 3.0 * 256.0);
+    int32_t v30 = 0;
+    int32_t v6_lo_max = int32_t(a4 + 128*128) / (128*128);
+    int32_t v6_lo_start = int32_t(a4 - 128*128) / (128*128);
+
+    while (v6_hi < v6_hi_max) {
+        int32_t v6_lo = v6_lo_start;
+        while (v6_lo < v6_lo_max) {
+            if (v6_hi < 0 || v6_hi >= 1024 || v6_lo >= 1024) {
+                v6_lo++;
+                continue;
+            }
+            int32_t i = (v6_hi << 10) + 1048623;
+            int v26 = mem.read_dword(self + (v6_lo + i)*4);
+            if (!v26) {
+                v6_lo++;
+                continue;
+            }
+            uint64_t v34 = int64_t(mem.read_dword(v26)) << 16;
+            uint32_t v34_lo = v34 & 0xFFFFFFFF;
+            uint32_t v34_hi = v34 >> 32;
+            v34_lo -= (v22 << 16);
+            v34_hi -= v34_lo < (v22 << 16);
+            v34_hi -= v22 >> 16;
+
+            const float v10 = 1 / 65536.0f;
+            v34 = make_pair(v34_hi, v34_lo);
+            float v17 = double(v34) * v10;
+
+            int64_t v35 = uint64_t(mem.read_dword(v26+4)) << 16;
+            v35 -= int64_t(v21) << 16;
+            float v18 = double(v35);
+
+            int32_t v19 = int32_t(v18 * v10 * v18 * v10 + v17 * v17);
+            if (!v29 || v19 < v30) {
+                v29 = v26;
+                v30 = v19;
+                mem.write_qword(a2, make_pair(v6_lo, v6_hi));
+            }
+            v6_lo++;
+        }
+        v6_hi++;
+    }
+    set_ret(a2);
+    return;
 }
 
 #endif // TERRAINGEN_NOISE_H
