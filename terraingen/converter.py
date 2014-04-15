@@ -1913,8 +1913,6 @@ class Converter(object):
         optional = pe.OPTIONAL_HEADER
 
         self.image_base = optional.ImageBase
-        self.code_base = optional.ImageBase + optional.BaseOfCode
-        self.data_base = optional.ImageBase + optional.BaseOfData
         self.entry_point = optional.ImageBase + optional.AddressOfEntryPoint
 
         print "Image base: %X" % self.image_base
