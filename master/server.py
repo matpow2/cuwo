@@ -76,7 +76,7 @@ class MasterServer(master.MasterProtocol):
 
     def update(self):
         with open(self.filename, 'wb') as fp:
-            fp.write(json.dumps(self.output.values()))
+            fp.write(json.dumps(list(self.output.values())))
         self.load_blacklist()
         self.output.clear()
 
@@ -136,7 +136,7 @@ def main():
 
     server = MasterServer(filename, blacklist_file)
     port = reactor.listenUDP(port, server)
-    print 'Running cuwo (master) on port %s' % port.port
+    print('Running cuwo (master) on port %s' % port.port)
     reactor.run()
 
 if __name__ == '__main__':

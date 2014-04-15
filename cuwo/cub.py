@@ -24,9 +24,9 @@ class CubModel(object):
         self.x_size = reader.read_uint32()
         self.y_size = reader.read_uint32()
         self.z_size = reader.read_uint32()
-        for z in xrange(self.z_size):
-            for y in xrange(self.y_size):
-                for x in xrange(self.x_size):
+        for z in range(self.z_size):
+            for y in range(self.y_size):
+                for x in range(self.x_size):
                     r = reader.read_uint8()
                     g = reader.read_uint8()
                     b = reader.read_uint8()
@@ -38,9 +38,9 @@ class CubModel(object):
         writer.write_uint32(self.x_size)
         writer.write_uint32(self.y_size)
         writer.write_uint32(self.z_size)
-        for z in xrange(self.z_size):
-            for y in xrange(self.y_size):
-                for x in xrange(self.x_size):
+        for z in range(self.z_size):
+            for y in range(self.y_size):
+                for x in range(self.x_size):
                     r, g, b = self.blocks.get((x, y, z), (0, 0, 0))
                     writer.write_uint8(r)
                     writer.write_uint8(g)

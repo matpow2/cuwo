@@ -41,7 +41,7 @@ def convert_qmo(data, path):
     blocks = data.get_dict()
 
     min_z = max_z = None
-    for pos in blocks.iterkeys():
+    for pos in blocks.keys():
         x, y, z = pos
         if min_z is None:
             min_z = max_z = z
@@ -50,7 +50,7 @@ def convert_qmo(data, path):
 
     qmo_model.y_size = max_z - min_z + 1
 
-    for pos, color in blocks.iteritems():
+    for pos, color in blocks.items():
         x, y, z = switch_axes(*pos)
         y -= min_z
         qmo_model.blocks[(x, y, z)] = color
@@ -62,15 +62,15 @@ def convert_qmo(data, path):
 
 
 def convert_pos(x, y, f):
-    print 'Generating', x, y
+    print('Generating', x, y)
     data = tgen.generate(x, y)
-    print 'Converting...'
+    print('Converting...')
     convert_qmo(data, f)
 
 
 def coords(s):
     try:
-        x, y = map(int, s.split(','))
+        x, y = list(map(int, s.split(',')))
         return x, y
     except ValueError:
         raise argparse.ArgumentTypeError("Coordinates must be x,y")
@@ -84,14 +84,14 @@ def main():
 
     args = parser.parse_args()
 
-    print 'Initializing...'
+    print('Initializing...')
     val = './data/'
     tgen.initialize(args.seed, val)
     for coord in args.coords:
         x, y = coord
         f = '%s_%s.qmo' % (x, y)
         convert_pos(x, y, f)
-    print 'Done'
+    print('Done')
 
 
 if __name__ == '__main__':

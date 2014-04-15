@@ -41,7 +41,7 @@ def get_player(server, value):
         except KeyError:
             pass
         value = value.lower()
-        for player in players.values():
+        for player in list(players.values()):
             name = player.name.lower()
             if name == value:
                 return player
@@ -60,7 +60,7 @@ class Command(object):
     def __init__(self, func):
         self.func = func
         self.original = original = getattr(func, 'func', func)
-        self.name = original.func_name
+        self.name = original.__name__
         self.module = original.__module__
         self.user_types = getattr(original, 'user_types', None)
         self.doc = original.__doc__
@@ -94,7 +94,7 @@ class Command(object):
         if has_defaults:
             defaults_start = len(func_info.args) - len(func_info.defaults)
         arguments = [self.name]
-        for i in xrange(1, len(func_info.args)):
+        for i in range(1, len(func_info.args)):
             argument = func_info.args[i]
             if not has_defaults:
                 arguments.append(argument)
@@ -166,18 +166,18 @@ class ScriptManager(object):
         self.cached_calls.clear()
 
     def unload(self):
-        for script in self.items.values():
+        for script in list(self.items.values()):
             script.unload()
 
     def get(self):
-        return self.items.itervalues()
+        return iter(self.items.values())
 
     def call(self, event_name, **kw):
         try:
             handlers = self.cached_calls[event_name]
         except KeyError:
             handlers = []
-            for script in self.items.values():
+            for script in list(self.items.values()):
                 f = getattr(script, event_name, None)
                 if not f:
                     continue

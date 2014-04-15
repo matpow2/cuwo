@@ -36,14 +36,14 @@ def create_entity_data():
     data.appearance = AppearanceData()
     data.consumable = ItemData()
     data.equipment = []
-    for _ in xrange(13):
+    for _ in range(13):
         data.equipment.append(ItemData())
     return data
 
 
 def read_list(reader, item_class):
     items = []
-    for _ in xrange(reader.read_uint32()):
+    for _ in range(reader.read_uint32()):
         item = item_class()
         item.read(reader)
         items.append(item)
@@ -139,7 +139,7 @@ class MultipleEntityUpdate(Packet):
     def read(self, reader):
         count = reader.read_uint32()
         self.items = []
-        for i in xrange(count):
+        for i in range(count):
             entity_id = reader.read_uint64()
             mask = reader.read_uint64()
             reader.rewind(8)
@@ -430,10 +430,10 @@ class ServerUpdate(Packet):
         self.chunk_items = read_list(reader, ChunkItems)
 
         self.items_8 = []
-        for _ in xrange(reader.read_uint32()):
+        for _ in range(reader.read_uint32()):
             something = reader.read_uint64()
             sub_items = []
-            for _ in xrange(reader.read_uint32()):
+            for _ in range(reader.read_uint32()):
                 sub_items.append(reader.read(16))
             self.items_8.append((something, sub_items))
 
@@ -442,7 +442,7 @@ class ServerUpdate(Packet):
         self.damage_actions = read_list(reader, DamageAction)
 
         self.items_12 = []
-        for _ in xrange(reader.read_uint32()):
+        for _ in range(reader.read_uint32()):
             self.items_12.append(reader.read(40))
 
         # objective/quests? not sure
@@ -458,10 +458,10 @@ class ServerUpdate(Packet):
             del v['sound_actions']
             del v['shoot_actions']
             del v['chunk_items']
-            for k, v in v.iteritems():
+            for k, v in v.items():
                 if not v:
                     continue
-                print k, v
+                print(k, v)
 
         if len(decompressed_data) != reader.tell():
             raise NotImplementedError()
@@ -731,7 +731,7 @@ def write_packet(packet):
 
 
 for table in (CS_PACKETS, SC_PACKETS):
-    for k, v in table.iteritems():
+    for k, v in table.items():
         v.packet_id = k
 
 
@@ -752,7 +752,7 @@ class PacketHandler(object):
                     break
                 packet = read_packet(reader, self.table)
                 self.callback(packet)
-        except OutOfData, e:
+        except OutOfData as e:
             if e.reader is not reader:
                 raise e
         except StopIteration:

@@ -15,16 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-import pefile
-import pydasm
-from cStringIO import StringIO
+from . import pefile
+from . import pydasm
+from io import StringIO
 import collections
 import struct
 import itertools
 import os
 import math
-import config
-from config import function_alias, import_alias, function_enders
+from . import config
+from .config import function_alias, import_alias, function_enders
 from ctypes import c_int32
 
 LICENSE_TEXT = '''\
@@ -174,11 +174,11 @@ class CodeWriter(object):
         except IOError:
             pass
         fp = open(self.filename, 'wb')
-        fp.write(data)
+        fp.write(data.encode('utf-8'))
         fp.close()
 
-MODE_32 = 0
-MODE_16 = 1
+MODE_32 = pydasm.MODE_32
+MODE_16 = pydasm.MODE_16
 
 REG_GEN = pydasm.REGISTER_TYPE_GEN
 REG_SEGMENT = pydasm.REGISTER_TYPE_SEGMENT
@@ -389,7 +389,7 @@ class Operand(object):
                 addr = op.displacement
 
                 if (addr in inst.converter.imports
-                    and addr not in inst.converter.import_addresses.values()):
+                    and addr not in list(inst.converter.import_addresses.values())):
                     self.displacement = str(addr)
                     self.is_memory = False
                     self.is_immediate = True
@@ -468,7 +468,7 @@ class Instruction(object):
         self.has_reloc = False
         self.condition_value = None
 
-        for pos in xrange(offset, offset+i.length):
+        for pos in range(offset, offset+i.length):
             if pos in converter.reloc_addresses:
                 self.has_reloc = True
                 break
@@ -515,7 +515,7 @@ class Instruction(object):
 
         if len(mnemonic) > 2:
             if mnemonic != ['bts', 'dword']:
-                print mnemonic
+                print(mnemonic)
                 raise NotImplementedError()
 
         self.mnemonic = mnemonic[0]
@@ -581,7 +581,7 @@ class Instruction(object):
 
     def get_dependees(self):
         dependees = set()
-        for value in self.eflags_dependency.values():
+        for value in list(self.eflags_dependency.values()):
             dependees.update(value)
         return dependees
 
@@ -594,7 +594,7 @@ class Instruction(object):
 def get_label_name(address):
     return 'loc_%X' % address
 
-label_makers = set([
+label_makers = {
     'jc', # 0x72,
     'jz', # 0x74,
     'jnz',
@@ -610,7 +610,7 @@ label_makers = set([
     'jg',
     ('jmp', 0xEB),
     ('jmp', 0xE9)
-])
+}
 
 class Subroutine(object):
     __slots__ = ['start', 'instructions', 'instruction_list', 'labels',
@@ -635,17 +635,17 @@ class Subroutine(object):
         while True:
             try:
                 data = converter.get_memory(address, 16)
-            except NotImplementedError, e:
-                print 'Could not get memory for address %X' % address
+            except NotImplementedError as e:
+                print('Could not get memory for address %X' % address)
                 raise e
             raw_instruction = pydasm.get_instruction(data, pydasm.MODE_32)
             if not raw_instruction:
-                print 'Invalid instruction at %X' % address
+                print('Invalid instruction at %X' % address)
                 break
             instruction = Instruction(raw_instruction, address, converter)
             add_eflags = label_eflags.get(address, None)
             if add_eflags:
-                for k, v in add_eflags.iteritems():
+                for k, v in add_eflags.items():
                     eflags_cache[k] += v
             for flag in instruction.eflags_used:
                 for inst_dep in eflags_cache[flag]:
@@ -660,7 +660,7 @@ class Subroutine(object):
             address += instruction.length
 
             mnemonic = instruction.mnemonic
-            keys = set([(mnemonic, opcode), mnemonic])
+            keys = {(mnemonic, opcode), mnemonic}
 
             if mnemonic in ('jmp', 'call'):
                 eflags_cache.clear()
@@ -676,7 +676,7 @@ class Subroutine(object):
             elif not keys.isdisjoint(label_makers):
                 self.add_jump(instruction.address, instruction.op1.value)
                 eflags_copy = {}
-                for k, v in eflags_cache.iteritems():
+                for k, v in eflags_cache.items():
                     eflags_copy[k] = v[:]
                 label_eflags[instruction.op1.value] = eflags_copy
 
@@ -706,7 +706,7 @@ class Subroutine(object):
         """
         Can only be called after initial decode
         """
-        for src, dst in self.jumps.iteritems():
+        for src, dst in self.jumps.items():
             minimum = min(src, dst)
             maximum = max(src, dst)
             if address >= minimum and address < maximum:
@@ -721,7 +721,7 @@ class Subroutine(object):
         self.start = items[0].address
         self.end = items[-1].address + items[-1].length
         self.jumps = {}
-        for src, dst in jumps.iteritems():
+        for src, dst in jumps.items():
             if src not in self.instructions:
                 continue
             self.jumps[src] = dst
@@ -795,7 +795,7 @@ float_types = {
 }
 
 def prettify_value(value):
-    if isinstance(value, (long, int)):
+    if isinstance(value, int):
         value = '%#x' % value
     return value
 
@@ -927,11 +927,11 @@ class CPU(object):
         self.writer.comment = None
         if self.unimplemented is None:
             self.unimplemented = True
-        print 'Conversion skipped %X:' % (self.sub.start)
-        print "%s: [%#x][%x] %s" % (message, self.eip, i.opcode,
-                                    i.get_disasm())
+        print('Conversion skipped %X:' % (self.sub.start))
+        print("%s: [%#x][%x] %s" % (message, self.eip, i.opcode,
+                                    i.get_disasm()))
 
-    def next(self):
+    def __next__(self):
         instruction = self.sub.instruction_list[self.index]
         self.eip = instruction.address
 
@@ -1016,12 +1016,12 @@ class CPU(object):
         if args:
             names = []
             for arg in args:
-                name = 'temp_%s' % self.result_id.next()
+                name = 'temp_%s' % next(self.result_id)
                 self.writer.putlnc('%s %s;', size_type, name)
                 self.writer.putlnc('%s = %s;', name, arg)
                 names.append(name)
             value %= tuple(names)
-        name = 'temp_%s' % self.result_id.next()
+        name = 'temp_%s' % next(self.result_id)
         self.writer.putlnc('%s %s;', size_type, name)
         self.writer.putlnc('%s = %s;', name, value)
         self.set_op(op, name)
@@ -1321,12 +1321,12 @@ class CPU(object):
             if instruction.condition_value:
                 cond_name = instruction.condition_value
             else:
-                cond_name = 'cond_%s' % self.eflags_id.next()
+                cond_name = 'cond_%s' % next(self.eflags_id)
                 instruction.condition_value = cond_name
                 create_bool = True
             c = instruction.get_condition()
             if c is None:
-                print instruction.mnemonic
+                print(instruction.mnemonic)
                 raise NotImplementedError()
             if c in ('nz', 'ne') and name == 'cmp':
                 value = '%s != %s' % (a, b)
@@ -1395,7 +1395,7 @@ class CPU(object):
             elif c == 'nl' and name == 'cmp':
                 value = '(%s)%s >= (%s)%s' % (signed_type, a, signed_type, b)
             else:
-                print name, c
+                print(name, c)
                 raise NotImplementedError()
             if create_bool:
                 self.writer.putlnc('bool %s;', cond_name)
@@ -1614,7 +1614,7 @@ class CPU(object):
                 comp = self.find_instruction('cmp', -4)
                 indirect = self.find_instruction('movzx', -2)
                 if comp is None:
-                    print i.get_disasm()
+                    print(i.get_disasm())
                     raise NotImplementedError()
                 table_size = comp.op2.value+1
                 if indirect:
@@ -1627,14 +1627,14 @@ class CPU(object):
                         raise NotImplementedError()
                     indexes = collections.defaultdict(list)
                     # find the max value
-                    for ii in xrange(table_size):
+                    for ii in range(table_size):
                         data = self.converter.get_memory(ind_addr + ii, 1)
                         index, = struct.unpack('<B', data)
                         indexes[index].append(ii)
 
                     self.writer.putln('switch (%s) {' % ind_reg)
                     self.writer.indent()
-                    for to_index, from_list in indexes.iteritems():
+                    for to_index, from_list in indexes.items():
                         for table_index in from_list:
                             self.writer.putln('case %s:' % table_index)
                         self.writer.indent()
@@ -1648,7 +1648,7 @@ class CPU(object):
 
                 self.writer.putln('switch (%s) {' % reg)
                 self.writer.indent()
-                for ii in xrange(table_size):
+                for ii in range(table_size):
                     data = self.converter.get_memory(table_addr + ii*scale, 4)
                     addr, = struct.unpack('<I', data)
                     if addr > self.sub.end or addr < self.sub.start:
@@ -1894,7 +1894,7 @@ class Converter(object):
         import_dir = os.path.join(self.base_dir, 'src', 'import')
         for f in os.listdir(import_dir):
             code_path = os.path.join(import_dir, f)
-            self.custom_code += open(code_path, 'rb').read()
+            self.custom_code += open(code_path, 'rb').read().decode('utf-8')
 
         self.mem_writes = {}
         self.sections = []
@@ -1915,7 +1915,7 @@ class Converter(object):
         self.image_base = optional.ImageBase
         self.entry_point = optional.ImageBase + optional.AddressOfEntryPoint
 
-        print "Image base: %X" % self.image_base
+        print("Image base: %X" % self.image_base)
 
         makedirs(self.gen_dir)
         writer = self.open_code('out.cpp')
@@ -1927,7 +1927,7 @@ class Converter(object):
             section = Section(pe, section)
             self.sections.append(section)
             section.image_base = self.image_base
-            name = section.Name.strip('\x00')[1:]
+            name = section.Name.decode('utf-8').strip('\x00')[1:]
             section.section_name = name
             if name in ('rsrc', 'text', 'reloc'):
                 continue
@@ -1954,7 +1954,7 @@ class Converter(object):
             section_base = section.image_base + section.VirtualAddress
             data = section.get_data()
             extra = section.Misc_VirtualSize - len(data)
-            data += '\x00' * extra
+            data += b'\x00' * extra
             name = '%s_section' % name
             self.write_data_header(data, name, '%s.h' % name)
             sections_header.putlnc('extern char %s[%s];', name, len(data))
@@ -1964,7 +1964,7 @@ class Converter(object):
 
         # ensure custom sqlite3 is used
         sqlite_table = config.sqlite_table
-        for _ in xrange(712 / 4):
+        for _ in range(712 // 4):
             value = self.get_dword(sqlite_table)
             if value != 0:
                 func = self.get_function_name(value)
@@ -1982,14 +1982,14 @@ class Converter(object):
         self.function_stack = [self.entry_point]
         for address in self.dynamic_addresses:
             if (address in self.imports and
-                address not in self.import_addresses.values()):
+                address not in list(self.import_addresses.values())):
                 self.used_imports.add(address)
             else:
                 self.function_stack.insert(0, address)
 
         # add initterm initializers to function stack
         writer.putmeth('void init_static')
-        for addr in xrange(config.static_start, config.static_end, 4):
+        for addr in range(config.static_start, config.static_end, 4):
             value = self.get_dword(addr)
             if value in config.static_ignore:
                 continue
@@ -2010,7 +2010,7 @@ class Converter(object):
                 if t == 0:
                     continue
                 if t != 3:
-                    print 'has unsupported reloctype', t
+                    print('has unsupported reloctype', t)
                     continue
                 addr = entry.rva + self.image_base
                 dword = self.get_dword(addr)
@@ -2108,11 +2108,11 @@ class Converter(object):
         writer.putln(')')
         writer.close()
 
-        print 'Instruction stats:', self.cpu.mnemonic_stats.most_common(10)
+        print('Instruction stats:', self.cpu.mnemonic_stats.most_common(10))
 
     def write_data_header(self, data, name, filename):
         if os.path.isfile(self.get_path(filename)):
-            print 'Not writing data header for', filename
+            print('Not writing data header for', filename)
             return
         section_writer = self.open_code(filename)
         section_writer.putlnc('char %s[%s] = {', name, len(data))
@@ -2122,7 +2122,7 @@ class Converter(object):
         data_len = len(data)
         while i < data_len:
             items = []
-            for ii in xrange(i, min(i+10, len(data))):
+            for ii in range(i, min(i+10, len(data))):
                 v = struct.unpack('b', data[ii])[0]
                 if v < 0:
                     v = '-0x%02X,' % -v
@@ -2163,7 +2163,7 @@ class Converter(object):
         if address in self.subs or address in self.function_stack:
             return
         if (address in self.imports and
-            address not in self.import_addresses.values() and
+            address not in list(self.import_addresses.values()) and
             address not in self.dynamic_addresses):
             return
         if address in self.custom_subs:
@@ -2269,7 +2269,7 @@ class Converter(object):
 
         writer.putmeth('void %s' % name)
         while True:
-            if not self.cpu.next():
+            if not next(self.cpu):
                 break
         if sub.child_sub:
             writer.putln('return;')
@@ -2339,7 +2339,7 @@ def convert(filename):
 
     file_hash = hashlib.md5(open(filename, 'rb').read()).hexdigest()
     if file_hash != SERVER_HASH.lower():
-        print 'Invalid Server.exe hash, should be %s' % SERVER_HASH
+        print('Invalid Server.exe hash, should be %s' % SERVER_HASH)
         return
 
     converter = Converter(filename)

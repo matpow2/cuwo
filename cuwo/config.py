@@ -35,7 +35,7 @@ class ConfigObject(object):
         for path in glob.glob(spec):
             name = os.path.splitext(os.path.basename(path))[0]
             new_dict = ConfigDict()
-            execfile(path, {}, new_dict)
+            exec(compile(open(path).read(), path, 'exec'), {}, new_dict)
             self.config_dict[name] = new_dict
 
     def __getattr__(self, name):

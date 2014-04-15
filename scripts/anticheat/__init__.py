@@ -25,7 +25,7 @@ from cuwo.script import (ServerScript,
 from cuwo.common import (get_power, get_item_name, is_bit_set,
                          get_entity_max_health)
 from cuwo.packet import ServerUpdate, PickupAction
-from constants import *
+from .constants import *
 from twisted.internet import reactor
 
 import re
@@ -325,7 +325,7 @@ class AntiCheatConnection(ConnectionScript):
 
     def log(self, message, loglevel=LOG_LEVEL_DEFAULT):
         if self.log_level >= loglevel:
-            print CUWO_ANTICHEAT + " - " + message
+            print(CUWO_ANTICHEAT + " - " + message)
         if self.irc_log_level >= loglevel:
             try:
                 self.server.scripts.irc.send(CUWO_ANTICHEAT + " - " + message)
@@ -335,9 +335,9 @@ class AntiCheatConnection(ConnectionScript):
                 self.disable_irc_logging()
 
     def disable_irc_logging(self):
-        print ("{anticheat} - irc not found, logging to " +
+        print(("{anticheat} - irc not found, logging to " +
                "irc automatically turned off").format(
-            anticheat=CUWO_ANTICHEAT)
+            anticheat=CUWO_ANTICHEAT))
 
         self.irc_log_level = 0
         self.server.config.anticheat.irc_log_level = 0

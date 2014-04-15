@@ -47,7 +47,7 @@ open('./dist/run.bat', 'wb').write('bin\server.exe\r\npause\r\n')
 for name in SERVER_FILES:
     copy('../%s' % name, './dist/%s' % name)
 
-for src, dst in COPY_FILES.iteritems():
+for src, dst in COPY_FILES.items():
     copy('../%s' % src, './dist/%s' % dst)
 
 for root, sub, files in os.walk('./dist'):
@@ -78,4 +78,4 @@ except OSError:
 try:
     subprocess.check_call(['7z', 'a', filename, 'dist'])
 except WindowsError:
-    print '7zip failed - do you have the 7zip directory in PATH?'
+    print('7zip failed - do you have the 7zip directory in PATH?')

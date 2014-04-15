@@ -1,1 +1,1 @@
-from euclid import Vector3
+from .euclid import Vector3

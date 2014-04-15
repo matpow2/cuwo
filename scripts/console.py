@@ -20,78 +20,61 @@ Provides console commands
 """
 
 import sys
-from twisted.protocols.basic import LineReceiver
-from twisted.internet.task import LoopingCall
+import asyncio
 from cuwo.common import parse_command
 from cuwo.script import ServerScript, ScriptInterface
 
 stdout = sys.__stdout__
 
+def write_stdout(v):
+    stdout.write(v.encode(stdout.encoding, 'replace'))
+
 if sys.platform == 'win32':
-    # StandardIO on Windows does not work, so we create a silly replacement
     import msvcrt
 
-    class StandardIO(object):
-        disconnecting = False
-        interval = 0.01
-        input = u''
-
-        def __init__(self, protocol):
-            self.protocol = protocol
-            protocol.makeConnection(self)
-            self.input_loop = LoopingCall(self.get_input)
-            self.input_loop.start(0.01)
-
-        def loseConnection(self):
-            self.input_loop.stop()
-
-        def get_input(self):
+    @asyncio.coroutine
+    def async_stdin():
+        current = ''
+        while True:
             while msvcrt.kbhit():
                 c = msvcrt.getwch()
-                if c == u'\r':  # new line
-                    c = u'\n'
+                if c == '\r':  # new line
+                    c = '\n'
                     stdout.write(c)
-                    self.input += c
-                    self.protocol.dataReceived(self.input)
-                    self.input = ''
-                elif c in (u'\xE0', u'\x00'):
+                    current += c
+                    break
+                elif c in ('\xE0', '\x00'):
                     # ignore special characters
                     msvcrt.getwch()
-                elif c == u'\x08':  # delete
-                    self.input = self.input[:-1]
+                elif c == '\x08':  # delete
+                    current = self.input[:-1]
                     stdout.write('\x08 \x08')
                 else:
-                    self.input += c
+                    current += c
                     stdout.write(c)
+            yield from asyncio.sleep(0.01)
+        return current
 
-        def write(self, data):
-            stdout.write(data)
-
-        def writeSequence(self, seq):
-            stdout.write(''.join(seq))
 else:
-    from twisted.internet.stdio import StandardIO
+    from asyncio.streams import FlowControlMixin 
 
+    reader = None
 
-class ConsoleInput(LineReceiver):
-    delimiter = '\n'
+    @asyncio.coroutine 
+    def get_stdin():
+        loop = asyncio.get_event_loop() 
+        reader = asyncio.StreamReader() 
+        reader_protocol = asyncio.StreamReaderProtocol(reader)
+        yield from loop.connect_read_pipe(lambda: reader_protocol, sys.stdin)
+        return reader 
 
-    def __init__(self, server):
-        self.server = server
-        self.interface = ScriptInterface('Console', server, 'admin', 'console')
-
-    def lineReceived(self, line):
-        if line.startswith('/'):
-            command, args = parse_command(line[1:])
-            if command == 'stop':
-                self.server.stop()
-                return
-            ret = self.server.call_command(self.interface, command, args)
-            if not ret:
-                return
-            self.sendLine(ret.encode(stdout.encoding, 'replace'))
-        else:
-            self.server.send_chat(line)
+    @asyncio.coroutine
+    def async_stdin():
+        global reader
+        if reader is None:
+            reader = yield from get_stdin() 
+        line = yield from reader.readline() 
+        return line.decode('utf8')
 
 
 class ConsoleServer(ServerScript):
@@ -102,12 +85,30 @@ class ConsoleServer(ServerScript):
         if not stdout.isatty():
             return
         self.console = ConsoleInput(self.server)
-        self.io = StandardIO(self.console)
+        self.interface = ScriptInterface('Console', server, 'admin', 'console')
+        self.task = asyncio.Task(self.loop())
+
+    @asyncio.coroutine
+    def loop(self):
+        while True:
+            line = yield from async_stdin()
+            self.handle_line(line)
+
+    def handle_line(self, line):
+        if not line.startswith('/'):
+            self.server.send_chat(line)
+            return
+        command, args = parse_command(line[1:])
+        if command == 'stop':
+            self.server.stop()
+            return
+        ret = self.server.call_command(self.interface, command, args)
+        if not ret:
+            return
+        print(ret)
 
     def on_unload(self):
-        if self.io is None:
-            return
-        self.io.loseConnection()
+        self.task.cancel()
 
 
 def get_class():

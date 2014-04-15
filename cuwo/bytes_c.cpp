@@ -211,5 +211,5 @@ inline PyObject * get_stream_data(void * stream)
 {
     ostringstream * ss = (ostringstream*)stream;
     const string tmp = ss->str();
-    return PyString_FromStringAndSize(tmp.c_str(), tmp.length());
+    return PyBytes_FromStringAndSize(tmp.c_str(), tmp.length());
 }

@@ -63,7 +63,7 @@ class QubicleModel(object):
             r = int(color & 0x0000FF)
             g = int((color & 0x00FF00) >> 8)
             b = int((color & 0xFF0000) >> 16)
-            for _ in xrange(times):
+            for _ in range(times):
                 x = i / (self.y_size * self.z_size)
                 y = (i % (self.y_size * self.z_size)) / self.z_size
                 z = i % self.z_size
@@ -80,9 +80,9 @@ class QubicleModel(object):
         writer.write_int32(self.z_offset)
         writer.write_uint8(self.hidden)
         writer.write_uint32(self.x_size * self.y_size * self.z_size)
-        for x in xrange(self.x_size):
-            for y in xrange(self.y_size):
-                for z in xrange(self.z_size):
+        for x in range(self.x_size):
+            for y in range(self.y_size):
+                for z in range(self.z_size):
                     c = self.blocks.get((x, y, z), None)
                     if c is None:
                         writer.write_uint32(0)
@@ -101,7 +101,7 @@ class QubicleFile(object):
             raise NotImplementedError('invalid magic')
         elif read_string(reader) != VERSION:
             raise NotImplementedError('unsupported version')
-        for _ in xrange(reader.read_uint32()):
+        for _ in range(reader.read_uint32()):
             self.models.append(QubicleModel(reader))
         self.junk = reader.read()
         if len(self.junk) != 108:

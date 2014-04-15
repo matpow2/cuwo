@@ -21,17 +21,17 @@ import shlex
 import os
 
 
-CHAR_FILTER = set([10, 13] + range(32, 127))
+CHAR_FILTER = set([10, 13] + list(range(32, 127)))
 
 
 def filter_string(value):
     # Cube World only displays characters between 32-126 (and \r\n which both
     # produce newlines) in-game, so in case the user sent a bogus message, we
     # need to filter out those characters and replace with spaces
-    new = u''
+    new = ''
     for c in value:
         if ord(c) not in CHAR_FILTER:
-            c = u' '
+            c = ' '
         new += c
     return new
 
@@ -83,7 +83,7 @@ def get_sector(vec):
 
 
 def parse_command(message):
-    if isinstance(message, unicode):
+    if isinstance(message, str):
         # due to shlex unicode problems
         message = message.encode('utf-8')
     try:

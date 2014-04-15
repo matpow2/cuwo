@@ -68,8 +68,7 @@ def login(script, password):
 def help(script, name=None):
     """Returns information about commands."""
     if name is None:
-        commands = [item.name for item in script.get_commands()]
-        commands.sort()
+        commands = sorted([item.name for item in script.get_commands()])
         return 'Commands: ' + ', '.join(commands)
     else:
         command = script.get_command(name)
@@ -140,7 +139,7 @@ def kill(script, name=None):
     player = script.get_player(name)
     damage_player(script, player, damage=player.entity_data.hp + 100.0)
     message = '%s was killed' % player.name
-    print message
+    print(message)
     script.server.send_chat(message)
 
 
@@ -151,7 +150,7 @@ def stun(script, name, milliseconds=1000):
     player = script.get_player(name)
     damage_player(script, player, stun_duration=int(milliseconds))
     message = '%s was stunned' % player.name
-    print message
+    print(message)
     script.server.send_chat(message)
 
 
@@ -171,7 +170,7 @@ def who_where(script, include_where):
     if player_count == 0:
         return 'No players connected'
     formatted_names = []
-    for player in server.players.values():
+    for player in list(server.players.values()):
         name = '%s #%s' % (player.name, player.entity_id)
         if include_where:
             name += ' %s' % (get_chunk(player.position),)

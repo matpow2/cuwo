@@ -68,8 +68,8 @@ class CubeWorldProtocol(Protocol):
         if self.entity_id is None:
             return
         entity = self.entities[self.entity_id]
-        print 'Info:'
-        print 'Pos:', entity.pos.x, entity.pos.y, entity.pos.z
+        print('Info:')
+        print('Pos:', entity.pos.x, entity.pos.y, entity.pos.z)
 
     def send_chat(self, value):
         packet = ServerChatMessage()
@@ -98,7 +98,7 @@ class CubeWorldProtocol(Protocol):
             return
         self.relay_client.transport.write(write_packet(packet))
         if packet.packet_id not in (0,):
-            print 'Got client packet:', packet.packet_id
+            print('Got client packet:', packet.packet_id)
 
     def on_server_packet(self, packet):
         if packet.packet_id == EntityUpdate.packet_id:
@@ -113,7 +113,7 @@ class CubeWorldProtocol(Protocol):
                                     UpdateFinished.packet_id,
                                     CurrentTime.packet_id,
                                     ServerUpdate.packet_id):
-            print 'Got server packet:', packet.packet_id
+            print('Got server packet:', packet.packet_id)
 
     def got_relay_client(self, p):
         self.relay_client = p
@@ -125,11 +125,11 @@ class CubeWorldProtocol(Protocol):
         point = TCP4ClientEndpoint(reactor, "127.0.0.1", 12346)
         d = point.connect(RelayFactory(self))
         d.addCallback(self.got_relay_client)
-        print 'Connected'
+        print('Connected')
 
     def connectionLost(self, reason):
         self.disconnected = True
-        print 'Lost connection'
+        print('Lost connection')
         if self.relay_client is not None:
             self.relay_client.transport.loseConnection()
 
@@ -147,7 +147,7 @@ class CubeWorldProtocol(Protocol):
 
 class CubeWorldServer(Factory):
     def __init__(self):
-        print 'cuwo (mitm) running on port 12345'
+        print('cuwo (mitm) running on port 12345')
 
     def buildProtocol(self, addr):
         return CubeWorldProtocol(self)

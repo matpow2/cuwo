@@ -76,7 +76,7 @@ if os.name == 'nt':
 
 ext_modules.append(Extension('terraingen.pydasm', define_macros=macros,
                              sources=['./terraingen/pydasm/libdasm.c',
-                                      './terraingen/pydasm/pydasm.c']))
+                                      './terraingen/pydasm/pydasm.pyx']))
 
 tgen_module = Extension('cuwo.tgen', ['./cuwo/tgen.pyx'],
                         language='c++', include_dirs=includes,
@@ -103,8 +103,7 @@ def silent_spawn_nt(cmd, search_path=1, verbose=0, dry_run=0):
     rc = p.returncode
     if rc != 0:
         # and this reflects the command running but failing
-        raise spawn.DistutilsExecError, \
-              "command '%s' failed with exit status %d" % (cmd[0], rc)
+        raise spawn.DistutilsExecError("command '%s' failed with exit status %d" % (cmd[0], rc))
 
 
 class build_ext(_build_ext.build_ext):
@@ -120,12 +119,12 @@ class build_ext(_build_ext.build_ext):
         if not self.force and os.path.isdir('./terraingen/gensrc'):
             return
         from terraingen.converter import convert
-        print 'Generating sources for tgen...'
+        print('Generating sources for tgen...')
         converter = convert('./data/Server.exe')
         sources = [os.path.relpath(src) for src in converter.get_sources()]
-        print 'Generated %s source files.' % len(sources)
+        print('Generated %s source files.' % len(sources))
 
-        print 'Building static tgen library (this may take a while)'
+        print('Building static tgen library (this may take a while)')
         is_msvc = self.compiler.compiler_type == 'msvc'
         includes = converter.get_includes(is_msvc)
         extra_args = []

@@ -112,7 +112,7 @@ class MasterClient(MasterProtocol):
         if self.has_response:
             return
         self.has_response = True
-        print 'Received response from master server'
+        print('Received response from master server')
 
 
 class MasterRelay(ServerScript):

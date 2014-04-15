@@ -21,7 +21,7 @@ def negate(data):
 
 def decode(data):
     data = bytearray(negate(data))
-    for i in reversed(xrange(len(data))):
+    for i in reversed(range(len(data))):
         j = (i + key[i % len(key)]) % len(data)
         data[i], data[j] = data[j], data[i]
     return data
@@ -29,7 +29,7 @@ def decode(data):
 
 def encode(data):
     data = bytearray(negate(data))
-    for i in xrange(len(data)):
+    for i in range(len(data)):
         j = (i + key[i % len(key)]) % len(data)
         data[i], data[j] = data[j], data[i]
     return data

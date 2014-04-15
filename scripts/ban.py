@@ -48,7 +48,7 @@ class BanServer(ServerScript):
             if name is None:
                 continue
             message = PLAYER_BANNED.format(name=name, reason=reason)
-            print message
+            print(message)
             self.server.send_chat(message)
 
     def unban(self, ip):

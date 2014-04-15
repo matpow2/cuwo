@@ -28,7 +28,7 @@ from OpenGL.constants import GLfloat_3, GLfloat_4
 from OpenGL.GL import shaders
 from OpenGL.GL.ARB.vertex_buffer_object import *
 import threading
-from Queue import PriorityQueue, Full
+from queue import PriorityQueue, Full
 from ctypes import *
 import math
 import os
@@ -104,7 +104,7 @@ class ChunkManager(object):
         return None
 
     def get_all(self):
-        for value in self.cache.itervalues():
+        for value in self.cache.values():
             if value is None:
                 continue
             yield value
@@ -113,7 +113,7 @@ class ChunkManager(object):
         self.running = False
 
     def run(self):
-        print 'Initializing tgen...'
+        print('Initializing tgen...')
         tgen.initialize(self.parent.seed, './data/')
         while self.running:
             key = self.gen_queue.get()
@@ -532,7 +532,7 @@ class MapViewer(object):
 
         chunk = (x, y)
         if chunk != self.old_chunk:
-            print 'Current chunk:', x, y
+            print('Current chunk:', x, y)
             self.old_chunk = chunk
 
         ChunkData.begin()

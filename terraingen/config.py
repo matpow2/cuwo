@@ -26,11 +26,11 @@ image_base = 0x400000
 entry_point = 0x549AD0
 static_start = 0x558414
 static_end = 0x558548
-static_ignore = set([
+static_ignore = {
     0x5566C0,
     0x5566D0,
     0x5566E0
-])
+}
 sqlite_table = 0x16A290 + image_base
 
 dynamic_addresses = [
@@ -54,7 +54,7 @@ function_alias = {
 
 import_alias = {
     '??2@YAPAXI@Z': 'new_func',
-    ('ws2_32', 115L): 'WSAStartup',
+    ('ws2_32', 115): 'WSAStartup',
     '??3@YAXPAX@Z': 'delete_func',
     '??0exception@std@@QAE@ABQBDH@Z': 'exception_ctor_noalloc',
     '??0exception@std@@QAE@ABQBD@Z': 'exception_ctor',
@@ -97,6 +97,6 @@ import_alias = {
     '?_Ios_base_dtor@ios_base@std@@CAXPAV12@@Z': 'ios_base_Ios_base_dtor'
 }
 
-function_enders = set([
+function_enders = {
     '_Xlength_errorstdYAXPBDZ_imp'
-])
+}

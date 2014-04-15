@@ -38,7 +38,7 @@ class SaneConnection(ConnectionScript):
         if self.connection is None:
             return
         host = self.connection.address.host
-        print 'Connection %s timed out, disconnecting...' % host
+        print('Connection %s timed out, disconnecting...' % host)
         self.connection.disconnect()
 
 
@@ -61,7 +61,7 @@ class SaneServer(ServerScript):
                 break
         else:
             return
-        print 'Too many connections from %s, closing...' % host
+        print('Too many connections from %s, closing...' % host)
         self.hard_bans.add(host)
         return False
 

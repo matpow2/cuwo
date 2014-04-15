@@ -69,7 +69,7 @@ class IRCBot(irc.IRCClient):
     def joined(self, channel):
         if channel.lower() == self.factory.channel:
             self.reset_users()
-        print "Joined channel %s" % channel
+        print("Joined channel %s" % channel)
 
     def irc_NICK(self, prefix, params):
         user = prefix.split('!', 1)[0]
@@ -98,7 +98,7 @@ class IRCBot(irc.IRCClient):
 
     @channel
     def modeChanged(self, user, channel, is_set, modes, args):
-        for i in xrange(len(args)):
+        for i in range(len(args)):
             mode, name = modes[i], args[i]
             try:
                 l = self.user_dict[mode]
@@ -127,7 +127,7 @@ class IRCBot(irc.IRCClient):
             msg = msg[len(self.factory.chatprefix):].strip()
             message = ("<%s> %s" % (name, msg))
             message = message[:MAX_IRC_CHAT_SIZE]
-            print message
+            print(message)
             self.server.send_chat(message)
 
     def handle_command(self, name, command):
@@ -160,7 +160,7 @@ class IRCBot(irc.IRCClient):
 
 
 def unpack_modes(value):
-    return set([item for sublist in value for item in sublist])
+    return {item for sublist in value for item in sublist}
 
 
 class IRCClientFactory(protocol.ClientFactory):
@@ -186,17 +186,17 @@ class IRCClientFactory(protocol.ClientFactory):
         self.chat_modes = unpack_modes(irc.chat_modes)
 
     def startedConnecting(self, connector):
-        print "Connecting to IRC server..."
+        print("Connecting to IRC server...")
 
     def clientConnectionLost(self, connector, reason):
-        print "Lost connection to IRC server (%s), " \
+        print("Lost connection to IRC server (%s), " \
               "reconnecting in %s seconds" % (reason,
-                                              self.lost_reconnect_delay)
+                                              self.lost_reconnect_delay))
         reactor.callLater(self.lost_reconnect_delay, connector.connect)
 
     def clientConnectionFailed(self, connector, reason):
-        print "Could not connect to IRC server (%s), " \
-              "retrying in %s seconds" % (reason, self.failed_reconnect_delay)
+        print("Could not connect to IRC server (%s), " \
+              "retrying in %s seconds" % (reason, self.failed_reconnect_delay))
         reactor.callLater(self.failed_reconnect_delay, connector.connect)
 
     def buildProtocol(self, address):
@@ -250,7 +250,7 @@ def get_class():
 
 
 def irc(func):
-    IRCBot.commands[func.func_name] = func
+    IRCBot.commands[func.__name__] = func
     return func
 
 
@@ -265,7 +265,7 @@ def who(bot):
         bot.me('has no players connected')
         return
     formatted_names = []
-    for player in server.players.values():
+    for player in list(server.players.values()):
         name = '\x0302%s #%s' % (encode_irc(player.name), player.entity_id)
         formatted_names.append(name)
     noun = 'player' if player_count == 1 else 'players'

@@ -43,7 +43,7 @@ def to_qmo(in_file, out_file):
     qmo_model.x_offset = -x_size / 2
     qmo_model.y_offset = 0
     qmo_model.z_offset = -z_size / 2
-    for k, v in cub.blocks.iteritems():
+    for k, v in cub.blocks.items():
         x, y, z = k
         x2, y2, z2 = switch_axes(x, y, z)
         qmo_model.blocks[x2, y2, z2] = v
@@ -64,7 +64,7 @@ def to_cub(in_file, out_file):
     cub.x_size = x_size
     cub.y_size = y_size
     cub.z_size = z_size
-    for k, v in qmo_model.blocks.iteritems():
+    for k, v in qmo_model.blocks.items():
         x, y, z = k
         x2, y2, z2 = switch_axes(x, y, z)
         cub.blocks[x2, y2, z2] = v
@@ -81,7 +81,7 @@ def main():
                         help='path to file to convert')
 
     for path in parser.parse_args().files:
-        print "Converting %r" % path
+        print("Converting %r" % path)
         filename, ext = os.path.splitext(path)
         if ext == '.cub':
             to_qmo(path, filename + '.qmo')

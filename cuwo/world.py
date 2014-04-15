@@ -21,7 +21,7 @@ World manager
 
 from cuwo import tgen
 from twisted.internet import reactor, defer
-from Queue import Queue
+from queue import Queue
 
 
 class GenerateData(object):

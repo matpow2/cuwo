@@ -15,11 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-from cuwo.twistedreactor import install_reactor
-install_reactor()
-from twisted.internet.protocol import Factory, Protocol
-from twisted.internet import reactor
-from twisted.internet.task import LoopingCall
+import asyncio
 
 from cuwo.packet import (PacketHandler, write_packet, CS_PACKETS,
                          ClientVersion, JoinPacket, SeedData, EntityUpdate,
@@ -60,7 +56,7 @@ mismatch_packet = ServerMismatch()
 server_full_packet = ServerFull()
 
 
-class CubeWorldConnection(Protocol):
+class CubeWorldConnection(asyncio.Protocol):
     """
     Protocol used for players
     """
@@ -76,10 +72,9 @@ class CubeWorldConnection(Protocol):
         self.address = addr
         self.server = server
 
-    # connection methods
-
-    def connectionMade(self):
-        self.transport.setTcpNoDelay(True)
+    def connection_made(self, transport):
+        self.transport = transport
+        self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
 
         server = self.server
         if len(server.connections) >= server.config.base.max_players:
@@ -104,21 +99,21 @@ class CubeWorldConnection(Protocol):
         self.scripts = ScriptManager()
         server.scripts.call('on_new_connection', connection=self)
 
-    def dataReceived(self, data):
+    def data_received(self, data):
         self.packet_handler.feed(data)
 
     def disconnect(self, reason=None):
         self.transport.loseConnection()
-        self.connectionLost(reason)
+        self.connection_lost(reason)
 
-    def connectionLost(self, reason):
+    def connection_lost(self, reason):
         if self.disconnected:
             return
         self.disconnected = True
         self.server.connections.discard(self)
         if self.has_joined:
             del self.server.players[self]
-            print 'Player %s left' % self.name
+            print('Player %s left' % self.name)
         if self.entity_data is not None:
             del self.server.entities[self.entity_id]
         if self.entity_id is not None:
@@ -135,7 +130,7 @@ class CubeWorldConnection(Protocol):
         if self.disconnected:
             return
         if packet is None:
-            print 'Invalid packet received'
+            print('Invalid packet received')
             self.disconnect()
             raise StopIteration()
         handler = self.packet_handlers.get(packet.packet_id, None)
@@ -217,7 +212,7 @@ class CubeWorldConnection(Protocol):
         chat_packet.entity_id = self.entity_id
         chat_packet.value = message
         self.server.broadcast_packet(chat_packet)
-        print '%s: %s' % (self.name, message)
+        print('%s: %s' % (self.name, message))
 
     def on_interact_packet(self, packet):
         interact_type = packet.interact_type
@@ -264,8 +259,8 @@ class CubeWorldConnection(Protocol):
         if self.scripts.call('on_join').result is False:
             return
 
-        print 'Player %s joined' % self.name
-        for player in self.server.players.values():
+        print('Player %s joined' % self.name)
+        for player in list(self.server.players.values()):
             entity_packet.set_entity(player.entity_data, player.entity_id)
             self.send_packet(entity_packet)
 
@@ -325,7 +320,7 @@ class CubeWorldConnection(Protocol):
         return self.entity_data.name
 
 
-class BanProtocol(Protocol):
+class BanProtocol(asyncio.Protocol):
     """
     Protocol used for banned players.
     Ignores data from client and only sends JoinPacket/ServerChatMessage
@@ -354,7 +349,7 @@ class BanProtocol(Protocol):
             self.disconnect_call.cancel()
 
 
-class CubeWorldServer(Factory):
+class CubeWorldServer(object):
     items_changed = False
     exit_code = None
     world = None
@@ -374,14 +369,14 @@ class CubeWorldServer(Factory):
         self.entities = {}
         self.entity_ids = IDPool(1)
 
-        self.update_loop = LoopingCall(self.update)
+        self.update_loop = asyncio.Task(self.loop())
         self.update_loop.start(1.0 / base.update_fps, False)
 
         # server-related
         self.git_rev = base.get('git_rev', None)
 
         self.passwords = {}
-        for k, v in base.passwords.iteritems():
+        for k, v in base.passwords.items():
             self.passwords[k.lower()] = v
 
         self.scripts = ScriptManager()
@@ -398,17 +393,10 @@ class CubeWorldServer(Factory):
             self.world = World(base.seed)
 
         # start listening
-        self.listen_tcp(base.port, self)
+        self.create_server(base.port, self.build_protocol)
 
-    def buildProtocol(self, addr):
-        # return None here to refuse the connection.
-        # will use this later to hardban e.g. DoS
-        ret = self.scripts.call('on_connection_attempt', address=addr).result
-        if ret is False:
-            return None
-        elif ret is not None:
-            return BanProtocol(ret)
-        return CubeWorldConnection(self, addr)
+    def build_protocol(self):
+        return CubeWorldConnection()
 
     def remove_item(self, chunk, index):
         items = self.chunk_items[chunk]
@@ -440,7 +428,7 @@ class CubeWorldServer(Factory):
         self.scripts.call('update')
 
         # entity updates
-        for entity_id, entity in self.entities.iteritems():
+        for entity_id, entity in self.entities.items():
             entity_packet.set_entity(entity, entity_id, entity.mask)
             entity.mask = 0
             self.broadcast_packet(entity_packet)
@@ -449,7 +437,7 @@ class CubeWorldServer(Factory):
         # other updates
         update_packet = self.update_packet
         if self.items_changed:
-            for chunk, items in self.chunk_items.iteritems():
+            for chunk, items in self.chunk_items.items():
                 item_list = ChunkItems()
                 item_list.chunk_x, item_list.chunk_y = chunk
                 item_list.items = items
@@ -459,7 +447,7 @@ class CubeWorldServer(Factory):
 
         # reset drop times
         if self.items_changed:
-            for items in self.chunk_items.values():
+            for items in list(self.chunk_items.values()):
                 for item in items:
                     item.drop_time = 0
             self.items_changed = False
@@ -477,7 +465,7 @@ class CubeWorldServer(Factory):
 
     def broadcast_packet(self, packet):
         data = write_packet(packet)
-        for player in self.players.values():
+        for player in list(self.players.values()):
             player.transport.write(data)
 
     # line/string formatting options based on config
@@ -501,11 +489,11 @@ class CubeWorldServer(Factory):
             pass
         try:
             mod = __import__('scripts.%s' % name, globals(), locals(), [name])
-        except ImportError, e:
+        except ImportError as e:
             traceback.print_exc(e)
             return None
         script = mod.get_class()(self)
-        print 'Loaded script %r' % name
+        print('Loaded script %r' % name)
         return script
 
     def unload_script(self, name):
@@ -513,7 +501,7 @@ class CubeWorldServer(Factory):
             self.scripts[name].unload()
         except KeyError:
             return False
-        print 'Unloaded script %r' % name
+        print('Unloaded script %r' % name)
         return True
 
     def call_command(self, user, command, args):
@@ -532,7 +520,7 @@ class CubeWorldServer(Factory):
         for script in self.scripts.get():
             if script.commands is None:
                 continue
-            for command in script.commands.itervalues():
+            for command in script.commands.values():
                 yield command
 
     def get_command(self, name):
@@ -588,13 +576,13 @@ class CubeWorldServer(Factory):
         self.exit_code = code
         reactor.stop()
 
-    # twisted wrappers
+    # asyncio wrappers
 
     def listen_udp(self, *arg, **kw):
         interface = self.config.base.network_interface
         return reactor.listenUDP(*arg, interface=interface, **kw)
 
-    def listen_tcp(self, *arg, **kw):
+    def create_server(self, *arg, **kw):
         interface = self.config.base.network_interface
         return reactor.listenTCP(*arg, interface=interface, **kw)
 
@@ -606,7 +594,7 @@ class CubeWorldServer(Factory):
 def main():
     # for py2exe
     if hasattr(sys, 'frozen'):
-        path = os.path.dirname(unicode(sys.executable, 
+        path = os.path.dirname(str(sys.executable, 
                                        sys.getfilesystemencoding()))
         root = os.path.abspath(os.path.join(path, '..'))
         sys.path.append(root)
@@ -614,7 +602,7 @@ def main():
     config = ConfigObject('./config')
     server = CubeWorldServer(config)
 
-    print 'cuwo running on port %s' % config.base.port
+    print('cuwo running on port %s' % config.base.port)
 
     if config.base.profile_file is None:
         reactor.run()
