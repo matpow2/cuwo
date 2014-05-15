@@ -17,16 +17,13 @@
 
 """ Anti Cheat script for Cuwo by Sarcen """
 
-from cuwo.constants import (WARRIOR_CLASS, RANGER_CLASS,
-                            MAGE_CLASS, ROGUE_CLASS)
-from cuwo.script import (ServerScript,
-                         ConnectionScript, command, admin,
-                         get_player)
+from cuwo.constants import RANGER_CLASS
+from cuwo.script import ServerScript, ConnectionScript
 from cuwo.common import (get_power, get_item_name, is_bit_set,
                          get_entity_max_health)
 from cuwo.packet import ServerUpdate, PickupAction
-from .constants import *
-from twisted.internet import reactor
+from .constants import (LOG_LEVEL_VERBOSE, LOG_LEVEL_DEFAULT, CUWO_ANTICHEAT,
+                        LEGAL_RECIPE_ITEMS, LEGAL_ITEMS)
 
 import re
 import math
@@ -72,7 +69,7 @@ class AntiCheatConnection(ConnectionScript):
 
         self.cooldown_strikes = 0
         self.ability_cooldown = {}
-        self.last_entity_update = reactor.seconds()
+        self.last_entity_update = self.loop.time()
 
         self.last_hit_time = 0
         self.last_hit_strikes = 0
@@ -82,7 +79,7 @@ class AntiCheatConnection(ConnectionScript):
         self.max_hp_strikes = 0
 
         # allow for extra catch ups during join
-        self.last_hit_time_catchup = reactor.seconds() + 10
+        self.last_hit_time_catchup = self.loop.time() + 10
         self.last_hit_time_catchup_count = -10
 
         config = self.server.config.anticheat
@@ -189,7 +186,7 @@ class AntiCheatConnection(ConnectionScript):
 
         if (entity_data.current_mode == 0
                 and self.combat_end_time == 0):
-            self.combat_end_time = reactor.seconds()
+            self.combat_end_time = self.loop.time()
 
         if entity_data.current_mode != 0:
             self.combat_end_time = 0
@@ -235,15 +232,15 @@ class AntiCheatConnection(ConnectionScript):
 
     def on_entity_update(self, event):
         entity_data = self.connection.entity_data
-        self.time_since_update = reactor.seconds() - self.last_entity_update
-        self.last_entity_update = reactor.seconds()
+        self.time_since_update = self.loop.time() - self.last_entity_update
+        self.last_entity_update = self.loop.time()
 
         self.last_mana = self.mana
         self.last_health = self.health
 
         self.mana = entity_data.mp
         self.health = entity_data.hp
-        
+
         if is_bit_set(event.mask, 7):
             if self.check_hostile_type() is False:
                 return False
@@ -252,8 +249,8 @@ class AntiCheatConnection(ConnectionScript):
             if self.check_max_health() is False:
                 return False
 
-        if reactor.seconds() - self.last_hit_check > 1.0:
-            self.last_hit_check = reactor.seconds()
+        if self.loop.time() - self.last_hit_check > 1.0:
+            self.last_hit_check = self.loop.time()
             if self.check_last_hit() is False:
                 return False
 
@@ -301,7 +298,7 @@ class AntiCheatConnection(ConnectionScript):
 
         # just damage packets, not healing would be negative
         if damage >= 0:
-            self.last_hit_time = reactor.seconds()
+            self.last_hit_time = self.loop.time()
             self.hit_counter += 1
 
         # how far away did this hit hit from where the target actually is
@@ -320,7 +317,7 @@ class AntiCheatConnection(ConnectionScript):
         self.ability_cooldown = {}
         # give one catchup count back as they will probably get one from
         # respawning :d
-        self.last_hit_time_catchup = reactor.seconds()
+        self.last_hit_time_catchup = self.loop.time()
         self.last_hit_time_catchup_count = -1
 
     def log(self, message, loglevel=LOG_LEVEL_DEFAULT):
@@ -412,7 +409,7 @@ class AntiCheatConnection(ConnectionScript):
         # Item type 2 is a recipe they are handled differently.
         # minus modifier is the item type of the crafted item
         if item.type == 2:
-            if not item.minus_modifier in LEGAL_RECIPE_ITEMS:
+            if item.minus_modifier not in LEGAL_RECIPE_ITEMS:
                 self.log(("invalid recipe:type={type} " +
                          "subtype={stype} material={mat} item={item}")
                          .format(type=item.minus_modifier,
@@ -435,7 +432,7 @@ class AntiCheatConnection(ConnectionScript):
 
             return False
 
-        if not (item.type, item.sub_type) in LEGAL_ITEMS:
+        if (item.type, item.sub_type) not in LEGAL_ITEMS:
             self.log(("invalid item:type={type} " +
                      "subtype={stype} material={material} item={item}")
                      .format(type=item.type,
@@ -445,7 +442,7 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if not item.material in LEGAL_ITEMS[(item.type, item.sub_type)]:
+        if item.material not in LEGAL_ITEMS[(item.type, item.sub_type)]:
             self.log(("invalid material:type={type} " +
                      "subtype={stype} material={mat} item={item}")
                      .format(type=item.type,
@@ -464,9 +461,9 @@ class AntiCheatConnection(ConnectionScript):
         power_char = get_power(entity_data.level)
         if power_item > power_char:
             self.log(("item level too high for character " +
-                     "item: level:{level1} (power: {power1}) " +
-                     "character: level:{level2} (power: {power2})")
-                     .format(level1=item.level,
+                      "item: level:{level1} (power: {power1}) " +
+                      "character: level:{level2} (power: {power2})")
+                      .format(level1=item.level,
                              power1=power_item,
                              level2=entity_data.level,
                              power2=power_char), LOG_LEVEL_VERBOSE)
@@ -672,7 +669,7 @@ class AntiCheatConnection(ConnectionScript):
             if mode in self.ability_cooldown:
                 last_used = self.ability_cooldown[mode]
 
-            current_cd = reactor.seconds() - last_used
+            current_cd = self.loop.time() - last_used
             if current_cd < min_cd - self.cooldown_margin:
                 self.cooldown_strikes += 1
                 if self.cooldown_strikes > self.max_cooldown_strikes:
@@ -688,7 +685,7 @@ class AntiCheatConnection(ConnectionScript):
                 self.cooldown_strikes = 0
 
             # keep track of ability usage
-            self.ability_cooldown[mode] = reactor.seconds()
+            self.ability_cooldown[mode] = self.loop.time()
 
         return True
 
@@ -1041,16 +1038,16 @@ class AntiCheatConnection(ConnectionScript):
         # Glider resetting attack animations bug
         # Rapidly switching between will be seen as bug abusing.
         if is_bit_set(flags_1, FLAGS_1_ATTACKING):
-            self.last_attacking = reactor.seconds()
+            self.last_attacking = self.loop.time()
             self.attack_count += 1
 
         if is_bit_set(flags_1, FLAGS_1_GLIDER_ACTIVE):
-            self.last_glider_active = reactor.seconds()
+            self.last_glider_active = self.loop.time()
             self.glider_count += 1
 
         # Reset if either attacking or gliding has not happend for a time
-        if (reactor.seconds() - self.last_glider_active > 0.75 or
-                reactor.seconds() - self.last_attacking > 0.75):
+        if (self.loop.time() - self.last_glider_active > 0.75 or
+                self.loop.time() - self.last_attacking > 0.75):
             self.glider_count = 0
             self.attack_count = 0
 
@@ -1106,7 +1103,7 @@ class AntiCheatConnection(ConnectionScript):
             self.remove_cheater('illegal hit counter')
             return False
 
-        if reactor.seconds() - self.last_hit_time > 4 + self.last_hit_margin:
+        if self.loop.time() - self.last_hit_time > 4 + self.last_hit_margin:
             self.hit_counter = 0
 
         hit_counter_diff = entity_data.hit_counter - self.hit_counter
@@ -1138,8 +1135,8 @@ class AntiCheatConnection(ConnectionScript):
 
         last_hit_rc = (float(entity_data.last_hit_time) / 1000.0)
         if self.last_hit_time == 0:
-            self.last_hit_time = reactor.seconds() - last_hit_rc
-        last_hit_pk = reactor.seconds() - self.last_hit_time
+            self.last_hit_time = self.loop.time() - last_hit_rc
+        last_hit_pk = self.loop.time() - self.last_hit_time
 
         time_diff = last_hit_pk - last_hit_rc
         if abs(time_diff) > self.last_hit_margin:
@@ -1155,15 +1152,15 @@ class AntiCheatConnection(ConnectionScript):
             # catch up time, this is only allowed twice every 15 seconds
             # it will make sure that a freeze or lagspike will be allowed
             # to catch up to (otherwise this would result in a kick)
-            if (reactor.seconds() - self.last_hit_time_catchup > 15.0):
-                self.last_hit_time_catchup = reactor.seconds()
+            if (self.loop.time() - self.last_hit_time_catchup > 15.0):
+                self.last_hit_time_catchup = self.loop.time()
                 self.last_hit_time_catchup_count = 0
 
             if (self.last_hit_time_catchup_count <
                     self.max_last_hit_time_catchup):
                 self.last_hit_time_catchup_count += 1
                 self.last_hit_strikes -= 1
-                self.last_hit_time = reactor.seconds() - last_hit_rc
+                self.last_hit_time = self.loop.time() - last_hit_rc
         else:
             self.last_hit_strikes = 0
 

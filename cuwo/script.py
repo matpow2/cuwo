@@ -71,7 +71,7 @@ class Command(object):
         # get min args
         func_info = inspect.getargspec(original)
         self.min_args = len(func_info.args) - 1
-        if not func_info.defaults is None:
+        if func_info.defaults is not None:
             self.min_args -= len(func_info.defaults)
 
     def __call__(self, *arg, **kw):
@@ -221,6 +221,7 @@ class ConnectionScript(BaseScript):
 
         self.parent = parent
         self.server = parent.server
+        self.loop = connection.loop
         self.connection = connection
         connection.scripts.add(self)
         parent.children.append(self)
@@ -273,6 +274,7 @@ class ServerScript(BaseScript):
         self.script_name = self.__module__.split('.')[1]
 
         self.server = server
+        self.loop = server.loop
         server.scripts.add(self)
         self.children = []
         self.on_load()

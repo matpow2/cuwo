@@ -21,7 +21,6 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
 from distutils.command import build_ext as _build_ext
-from distutils.sysconfig import customize_compiler
 import multiprocessing.pool
 from distutils import log
 from distutils.sysconfig import get_config_vars
@@ -38,6 +37,7 @@ for filename in data_files:
 
 # suppress warnings
 IGNORE_FLAGS = ('-Wstrict-prototypes', '-mno-fused-madd')
+
 
 def filter_flags(name):
     value, = get_config_vars(name)
@@ -90,6 +90,7 @@ for name in names:
 
 _spawn_nt = spawn._spawn_nt
 
+
 def silent_spawn_nt(cmd, search_path=1, verbose=0, dry_run=0):
     executable = cmd[0]
     if search_path:
@@ -101,9 +102,11 @@ def silent_spawn_nt(cmd, search_path=1, verbose=0, dry_run=0):
     p = subprocess.Popen([executable] + cmd[1:], stdout=subprocess.PIPE)
     p.wait()
     rc = p.returncode
-    if rc != 0:
-        # and this reflects the command running but failing
-        raise spawn.DistutilsExecError("command '%s' failed with exit status %d" % (cmd[0], rc))
+    if rc == 0:
+        return
+    # and this reflects the command running but failing
+    raise spawn.DistutilsExecError(
+        "command '%s' failed with exit status %d" % (cmd[0], rc))
 
 
 class build_ext(_build_ext.build_ext):
@@ -138,7 +141,7 @@ class build_ext(_build_ext.build_ext):
 
         # make a parallel build
         def compile_single(source):
-            p = (compile_state.index * 100) / len(sources)
+            p = (compile_state.index * 100) // len(sources)
             p = '%02d' % p
             compile_state.index += 1
             sys.stdout.write('[%s%%] %s\n' % (p, os.path.basename(source)))
@@ -157,14 +160,14 @@ class build_ext(_build_ext.build_ext):
         if os.name == 'nt':
             rsp_path = os.path.join(self.build_temp, 'link.rsp')
             fp = open(rsp_path, 'wb')
-            fp.write(' '.join(objects).replace('\\', '/'))
+            data = ' '.join(objects).replace('\\', '/')
+            fp.write(data.encode('utf-8'))
             fp.close()
             objects = ['@' + rsp_path]
 
         if is_msvc:
             objects += ['/NOLOGO']
 
-        language = ext.language or self.compiler.detect_language(sources)
         old_force = self.compiler.force
         self.compiler.force = True
         self.compiler.create_static_lib(objects, 'tgen',

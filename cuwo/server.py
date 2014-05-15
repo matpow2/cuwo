@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
-
 from cuwo.packet import (PacketHandler, write_packet, CS_PACKETS,
                          ClientVersion, JoinPacket, SeedData, EntityUpdate,
                          ClientChatMessage, ServerChatMessage,
@@ -44,6 +42,8 @@ import os
 import sys
 import pprint
 import traceback
+import asyncio
+import signal
 
 # initialize packet instances for sending
 join_packet = JoinPacket()
@@ -68,12 +68,14 @@ class CubeWorldConnection(asyncio.Protocol):
     chunk_pos = None
     chunk = None
 
-    def __init__(self, server, addr):
-        self.address = addr
+    def __init__(self, server):
         self.server = server
+        self.loop = server.loop
 
     def connection_made(self, transport):
         self.transport = transport
+        self.address = transport.get_extra_info('peername')
+        socket = transport.get_extra_info('socket')
         self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
 
         server = self.server
@@ -297,7 +299,7 @@ class CubeWorldConnection(asyncio.Protocol):
     def send_lines(self, lines):
         current_time = 0
         for line in lines:
-            reactor.callLater(current_time, self.send_chat, line)
+            self.loop.call_later(current_time, self.send_chat, line)
             current_time += 2
 
     def kick(self):
@@ -335,7 +337,8 @@ class BanProtocol(asyncio.Protocol):
     def connectionMade(self):
         join_packet.entity_id = 1
         self.send_packet(join_packet)
-        self.disconnect_call = reactor.callLater(0.1, self.disconnect)
+        loop = asyncio.get_event_loop()
+        self.disconnect_call = loop.call_later(0.1, self.disconnect)
 
     def disconnect(self):
         if self.message is not None:
@@ -345,8 +348,7 @@ class BanProtocol(asyncio.Protocol):
         self.transport.loseConnection()
 
     def connectionLost(self, reason):
-        if self.disconnect_call.active():
-            self.disconnect_call.cancel()
+        self.disconnect_call.cancel()
 
 
 class CubeWorldServer(object):
@@ -354,7 +356,8 @@ class CubeWorldServer(object):
     exit_code = None
     world = None
 
-    def __init__(self, config):
+    def __init__(self, loop, config):
+        self.loop = loop
         self.config = config
         base = config.base
 
@@ -369,8 +372,8 @@ class CubeWorldServer(object):
         self.entities = {}
         self.entity_ids = IDPool(1)
 
-        self.update_loop = asyncio.Task(self.loop())
-        self.update_loop.start(1.0 / base.update_fps, False)
+        # self.update_loop = asyncio.Task(self.loop())
+        # self.update_loop.start(1.0 / base.update_fps, False)
 
         # server-related
         self.git_rev = base.get('git_rev', None)
@@ -385,7 +388,7 @@ class CubeWorldServer(object):
 
         # time
         self.extra_elapsed_time = 0.0
-        self.start_time = reactor.seconds()
+        self.start_time = loop.time()
         self.set_clock('12:00')
 
         # world
@@ -393,10 +396,11 @@ class CubeWorldServer(object):
             self.world = World(base.seed)
 
         # start listening
-        self.create_server(base.port, self.build_protocol)
+        self.loop.run_until_complete(self.create_server(self.build_protocol,
+                                                        port=base.port))
 
     def build_protocol(self):
-        return CubeWorldConnection()
+        return CubeWorldConnection(self)
 
     def remove_item(self, chunk, index):
         items = self.chunk_items[chunk]
@@ -428,9 +432,9 @@ class CubeWorldServer(object):
         self.scripts.call('update')
 
         # entity updates
-        for entity_id, entity in self.entities.items():
-            entity_packet.set_entity(entity, entity_id, entity.mask)
-            entity.mask = 0
+        for entity_id, data in self.entities.items():
+            entity_packet.set_entity(data, entity_id, data.mask)
+            data.mask = 0
             self.broadcast_packet(entity_packet)
         self.broadcast_packet(update_finished_packet)
 
@@ -490,7 +494,7 @@ class CubeWorldServer(object):
         try:
             mod = __import__('scripts.%s' % name, globals(), locals(), [name])
         except ImportError as e:
-            traceback.print_exc(e)
+            traceback.print_exc()
             return None
         script = mod.get_class()(self)
         print('Loaded script %r' % name)
@@ -553,11 +557,11 @@ class CubeWorldServer(object):
     def set_clock(self, value):
         day = self.get_day()
         time = parse_clock(value)
-        self.start_time = reactor.seconds()
+        self.start_time = self.loop.time()
         self.extra_elapsed_time = day * constants.MAX_TIME + time
 
     def get_elapsed_time(self):
-        dt = reactor.seconds() - self.start_time
+        dt = self.loop.time() - self.start_time
         dt *= self.config.base.time_modifier * constants.NORMAL_TIME_SPEED
         return dt * 1000 + self.extra_elapsed_time
 
@@ -574,41 +578,60 @@ class CubeWorldServer(object):
 
     def stop(self, code=None):
         self.exit_code = code
-        reactor.stop()
+        print('Stopping...')
+        self.loop.stop()
 
     # asyncio wrappers
 
-    def listen_udp(self, *arg, **kw):
-        interface = self.config.base.network_interface
-        return reactor.listenUDP(*arg, interface=interface, **kw)
+    def create_datagram_endpoint(self, *arg, port=0, **kw):
+        host = self.config.base.network_interface
+        addr = (host, port)
+        return self.loop.create_datagram_endpoint(*arg, local_addr=addr, **kw)
 
     def create_server(self, *arg, **kw):
-        interface = self.config.base.network_interface
-        return reactor.listenTCP(*arg, interface=interface, **kw)
+        host = self.config.base.network_interface
+        return self.loop.create_server(*arg, host=host, **kw)
 
-    def connect_tcp(self, *arg, **kw):
-        interface = self.config.base.network_interface
-        return reactor.connectTCP(*arg, bindAddress=(interface, 0), **kw)
+    def connect_connection(self, *arg, **kw):
+        host = self.config.base.network_interface
+        return self.loop.create_connection(*arg, local_addr=(host, 0), **kw)
 
 
 def main():
     # for py2exe
     if hasattr(sys, 'frozen'):
-        path = os.path.dirname(str(sys.executable, 
-                                       sys.getfilesystemencoding()))
+        path = os.path.dirname(str(sys.executable,
+                                   sys.getfilesystemencoding()))
         root = os.path.abspath(os.path.join(path, '..'))
         sys.path.append(root)
 
     config = ConfigObject('./config')
-    server = CubeWorldServer(config)
+
+    # if sys.platform == 'win32':
+    #     # use IOCP on Windows
+    #     from asyncio import windows_events
+    #     loop = windows_events.ProactorEventLoop()
+    #     asyncio.set_event_loop(loop)
+    # else:
+    loop = asyncio.get_event_loop()
+
+    server = CubeWorldServer(loop, config)
+
+    if sys.platform == 'win32':
+        def signal_handler(signal, frame):
+            loop = asyncio.get_event_loop()
+            loop.call_soon_threadsafe(server.stop)
+        signal.signal(signal.SIGINT, signal_handler)
+    else:
+        loop.add_signal_handler(signal.SIGINT, server.stop)
 
     print('cuwo running on port %s' % config.base.port)
 
     if config.base.profile_file is None:
-        reactor.run()
+        loop.run_forever()
     else:
         import cProfile
-        cProfile.run('reactor.run()', filename=config.base.profile_file)
+        cProfile.run('loop.run_forever()', filename=config.base.profile_file)
 
     sys.exit(server.exit_code)
 

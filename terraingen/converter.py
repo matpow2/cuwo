@@ -48,6 +48,7 @@ LICENSE_TEXT = '''\
 */
 '''
 
+
 class StringWrapper(object):
     def __init__(self, value):
         self.value = value
@@ -86,6 +87,7 @@ def to_c(format_spec, *args):
         new_args.append(arg)
     return format_spec % tuple(new_args)
 
+
 class CodeWriter(object):
     indentation = 0
     comment = None
@@ -96,10 +98,10 @@ class CodeWriter(object):
         self.filename = filename
         if license:
             self.putln(LICENSE_TEXT)
-    
+
     def format_line(self, line):
         return self.get_spaces() + line
-    
+
     def putln(self, *lines):
         for line in lines:
             line = self.format_line(line)
@@ -111,7 +113,7 @@ class CodeWriter(object):
     def putlnc(self, line, *arg):
         line = to_c(line, *arg)
         self.putln(line)
-    
+
     def get_data(self):
         fp = self.fp
         pos = fp.tell()
@@ -124,7 +126,7 @@ class CodeWriter(object):
         self.putln('{')
         self.indent()
 
-    def end_brace(self, semicolon = False):
+    def end_brace(self, semicolon=False):
         self.dedent()
         text = '}'
         if semicolon:
@@ -148,18 +150,18 @@ class CodeWriter(object):
         self.putln('')
         self.putln('#endif // %s' % name)
         self.putln('')
-    
+
     def indent(self):
         self.indentation += 1
-        
+
     def dedent(self):
         self.indentation -= 1
         if self.indentation < 0:
             raise ValueError('indentation cannot be lower than 0')
-        
-    def get_spaces(self, extra = 0):
+
+    def get_spaces(self, extra=0):
         return (self.indentation + extra) * '    '
-    
+
     def close(self):
         data = self.get_data()
         self.fp.close()
@@ -255,10 +257,10 @@ REG_ESI = REG_SI = REG_DH = REG_ST6 = pydasm.REGISTER_ESI
 REG_EDI = REG_DI = REG_BH = REG_ST7 = pydasm.REGISTER_EDI
 REG_NOP = pydasm.REGISTER_NOP
 
-AM_A = 0x00010000  # Direct address with segment prefix
-AM_I = 0x00060000  # Immediate data follows
-AM_J = 0x00070000  # Immediate value is relative to EIP
-AM_I1 = 0x00200000 # Immediate byte 1 encoded in instruction
+AM_A = 0x00010000   # Direct address with segment prefix
+AM_I = 0x00060000   # Immediate data follows
+AM_J = 0x00070000   # Immediate value is relative to EIP
+AM_I1 = 0x00200000  # Immediate byte 1 encoded in instruction
 
 
 def get_mask_ot(x):
@@ -369,7 +371,7 @@ class Operand(object):
                 if inst.has_reloc and addr in inst.converter.reloc_values:
                     self.reloc_displacement = inst.converter.get_reloc(addr)
                     self.is_reloc = True
-                if op.displacement & (1<<(op.dispbytes*8-1)):
+                if op.displacement & (1 << (op.dispbytes*8-1)):
                     tmp = op.displacement
                     if op.dispbytes == 1:
                         tmp = ~tmp & 0xff
@@ -388,8 +390,8 @@ class Operand(object):
             if len(sum_list) == 1 and inst.dispbytes:
                 addr = op.displacement
 
-                if (addr in inst.converter.imports
-                    and addr not in list(inst.converter.import_addresses.values())):
+                if (addr in inst.converter.imports and
+                        addr not in inst.converter.import_addresses.values()):
                     self.displacement = str(addr)
                     self.is_memory = False
                     self.is_immediate = True
@@ -412,7 +414,7 @@ class Operand(object):
             # 32-bit or 48-bit address
             elif mask == AM_A:
                 raise NotImplementedError()
-                string += '0x%x:0x%x' % (op.section, op.displacement)
+                # string += '0x%x:0x%x' % (op.section, op.displacement)
 
             if inst.has_reloc and value in inst.converter.reloc_values:
                 self.reloc_value = inst.converter.get_reloc(value)
@@ -447,6 +449,7 @@ class Operand(object):
         if self.is_immediate and not as_reloc:
             return '%sU' % value
         return value
+
 
 def get_memory(addr, size):
     func = 'mem.read_%s' % size_names[size]
@@ -498,7 +501,7 @@ class Instruction(object):
             self.op3 = Operand(self, i.op3, offset)
         else:
             self.op3 = None
-        
+
         mnemonic = pydasm.get_mnemonic_string(i, pydasm.FORMAT_INTEL)
         mnemonic = mnemonic.strip()
         if mnemonic == 'rep retn':
@@ -540,7 +543,7 @@ class Instruction(object):
 
     def get_disasm(self):
         return self.disasm
-    
+
     def group2(self):
         return (self.flags & 0x00ff0000) >> 16
 
@@ -595,8 +598,8 @@ def get_label_name(address):
     return 'loc_%X' % address
 
 label_makers = {
-    'jc', # 0x72,
-    'jz', # 0x74,
+    'jc',  # 0x72,
+    'jz',  # 0x74,
     'jnz',
     'jl',
     'jnl',
@@ -611,6 +614,7 @@ label_makers = {
     ('jmp', 0xEB),
     ('jmp', 0xE9)
 }
+
 
 class Subroutine(object):
     __slots__ = ['start', 'instructions', 'instruction_list', 'labels',
@@ -794,15 +798,18 @@ float_types = {
     4: 'ss'
 }
 
+
 def prettify_value(value):
     if isinstance(value, int):
         value = '%#x' % value
     return value
 
+
 def get_flag(value):
     if value == 'DF':
         return 'false'
     return 'cpu.get_%s()' % value.lower()
+
 
 def get_fpu():
     return get_register(REG_ST0, REG_FPU)
@@ -983,7 +990,6 @@ class CPU(object):
 
     def set_memory(self, dest, src, size):
         func = 'mem.write_%s' % size_names[size]
-        typ = size_types[size]
         self.writer.putlnc('%s(%s, %s);', func, dest, src)
 
     def set_register(self, dest, src):
@@ -1098,12 +1104,12 @@ class CPU(object):
     def on_addsd(self, i):
         i.op1.size = i.op2.size = 8
         value = 'to_sd(%s) + to_sd(%s)' % (i.op1.get(), i.op2.get())
-        self.set_op(i.op1, value)   
+        self.set_op(i.op1, value)
 
     def on_divsd(self, i):
         i.op1.size = i.op2.size = 8
         value = 'to_sd(%s) / to_sd(%s)' % (i.op1.get(), i.op2.get())
-        self.set_op(i.op1, value)   
+        self.set_op(i.op1, value)
 
     def on_subsd(self, i):
         i.op1.size = i.op2.size = 8
@@ -1442,7 +1448,7 @@ class CPU(object):
     def on_xorps(self, i):
         # eflags not affected
         self.set_op(i.op1, '%s ^ %s' % (i.op1.get(), i.op2.get()))
- 
+
     def on_lea(self, i):
         if i.get_operand_mode() != MODE_32 or i.get_address_mode() != MODE_32:
             import code
@@ -1820,7 +1826,6 @@ class CPU(object):
         b = i.op2.get()
         self.set_eflags(i, a=a, b=b, res=(None, i.op1.size))
 
-import struct
 
 class DWORD(object):
     def __init__(self, value):
@@ -1828,6 +1833,7 @@ class DWORD(object):
 
 import_filter = '@?$'
 import_mappings = {}
+
 
 def filter_import_name(name):
     try:
@@ -1951,7 +1957,6 @@ class Converter(object):
 
         for section in self.load_sections:
             name = section.section_name
-            section_base = section.image_base + section.VirtualAddress
             data = section.get_data()
             extra = section.Misc_VirtualSize - len(data)
             data += b'\x00' * extra
@@ -1982,7 +1987,7 @@ class Converter(object):
         self.function_stack = [self.entry_point]
         for address in self.dynamic_addresses:
             if (address in self.imports and
-                address not in list(self.import_addresses.values())):
+                    address not in self.import_addresses.values()):
                 self.used_imports.add(address)
             else:
                 self.function_stack.insert(0, address)
@@ -2017,11 +2022,11 @@ class Converter(object):
                 is_text = False
                 if self.get_section(addr).section_name == 'text':
                     is_text = True
-                if dword in (self.image_base, 
+                if dword in (self.image_base,
                              self.image_base+0x3c,
                              self.image_base+0x18,
                              self.image_base+0x74,
-                             self.image_base+0xe8): 
+                             self.image_base+0xe8):
                     # dos headers
                     continue
                 if self.get_section(dword).section_name == 'text':
@@ -2035,13 +2040,12 @@ class Converter(object):
                 writer.putlnc('mem.write_dword(%s, %s);', dst, src)
         writer.end_brace()
 
-        del pe # garbage collect
+        del pe  # garbage collect
 
         # iterate function stack
 
         while self.function_stack:
             address = self.function_stack.pop()
-            ida = self.get_ida_address(address)
             subs = self.get_subs(address)
             self.subs.add(subs[0].start)
             for sub in subs:
@@ -2163,8 +2167,8 @@ class Converter(object):
         if address in self.subs or address in self.function_stack:
             return
         if (address in self.imports and
-            address not in list(self.import_addresses.values()) and
-            address not in self.dynamic_addresses):
+                address not in self.import_addresses.values() and
+                address not in self.dynamic_addresses):
             return
         if address in self.custom_subs:
             return
@@ -2220,7 +2224,6 @@ class Converter(object):
         start_sub = sub
         subs = [start_sub]
         split_dist = 4000
-        jumps = start_sub.jumps
 
         next_offset = split_dist
 
@@ -2284,7 +2287,7 @@ class Converter(object):
     def get_section(self, address):
         for section in self.sections:
             section_base = section.image_base + section.VirtualAddress
-            section_end = section_base + section.Misc_VirtualSize 
+            section_end = section_base + section.Misc_VirtualSize
             if address < section_base or address >= section_end:
                 continue
             return section
@@ -2344,6 +2347,7 @@ def convert(filename):
 
     converter = Converter(filename)
     return converter
+
 
 def main():
     import argparse

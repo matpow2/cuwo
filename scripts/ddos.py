@@ -22,13 +22,12 @@ XXX should probably be merged with anticheat
 """
 
 from cuwo.script import ServerScript, ConnectionScript
-from twisted.internet import reactor
 
 
 class SaneConnection(ConnectionScript):
     def on_connect(self, event):
         timeout = self.server.config.base.connection_timeout
-        self.timeout_call = reactor.callLater(timeout, self.timeout)
+        self.timeout_call = self.loop.call_later(timeout, self.timeout)
 
     def on_entity_update(self, event):
         timeout = self.server.config.base.connection_timeout

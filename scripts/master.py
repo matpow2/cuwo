@@ -21,33 +21,35 @@ Sends updates to a master server at a constant interval
 
 from cuwo.script import ServerScript
 from cuwo.exceptions import InvalidData
-from twisted.internet.protocol import DatagramProtocol
-from twisted.internet.task import LoopingCall
-from twisted.internet import reactor
 import zlib
 import json
+import asyncio
 
 
-# sends an update packet every 20 second
+# sends an update packet every 10 seconds
 UPDATE_RATE = 10
 
 
-class MasterProtocol(DatagramProtocol):
-    def datagramReceived(self, data, addr):
+class MasterProtocol(asyncio.DatagramProtocol):
+    def connection_made(self, transport):
+        self.transport = transport
+
+    def datagram_received(self, data, addr):
         try:
-            value = json.loads(zlib.decompress(data))
+            value = json.loads(zlib.decompress(data).decode('utf-8'))
         except (zlib.error, ValueError):
             self.on_bad_packet(addr)
+            return
         self.on_packet(value, addr)
 
     def on_packet(self, data, addr):
         pass
 
-    def send_packet(self, value, addr):
+    def send_packet(self, value, addr=None):
         if self.transport is None:
             return
-        data = zlib.compress(json.dumps(value))
-        self.transport.write(data, addr)
+        data = zlib.compress(json.dumps(value).encode('utf-8'))
+        self.transport.sendto(data, addr)
 
     def on_bad_packet(self, addr):
         pass
@@ -88,21 +90,26 @@ class ServerData(object):
 class MasterClient(MasterProtocol):
     has_response = False
 
-    def __init__(self, server, addr):
+    def __init__(self, server):
         self.server = server
-        self.address = addr
-        self.update_loop = LoopingCall(self.update)
-        self.update_loop.start(UPDATE_RATE)
 
-    def update(self):
+    def connection_made(self, transport):
+        self.transport = transport
+        asyncio.Task(self.send_loop())
+
+    @asyncio.coroutine
+    def send_loop(self):
         config = self.server.config.base
         data = ServerData()
-        data.name = config.server_name
-        data.max = config.max_players
-        data.ip = self.server.config.master.hostname
-        data.players = len(self.server.players)
-        data.mode = self.server.get_mode()
-        self.send_packet(data.get(), self.address)
+
+        while True:
+            data.name = config.server_name
+            data.max = config.max_players
+            data.ip = self.server.config.master.hostname
+            data.players = len(self.server.players)
+            data.mode = self.server.get_mode()
+            self.send_packet(data.get())
+            yield from asyncio.sleep(UPDATE_RATE)
 
     def on_packet(self, data, addr):
         if data.get('ack', False):
@@ -119,14 +126,15 @@ class MasterRelay(ServerScript):
     connection_class = None
 
     def on_load(self):
-        master = self.server.config.master
-        reactor.resolve(master.server).addCallback(self.on_ip)
-
-    def on_ip(self, ip):
-        master = self.server.config.master
-        config = self.server.config.base
-        self.client = MasterClient(self.server, (ip, master.port))
-        self.server.listen_udp(config.port, self.client)
+        config = self.server.config
+        master = config.master
+        remote = (master.server, master.port)
+        local_port = config.base.port
+        protocol = MasterClient(self.server)
+        server = self.server.create_datagram_endpoint(lambda: protocol,
+                                                      port=local_port,
+                                                      remote_addr=remote)
+        asyncio.Task(server)
 
     def on_new_connection(self, event):
         return
