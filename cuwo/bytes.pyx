@@ -21,7 +21,7 @@ High-level byte read/writing and pack/unpacking from files and data
 
 from cuwo.vector import Vector3
 from cuwo.exceptions import OutOfData
-from cuwo.common import filter_string
+from cuwo.common import filter_bytes
 cimport cython
 from libc.limits cimport UINT_MAX
 
@@ -124,7 +124,7 @@ cdef class ByteReader:
         return data[:i]
 
     cpdef unicode read_ascii(self, unsigned int size):
-        return filter_string(self.read_string(size))
+        return filter_bytes(self.read_string(size))
 
     cpdef skip(self, unsigned int size):
         cdef unsigned int end_pos = self.tell() + size

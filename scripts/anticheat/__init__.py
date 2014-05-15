@@ -23,7 +23,11 @@ from cuwo.common import (get_power, get_item_name, is_bit_set,
                          get_entity_max_health)
 from cuwo.packet import ServerUpdate, PickupAction
 from .constants import (LOG_LEVEL_VERBOSE, LOG_LEVEL_DEFAULT, CUWO_ANTICHEAT,
-                        LEGAL_RECIPE_ITEMS, LEGAL_ITEMS)
+                        LEGAL_RECIPE_ITEMS, LEGAL_ITEMS, LEGAL_CLASSES,
+                        LEGAL_ITEMSLOTS, TWOHANDED_WEAPONS, CLASS_WEAPONS,
+                        CLASS_ARMOR, ARMOR_IDS, ABILITIES, APPEARANCES,
+                        FLAGS_1_ATTACKING, FLAGS_2_RANGER_STEALTH,
+                        FLAGS_1_GLIDER_ACTIVE)
 
 import re
 import math
@@ -38,7 +42,6 @@ def is_valid_float(v):
 
 
 class AntiCheatConnection(ConnectionScript):
-
     def on_load(self):
         self.combat_end_time = 0
         self.last_glider_active = 0
@@ -460,16 +463,16 @@ class AntiCheatConnection(ConnectionScript):
         power_item = get_power(item.level)
         power_char = get_power(entity_data.level)
         if power_item > power_char:
-            self.log(("item level too high for character " +
-                      "item: level:{level1} (power: {power1}) " +
+            self.log(("item level too high for character "
+                      "item: level:{level1} (power: {power1}) "
                       "character: level:{level2} (power: {power2})")
-                      .format(level1=item.level,
+                     .format(level1=item.level,
                              power1=power_item,
                              level2=entity_data.level,
                              power2=power_char), LOG_LEVEL_VERBOSE)
             return True
 
-        if not item.type in LEGAL_ITEMSLOTS:
+        if item.type not in LEGAL_ITEMSLOTS:
             self.log("non equipable item slot:" +
                      "type={type} subtype={subtype} slot={slot}"
                      .format(type=item.type,
@@ -477,7 +480,7 @@ class AntiCheatConnection(ConnectionScript):
                              slot=in_slotindex), LOG_LEVEL_VERBOSE)
             return True
 
-        if not in_slotindex in LEGAL_ITEMSLOTS[item.type]:
+        if in_slotindex not in LEGAL_ITEMSLOTS[item.type]:
             self.log("item in invalid slot:" +
                      "type={type} subtype={subtype} slot={slot}"
                      .format(type=item.type,
@@ -1089,7 +1092,7 @@ class AntiCheatConnection(ConnectionScript):
         self.time_traveled += self.time_since_update
         if self.time_traveled > 0.5:
             speed = self.distance_traveled / self.time_traveled
-            #print "Traveling at", speed
+            # print "Traveling at", speed
             self.time_traveled = 0
             self.distance_traveled = 0
 

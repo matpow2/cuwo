@@ -26,7 +26,7 @@ from cuwo.entity import (EntityData, AppearanceData, ItemData,
 from cuwo.sounds import SOUNDS
 from cuwo.loader import Loader
 from cuwo.bytes import ByteReader, ByteWriter
-from cuwo.constants import FULL_MASK, BLOCK_SCALE 
+from cuwo.constants import FULL_MASK, BLOCK_SCALE
 from cuwo.exceptions import OutOfData
 import zlib
 
@@ -95,7 +95,7 @@ class JoinPacket(Packet):
         writer.write_uint32(0)
         writer.write_uint64(self.entity_id)
         if self.data is None:
-            writer.write('\x00' * 0x1168)
+            writer.write(b'\x00' * 0x1168)
         else:
             self.data.write(writer)
 
@@ -364,9 +364,9 @@ class StaticEntityData(Loader):
         reader.skip(4)
         # memory header starts here (size 72)
         self.entity_type = reader.read_uint32()
-        reader.skip(4) # 64bit struct padding
+        reader.skip(4)  # 64bit struct padding
         self.pos = reader.read_qvec3()
-        self.something2 = reader.read_uint32() # 0, 1, 2, 3
+        self.something2 = reader.read_uint32()  # 0, 1, 2, 3
         self.something3 = reader.read_float()
         self.something4 = reader.read_float()
         self.something5 = reader.read_float()
@@ -374,7 +374,7 @@ class StaticEntityData(Loader):
         reader.skip(3)
         self.something7 = reader.read_uint32()
         self.something8 = reader.read_uint32()
-        reader.skip(4) # 64bit padding
+        reader.skip(4)  # 64bit padding
         # following may be 64bit number?
         self.something9 = reader.read_uint32()
         self.something10 = reader.read_uint32()
@@ -598,8 +598,8 @@ class ShootPacket(Packet):
         self.something14 = reader.read_uint32()
         self.something15 = reader.read_uint32()
         self.velocity = reader.read_vec3()
-        self.something19 = reader.read_float()  # rand() something,
-                                                # probably damage multiplier
+        # rand() something, probably damage multiplier
+        self.something19 = reader.read_float()
         self.something20 = reader.read_float()
         self.something21 = reader.read_float()
         self.something22 = reader.read_float()  # used stamina? amount of stun?
@@ -736,7 +736,7 @@ for table in (CS_PACKETS, SC_PACKETS):
 
 
 class PacketHandler(object):
-    data = ''
+    data = b''
 
     def __init__(self, table, callback):
         self.table = table

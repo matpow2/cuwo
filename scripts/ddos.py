@@ -26,14 +26,14 @@ from cuwo.script import ServerScript, ConnectionScript
 
 class SaneConnection(ConnectionScript):
     def on_connect(self, event):
-        timeout = self.server.config.base.connection_timeout
-        self.timeout_call = self.loop.call_later(timeout, self.timeout)
+        self.timeout = self.server.config.base.connection_timeout
+        self.timeout_call = self.loop.call_later(self.timeout, self.on_timeout)
 
     def on_entity_update(self, event):
-        timeout = self.server.config.base.connection_timeout
-        self.timeout_call.reset(timeout)
+        self.timeout_call.cancel()
+        self.timeout_call = self.loop.call_later(self.timeout, self.on_timeout)
 
-    def timeout(self):
+    def on_timeout(self):
         if self.connection is None:
             return
         host = self.connection.address.host

@@ -44,6 +44,7 @@ import pprint
 import traceback
 import asyncio
 import signal
+import socket
 
 # initialize packet instances for sending
 join_packet = JoinPacket()
@@ -75,8 +76,10 @@ class CubeWorldConnection(asyncio.Protocol):
     def connection_made(self, transport):
         self.transport = transport
         self.address = transport.get_extra_info('peername')
-        socket = transport.get_extra_info('socket')
-        socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+
+        # enable TCP_NODELAY
+        sock = transport.get_extra_info('socket')
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
 
         server = self.server
         if len(server.connections) >= server.config.base.max_players:
@@ -206,6 +209,7 @@ class CubeWorldConnection(asyncio.Protocol):
 
     def on_chat_packet(self, packet):
         message = filter_string(packet.value).strip()
+        print('on chat packet:', message, packet.value)
         if not message:
             return
         message = self.on_chat(message)
@@ -307,7 +311,7 @@ class CubeWorldConnection(asyncio.Protocol):
         self.disconnect()
         self.server.send_chat('%s has been kicked' % self.name)
 
-    # convienience methods
+    # convenience methods
 
     @property
     def position(self):

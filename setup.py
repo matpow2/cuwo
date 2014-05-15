@@ -110,11 +110,25 @@ def silent_spawn_nt(cmd, search_path=1, verbose=0, dry_run=0):
 
 
 class build_ext(_build_ext.build_ext):
+    user_options = _build_ext.build_ext.user_options + [
+        ('disable-tgen', None, 'disables the tgen extension')
+    ]
+
+    boolean_options = _build_ext.build_ext.boolean_options + [
+        'disable-tgen'
+    ]
+
+    def initialize_options(self):
+        super().initialize_options()
+        self.disable_tgen = False
+
     def build_extensions(self):
         self.check_extensions_list(self.extensions)
 
         for ext in self.extensions:
             if ext.name == 'cuwo.tgen':
+                if self.disable_tgen:
+                    continue
                 self.generate_tgen_sources(ext)
             self.build_extension(ext)
 
