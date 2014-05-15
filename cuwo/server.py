@@ -209,7 +209,6 @@ class CubeWorldConnection(asyncio.Protocol):
 
     def on_chat_packet(self, packet):
         message = filter_string(packet.value).strip()
-        print('on chat packet:', message, packet.value)
         if not message:
             return
         message = self.on_chat(message)
