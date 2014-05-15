@@ -92,7 +92,7 @@ def parse_command(message):
         command = args.pop(0)
     else:
         command = ''
-    return command, [arg for arg in args]
+    return command, args
 
 
 def create_path(path):
