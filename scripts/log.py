@@ -38,7 +38,6 @@ class LoggerWriter:
         self.level = level
 
     def write(self, message):
-        self.fp.write(message)
         self.data += message
         splitted = self.data.split('\n')
         for message in splitted[:-1]:
@@ -54,6 +53,9 @@ class LogServer(ServerScript):
 
     def on_load(self):
         logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+
+        # also write stdout/stderr to log file
         sys.stdout = LoggerWriter(sys.__stdout__, logger, logging.INFO)
         sys.sterr = LoggerWriter(sys.__stderr__, logger, logging.WARNING)
 
@@ -65,6 +67,9 @@ class LogServer(ServerScript):
         else:
             handler = logging.FileHandler(logfile)
         logger.addHandler(handler)
+
+        # log normal logging messages to stdout
+        logger.addHandler(logging.StreamHandler(sys.__stdout__))
 
         print('cuwo server started on %s' % time.strftime('%c'))
 

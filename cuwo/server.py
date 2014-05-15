@@ -76,7 +76,7 @@ class CubeWorldConnection(asyncio.Protocol):
         self.transport = transport
         self.address = transport.get_extra_info('peername')
         socket = transport.get_extra_info('socket')
-        self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+        socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
 
         server = self.server
         if len(server.connections) >= server.config.base.max_players:

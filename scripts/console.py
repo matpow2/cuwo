@@ -100,7 +100,6 @@ class ConsoleServer(ServerScript):
             self.server.send_chat(line)
             return
         command, args = parse_command(line[1:])
-        print('command:', command, args)
         if command == 'stop':
             self.server.stop()
             return
