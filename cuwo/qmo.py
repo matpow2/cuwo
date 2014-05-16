@@ -28,7 +28,7 @@ MAGIC = 'QBCL\x20'
 VERSION = '1.02'
 
 
-class QubicleModel(object):
+class QubicleModel:
     def __init__(self, reader=None):
         self.blocks = {}
         if reader is None:
@@ -92,7 +92,7 @@ class QubicleModel(object):
                     writer.write_uint32(c2)
 
 
-class QubicleFile(object):
+class QubicleFile:
     def __init__(self, reader=None):
         self.models = []
         if reader is None:

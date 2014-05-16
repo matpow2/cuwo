@@ -355,7 +355,7 @@ class BanProtocol(asyncio.Protocol):
         self.disconnect_call.cancel()
 
 
-class CubeWorldServer(object):
+class CubeWorldServer:
     items_changed = False
     exit_code = None
     world = None

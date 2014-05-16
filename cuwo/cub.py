@@ -16,7 +16,7 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 
-class CubModel(object):
+class CubModel:
     def __init__(self, reader=None):
         self.blocks = {}
         if reader is None:

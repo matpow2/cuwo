@@ -24,14 +24,14 @@ from queue import Queue
 import asyncio
 
 
-class GenerateData(object):
+class GenerateData:
     def __init__(self, x, y):
         self.x = x
         self.y = y
         self.f = asyncio.Future()
 
 
-class World(object):
+class World:
     running = True
 
     def __init__(self, loop, seed):

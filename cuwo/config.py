@@ -24,7 +24,7 @@ class ConfigDict(dict):
         return self[name]
 
 
-class ConfigObject(object):
+class ConfigObject:
     def __init__(self, directory):
         self.directory = directory
         self.reload()

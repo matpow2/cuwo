@@ -735,7 +735,7 @@ for table in (CS_PACKETS, SC_PACKETS):
         v.packet_id = k
 
 
-class PacketHandler(object):
+class PacketHandler:
     data = b''
 
     def __init__(self, table, callback):

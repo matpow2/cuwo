@@ -56,7 +56,7 @@ def get_player(server, value):
 
 # command decorators/class implementation
 
-class Command(object):
+class Command:
     def __init__(self, func):
         self.func = func
         self.original = original = getattr(func, 'func', func)
@@ -141,7 +141,7 @@ def restrict(*user_types):
 admin = restrict('admin')
 
 
-class ScriptManager(object):
+class ScriptManager:
     """Manages scripts for either a server or connection."""
 
     def __init__(self):
@@ -196,7 +196,7 @@ class ScriptManager(object):
         return event
 
 
-class BaseScript(object):
+class BaseScript:
     def call(self, event_name, **kw):
         event = AttributeDict(kw)
         f = getattr(self, event_name, None)
@@ -329,7 +329,7 @@ class ServerScript(BaseScript):
         return ret
 
 
-class ScriptInterface(object):
+class ScriptInterface:
     """
     Used for external script interfaces to emulate a connection for e.g.
     console and IRC commands

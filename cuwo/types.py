@@ -18,7 +18,7 @@
 import itertools
 
 
-class IDPool(object):
+class IDPool:
     """
     Manage pool of IDs
     """
@@ -69,7 +69,7 @@ class AttributeDict(dict):
         self.__dict__ = self
 
 
-class DictItem(object):
+class DictItem:
     keys = None
     value = None
 
