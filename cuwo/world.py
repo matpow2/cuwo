@@ -20,37 +20,40 @@ World manager
 """
 
 from cuwo import tgen
-from twisted.internet import reactor, defer
 from queue import Queue
+import asyncio
 
 
 class GenerateData(object):
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.d = defer.Deferred()
+        self.f = asyncio.Future()
 
 
 class World(object):
     running = True
 
-    def __init__(self, seed):
+    def __init__(self, loop, seed):
+        self.loop = loop
         self.gen_queue = Queue()
         self.cache = {}
-        reactor.callInThread(self.run_gen, seed)
-        reactor.addSystemEventTrigger('before', 'shutdown', self.on_shutdown)
+        loop.run_in_executor(None, self.run_gen, seed)
 
-    def on_shutdown(self):
+    def stop(self):
         self.gen_queue.put(None)
 
     def get_chunk(self, x, y):
         try:
-            return defer.succeed(self.cache[(x, y)])
+            chunk = self.cache[(x, y)]
+            f = asyncio.Future()
+            f.set_result(chunk)
+            return f
         except KeyError:
             pass
         data = GenerateData(x, y)
         self.gen_queue.put(data, False)
-        return data.d
+        return data.f
 
     def run_gen(self, seed):
         tgen.initialize(seed)
@@ -63,4 +66,4 @@ class World(object):
             if res is None:
                 res = tgen.generate(data.x, data.y)
                 self.cache[key] = res
-            reactor.callFromThread(data.d.callback, res)
+            self.loop.call_soon_threadsafe(data.f.set_result, res)

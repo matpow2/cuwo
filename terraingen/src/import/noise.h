@@ -96,8 +96,8 @@ void sub_4FE970()
     double v4 = interpolated_noise(double(a4) * 0.0005, 3423.0);
     double v7 = interpolated_noise(double(a3) * 0.0005, 23421.0);
     int v29 = 0;
-    int v22 = int(a3 + v4 * 3.0 * 256.0);
-    int v21 = int(a4 + v7 * 3.0 * 256.0);
+    uint32_t v22 = uint32_t(a3 + v4 * 3.0 * 256.0);
+    uint32_t v21 = uint32_t(a4 + v7 * 3.0 * 256.0);
     int32_t v30 = 0;
     int32_t v6_lo_max = int32_t(a4 + 128*128) / (128*128);
     int32_t v6_lo_start = int32_t(a4 - 128*128) / (128*128);
@@ -124,11 +124,11 @@ void sub_4FE970()
 
             const float v10 = 1 / 65536.0f;
             v34 = make_pair(v34_hi, v34_lo);
-            float v17 = double(v34) * v10;
+            float v17 = float(double(v34) * v10);
 
             int64_t v35 = uint64_t(mem.read_dword(v26+4)) << 16;
             v35 -= int64_t(v21) << 16;
-            float v18 = double(v35);
+            float v18 = float(v35);
 
             int32_t v19 = int32_t(v18 * v10 * v18 * v10 + v17 * v17);
             if (!v29 || v19 < v30) {

@@ -938,7 +938,7 @@ class CPU(object):
         print("%s: [%#x][%x] %s" % (message, self.eip, i.opcode,
                                     i.get_disasm()))
 
-    def __next__(self):
+    def handle_next(self):
         instruction = self.sub.instruction_list[self.index]
         self.eip = instruction.address
 
@@ -2272,7 +2272,7 @@ class Converter(object):
 
         writer.putmeth('void %s' % name)
         while True:
-            if not next(self.cpu):
+            if not self.cpu.handle_next():
                 break
         if sub.child_sub:
             writer.putln('return;')

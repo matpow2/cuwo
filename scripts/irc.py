@@ -17,10 +17,12 @@
 
 """
 IRC client that can be used as a way to control the game server
+
+Depends on the irc3 package. Install with:
+pip install irc3
 """
 
-from twisted.words.protocols import irc
-from twisted.internet import reactor, protocol
+import irc3
 from cuwo.common import parse_command
 from cuwo.script import ServerScript, ConnectionScript, ScriptInterface
 
@@ -39,8 +41,12 @@ MAX_IRC_CHAT_SIZE = 100
 def encode_irc(value):
     return value.encode('ascii', 'replace')
 
+@irc3.plugin
+class ServerPlugin:
+    def __init__(self, bot):
+        self.bot = bot
 
-class IRCBot(irc.IRCClient):
+class IrcConnection(irc3.IrcConnection):
     commands = {}
 
     def __init__(self, factory, server):
@@ -163,7 +169,7 @@ def unpack_modes(value):
     return {item for sublist in value for item in sublist}
 
 
-class IRCClientFactory(protocol.ClientFactory):
+class IrcBot(irc3.IrcBot):
     lost_reconnect_delay = 20
     failed_reconnect_delay = 60
     bot = None

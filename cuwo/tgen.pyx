@@ -29,7 +29,7 @@ cdef extern from "terraingen.h" nogil:
         unsigned char r, g, b, a
 
     cdef struct ChunkXY:
-        int a, b # b is not actually used
+        int a, b  # b is not actually used
         unsigned int size
         ChunkEntry * items
 
@@ -79,6 +79,7 @@ def initialize(seed, path=None):
     if path is None:
         path = './data/'
     tgen_set_seed(seed)
+    path = path.encode('utf-8')
     tgen_set_path(path)
     with nogil:
         tgen_init()
@@ -207,7 +208,7 @@ cdef class RenderBuffer:
             q.v1.ny = q.v2.ny = q.v3.ny = q.v4.ny = -1.0
             q.v1.nz = q.v2.nz = q.v3.nz = q.v4.nz = 0.0
             self.data.push_back(q)
-        
+
 
         # Top face
         if not proxy.get_solid_c(x, y, z + 1):
@@ -219,7 +220,7 @@ cdef class RenderBuffer:
             q.v1.ny = q.v2.ny = q.v3.ny = q.v4.ny = 0.0
             q.v1.nz = q.v2.nz = q.v3.nz = q.v4.nz = -1.0
             self.data.push_back(q)
-        
+
 
         # Bottom face
         if not proxy.get_solid_c(x, y, z - 1):
@@ -231,7 +232,7 @@ cdef class RenderBuffer:
             q.v1.ny = q.v2.ny = q.v3.ny = q.v4.ny = 0.0
             q.v1.nz = q.v2.nz = q.v3.nz = q.v4.nz = 1.0
             self.data.push_back(q)
-        
+
 
         # Right face
         if not proxy.get_solid_c(x + 1, y, z):
@@ -243,7 +244,7 @@ cdef class RenderBuffer:
             q.v1.ny = q.v2.ny = q.v3.ny = q.v4.ny = 0.0
             q.v1.nz = q.v2.nz = q.v3.nz = q.v4.nz = 0.0
             self.data.push_back(q)
-        
+
 
         # Left Face
         if not proxy.get_solid_c(x - 1, y, z):
@@ -261,7 +262,7 @@ cdef class ChunkProxy:
     cdef ChunkData * data
     cdef public:
         list items
-    
+
     def __init__(self, x, y):
         cdef unsigned int x_int = x
         cdef unsigned int y_int = y

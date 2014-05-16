@@ -203,7 +203,8 @@ class CubeWorldConnection(asyncio.Protocol):
         if self.server.world:
             chunk = get_chunk(self.position)
             if chunk != self.chunk_pos:
-                self.server.world.get_chunk(*chunk).addCallback(self.on_chunk)
+                f = self.server.world.get_chunk(*chunk)
+                f.add_done_callback(self.on_chunk)
                 self.chunk_pos = chunk
         self.scripts.call('on_pos_update')
 
@@ -396,7 +397,7 @@ class CubeWorldServer(object):
 
         # world
         if has_world and base.use_world:
-            self.world = World(base.seed)
+            self.world = World(self.loop, base.seed)
 
         # start listening
         self.loop.run_until_complete(self.create_server(self.build_protocol,
@@ -411,7 +412,8 @@ class CubeWorldServer(object):
         self.items_changed = True
         return ret.item_data
 
-    def on_chunk(self, chunk):
+    def on_chunk(self, f):
+        chunk = f.result()
         if not chunk.items:
             return
         chunk_pos = (chunk.x, chunk.y)
@@ -580,8 +582,10 @@ class CubeWorldServer(object):
     # stop/restart
 
     def stop(self, code=None):
-        self.exit_code = code
         print('Stopping...')
+        self.exit_code = code
+        if self.world:
+            self.world.stop()
         self.loop.stop()
 
     # asyncio wrappers

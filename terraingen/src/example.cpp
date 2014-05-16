@@ -31,20 +31,27 @@ inline int to_int(const char * in)
 
 int main(int argc, const char ** argv)
 {
-    if (argc != 4) {
-        std::cout << "Usage: gen.exe seed x y file" << std::endl;
+	int coords = (argc - 2);
+    if (coords < 0 || coords % 2 != 0) {
+        std::cout << "Usage: gen.exe seed x1 y1 x2 y2 ..." << std::endl;
         return 0;
     }
+	int pairs = coords / 2;
 
     tgen_set_seed(to_int(argv[1]));
-    int x = to_int(argv[2]);
-    int y = to_int(argv[3]);
 
     tgen_set_path("../data/");
     tgen_init();
     std::cout << "Generator setup" << std::endl;
-    ChunkData * c = tgen_generate_chunk(x, y);
-    std::cout << "Generated chunk" << std::endl;
-    
+	for (int i = 0; i < pairs; i++) {
+		int x = to_int(argv[2 + i*2]);
+		int y = to_int(argv[3 + i*2]);
+		std::cout << "Generating (" << x << ", " << y << ")" << std::endl;
+		ChunkData * c = tgen_generate_chunk(x, y);
+        std::cout << "Generated." << std::endl;
+	}
+
+    std::cout << "Done." << std::endl;
+
     return 0;
 }
