@@ -616,7 +616,6 @@ def main():
     config = ConfigObject('./config')
 
     if sys.platform == 'win32':
-        # use IOCP on Windows
         from cuwo.win32 import SelectorEventLoop
         loop = SelectorEventLoop()
         asyncio.set_event_loop(loop)
