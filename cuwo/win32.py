@@ -39,6 +39,8 @@ def fix_event_loop(klass):
             super().__init__()
             # 10 ms resolution
             self._clock_resolution = 10 * 1e-3
+            self._last_time = 0
+            self._n_overflow = 0
 
         def run_forever(self):
             period = int(self._clock_resolution * 1e3)
@@ -48,7 +50,12 @@ def fix_event_loop(klass):
             timeEndPeriod(period)
 
         def time(self):
-            return timeGetTime() * 1e-3
+            # lifted from timemodule.c (pymonotonic)
+            t = timeGetTime()
+            if t < self._last_time:
+                self._n_overflow += 0x100000000
+            self._last_time = t
+            return (t + self._n_overflow) * 1e-3
 
     return EventLoop
 
