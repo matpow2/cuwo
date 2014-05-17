@@ -615,13 +615,13 @@ def main():
 
     config = ConfigObject('./config')
 
-    # if sys.platform == 'win32':
-    #     # use IOCP on Windows
-    #     from asyncio import windows_events
-    #     loop = windows_events.ProactorEventLoop()
-    #     asyncio.set_event_loop(loop)
-    # else:
-    loop = asyncio.get_event_loop()
+    if sys.platform == 'win32':
+        # use IOCP on Windows
+        from cuwo.win32 import SelectorEventLoop
+        loop = SelectorEventLoop()
+        asyncio.set_event_loop(loop)
+    else:
+        loop = asyncio.get_event_loop()
 
     server = CubeWorldServer(loop, config)
 
