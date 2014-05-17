@@ -30,6 +30,7 @@ from cuwo.common import (get_clock_string, parse_clock, parse_command,
 from cuwo.script import ScriptManager
 from cuwo.config import ConfigObject
 from cuwo import entity
+from cuwo.loop import LoopingCall
 
 try:
     from cuwo.world import World
@@ -376,8 +377,8 @@ class CubeWorldServer:
         self.entities = {}
         self.entity_ids = IDPool(1)
 
-        # self.update_loop = asyncio.Task(self.loop())
-        # self.update_loop.start(1.0 / base.update_fps, False)
+        self.update_loop = LoopingCall(self.update)
+        self.update_loop.start(1.0 / base.update_fps, now=False)
 
         # server-related
         self.git_rev = base.get('git_rev', None)
@@ -400,8 +401,8 @@ class CubeWorldServer:
             self.world = World(self.loop, base.seed)
 
         # start listening
-        self.loop.run_until_complete(self.create_server(self.build_protocol,
-                                                        port=base.port))
+        asyncio.Task(self.create_server(self.build_protocol,
+                                        port=base.port))
 
     def build_protocol(self):
         return CubeWorldConnection(self)
@@ -474,7 +475,7 @@ class CubeWorldServer:
 
     def broadcast_packet(self, packet):
         data = write_packet(packet)
-        for player in list(self.players.values()):
+        for player in self.players.values():
             player.transport.write(data)
 
     # line/string formatting options based on config

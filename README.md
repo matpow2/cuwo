@@ -25,13 +25,15 @@ out there, and has features like
 Running
 =======
 
-On Windows, see the 
-[quick-start guide](https://github.com/matpow2/cuwo/wiki/Quickstart) for a 
+On Windows, see the
+[quick-start guide](https://github.com/matpow2/cuwo/wiki/Quickstart) for a
 quick way to get started.
 
-On Linux/Mac OS X/FreeBSD/etc., make sure you have Python 2.7, Twisted and
+On Linux/Mac OS X/FreeBSD/etc., make sure you have Python 3.4 and
 Cython installed on your machine, along with native compilers.
 Run build.sh and afterwards run_server.sh.
+
+Optionally, install the irc3 package to enable IRC bot support.
 
 Status
 ======

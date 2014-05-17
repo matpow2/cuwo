@@ -142,8 +142,5 @@ class MultikeyDict(dict):
     def values(self):
         return self.value_set
 
-    def itervalues(self):
-        return iter(self.value_set)
-
     def __len__(self):
         return len(self.value_set)

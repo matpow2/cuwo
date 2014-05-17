@@ -56,7 +56,7 @@ if sys.platform == 'win32':
                     current += c
                     write_stdout(c)
                     stdout.flush()
-            yield from asyncio.sleep(0.01)
+            yield from asyncio.sleep(0.04)
         return current
 
 else:

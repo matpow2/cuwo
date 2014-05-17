@@ -1,2 +1,2 @@
-python -m cuwo.server
+py -3 -m cuwo.server
 pause

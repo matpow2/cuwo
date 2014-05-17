@@ -25,12 +25,12 @@ sys.path += ['.', './scripts']
 from cuwo import constants
 from cuwo.exceptions import InvalidData
 import master
-from twisted.internet.task import LoopingCall
-from twisted.internet import reactor
+import asyncio
 import pygeoip
 import argparse
 import json
 import os
+import socket
 
 
 WRITE_INTERVAL = 10
@@ -46,8 +46,8 @@ class MasterServer(master.MasterProtocol):
         self.blacklist_file = blacklist_file
         self.blacklist = set()
         self.ip_database = pygeoip.GeoIP('GeoIP.dat')
-        self.update_loop = LoopingCall(self.update)
-        self.update_loop.start(EXPIRE_TIME, now=True)
+
+        asyncio.Task(self.update())
 
     def datagramReceived(self, data, addr):
         host, port = addr
@@ -69,7 +69,7 @@ class MasterServer(master.MasterProtocol):
 
     def load_blacklist(self):
         if not os.path.isfile(self.blacklist_file):
-            self.save_blacklist() # save empty blacklist
+            self.save_blacklist()  # save empty blacklist
             return
         with open(self.blacklist_file, 'rb') as fp:
             self.blacklist = set(json.loads(fp.read()))
@@ -80,25 +80,26 @@ class MasterServer(master.MasterProtocol):
         self.load_blacklist()
         self.output.clear()
 
-    def on_resolve(self, resolved_ip, ip, hostname, data):
-        if resolved_ip == ip:
-            data.ip = hostname
-        else:
-            data.ip = ip
-        self.add_server(data, ip)
+    @asyncio.coroutine
+    def resolve(self, host):
+        info = yield from self.loop.getaddrinfo(host, 0)
+        return info[0][4][0]
 
-    def on_resolve_error(self, failure, ip, data):
-        data.ip = ip
-        self.add_server(data, ip)
-
+    @asyncio.coroutine
     def on_server(self, data, addr):
         host, port = addr
-        if data.ip is not None:
-            d = reactor.resolve(data.ip)
-            d.addCallback(self.on_resolve, host, data.ip, data)
-            d.addErrback(self.on_resolve_error, host, data)
-            return
         data.ip = host
+        if data.ip is None:
+            data.ip = host
+        else:
+            use_ip = False
+            try:
+                ip = yield from self.resolve(data.ip)
+                use_ip = ip == host
+            except socket.gaierror:
+                pass
+            if not use_ip:
+                data.ip = host
         self.add_server(data, host)
 
     def add_server(self, data, ip):
@@ -115,7 +116,7 @@ class MasterServer(master.MasterProtocol):
         if port != constants.SERVER_PORT:
             return
         try:
-            self.on_server(master.ServerData(value), addr)
+            asyncio.Task(self.on_server(master.ServerData(value), addr))
         except InvalidData:
             self.on_bad_packet(addr)
             return
@@ -134,10 +135,13 @@ def main():
     filename = args.filename
     blacklist_file = args.blacklist
 
-    server = MasterServer(filename, blacklist_file)
-    port = reactor.listenUDP(port, server)
+    loop = asyncio.get_event_loop()
+    protocol = MasterServer(filename, blacklist_file)
+
     print('Running cuwo (master) on port %s' % port.port)
-    reactor.run()
+    addr = (None, port)
+    loop.run_until_complete(loop.create_datagram_endpoint(protocol,
+                                                          local_addr=addr))
 
 if __name__ == '__main__':
     main()

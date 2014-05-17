@@ -19,12 +19,11 @@ import sys
 sys.path.append('.')
 from cuwo import tgen
 from cuwo import euclid
-from cuwo import constants
 import sdl2
 import sdl2.ext
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from OpenGL.constants import GLfloat_3, GLfloat_4
+from OpenGL.constants import GLfloat_4
 from OpenGL.GL import shaders
 from OpenGL.GL.ARB.vertex_buffer_object import *
 import threading
@@ -191,7 +190,7 @@ def draw_cube(x, y, z, r, g, b):
     glBegin(GL_QUADS)
     glColor4ub(r, g, b, 255)
 
-    gl_x1 = x 
+    gl_x1 = x
     gl_x2 = gl_x1 + 1.0
     gl_y1 = y
     gl_y2 = gl_y1 + 1.0
@@ -207,38 +206,38 @@ def draw_cube(x, y, z, r, g, b):
 
     # Right face
     glNormal3f(0.0, -1.0, 0.0)
-    glVertex3f(gl_x1, gl_y1, gl_z1) # Top right
-    glVertex3f(gl_x2, gl_y1, gl_z1) # Top left
-    glVertex3f(gl_x2, gl_y1, gl_z2) # Bottom left
-    glVertex3f(gl_x1, gl_y1, gl_z2) # Bottom right
+    glVertex3f(gl_x1, gl_y1, gl_z1)  # Top right
+    glVertex3f(gl_x2, gl_y1, gl_z1)  # Top left
+    glVertex3f(gl_x2, gl_y1, gl_z2)  # Bottom left
+    glVertex3f(gl_x1, gl_y1, gl_z2)  # Bottom right
 
     # Top face
     glNormal3f(0.0, 0.0, -1.0)
-    glVertex3f(gl_x1, gl_y1, gl_z2) # Bottom left
-    glVertex3f(gl_x2, gl_y1, gl_z2) # Bottom right
-    glVertex3f(gl_x2, gl_y2, gl_z2) # Top right
-    glVertex3f(gl_x1, gl_y2, gl_z2) # Top left
+    glVertex3f(gl_x1, gl_y1, gl_z2)  # Bottom left
+    glVertex3f(gl_x2, gl_y1, gl_z2)  # Bottom right
+    glVertex3f(gl_x2, gl_y2, gl_z2)  # Top right
+    glVertex3f(gl_x1, gl_y2, gl_z2)  # Top left
 
     # Bottom face
     glNormal3f(0.0, 0.0, 1.0)
-    glVertex3f(gl_x1, gl_y1, gl_z1) # Bottom right
-    glVertex3f(gl_x1, gl_y2, gl_z1) # Top right
-    glVertex3f(gl_x2, gl_y2, gl_z1) # Top left
-    glVertex3f(gl_x2, gl_y1, gl_z1) # Bottom left
-    
+    glVertex3f(gl_x1, gl_y1, gl_z1)  # Bottom right
+    glVertex3f(gl_x1, gl_y2, gl_z1)  # Top right
+    glVertex3f(gl_x2, gl_y2, gl_z1)  # Top left
+    glVertex3f(gl_x2, gl_y1, gl_z1)  # Bottom left
+
     # Right face
     glNormal3f(1.0, 0.0, 0.0)
-    glVertex3f(gl_x2, gl_y1, gl_z1) # Bottom right
-    glVertex3f(gl_x2, gl_y2, gl_z1) # Top right
-    glVertex3f(gl_x2, gl_y2, gl_z2) # Top left
-    glVertex3f(gl_x2, gl_y1, gl_z2) # Bottom left
-    
+    glVertex3f(gl_x2, gl_y1, gl_z1)  # Bottom right
+    glVertex3f(gl_x2, gl_y2, gl_z1)  # Top right
+    glVertex3f(gl_x2, gl_y2, gl_z2)  # Top left
+    glVertex3f(gl_x2, gl_y1, gl_z2)  # Bottom left
+
     # Left Face
     glNormal3f(-1.0, 0.0, 0.0)
-    glVertex3f(gl_x1, gl_y1, gl_z1) # Bottom left
-    glVertex3f(gl_x1, gl_y1, gl_z2) # Bottom right
-    glVertex3f(gl_x1, gl_y2, gl_z2) # Top right
-    glVertex3f(gl_x1, gl_y2, gl_z1) # Top left
+    glVertex3f(gl_x1, gl_y1, gl_z1)  # Bottom left
+    glVertex3f(gl_x1, gl_y1, gl_z2)  # Bottom right
+    glVertex3f(gl_x1, gl_y2, gl_z2)  # Top right
+    glVertex3f(gl_x1, gl_y2, gl_z1)  # Top left
 
     glEnd()
 
@@ -298,7 +297,7 @@ class MapViewer(object):
         self.chunks = ChunkManager(self)
         self.camera = Camera()
         renderer = glGetString(GL_RENDERER)
-        self.use_ssao = 'Intel HD' not in renderer
+        self.use_ssao = b'Intel HD' not in renderer
         self.init_ssao()
 
     def init_ssao(self):
@@ -307,7 +306,7 @@ class MapViewer(object):
         self.ssao_shader = GLSLShader('ssao')
 
         self.depth_texture = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, self.depth_texture);
+        glBindTexture(GL_TEXTURE_2D, self.depth_texture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP)
@@ -461,7 +460,7 @@ class MapViewer(object):
     def set_lighting(self):
         v1 = euclid.Vector3(0.3, -0.7, -0.6).normalized()
         light1_position = GLfloat_4(v1.x, v1.y, v1.z, 0.0)
-        diffuse = 0.6;
+        diffuse = 0.6
         light_diffuse = GLfloat_4(diffuse, diffuse, diffuse, 1.0)
         light_ambient = GLfloat_4(0.0, 0.0, 0.0, 1.0)
         specular = 0.0
@@ -551,6 +550,7 @@ class MapViewer(object):
             chunk.draw()
 
         ChunkData.end()
+
 
 def main():
     viewer = MapViewer(32800, 32800, 26879)
