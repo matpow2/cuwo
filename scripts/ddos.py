@@ -48,7 +48,7 @@ class SaneServer(ServerScript):
         self.hard_bans = set()
 
     def on_connection_attempt(self, event):
-        host = event.address.host
+        host = event.address[0]
         if host in self.hard_bans:
             return False
         max_count = self.server.config.base.max_connections_per_ip

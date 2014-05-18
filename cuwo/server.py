@@ -78,9 +78,35 @@ class CubeWorldConnection(asyncio.Protocol):
         self.transport = transport
         self.address = transport.get_extra_info('peername')
 
+        accept = self.server.scripts.call('on_connection_attempt',
+                                          address=self.address).result
+        # hardban
+        if accept is False:
+            self.transport.abort()
+            self.disconnected = True
+            return
+
         # enable TCP_NODELAY
         sock = transport.get_extra_info('socket')
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+
+        # ban with message
+        if accept is not None:
+            join_packet.entity_id = 1
+            self.send_packet(join_packet)
+
+            def disconnect():
+                chat_packet.entity_id = 0
+                chat_packet.value = accept
+                self.send_packet(chat_packet)
+                self.transport.close()
+
+            # need to add a small delay, since the client will otherwise
+            # ignore our chat message
+            self.loop.call_later(0.1, disconnect)
+            self.disconnected = True
+            self.transport.pause_reading()
+            return
 
         server = self.server
         if len(server.connections) >= server.config.base.max_players:
@@ -109,7 +135,7 @@ class CubeWorldConnection(asyncio.Protocol):
         self.packet_handler.feed(data)
 
     def disconnect(self, reason=None):
-        self.transport.loseConnection()
+        self.transport.close()
         self.connection_lost(reason)
 
     def connection_lost(self, reason):
@@ -325,35 +351,6 @@ class CubeWorldConnection(asyncio.Protocol):
         if self.entity_data is None:
             return None
         return self.entity_data.name
-
-
-class BanProtocol(asyncio.Protocol):
-    """
-    Protocol used for banned players.
-    Ignores data from client and only sends JoinPacket/ServerChatMessage
-    """
-
-    def __init__(self, message=None):
-        self.message = message
-
-    def send_packet(self, packet):
-        self.transport.write(write_packet(packet))
-
-    def connectionMade(self):
-        join_packet.entity_id = 1
-        self.send_packet(join_packet)
-        loop = asyncio.get_event_loop()
-        self.disconnect_call = loop.call_later(0.1, self.disconnect)
-
-    def disconnect(self):
-        if self.message is not None:
-            chat_packet.entity_id = 0
-            chat_packet.value = self.message
-        self.send_packet(chat_packet)
-        self.transport.loseConnection()
-
-    def connectionLost(self, reason):
-        self.disconnect_call.cancel()
 
 
 class CubeWorldServer:

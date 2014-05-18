@@ -39,7 +39,7 @@ class BanServer(ServerScript):
         self.ban_entries[ip] = reason
         self.save_bans()
         for connection in self.server.connections.copy():
-            if connection.address.host != ip:
+            if connection.address[0] != ip:
                 continue
             name = connection.name
             if name is not None:
@@ -61,7 +61,7 @@ class BanServer(ServerScript):
 
     def on_connection_attempt(self, event):
         try:
-            reason = self.ban_entries[event.address.host]
+            reason = self.ban_entries[event.address[0]]
         except KeyError:
             return
         return SELF_BANNED.format(reason=reason)
@@ -77,7 +77,7 @@ def ban(script, name, *reason):
     """Bans a player."""
     player = script.get_player(name)
     reason = ' '.join(reason) or DEFAULT_REASON
-    script.parent.ban(player.address.host, reason)
+    script.parent.ban(player.address[0], reason)
 
 
 @command
