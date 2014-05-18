@@ -618,6 +618,7 @@ def main():
     if sys.platform == 'win32':
         from cuwo.win32 import SelectorEventLoop
         loop = SelectorEventLoop()
+        loop.set_clock_resolution(1 * 1e-3)
         asyncio.set_event_loop(loop)
     else:
         loop = asyncio.get_event_loop()
