@@ -31,6 +31,7 @@ import argparse
 import json
 import os
 import socket
+import signal
 
 
 WRITE_INTERVAL = 10
@@ -40,20 +41,23 @@ BLACKLIST_FILE = 'blacklist.json'
 
 
 class MasterServer(master.MasterProtocol):
-    def __init__(self, filename, blacklist_file):
+    def __init__(self, loop, filename, blacklist_file):
+        self.loop = loop
         self.filename = filename
         self.output = {}
         self.blacklist_file = blacklist_file
         self.blacklist = set()
         self.ip_database = pygeoip.GeoIP('GeoIP.dat')
 
+    def connection_made(self, transport):
+        self.transport = transport
         asyncio.Task(self.update())
 
-    def datagramReceived(self, data, addr):
+    def datagram_received(self, data, addr):
         host, port = addr
         if host in self.blacklist:
             return
-        master.MasterProtocol.datagramReceived(self, data, addr)
+        super().datagram_received(data, addr)
 
     def on_bad_packet(self, addr):
         host, port = addr
@@ -72,13 +76,17 @@ class MasterServer(master.MasterProtocol):
             self.save_blacklist()  # save empty blacklist
             return
         with open(self.blacklist_file, 'rb') as fp:
-            self.blacklist = set(json.loads(fp.read()))
+            self.blacklist = set(json.loads(fp.read().decode('utf-8')))
 
+    @asyncio.coroutine
     def update(self):
-        with open(self.filename, 'wb') as fp:
-            fp.write(json.dumps(list(self.output.values())))
-        self.load_blacklist()
-        self.output.clear()
+        while True:
+            with open(self.filename, 'wb') as fp:
+                values = list(self.output.values())
+                fp.write(json.dumps(values).encode('utf-8'))
+            self.load_blacklist()
+            self.output.clear()
+            yield from asyncio.sleep(EXPIRE_TIME)
 
     @asyncio.coroutine
     def resolve(self, host):
@@ -88,7 +96,6 @@ class MasterServer(master.MasterProtocol):
     @asyncio.coroutine
     def on_server(self, data, addr):
         host, port = addr
-        data.ip = host
         if data.ip is None:
             data.ip = host
         else:
@@ -96,7 +103,7 @@ class MasterServer(master.MasterProtocol):
             try:
                 ip = yield from self.resolve(data.ip)
                 use_ip = ip == host
-            except socket.gaierror:
+            except (socket.gaierror, IndexError):
                 pass
             if not use_ip:
                 data.ip = host
@@ -135,13 +142,23 @@ def main():
     filename = args.filename
     blacklist_file = args.blacklist
 
-    loop = asyncio.get_event_loop()
-    protocol = MasterServer(filename, blacklist_file)
+    if sys.platform == 'win32':
+        from cuwo.win32 import WindowsEventLoop
+        loop = WindowsEventLoop()
+        asyncio.set_event_loop(loop)
+    else:
+        loop = asyncio.get_event_loop()
 
-    print('Running cuwo (master) on port %s' % port.port)
-    addr = (None, port)
-    loop.run_until_complete(loop.create_datagram_endpoint(protocol,
-                                                          local_addr=addr))
+    loop.add_signal_handler(signal.SIGINT, loop.close)
+
+    protocol = MasterServer(loop, filename, blacklist_file)
+
+    print('Running cuwo (master) on port %s' % port)
+
+    addr = ('0.0.0.0', port)
+    asyncio.Task(loop.create_datagram_endpoint(lambda: protocol,
+                                               local_addr=addr))
+    loop.run_forever()
 
 if __name__ == '__main__':
     main()

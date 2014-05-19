@@ -588,17 +588,19 @@ class CubeWorldServer:
 
     # asyncio wrappers
 
+    def get_interface(self):
+        return self.config.base.network_interface
+
     def create_datagram_endpoint(self, *arg, port=0, **kw):
-        host = self.config.base.network_interface
+        host = self.get_interface()
         addr = (host, port)
         return self.loop.create_datagram_endpoint(*arg, local_addr=addr, **kw)
 
     def create_server(self, *arg, **kw):
-        host = self.config.base.network_interface
-        return self.loop.create_server(*arg, host=host, **kw)
+        return self.loop.create_server(*arg, host=self.get_interface(), **kw)
 
     def connect_connection(self, *arg, **kw):
-        host = self.config.base.network_interface
+        host = self.get_interface()
         return self.loop.create_connection(*arg, local_addr=(host, 0), **kw)
 
 
@@ -613,8 +615,8 @@ def main():
     config = ConfigObject('./config')
 
     if sys.platform == 'win32':
-        from cuwo.win32 import SelectorEventLoop
-        loop = SelectorEventLoop()
+        from cuwo.win32 import WindowsEventLoop
+        loop = WindowsEventLoop()
         loop.set_clock_resolution(1 * 1e-3)
         asyncio.set_event_loop(loop)
     else:
@@ -622,13 +624,7 @@ def main():
 
     server = CubeWorldServer(loop, config)
 
-    if sys.platform == 'win32':
-        def signal_handler(signal, frame):
-            loop = asyncio.get_event_loop()
-            loop.call_soon_threadsafe(server.stop)
-        signal.signal(signal.SIGINT, signal_handler)
-    else:
-        loop.add_signal_handler(signal.SIGINT, server.stop)
+    loop.add_signal_handler(signal.SIGINT, server.stop)
 
     print('cuwo running on port %s' % config.base.port)
 

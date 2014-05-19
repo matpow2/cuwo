@@ -25,6 +25,7 @@ Relevant discussion:
 https://groups.google.com/forum/?fromgroups#!topic/python-tulip/yUFm29WPt88
 """
 
+import signal
 from ctypes import windll
 from asyncio import windows_events
 
@@ -85,6 +86,11 @@ def fix_event_loop(klass):
             self._restore_time_period()
             super().close()
 
+        def add_signal_handler(self, sig, callback, *args):
+            def signal_handler(signal, frame):
+                self.call_soon_threadsafe(callback, *args)
+            signal.signal(sig, signal_handler)
+
         def time(self):
             # lifted from timemodule.c (pymonotonic)
             t = timeGetTime()
@@ -97,3 +103,6 @@ def fix_event_loop(klass):
 
 ProactorEventLoop = fix_event_loop(windows_events.ProactorEventLoop)
 SelectorEventLoop = fix_event_loop(windows_events.SelectorEventLoop)
+
+# Use SelectorEventLoop by default
+WindowsEventLoop = SelectorEventLoop

@@ -31,6 +31,8 @@ UPDATE_RATE = 10
 
 
 class MasterProtocol(asyncio.DatagramProtocol):
+    transport = None
+
     def connection_made(self, transport):
         self.transport = transport
 
@@ -42,10 +44,13 @@ class MasterProtocol(asyncio.DatagramProtocol):
             return
         self.on_packet(value, addr)
 
+    def error_received(self, exc):
+        print('Error:', exc)
+
     def on_packet(self, data, addr):
         pass
 
-    def send_packet(self, value, addr=None):
+    def send_packet(self, value, addr):
         if self.transport is None:
             return
         data = zlib.compress(json.dumps(value).encode('utf-8'))
@@ -90,8 +95,9 @@ class ServerData(object):
 class MasterClient(MasterProtocol):
     has_response = False
 
-    def __init__(self, server):
+    def __init__(self, server, address):
         self.server = server
+        self.address = address
 
     def connection_made(self, transport):
         self.transport = transport
@@ -108,7 +114,7 @@ class MasterClient(MasterProtocol):
             data.ip = self.server.config.master.hostname
             data.players = len(self.server.players)
             data.mode = self.server.get_mode()
-            self.send_packet(data.get())
+            self.send_packet(data.get(), self.address)
             yield from asyncio.sleep(UPDATE_RATE)
 
     def on_packet(self, data, addr):
@@ -126,15 +132,17 @@ class MasterRelay(ServerScript):
     connection_class = None
 
     def on_load(self):
+        asyncio.Task(self.start())
+
+    @asyncio.coroutine
+    def start(self):
         config = self.server.config
         master = config.master
         remote = (master.server, master.port)
         local_port = config.base.port
-        protocol = MasterClient(self.server)
-        server = self.server.create_datagram_endpoint(lambda: protocol,
-                                                      port=local_port,
-                                                      remote_addr=remote)
-        asyncio.Task(server)
+        protocol = MasterClient(self.server, remote)
+        yield from self.server.create_datagram_endpoint(lambda: protocol,
+                                                        port=local_port)
 
     def on_new_connection(self, event):
         return
