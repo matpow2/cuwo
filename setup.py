@@ -38,12 +38,13 @@ for filename in data_files:
 # suppress warnings
 IGNORE_FLAGS = ('-Wstrict-prototypes', '-mno-fused-madd')
 
+config_vars = get_config_vars()
+
 
 def filter_flags(name):
-    value, = get_config_vars(name)
-    if not value:
+    if name not in config_vars:
         return
-    flags = value.split()
+    flags = config_vars[name].split()
     for flag in flags[:]:
         if flag in IGNORE_FLAGS:
             flags.remove(flag)
@@ -52,7 +53,7 @@ def filter_flags(name):
             flags.append('-O3')
             flags.remove(flag)
             continue
-    os.environ[name] = ' '.join(flags)
+    config_vars[name] = ' '.join(flags)
 
 filter_flags('OPT')
 filter_flags('CFLAGS')
@@ -148,7 +149,7 @@ class build_ext(_build_ext.build_ext):
         if is_msvc:
             extra_args += ['/wd4102', '/EHsc', '/MP']
         else:
-            extra_args += ['-Wno-unused-label', '-Wunused-local-typedefs',
+            extra_args += ['-Wno-unused-label', '-Wno-unused-local-typedefs',
                            '-fPIC']
 
         class compile_state:
