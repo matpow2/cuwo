@@ -2127,7 +2127,7 @@ class Converter(object):
         while i < data_len:
             items = []
             for ii in range(i, min(i+10, len(data))):
-                v = struct.unpack('b', data[ii])[0]
+                v = struct.unpack('b', data[ii:ii+1])[0]
                 if v < 0:
                     v = '-0x%02X,' % -v
                 else:
