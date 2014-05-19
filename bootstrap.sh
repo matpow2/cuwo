@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 git clone https://github.com/matpow2/cuwo.git .
 curl -o ./data/Server.exe http://mp2.dk/Server.exe
 curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash
