@@ -7,3 +7,4 @@ if [ -f "run_pyenv.sh" ]; then
     python -m cuwo.server
 else
     /usr/bin/env python3.4 -m cuwo.server
+fi
