@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Logging level 2 = Verbose, 1 = Default, or 0 = None
 log_level = 2
 

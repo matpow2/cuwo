@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # IRC script variables (enable by adding 'irc' to script list)
 nickname = 'cuwobot'
 server = 'irc.esper.net'
