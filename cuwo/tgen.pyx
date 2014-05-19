@@ -75,9 +75,7 @@ cdef enum:
     TREE_TYPE = 8
 
 
-def initialize(seed, path=None):
-    if path is None:
-        path = './data/'
+def initialize(seed, path):
     tgen_set_seed(seed)
     path = path.encode('utf-8')
     tgen_set_path(path)

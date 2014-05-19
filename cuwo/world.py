@@ -19,9 +19,10 @@
 World manager
 """
 
-from cuwo import tgen
+import os
 from queue import Queue
 import asyncio
+from cuwo import tgen
 
 
 class GenerateData:
@@ -33,8 +34,16 @@ class GenerateData:
 
 class World:
     running = True
+    data_path = './data/'
 
     def __init__(self, loop, seed):
+        for name in ('data1.db', 'data4.db'):
+            path = os.path.join(self.data_path, name)
+            if os.path.isfile(path):
+                continue
+            path = os.path.abspath(path)
+            raise FileNotFoundError('Missing asset file %r' % path)
+
         self.loop = loop
         self.gen_queue = Queue()
         self.cache = {}
@@ -56,7 +65,7 @@ class World:
         return data.f
 
     def run_gen(self, seed):
-        tgen.initialize(seed)
+        tgen.initialize(seed, self.data_path)
         while True:
             data = self.gen_queue.get()
             if data is None:
