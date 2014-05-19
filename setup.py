@@ -28,7 +28,7 @@ from distutils import spawn
 import subprocess
 
 data_dir = './data'
-data_files = ['data1.db', 'data4.db', 'Server.exe']
+data_files = ['Server.exe']
 for filename in data_files:
     path = os.path.join(data_dir, filename)
     if os.path.isfile(path):
