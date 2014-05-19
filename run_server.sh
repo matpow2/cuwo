@@ -1,3 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
 cd "$(dirname "$0")"
-/usr/bin/env python2.7 -m cuwo.server
+
+if [ -f "run_pyenv.sh" ]; then
+    sh run_pyenv.sh
+    python -m cuwo.server
+else
+    /usr/bin/env python3.4 -m cuwo.server
