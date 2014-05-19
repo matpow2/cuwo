@@ -40,6 +40,10 @@ EXPIRE_TIME = master.UPDATE_RATE * 1.5
 BLACKLIST_FILE = 'blacklist.json'
 
 
+def is_sane_count(count):
+    return count < 500
+
+
 class MasterServer(master.MasterProtocol):
     def __init__(self, loop, filename, blacklist_file):
         self.loop = loop
@@ -56,6 +60,8 @@ class MasterServer(master.MasterProtocol):
     def datagram_received(self, data, addr):
         host, port = addr
         if host in self.blacklist:
+            return
+        if port != constants.SERVER_PORT:
             return
         super().datagram_received(data, addr)
 
@@ -119,14 +125,17 @@ class MasterServer(master.MasterProtocol):
         self.output[ip] = data.get()
 
     def on_packet(self, value, addr):
-        host, port = addr
-        if port != constants.SERVER_PORT:
-            return
         try:
-            asyncio.Task(self.on_server(master.ServerData(value), addr))
+            value = master.ServerData(value)
         except InvalidData:
             self.on_bad_packet(addr)
             return
+
+        if not is_sane_count(value.max) or not is_sane_count(value.players):
+            # don't blacklist for this, just ignore the message
+            return
+
+        asyncio.Task(self.on_server(value, addr))
         self.send_packet({'ack': True}, addr)
 
 

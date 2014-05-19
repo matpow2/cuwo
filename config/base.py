@@ -3,7 +3,7 @@
 # Global server name
 server_name = 'cuwo server'
 
-# Max number of players on the server at once
+# Max number of players on the server at once.
 max_players = 4
 
 # Seed for the server

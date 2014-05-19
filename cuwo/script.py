@@ -166,18 +166,18 @@ class ScriptManager:
         self.cached_calls.clear()
 
     def unload(self):
-        for script in list(self.items.values()):
+        for script in self.items.values():
             script.unload()
 
     def get(self):
-        return iter(self.items.values())
+        return self.items.values()
 
     def call(self, event_name, **kw):
         try:
             handlers = self.cached_calls[event_name]
         except KeyError:
             handlers = []
-            for script in list(self.items.values()):
+            for script in self.items.values():
                 f = getattr(script, event_name, None)
                 if not f:
                     continue
