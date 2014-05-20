@@ -33,7 +33,8 @@ On Linux/Mac OS X/FreeBSD/etc., make sure you have Python >= 3.3 and
 Cython installed on your machine, along with native compilers.
 On Python versions below 3.4, you will also need asyncio installed.
 
-Put `Server.exe` in `data`, run build.sh and afterwards run_server.sh.
+To build cuwo, run `python setup.py build_ext --inplace`.
+To run the server, run `python -m cuwo.server`.
 
 Optionally, install the irc3 package to enable IRC bot support.
 
