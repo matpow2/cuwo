@@ -35,15 +35,18 @@ quick way to get started.
 Source
 ------
 
-Make sure you have Python >= 3.3 and Cython installed on your machine, along
-with native compilers. On Python versions below 3.4, you will also need
-asyncio installed.
+Make sure you have Python >= 3.3 and `cython` installed on your machine, along
+with native compilers.
+
+On Python versions below 3.4, you will need `asyncio` installed.
+
+If you want IRC bot support, you will also need the `irc3` package
+
+These packages can be installed with `pip install cython irc3 asyncio`
 
 To build cuwo, run `python setup.py build_ext --inplace`.
 
 To run the server, run `python -m cuwo.server`.
-
-Optionally, install the irc3 package to enable IRC bot support.
 
 Status
 ======
