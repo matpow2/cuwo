@@ -5,7 +5,7 @@ cuwo is an open server implementation for Cube World, written in Python and
 C++. It currently has the best protocol coverage among all the server projects
 out there, and has features like
 
-* Cross-platform support (Windows, Mac OS X, Linux, FreeBSD, what have you)
+* Cross-platform support (Linux, Windows, Mac OS X, FreeBSD, what have you)
 * File/console logging
 * MOTD message
 * Scripting (see the minimal welcome.py example)
@@ -25,15 +25,22 @@ out there, and has features like
 Running
 =======
 
-On Windows, see the
+Windows
+-------
+
+See the
 [quick-start guide](https://github.com/matpow2/cuwo/wiki/Quickstart) for a
 quick way to get started.
 
-On Linux/Mac OS X/FreeBSD/etc., make sure you have Python >= 3.3 and
-Cython installed on your machine, along with native compilers.
-On Python versions below 3.4, you will also need asyncio installed.
+Source
+------
+
+Make sure you have Python >= 3.3 and Cython installed on your machine, along
+with native compilers. On Python versions below 3.4, you will also need
+asyncio installed.
 
 To build cuwo, run `python setup.py build_ext --inplace`.
+
 To run the server, run `python -m cuwo.server`.
 
 Optionally, install the irc3 package to enable IRC bot support.
