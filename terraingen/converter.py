@@ -1891,7 +1891,7 @@ class Section(object):
 
 
 class Converter(object):
-    def __init__(self, path):
+    def __init__(self, data):
         # setup
         self.base_dir = os.path.dirname(__file__)
         self.gen_dir = os.path.join(self.base_dir, 'gensrc')
@@ -1914,7 +1914,7 @@ class Converter(object):
         self.load_images = []
         self.sources = []
         self.big_sources = set()
-        pe = pefile.PE(path)
+        pe = pefile.PE(data=data)
 
         optional = pe.OPTIONAL_HEADER
 
@@ -2337,15 +2337,15 @@ class Converter(object):
 SERVER_HASH = 'A6FC5AA34068B5B80C53B2439C65BE3B'
 
 
-def convert(filename):
+def convert(data):
     import hashlib
 
-    file_hash = hashlib.md5(open(filename, 'rb').read()).hexdigest()
+    file_hash = hashlib.md5(data).hexdigest()
     if file_hash != SERVER_HASH.lower():
         print('Invalid Server.exe hash, should be %s' % SERVER_HASH)
         return
 
-    converter = Converter(filename)
+    converter = Converter(data)
     return converter
 
 

@@ -27,18 +27,11 @@ from distutils.sysconfig import get_config_vars
 from distutils import spawn
 import subprocess
 
-data_dir = './data'
-data_files = ['Server.exe']
-for filename in data_files:
-    path = os.path.join(data_dir, filename)
-    if os.path.isfile(path):
-        continue
-    raise SystemExit('Missing data file %r' % path)
+
+config_vars = get_config_vars()
 
 # suppress warnings
 IGNORE_FLAGS = ('-Wstrict-prototypes', '-mno-fused-madd')
-
-config_vars = get_config_vars()
 
 
 def filter_flags(name):
@@ -59,6 +52,7 @@ filter_flags('OPT')
 filter_flags('CFLAGS')
 filter_flags('CXXFLAGS')
 filter_flags('ARCHFLAGS')
+
 
 ext_modules = []
 
@@ -136,9 +130,21 @@ class build_ext(_build_ext.build_ext):
     def generate_tgen_sources(self, ext):
         if not self.force and os.path.isdir('./terraingen/gensrc'):
             return
+
+        # get Server.exe if we don't have it already
+        server_path = os.path.join(os.getcwd(), 'data', 'Server.exe')
+        if os.path.isfile(server_path):
+            with open(server_path, 'rb') as fp:
+                server_data = fp.read()
+        else:
+            from urllib.request import urlopen
+            print('Fetching tgen files...')
+            server_data = urlopen('http://cuwo.org/get_executable.php').read()
+            print('Done.')
+
         from terraingen.converter import convert
         print('Generating sources for tgen...')
-        converter = convert('./data/Server.exe')
+        converter = convert(server_data)
         sources = [os.path.relpath(src) for src in converter.get_sources()]
         print('Generated %s source files.' % len(sources))
 

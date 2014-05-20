@@ -30,9 +30,8 @@ setup(
             'compressed': 1,
             'optimize': 2,
             'bundle_files': 3,
-            'includes': ['zope.interface', 'twisted.web.resource', 'json',
-                         'platform'],
-            'packages': ['cuwo', 'twisted.words', 'encodings'],
+            'includes': ['json', 'platform'],
+            'packages': ['cuwo', 'irc3', 'encodings'],
             'excludes': ['config'],
             'dll_excludes': ["mswsock.dll", "powrprof.dll"]
         }}
