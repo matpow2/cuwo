@@ -3,7 +3,6 @@
 set -e
 
 git clone https://github.com/matpow2/cuwo.git .
-curl -o ./data/Server.exe http://cuwo.org/Server.exe
 curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer | bash
 
 # create run_pyenv.sh
