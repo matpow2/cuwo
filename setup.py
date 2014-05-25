@@ -155,7 +155,7 @@ class build_ext(_build_ext.build_ext):
         if is_msvc:
             extra_args += ['/wd4102', '/EHsc', '/MP']
         else:
-            extra_args += ['-w', '-fPIC']
+            extra_args += ['-w', '-fPIC', '-g0']
 
         class compile_state:
             index = 0
@@ -166,6 +166,7 @@ class build_ext(_build_ext.build_ext):
             p = '%02d' % p
             compile_state.index += 1
             sys.stdout.write('[%s%%] %s\n' % (p, os.path.basename(source)))
+            sys.stdout.flush()
             return self.compiler.compile([source], output_dir=self.build_temp,
                                          macros=macros, include_dirs=includes,
                                          debug=self.debug,
