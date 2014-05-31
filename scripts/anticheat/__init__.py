@@ -346,7 +346,7 @@ class AntiCheatConnection(ConnectionScript):
         connection = self.connection
         self.log(self.log_message
                  .format(playername=connection.name,
-                         ip=connection.address.host,
+                         ip=connection.address[0],
                          reason=reason))
 
         connection.send_chat(self.disconnect_message.

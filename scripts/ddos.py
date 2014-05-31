@@ -36,7 +36,7 @@ class SaneConnection(ConnectionScript):
     def on_timeout(self):
         if self.connection is None:
             return
-        host = self.connection.address.host
+        host = self.connection.address[0]
         print('Connection %s timed out, disconnecting...' % host)
         self.connection.disconnect()
 
@@ -53,7 +53,7 @@ class SaneServer(ServerScript):
             return False
         max_count = self.server.config.base.max_connections_per_ip
         for connection in self.server.connections:
-            if connection.address.host != host:
+            if connection.address[0] != host:
                 continue
             max_count -= 1
             if max_count <= 0:
