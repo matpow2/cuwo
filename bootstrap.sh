@@ -15,8 +15,8 @@ echo 'fi' >> run_pyenv.sh
 
 # create update.sh
 echo '#!/usr/bin/env bash' > update.sh
-echo 'cd "$(dirname "$0")"'
-echo 'source run_pyenv.sh'
+echo 'cd "$(dirname "$0")"' >> update.sh
+echo 'source run_pyenv.sh' >> update.sh
 echo 'git pull' >> update.sh
 echo 'python setup.py build_ext --inplace' >> update.sh
 
