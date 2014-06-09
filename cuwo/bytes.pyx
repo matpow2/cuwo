@@ -97,7 +97,7 @@ cdef class ByteReader:
         return pos[:size]
 
     def open_editor(self):
-        if raw_input('Open editor? y/n ').strip().lower() != 'y':
+        if input('Open editor? y/n ').strip().lower() != 'y':
             return False
         import tempfile
         import subprocess
@@ -110,7 +110,7 @@ cdef class ByteReader:
             subprocess.Popen(['010editor', '%s@%s' % (name, self.tell())])
         except IOError:
             pass
-        raw_input('Press enter to continue...')
+        input('Press enter to continue...')
         return True
 
     cpdef bytes read_string(self, unsigned int size):
