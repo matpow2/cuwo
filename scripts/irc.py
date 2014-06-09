@@ -107,8 +107,6 @@ class ServerPlugin:
         if nick == self.bot.nick:
             self.script.plugin = self
             return
-        self.channels[channel].add(mask.nick)
-        self.nicks[mask.nick] = mask
 
     def part(self, nick, mask, channel):
         if nick == self.bot.nick:
