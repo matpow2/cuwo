@@ -201,7 +201,7 @@ class AntiCheatConnection(ConnectionScript):
         if entity_data.current_mode != 0:
             if self.use_ability(entity_data.current_mode) is False:
                 self.remove_cheater('cooldown hack')
-                return True
+                return False
 
     def on_class_update(self, event=None):
         if self.has_illegal_class():
@@ -297,7 +297,7 @@ class AntiCheatConnection(ConnectionScript):
         # sanitize damage value
         if not is_valid_float(damage) or math.fabs(damage) > self.max_damage:
             self.remove_cheater('invalid hit damage (%s)' % damage)
-            return
+            return False
 
         # just damage packets, not healing would be negative
         if damage >= 0:
@@ -311,6 +311,7 @@ class AntiCheatConnection(ConnectionScript):
             if self.hit_distance_strikes > self.max_hit_distance_strikes:
                 self.remove_cheater('hit distance too far, ' +
                                     'either cheating or lagging too much')
+                return False
         else:
             self.hit_distance_strikes = 0
 
