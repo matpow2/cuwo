@@ -123,7 +123,7 @@ class ServerPlugin:
     @irc3.event('^:\S+ 353 [^&#]+(?P<channel>\S+) :(?P<nicknames>.*)')
     def names(self, channel=None, nicknames=None):
         # RPL_NAMREPLY
-        nicknames = nicknames.split(' ')
+        nicknames = nicknames.split()
         for nick in nicknames:
             mode = nick[0]
             nick = nick[1:]
