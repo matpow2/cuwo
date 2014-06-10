@@ -612,6 +612,9 @@ def main():
         root = os.path.abspath(os.path.join(path, '..'))
         sys.path.append(root)
 
+        from cuwo.download import download_dependencies
+        download_dependencies()
+
     config = ConfigObject('./config')
 
     if sys.platform == 'win32':

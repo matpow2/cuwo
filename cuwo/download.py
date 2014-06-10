@@ -20,6 +20,7 @@ from urllib.error import HTTPError
 import xml.dom.minidom
 import zlib
 import getpass
+import os
 
 
 VALIDATE_URL = 'https://picroma.com/cwvalidate/'
@@ -90,3 +91,30 @@ def download_prompt(*files, email=None, password=None):
         print('Invalid login details, please try again')
 
     return download_package(*files)
+
+
+def get_data_path(name):
+    return os.path.join(os.getcwd(), 'data', name)
+
+
+def download_dependencies(email=None, password=None):
+    names = ('data1.db', 'data4.db')
+
+    for name in names:
+        if not os.path.isfile(get_data_path(name)):
+            break
+    else:
+        return
+
+    if not email or not password:
+        print('Picroma login (leave empty to skip package)')
+
+    try:
+        files = download_prompt(*names, email=email, password=password)
+    except ValidateError:
+        return
+
+    for index, name in enumerate(names):
+        filename = get_data_path(name)
+        with open(filename, 'wb') as fp:
+            fp.write(files[index])

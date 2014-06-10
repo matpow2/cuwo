@@ -26,7 +26,7 @@ from distutils import log
 from distutils.sysconfig import get_config_vars
 from distutils import spawn
 import subprocess
-from cuwo.download import download_prompt, ValidateError
+from cuwo.download import download_dependencies
 
 
 config_vars = get_config_vars()
@@ -140,28 +140,7 @@ class build_ext(_build_ext.build_ext):
         return os.path.join(os.getcwd(), 'data', name)
 
     def download_package(self):
-        names = ('data1.db', 'data4.db')
-
-        for name in names:
-            if not self.has_data_file(name):
-                break
-        else:
-            return
-
-        if not self.email or not self.password:
-            print('Picroma login (leave empty to skip package)')
-
-        try:
-            files = download_prompt(*names,
-                                    email=self.email,
-                                    password=self.password)
-        except ValidateError:
-            return
-
-        for index, name in enumerate(names):
-            filename = self.get_data_path(name)
-            with open(filename, 'wb') as fp:
-                fp.write(files[index])
+        download_dependencies(self.email, self.password)
 
     def generate_tgen_sources(self, ext):
         if not self.force and os.path.isdir('./terraingen/gensrc'):
