@@ -16,7 +16,7 @@ key = [
 
 def negate(data):
     for a in data:
-        yield ~ord(a) & 0xFF
+        yield ~a & 0xFF
 
 
 def decode(data):

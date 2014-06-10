@@ -26,6 +26,7 @@ from distutils import log
 from distutils.sysconfig import get_config_vars
 from distutils import spawn
 import subprocess
+from cuwo.download import download_prompt, ValidateError
 
 
 config_vars = get_config_vars()
@@ -106,7 +107,9 @@ def silent_spawn_nt(cmd, search_path=1, verbose=0, dry_run=0):
 
 class build_ext(_build_ext.build_ext):
     user_options = _build_ext.build_ext.user_options + [
-        ('disable-tgen', None, 'disables the tgen extension')
+        ('disable-tgen', None, 'disables the tgen extension'),
+        ('email=', None, 'email to use for package downloads'),
+        ('password=', None, 'password to use for package downloads')
     ]
 
     boolean_options = _build_ext.build_ext.boolean_options + [
@@ -116,6 +119,8 @@ class build_ext(_build_ext.build_ext):
     def initialize_options(self):
         super().initialize_options()
         self.disable_tgen = False
+        self.email = None
+        self.password = None
 
     def build_extensions(self):
         self.check_extensions_list(self.extensions)
@@ -124,15 +129,46 @@ class build_ext(_build_ext.build_ext):
             if ext.name == 'cuwo.tgen':
                 if self.disable_tgen:
                     continue
+                self.download_package()
                 self.generate_tgen_sources(ext)
             self.build_extension(ext)
+
+    def has_data_file(self, name):
+        return os.path.isfile(self.get_data_path(name))
+
+    def get_data_path(self, name):
+        return os.path.join(os.getcwd(), 'data', name)
+
+    def download_package(self):
+        names = ('data1.db', 'data4.db')
+
+        for name in names:
+            if not self.has_data_file(name):
+                break
+        else:
+            return
+
+        if not self.email or not self.password:
+            print('Picroma login (leave empty to skip package)')
+
+        try:
+            files = download_prompt(*names,
+                                    email=self.email,
+                                    password=self.password)
+        except ValidateError:
+            return
+
+        for index, name in enumerate(names):
+            filename = self.get_data_path(name)
+            with open(filename, 'wb') as fp:
+                fp.write(files[index])
 
     def generate_tgen_sources(self, ext):
         if not self.force and os.path.isdir('./terraingen/gensrc'):
             return
 
         # get Server.exe if we don't have it already
-        server_path = os.path.join(os.getcwd(), 'data', 'Server.exe')
+        server_path = self.get_data_path('Server.exe')
         if os.path.isfile(server_path):
             with open(server_path, 'rb') as fp:
                 server_data = fp.read()
