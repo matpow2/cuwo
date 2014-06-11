@@ -87,13 +87,12 @@ def download_prompt(*files, email=None, password=None):
             raise ValidateError('Invalid login')
         return download_package(*files)
 
+    print('Picroma login (leave empty to skip package)')
+
     while True:
-        try:
-            use_email = email or get_input('Email: ')
-            if use_email:
-                use_password = password or getpass.getpass()
-        except KeyboardInterrupt:
-            raise ValidateError('Prompt interrupted')
+        use_email = email or get_input('Email: ')
+        if use_email:
+            use_password = password or getpass.getpass()
 
         if not use_email or not use_password:
             raise ValidateError('Empty login provided')
@@ -118,9 +117,6 @@ def download_dependencies(email=None, password=None):
             break
     else:
         return
-
-    if not email or not password:
-        print('Picroma login (leave empty to skip package)')
 
     try:
         files = download_prompt(*names, email=email, password=password)
