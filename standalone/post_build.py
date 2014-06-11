@@ -34,7 +34,7 @@ def get_git_rev():
     pipe = subprocess.Popen(
         ["git", "rev-parse", "--short", "HEAD"],
         stdout=subprocess.PIPE, shell=True)
-    return pipe.stdout.read().replace('\n', '')
+    return pipe.stdout.read().decode('utf-8').replace('\n', '')
 
 # copy files
 SERVER_FILES = ['scripts', 'config']
@@ -42,7 +42,7 @@ COPY_FILES = {}
 REMOVE_EXTENSIONS = ['pyc', 'pyo']
 REMOVE_FILES = ['w9xpopen.exe', 'dummy']
 
-open('./dist/run.bat', 'wb').write('bin\server.exe\r\npause\r\n')
+open('./dist/run.bat', 'wb').write(b'bin\server.exe\r\npause\r\n')
 
 for name in SERVER_FILES:
     copy('../%s' % name, './dist/%s' % name)
@@ -51,21 +51,23 @@ for src, dst in COPY_FILES.items():
     copy('../%s' % src, './dist/%s' % dst)
 
 for root, sub, files in os.walk('./dist'):
-    for file in files:
-        path = os.path.join(root, file)
-        if file in REMOVE_FILES:
+    for name in files:
+        path = os.path.join(root, name)
+        if name in REMOVE_FILES:
             os.remove(path)
         else:
             for ext in REMOVE_EXTENSIONS:
-                if file.endswith(ext):
+                if name.endswith(ext):
                     os.remove(path)
                     break
 
+os.makedirs('./dist/data')
+
 # rewrite config
 git_rev = get_git_rev()
-config = open('./dist/config/base.py', 'rU').read()
-open('./dist/config/base.py', 'wb').write(
-    config + '\n# Current revision\ngit_rev = %r\n' % git_rev)
+config = open('./dist/config/base.py', 'rb').read().decode('utf-8')
+config += '\n# Current revision\ngit_rev = %r\n' % git_rev
+open('./dist/config/base.py', 'wb').write(config.encode('utf-8'))
 
 
 filename = 'cuwo-%s.zip' % git_rev

@@ -31,7 +31,7 @@ setup(
             'optimize': 2,
             'bundle_files': 3,
             'includes': ['json', 'platform'],
-            'packages': ['cuwo', 'irc3', 'encodings'],
+            'packages': ['encodings', 'irc3', 'cuwo'],
             'excludes': ['config'],
             'dll_excludes': ["mswsock.dll", "powrprof.dll"]
         }}

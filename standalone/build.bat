@@ -1,3 +1,4 @@
 rmdir /S /Q dist
-python build.py py2exe
-python post_build.py
+mkdir dist
+py -3 build.py py2exe
+py -3 post_build.py

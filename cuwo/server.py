@@ -607,8 +607,7 @@ class CubeWorldServer:
 def main():
     # for py2exe
     if hasattr(sys, 'frozen'):
-        path = os.path.dirname(str(sys.executable,
-                                   sys.getfilesystemencoding()))
+        path = os.path.dirname(sys.executable)
         root = os.path.abspath(os.path.join(path, '..'))
         sys.path.append(root)
 
