@@ -25,9 +25,13 @@ import asyncio
 import signal
 
 
-class RelayClient(asyncio.Protocol):
+class BackendProtocol(asyncio.Protocol):
     def __init__(self, protocol):
         self.protocol = protocol
+        protocol.relay_client = self
+
+    def connection_made(self, transport):
+        self.transport = transport
 
     def data_received(self, data):
         self.protocol.server_data_received(data)
@@ -108,14 +112,14 @@ class FrontendProtocol(asyncio.Protocol):
             print('Got server packet:', packet.packet_id)
 
     def got_relay_client(self, f):
-        self.relay_client = f.result()
         for data in self.relay_packets:
             self.relay_client.transport.write(data)
         self.relay_packets = None
 
-    def connection_made(self):
+    def connection_made(self, transport):
+        self.transport = transport
         print('On connection')
-        co = self.loop.create_connection(lambda: RelayClient(self),
+        co = self.loop.create_connection(lambda: BackendProtocol(self),
                                          '127.0.0.1', 12346)
         asyncio.Task(co).add_done_callback(self.got_relay_client)
 
@@ -152,7 +156,8 @@ def main():
         loop = asyncio.get_event_loop()
 
     loop.add_signal_handler(signal.SIGINT, loop.stop)
-    loop.create_server(lambda: FrontendProtocol(loop), '127.0.0.1', 12345)
+    co = loop.create_server(lambda: FrontendProtocol(loop), '127.0.0.1', 12345)
+    asyncio.Task(co)
     print('cuwo (mitm) running on port 12345')
 
     loop.run_forever()

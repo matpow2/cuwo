@@ -16,6 +16,13 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 from cuwo.loader import Loader
+from cuwo.defs import STATIC_NAMES
+
+
+ORIENT_SOUTH = 0
+ORIENT_EAST = 1
+ORIENT_NORTH = 2
+ORIENT_WEST = 3
 
 
 class StaticEntityHeader(Loader):
@@ -24,34 +31,33 @@ class StaticEntityHeader(Loader):
         self.entity_type = reader.read_uint32()
         reader.skip(4)  # 64bit struct padding
         self.pos = reader.read_qvec3()
-        self.something2 = reader.read_uint32()  # 0, 1, 2, 3
-        self.something3 = reader.read_float()
-        self.something4 = reader.read_float()
-        self.something5 = reader.read_float()
-        self.something6 = reader.read_uint8()
+        self.orientation = reader.read_uint32()
+        self.size = reader.read_vec3()
+        self.closed = reader.read_uint8()
         reader.skip(3)
-        self.something7 = reader.read_uint32()
+        # time offset to use for e.g. opening doors
+        # seems to be in ms, for windows/doors goes from 0-1000
+        self.time_offset = reader.read_uint32()
         self.something8 = reader.read_uint32()
         reader.skip(4)  # 64bit padding
-        # following may be 64bit number?
-        self.something9 = reader.read_uint32()
-        self.something10 = reader.read_uint32()
+        # the entity which is using this static entity
+        self.user_id = reader.read_uint64()
+
+    def get_type_name(self):
+        return STATIC_NAMES[self.entity_type]
 
     def write(self, writer):
         writer.write_uint32(self.entity_type)
         writer.pad(4)
         writer.write_qvec3(self.pos)
-        writer.write_uint32(self.something2)
-        writer.write_float(self.something3)
-        writer.write_float(self.something4)
-        writer.write_float(self.something5)
-        writer.write_uint8(self.something6)
+        writer.write_uint32(self.orientation)
+        writer.write_vec3(self.size)
+        writer.write_uint8(self.closed)
         writer.pad(3)
-        writer.write_uint32(self.something7)
+        writer.write_uint32(self.time_offset)
         writer.write_uint32(self.something8)
         writer.pad(4)
-        writer.write_uint32(self.something9)
-        writer.write_uint32(self.something10)
+        writer.write_uint64(self.user_id)
 
 
 class StaticEntity(Loader):
