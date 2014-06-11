@@ -32,6 +32,9 @@ See the
 [quick-start guide](https://github.com/matpow2/cuwo/wiki/Quickstart) for a
 quick way to get started.
 
+Alternatively, you can also
+[build from source](https://github.com/matpow2/cuwo/wiki/WindowsSource).
+
 Source
 ------
 
@@ -47,6 +50,9 @@ These packages can be installed with `pip install cython irc3 asyncio`
 To build cuwo, run `python setup.py build_ext --inplace`.
 
 To run the server, run `python -m cuwo.server`.
+
+For more information, see
+[this guide](https://github.com/matpow2/cuwo/wiki/BuildSource).
 
 Status
 ======
