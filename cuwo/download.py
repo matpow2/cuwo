@@ -15,6 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Utilities for downloading Cube World package files from Picroma
+
+Useful for downloading the terraingen dependencies
+"""
+
 import urllib.request
 from urllib.error import HTTPError
 import xml.dom.minidom
