@@ -15,46 +15,34 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-XXX port to asyncio
-"""
-
-from twisted.internet.protocol import Factory, Protocol
-from twisted.internet import reactor
-from twisted.internet.endpoints import TCP4ClientEndpoint
 from cuwo.packet import (PacketHandler, write_packet, ServerChatMessage,
                          CS_PACKETS, SC_PACKETS, EntityUpdate,
                          create_entity_data, JoinPacket, CurrentTime,
                          ClientChatMessage, UpdateFinished, ServerUpdate)
 from cuwo import constants
+import sys
+import asyncio
+import signal
 
 
-class RelayClient(Protocol):
+class RelayClient(asyncio.Protocol):
     def __init__(self, protocol):
         self.protocol = protocol
 
-    def dataReceived(self, data):
-        self.protocol.serverDataReceived(data)
+    def data_received(self, data):
+        self.protocol.server_data_received(data)
 
 
-class RelayFactory(Factory):
-    def __init__(self, protocol):
-        self.protocol = protocol
-
-    def buildProtocol(self, addr):
-        return RelayClient(self.protocol)
-
-
-class CubeWorldProtocol(Protocol):
+class FrontendProtocol(asyncio.Protocol):
     relay_client = None
     relay_packets = None
     entity_id = None
     disconnected = False
     update_index = 0
 
-    def __init__(self, server):
-        self.server = server
-        self.start_time = reactor.seconds()
+    def __init__(self, loop):
+        self.loop = loop
+        self.start_time = self.loop.time()
         self.client_handler = PacketHandler(CS_PACKETS,
                                             self.on_client_packet)
         self.server_handler = PacketHandler(SC_PACKETS,
@@ -67,7 +55,7 @@ class CubeWorldProtocol(Protocol):
     def print_stats(self):
         if self.disconnected:
             return
-        reactor.callLater(15, self.print_stats)
+        self.loop.call_later(15, self.print_stats)
 
         if self.entity_id is None:
             return
@@ -119,29 +107,29 @@ class CubeWorldProtocol(Protocol):
                                     ServerUpdate.packet_id):
             print('Got server packet:', packet.packet_id)
 
-    def got_relay_client(self, p):
-        self.relay_client = p
+    def got_relay_client(self, f):
+        self.relay_client = f.result()
         for data in self.relay_packets:
             self.relay_client.transport.write(data)
         self.relay_packets = None
 
-    def connectionMade(self):
-        point = TCP4ClientEndpoint(reactor, "127.0.0.1", 12346)
-        d = point.connect(RelayFactory(self))
-        d.addCallback(self.got_relay_client)
-        print('Connected')
+    def connection_made(self):
+        print('On connection')
+        co = self.loop.create_connection(lambda: RelayClient(self),
+                                         '127.0.0.1', 12346)
+        asyncio.Task(co).add_done_callback(self.got_relay_client)
 
-    def connectionLost(self, reason):
+    def connection_lost(self, reason):
         self.disconnected = True
         print('Lost connection')
         if self.relay_client is not None:
-            self.relay_client.transport.loseConnection()
+            self.relay_client.transport.close()
 
-    def serverDataReceived(self, data):
+    def server_data_received(self, data):
         # self.transport.write(data)
         self.server_handler.feed(data)
 
-    def dataReceived(self, data):
+    def data_received(self, data):
         # if self.relay_client is None:
         #     self.relay_packets.append(data)
         #     return
@@ -149,17 +137,25 @@ class CubeWorldProtocol(Protocol):
         self.client_handler.feed(data)
 
 
-class CubeWorldServer(Factory):
-    def __init__(self):
-        print('cuwo (mitm) running on port 12345')
-
-    def buildProtocol(self, addr):
-        return CubeWorldProtocol(self)
-
-
 def main():
-    reactor.listenTCP(12345, CubeWorldServer())
-    reactor.run()
+    if sys.platform == 'win32':
+        from cuwo.win32 import WindowsEventLoop
+        loop = WindowsEventLoop()
+        asyncio.set_event_loop(loop)
+
+        # asyncio has poor support for signals on win32.
+        # use a busy loop to properly receive SIGINT
+        def busy_loop():
+            loop.call_later(0.1, busy_loop)
+        busy_loop()
+    else:
+        loop = asyncio.get_event_loop()
+
+    loop.add_signal_handler(signal.SIGINT, loop.stop)
+    loop.create_server(lambda: FrontendProtocol(loop), '127.0.0.1', 12345)
+    print('cuwo (mitm) running on port 12345')
+
+    loop.run_forever()
 
 if __name__ == '__main__':
     main()
