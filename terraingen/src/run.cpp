@@ -151,10 +151,6 @@ ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
 unsigned int tgen_generate_debug_chunk(const char * filename,
                                        unsigned int x, unsigned int y)
 {
-    ChunkData * data = new ChunkData;
-    data->x = x;
-    data->y = y;
-
     cpu.reset_stack();
     cpu.push_dword(y);
     cpu.push_dword(x);
@@ -240,4 +236,9 @@ void tgen_dump_mem(const char * filename)
     std::ofstream fp(filename, std::ios::binary);
     fp.write(mem.heap, mem.heap_offset);
     fp.close();
+}
+
+unsigned int tgen_get_heap_base()
+{
+    return mem.translate((char*)mem.heap);
 }

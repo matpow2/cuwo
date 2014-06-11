@@ -47,6 +47,7 @@ cdef extern from "terraingen.h" nogil:
     void tgen_dump_mem(const char * filename)
     unsigned int tgen_generate_debug_chunk(const char *,
                                            unsigned int, unsigned int)
+    unsigned int tgen_get_heap_base()
 
 from libcpp.vector cimport vector
 
@@ -88,11 +89,16 @@ def generate(x, y):
 
 
 def generate_debug(filename, x, y):
+    filename = filename.encode('utf-8')
     return tgen_generate_debug_chunk(filename, x, y)
 
 
 def dump_mem(filename):
     tgen_dump_mem(filename)
+
+
+def get_heap_base():
+    return tgen_get_heap_base()
 
 
 cdef int get_block_type(ChunkEntry * block) nogil:

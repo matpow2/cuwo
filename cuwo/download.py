@@ -21,6 +21,7 @@ import xml.dom.minidom
 import zlib
 import getpass
 import os
+import sys
 
 
 VALIDATE_URL = 'https://picroma.com/cwvalidate/'
@@ -67,6 +68,18 @@ def download_package(*files):
     return result
 
 
+def get_input(prompt):
+    if sys.stdin.isatty():
+        return input(prompt)
+
+    old_stdin = sys.stdin
+    sys.stdin = open('/dev/tty', 'r')
+    ret = input(prompt)
+    sys.stdin.close()
+    sys.stdin = old_stdin
+    return ret
+
+
 def download_prompt(*files, email=None, password=None):
     if email and password:
         if not validate(email, password):
@@ -76,7 +89,7 @@ def download_prompt(*files, email=None, password=None):
 
     while True:
         try:
-            use_email = email or input('Email: ')
+            use_email = email or get_input('Email: ')
             if use_email:
                 use_password = password or getpass.getpass()
         except KeyboardInterrupt:

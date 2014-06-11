@@ -108,17 +108,19 @@ def silent_spawn_nt(cmd, search_path=1, verbose=0, dry_run=0):
 class build_ext(_build_ext.build_ext):
     user_options = _build_ext.build_ext.user_options + [
         ('disable-tgen', None, 'disables the tgen extension'),
+        ('no-parallel', None, 'disables parallel tgen build'),
         ('email=', None, 'email to use for package downloads'),
         ('password=', None, 'password to use for package downloads')
     ]
 
     boolean_options = _build_ext.build_ext.boolean_options + [
-        'disable-tgen'
+        'disable-tgen', 'no-parallel'
     ]
 
     def initialize_options(self):
         super().initialize_options()
         self.disable_tgen = False
+        self.no_parallel = False
         self.email = None
         self.password = None
 
@@ -129,25 +131,16 @@ class build_ext(_build_ext.build_ext):
             if ext.name == 'cuwo.tgen':
                 if self.disable_tgen:
                     continue
-                self.download_package()
+                download_dependencies(self.email, self.password)
                 self.generate_tgen_sources(ext)
             self.build_extension(ext)
-
-    def has_data_file(self, name):
-        return os.path.isfile(self.get_data_path(name))
-
-    def get_data_path(self, name):
-        return os.path.join(os.getcwd(), 'data', name)
-
-    def download_package(self):
-        download_dependencies(self.email, self.password)
 
     def generate_tgen_sources(self, ext):
         if not self.force and os.path.isdir('./terraingen/gensrc'):
             return
 
         # get Server.exe if we don't have it already
-        server_path = self.get_data_path('Server.exe')
+        server_path = os.path.join(os.getcwd(), 'data', 'Server.exe')
         if os.path.isfile(server_path):
             with open(server_path, 'rb') as fp:
                 server_data = fp.read()
@@ -189,8 +182,13 @@ class build_ext(_build_ext.build_ext):
 
         spawn._spawn_nt = silent_spawn_nt
         old = log.set_threshold(log.WARN)
+        if self.no_parallel:
+            workers = 1
+        else:
+            workers = max(1, multiprocessing.cpu_count() - 1)
+        pool = multiprocessing.pool.ThreadPool(workers)
+
         # convert to list, imap is evaluated on-demand
-        pool = multiprocessing.pool.ThreadPool(multiprocessing.cpu_count())
         objects = list(pool.imap(compile_single, sources))
         spawn._spawn_nt = _spawn_nt
 

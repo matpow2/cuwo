@@ -23,11 +23,12 @@
 
 from cuwo.entity import (EntityData, AppearanceData, ItemData,
                          read_masked_data, write_masked_data, get_masked_size)
-from cuwo.sounds import SOUNDS
+from cuwo.defs import SOUNDS
 from cuwo.loader import Loader
 from cuwo.bytes import ByteReader, ByteWriter
 from cuwo.constants import FULL_MASK, BLOCK_SCALE
 from cuwo.exceptions import OutOfData
+from cuwo.static import StaticEntityHeader
 import zlib
 
 
@@ -356,48 +357,21 @@ class MissionData(Loader):
         writer.write_uint32(self.chunk_y)
 
 
-class StaticEntityData(Loader):
+class StaticEntityPacket(Loader):
     def read(self, reader):
         self.chunk_x = reader.read_uint32()
         self.chunk_y = reader.read_uint32()
         self.entity_id = reader.read_uint32()
         reader.skip(4)
-        # memory header starts here (size 72)
-        self.entity_type = reader.read_uint32()
-        reader.skip(4)  # 64bit struct padding
-        self.pos = reader.read_qvec3()
-        self.something2 = reader.read_uint32()  # 0, 1, 2, 3
-        self.something3 = reader.read_float()
-        self.something4 = reader.read_float()
-        self.something5 = reader.read_float()
-        self.something6 = reader.read_uint8()
-        reader.skip(3)
-        self.something7 = reader.read_uint32()
-        self.something8 = reader.read_uint32()
-        reader.skip(4)  # 64bit padding
-        # following may be 64bit number?
-        self.something9 = reader.read_uint32()
-        self.something10 = reader.read_uint32()
+        self.header = StaticEntityHeader()
+        self.header.read(reader)
 
     def write(self, writer):
         writer.write_uint32(self.chunk_x)
         writer.write_uint32(self.chunk_y)
         writer.write_uint32(self.entity_id)
         writer.pad(4)
-        writer.write_uint32(self.entity_type)
-        writer.pad(4)
-        writer.write_qvec3(self.pos)
-        writer.write_uint32(self.something2)
-        writer.write_float(self.something3)
-        writer.write_float(self.something4)
-        writer.write_float(self.something5)
-        writer.write_uint8(self.something6)
-        writer.pad(3)
-        writer.write_uint32(self.something7)
-        writer.write_uint32(self.something8)
-        writer.pad(4)
-        writer.write_uint32(self.something9)
-        writer.write_uint32(self.something10)
+        self.header.write(writer)
 
 
 class ServerUpdate(Packet):
@@ -426,7 +400,7 @@ class ServerUpdate(Packet):
         self.particles = read_list(reader, ParticleData)
         self.sound_actions = read_list(reader, SoundAction)
         self.shoot_actions = read_list(reader, ShootPacket)
-        self.static_entities = read_list(reader, StaticEntityData)
+        self.static_entities = read_list(reader, StaticEntityPacket)
         self.chunk_items = read_list(reader, ChunkItems)
 
         self.items_8 = []

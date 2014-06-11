@@ -63,7 +63,6 @@ cdef class ItemData:
         short level
         list items
         unsigned int upgrade_count
-        # size: 280
 
     cpdef read(self, ByteReader reader):
         self.type = reader.read_uint8()
