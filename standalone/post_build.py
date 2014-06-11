@@ -36,30 +36,38 @@ def get_git_rev():
         stdout=subprocess.PIPE, shell=True)
     return pipe.stdout.read().decode('utf-8').replace('\n', '')
 
+
+def git_ls(path):
+    pipe = subprocess.Popen(
+        ['git', 'ls-tree', '--name-only', '--full-tree', '-r', 'HEAD', path],
+        stdout=subprocess.PIPE, shell=True)
+    data = pipe.stdout.read().decode('utf-8')
+    return data.splitlines()
+
+
+def copy_git(src, prefix):
+    prefix = os.path.relpath(os.path.join(os.getcwd(), prefix), '..')
+    prefix = prefix.replace('\\', '/') + '/'
+    for src_file in git_ls(src):
+        args = ['git', 'checkout-index', '-f', '--prefix=%s' % prefix,
+                src_file]
+        subprocess.Popen(args, shell=True, cwd='..').wait()
+
+
 # copy files
-SERVER_FILES = ['scripts', 'config']
-COPY_FILES = {}
-REMOVE_EXTENSIONS = ['pyc', 'pyo']
+GIT_FILES = ['scripts', 'config']
 REMOVE_FILES = ['w9xpopen.exe', 'dummy']
 
 open('./dist/run.bat', 'wb').write(b'bin\server.exe\r\npause\r\n')
 
-for name in SERVER_FILES:
-    copy('../%s' % name, './dist/%s' % name)
-
-for src, dst in COPY_FILES.items():
-    copy('../%s' % src, './dist/%s' % dst)
+for name in GIT_FILES:
+    copy_git(name, './dist')
 
 for root, sub, files in os.walk('./dist'):
     for name in files:
         path = os.path.join(root, name)
         if name in REMOVE_FILES:
             os.remove(path)
-        else:
-            for ext in REMOVE_EXTENSIONS:
-                if name.endswith(ext):
-                    os.remove(path)
-                    break
 
 os.makedirs('./dist/data')
 
