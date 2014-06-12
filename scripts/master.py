@@ -45,7 +45,7 @@ class MasterProtocol(asyncio.DatagramProtocol):
         self.on_packet(value, addr)
 
     def error_received(self, exc):
-        print('Error:', exc)
+        print('Master error:', exc)
 
     def on_packet(self, data, addr):
         pass
