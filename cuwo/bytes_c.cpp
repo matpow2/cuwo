@@ -204,7 +204,7 @@ inline size_t get_write_pos(void * stream)
     streampos pos = ss->tellp();
     if (pos == (streampos)-1)
         return 0;
-    return pos;
+    return size_t(pos);
 }
 
 inline PyObject * get_stream_data(void * stream)

@@ -85,7 +85,12 @@ try:
 except OSError:
     pass
 
+args = ['7z', 'a']
+if len(sys.argv) == 2:
+    args += ['-o%s' % sys.argv[1]]
+args += [filename, 'dist']
+
 try:
-    subprocess.check_call(['7z', 'a', filename, 'dist'])
+    subprocess.check_call(args)
 except WindowsError:
     print('7zip failed - do you have the 7zip directory in PATH?')

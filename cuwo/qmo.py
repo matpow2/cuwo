@@ -17,12 +17,13 @@
 
 
 def read_string(reader):
-    return reader.read(reader.read_uint8())
+    return reader.read(reader.read_uint8()).decode('utf-8')
 
 
 def write_string(writer, value):
     writer.write_uint8(len(value))
-    writer.write(value)
+    writer.write(value.encode('utf-8'))
+
 
 MAGIC = 'QBCL\x20'
 VERSION = '1.02'
@@ -113,4 +114,4 @@ class QubicleFile:
         writer.write_uint32(len(self.models))
         for model in self.models:
             model.write(writer)
-        writer.write('\x00' * 108)
+        writer.write(b'\x00' * 108)

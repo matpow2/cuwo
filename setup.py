@@ -62,7 +62,8 @@ names = [
     'cuwo.entity'
 ]
 
-includes = ['./cuwo', './terraingen/include']
+includes = ['./cuwo', './terraingen/include', './terraingen/src']
+
 lib_dir = './lib'
 
 macros = []

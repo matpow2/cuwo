@@ -26,7 +26,7 @@ cdef class ByteReader:
         char * start
         char * end
         char * pos
-        bytes py_data
+        object py_data
 
     cpdef inline unsigned int tell(self)
     cpdef inline seek(self, int pos, int whence=?)

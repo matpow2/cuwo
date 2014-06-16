@@ -15,7 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-""" Anti Cheat script for Cuwo by Sarcen """
+"""
+Anticheat script for cuwo
+
+by Sarcen
+"""
 
 from cuwo.constants import (WARRIOR_CLASS, RANGER_CLASS,
                             MAGE_CLASS, ROGUE_CLASS)

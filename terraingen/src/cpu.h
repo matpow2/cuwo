@@ -20,7 +20,7 @@
 #ifndef TERRAINGEN_CPU_H
 #define TERRAINGEN_CPU_H
 
-#include <inttypes.h>
+#include <stdint.h>
 #include <boost/unordered_map.hpp>
 #include "sse.h"
 #include "config.h"

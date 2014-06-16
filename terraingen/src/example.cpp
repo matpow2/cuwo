@@ -47,7 +47,7 @@ int main(int argc, const char ** argv)
 		int x = to_int(argv[2 + i*2]);
 		int y = to_int(argv[3 + i*2]);
 		std::cout << "Generating (" << x << ", " << y << ")" << std::endl;
-		ChunkData * c = tgen_generate_chunk(x, y);
+		tgen_generate_chunk(x, y);
         std::cout << "Generated." << std::endl;
 	}
 

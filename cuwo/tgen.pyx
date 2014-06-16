@@ -23,36 +23,30 @@ Terraingen wrapper
 from cuwo.packet import ChunkItemData
 from cuwo.bytes cimport ByteReader
 
+from libc.stdint cimport uintptr_t, uint32_t
+from libc.stdlib cimport malloc, free
 
-cdef extern from "terraingen.h" nogil:
-    cdef struct ChunkEntry:
-        unsigned char r, g, b, a
+cdef extern from "tgen.h" nogil:
+    cdef cppclass Memory:
+        char * translate(uint32_t)
+        uint32_t translate(char *)
+        uint32_t read_dword(uint32_t)
+        void read(uint32_t, char*, uint32_t)
 
-    cdef struct ChunkXY:
-        int a, b  # b is not actually used
-        unsigned int size
-        ChunkEntry * items
-
-    cdef struct ChunkData:
-        int x, y
-        ChunkXY items[256*256]
-        size_t item_size
-        char * item_data
+    extern Memory mem
 
     void tgen_init()
     void tgen_set_path(const char * dir)
-    void tgen_set_seed(unsigned int seed)
-    ChunkData * tgen_generate_chunk(unsigned int, unsigned int)
-    void tgen_destroy_chunk(ChunkData *)
+    void tgen_set_seed(uint32_t seed)
+    uint32_t tgen_generate_chunk(uint32_t, uint32_t)
     void tgen_dump_mem(const char * filename)
-    unsigned int tgen_generate_debug_chunk(const char *,
-                                           unsigned int, unsigned int)
-    unsigned int tgen_get_heap_base()
+    uint32_t tgen_generate_debug_chunk(const char *, uint32_t, uint32_t)
+    uint32_t tgen_get_heap_base()
 
 from libcpp.vector cimport vector
 
-cdef extern from "stddef.h" nogil:
-    ctypedef unsigned int uintptr_t
+# cdef extern from "stddef.h" nogil:
+#     ctypedef unsigned int uintptr_t
 
 
 # alpha:
@@ -85,7 +79,7 @@ def initialize(seed, path):
 
 
 def generate(x, y):
-    return ChunkProxy(x, y)
+    return Chunk(x, y)
 
 
 def generate_debug(filename, x, y):
@@ -142,7 +136,7 @@ cdef class RenderBuffer:
     cdef vector[Quad] data
     cdef float off_x, off_y
 
-    def __init__(self, ChunkProxy proxy, float off_x, float off_y):
+    def __init__(self, Chunk proxy, float off_x, float off_y):
         self.off_x = off_x
         self.off_y = off_y
         with nogil:
@@ -156,7 +150,7 @@ cdef class RenderBuffer:
         cdef uintptr_t v = <uintptr_t>(&self.data[0])
         return (v, self.data.size())
 
-    cdef void fill(self, ChunkProxy proxy) nogil:
+    cdef void fill(self, Chunk proxy) nogil:
         cdef int x, y, i, n, z
         cdef ChunkXY * xy
         cdef ChunkEntry * block
@@ -175,7 +169,7 @@ cdef class RenderBuffer:
                     continue
                 self.add_block(proxy, x, y, z, block)
 
-    cdef void add_block(self, ChunkProxy proxy, int x, int y, int z,
+    cdef void add_block(self, Chunk proxy, int x, int y, int z,
                         ChunkEntry * block) nogil:
         cdef Quad q
 
@@ -262,34 +256,72 @@ cdef class RenderBuffer:
             self.data.push_back(q)
 
 
-cdef class ChunkProxy:
-    cdef ChunkData * data
+cdef struct ChunkEntry:
+    unsigned char r, g, b, a
+
+cdef struct ChunkXY:
+    int a, b  # b is not actually used
+    unsigned int size
+    ChunkEntry * items
+
+cdef struct ChunkData:
+    ChunkXY items[256*256]
+
+
+cdef class Chunk:
+    cdef ChunkData data
     cdef public:
         list items
+        int x, y
 
     def __init__(self, x, y):
-        cdef unsigned int x_int = x
-        cdef unsigned int y_int = y
+        cdef uint32_t x_int = x
+        cdef uint32_t y_int = y
 
+        cdef uint32_t addr
         with nogil:
-            self.data = tgen_generate_chunk(x_int, y_int)
+            addr = tgen_generate_chunk(x_int, y_int)
+            self.read_chunk(addr)
 
-        # read items
+        # read chunk items
         self.items = []
         cdef ByteReader reader
-        reader = ByteReader(self.data.item_data[:self.data.item_size])
+
+        cdef uint32_t start_items = mem.read_dword(addr + 48)
+        cdef uint32_t end_items = mem.read_dword(addr + 52)
+
+        cdef uint32_t size = end_items - start_items
+        cdef char[:] arr = <char[:size]>mem.translate(start_items)
+        reader = ByteReader.__new__(ByteReader, arr)
         while reader.get_left() > 0:
             item = ChunkItemData()
             item.read(reader)
             self.items.append(item)
 
-    property x:
-        def __get__(self):
-            return self.data.x
+    cdef void read_chunk(self, uint32_t addr) nogil:
+        cdef uint32_t entry = mem.read_dword(addr + 168)
 
-    property y:
-        def __get__(self):
-            return self.data.y
+        cdef uint32_t chunk_data, data_size
+        cdef char * out_data
+        cdef ChunkXY * c
+
+        for i in range(256*256):
+            c = &self.data.items[i]
+            # cdef uint32_t vtable = mem.read_dword(entry);
+            # cdef float something = to_ss(mem.read_dword(entry+4));
+            # cdef float something2 = to_ss(mem.read_dword(entry+8));
+            # cdef float something3 = to_ss(mem.read_dword(entry+12));
+            c.a = mem.read_dword(entry+16)
+            c.b = mem.read_dword(entry+20)
+            chunk_data = mem.read_dword(entry+24)
+            data_size = mem.read_dword(entry+28) # * 4, size
+            out_data = <char*>malloc(data_size*4)
+            mem.read(chunk_data, out_data, data_size*4)
+
+            # write it out
+            c.size = data_size
+            c.items = <ChunkEntry*>out_data
+            entry += 32
 
     cdef bint get_solid_c(self, int x, int y, int z) nogil:
         if x < 0 or x >= 256 or y < 0 or y >= 256:
@@ -350,4 +382,5 @@ cdef class ChunkProxy:
         return proxy
 
     def __dealloc__(self):
-        tgen_destroy_chunk(self.data)
+        for i in range(256*256):
+            free(self.data.items[i].items)

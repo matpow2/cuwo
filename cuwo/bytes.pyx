@@ -62,8 +62,8 @@ cdef extern from "bytes_c.cpp":
 
 @cython.final
 cdef class ByteReader:
-    def __init__(self, bytes data):
-        self.start = data
+    def __cinit__(self, char[:] data):
+        self.start = &data[0]
         self.end = self.start + len(data)
         self.pos = self.start
         self.py_data = data

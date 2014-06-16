@@ -20,7 +20,7 @@
 #ifndef TERRAINGEN_MEMORY_H
 #define TERRAINGEN_MEMORY_H
 
-#include <inttypes.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include "sse.h"
 

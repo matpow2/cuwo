@@ -20,23 +20,50 @@
 #include "main.h"
 #include "gensrc/out.cpp"
 #include "imports.h"
-#include "terraingen.h"
+#include "tgen.h"
 #include <fstream>
 
 #define MANAGER_ADDRESS mem.manager
 
 /*
-Some3Data:
-    88: ItemData
+struct SomeStaticEntitySubData
+{
+    uint32_t header;
+    ItemData data;
+}
+
+struct SomeStaticEntityData
+{
+    SomeStaticEntitySubData * vec_start;
+    SomeStaticEntitySubData * vec_end;
+    uint32_t vec_capacity;
+}
+
+struct StaticEntity
+{
+    StaticEntityHeader header;
+    SomeStaticEntityData * vec_start;
+    SomeStaticEntityData * vec_end;
+    uint32_t vec_capacity;
+    uint32_t something1;
+    ItemData item; // (88)
+    uint32_t something2;
+    uint32_t something3;
+    uint32_t something4;
+    uint32_t something5;
+    uint32_t something6;
+    uint32_t something7;
+
+};
 
 struct ChunkParent, size 200
 {
   int vtable; - pointer
   int b; - pointer
   int c; - value (size?)
-  Some3Data * some3_start;
-  Some3Data * some3_end;
-  _DWORD some3_capacity;
+  StaticEntity * static_entities_start;
+  StaticEntity * static_entities_end;
+  _DWORD static_entities_capacity;
   _DWORD some1_4bytep_start;
   _DWORD some1_4bytep_end;
   _DWORD some1_capacity;
@@ -84,45 +111,64 @@ struct ChunkParent, size 200
 
 */
 
-void save_chunk(uint32_t addr, ChunkData * data)
-{
-    // read items
-    uint32_t start_items = mem.read_dword(addr + 48);
-    uint32_t end_items = mem.read_dword(addr + 52);
-    data->item_size = end_items - start_items;
-    data->item_data = new char[data->item_size];
-    mem.read(start_items, data->item_data, data->item_size);
+// void save_chunk(uint32_t addr, ChunkData * data)
+// {
+//     // read items
+//     uint32_t start_items = mem.read_dword(addr + 48);
+//     uint32_t end_items = mem.read_dword(addr + 52);
+//     data->item_size = end_items - start_items;
+//     data->item_data = new char[data->item_size];
+//     mem.read(start_items, data->item_data, data->item_size);
 
-    uint32_t entry = mem.read_dword(addr + 168);
-    for (int i = 0; i < 256*256; i++) {
-        ChunkXY & c = data->items[i];
-        // uint32_t vtable = mem.read_dword(entry);
-        // float something = to_ss(mem.read_dword(entry+4));
-        // float something2 = to_ss(mem.read_dword(entry+8));
-        // float something3 = to_ss(mem.read_dword(entry+12));
-        uint32_t something4 = mem.read_dword(entry+16);
-        uint32_t something5 = mem.read_dword(entry+20);
-        uint32_t chunk_data = mem.read_dword(entry+24);
-        uint32_t data_size = mem.read_dword(entry+28); // * 4, size
-        char * out_data = new char[data_size*4];
-        mem.read(chunk_data, out_data, data_size*4);
+//     uint32_t entry = mem.read_dword(addr + 168);
+//     for (int i = 0; i < 256*256; i++) {
+//         ChunkXY & c = data->items[i];
+//         // uint32_t vtable = mem.read_dword(entry);
+//         // float something = to_ss(mem.read_dword(entry+4));
+//         // float something2 = to_ss(mem.read_dword(entry+8));
+//         // float something3 = to_ss(mem.read_dword(entry+12));
+//         uint32_t something4 = mem.read_dword(entry+16);
+//         uint32_t something5 = mem.read_dword(entry+20);
+//         uint32_t chunk_data = mem.read_dword(entry+24);
+//         uint32_t data_size = mem.read_dword(entry+28); // * 4, size
+//         char * out_data = new char[data_size*4];
+//         mem.read(chunk_data, out_data, data_size*4);
 
-        // write it out
-        c.a = something4;
-        c.b = something5;
-        c.size = data_size;
-        c.items = (ChunkEntry*)out_data;
-        entry += 32;
-    }
-}
+//         // write it out
+//         c.a = something4;
+//         c.b = something5;
+//         c.size = data_size;
+//         c.items = (ChunkEntry*)out_data;
+//         entry += 32;
+//     }
+// }
 
 static SavedHeap saved_heap;
 
-ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
+// struct ChunkEntry
+// {
+//     unsigned char r, g, b, a;
+// };
+
+// struct ChunkXY
+// {
+//     int a, b;
+//     unsigned int size;
+//     ChunkEntry * items;
+// };
+
+// struct ChunkData
+// {
+//     int x, y;
+//     ChunkXY items[256*256];
+//     size_t item_size;
+//     char * item_data;
+// };
+
+uint32_t tgen_generate_chunk(uint32_t x, uint32_t y)
 {
-    ChunkData * data = new ChunkData;
-    data->x = x;
-    data->y = y;
+    // restore heap
+    mem.restore_heap(saved_heap);
 
     cpu.reset_stack();
     cpu.push_dword(y);
@@ -140,17 +186,16 @@ ChunkData * tgen_generate_chunk(unsigned int x, unsigned int y)
     get_self() = MANAGER_ADDRESS;
     add_ret();
     sub_405E30();
-    save_chunk(cpu.reg[EAX], data);
 
+    return cpu.reg[EAX];
+}
+
+uint32_t tgen_generate_debug_chunk(const char * filename,
+                                       uint32_t x, uint32_t y)
+{
     // restore heap
     mem.restore_heap(saved_heap);
 
-    return data;
-}
-
-unsigned int tgen_generate_debug_chunk(const char * filename,
-                                       unsigned int x, unsigned int y)
-{
     cpu.reset_stack();
     cpu.push_dword(y);
     cpu.push_dword(x);
@@ -170,21 +215,10 @@ unsigned int tgen_generate_debug_chunk(const char * filename,
     uint32_t chunk_offset = cpu.reg[EAX];
     tgen_dump_mem(filename);
 
-    // restore heap
-    mem.restore_heap(saved_heap);
-
     return chunk_offset;
 }
 
-void tgen_destroy_chunk(ChunkData * data)
-{
-    for (int i = 0; i < 256*256; i++) {
-        delete[] data->items[i].items;
-    }
-    delete data;
-}
-
-static uint32_t global_seed = 626466;
+static uint32_t global_seed = 0;
 static std::string translated_path;
 static std::string data_path;
 
@@ -210,7 +244,7 @@ void tgen_set_path(const char * dir)
     data_path = dir;
 }
 
-void tgen_set_seed(unsigned int seed)
+void tgen_set_seed(uint32_t seed)
 {
     global_seed = seed;
 }
@@ -238,7 +272,7 @@ void tgen_dump_mem(const char * filename)
     fp.close();
 }
 
-unsigned int tgen_get_heap_base()
+uint32_t tgen_get_heap_base()
 {
     return mem.translate((char*)mem.heap);
 }
