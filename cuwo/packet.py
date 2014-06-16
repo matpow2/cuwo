@@ -25,9 +25,8 @@ from cuwo.entity import (EntityData, AppearanceData, ItemData,
                          read_masked_data, write_masked_data, get_masked_size)
 from cuwo.defs import SOUNDS
 from cuwo.loader import Loader
-from cuwo.bytes import ByteReader, ByteWriter
+from cuwo.bytes import ByteReader, ByteWriter, OutOfData
 from cuwo.constants import FULL_MASK, BLOCK_SCALE
-from cuwo.exceptions import OutOfData
 from cuwo.static import StaticEntityHeader
 import zlib
 

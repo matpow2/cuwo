@@ -16,14 +16,6 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 
-class OutOfData(Exception):
-    """
-    Raised when there is not enough data for the element being read.
-    """
-    def __init__(self, reader):
-        self.reader = reader
-
-
 class InvalidData(Exception):
     """
     Raised when invalid data is received

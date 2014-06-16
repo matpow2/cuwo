@@ -18,7 +18,6 @@
 
 cimport cython
 from cuwo.common cimport int64_t, uint64_t
-from cuwo.exceptions import OutOfData
 
 
 cdef extern from "bytes_c.cpp":
@@ -53,6 +52,9 @@ cdef extern from "bytes_c.cpp":
     size_t get_write_pos(void * stream)
 
 
+cdef bint raise_out_of_data(ByteReader reader) except True
+
+
 @cython.final
 cdef class ByteReader:
     cdef:
@@ -79,7 +81,8 @@ cdef class ByteReader:
     cdef inline char * check_available(self, unsigned int size) except NULL:
         cdef char * data = self.pos
         if data + size > self.end:
-            raise OutOfData(self)
+            raise_out_of_data(self)
+            return NULL
         self.pos += size
         return data
 
@@ -97,7 +100,7 @@ cdef class ByteReader:
         cdef unsigned int end_pos = self.tell() + size
         self.seek(end_pos)
         if end_pos != self.tell():
-            raise OutOfData(self)
+            raise_out_of_data(self)
 
     cpdef inline rewind(self, int size):
         self.seek(-size, 1)

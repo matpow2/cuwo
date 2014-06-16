@@ -32,10 +32,22 @@ cdef extern from "bytes_c.cpp":
     object get_stream_data(void * stream)
 
 
+class OutOfData(Exception):
+    """
+    Raised when there is not enough data for the element being read.
+    """
+    def __init__(self, ByteReader reader):
+        self.reader = reader
+
+
+cdef bint raise_out_of_data(ByteReader reader) except True:
+    raise OutOfData(reader)
+
+
 @cython.final
 cdef class ByteReader:
-    def __init__(self, char[::1] data):
-        self.init(&data[0], len(data))
+    def __init__(self, bytes data):
+        self.init(data, len(data))
         self.py_data = data
 
     cpdef seek(self, int pos, int whence=0):
