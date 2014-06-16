@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-from cuwo import constants
+from cuwo import constants, defs
 
 import shlex
 import os
@@ -212,17 +212,13 @@ def get_item_name(item):
     if item.material in constants.MATERIAL_NAMES:
         name.append(constants.MATERIAL_NAMES[item.material])
 
-    if item.type in constants.ITEM_NAMES:
-        name.append(constants.ITEM_NAMES[item.type])
+    try:
+        name.append(defs.ITEM_NAMES[(item.type, item.sub_type)])
+    except KeyError:
+        pass
 
-    if item.type == 1 and item.sub_type in constants.CONSUMABLE_NAMES:
-        name.append(constants.CONSUMABLE_NAMES[item.sub_type])
-
-    if item.type == 3 and item.sub_type in constants.WEAPON_NAMES:
-        name.append(constants.WEAPON_NAMES[item.sub_type])
-
-    if item.type == 19 and item.sub_type in constants.NPC_NAMES:
-        name.append(constants.NPC_NAMES[item.sub_type])
+    if item.type == 19 and item.sub_type in defs.ENTITY_NAMES:
+        name.append(defs.ENTITY_NAMES[item.sub_type])
 
     power = get_power(item.level)
     name.append("+{power}".format(power=power))

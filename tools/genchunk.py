@@ -18,7 +18,7 @@
 import sys
 sys.path.append('.')
 from cuwo import tgen
-from cuwo.bytes import ByteReader, ByteWriter
+from cuwo.bytes import ByteWriter
 from cuwo.qmo import QubicleFile, QubicleModel
 import argparse
 
@@ -64,8 +64,15 @@ def convert_qmo(data, path):
 def convert_pos(x, y, f):
     print('Generating', x, y)
     data = tgen.generate(x, y)
-    print('Converting...')
-    convert_qmo(data, f)
+    for entity in data.static_entities:
+        if not entity.items:
+            continue
+        print('Has items')
+    import code
+    code.interact(local=locals())
+    print(data.static_entities)
+    # print('Converting...')
+    # convert_qmo(data, f)
 
 
 def coords(s):

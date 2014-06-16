@@ -21,10 +21,13 @@ Terraingen wrapper
 
 
 from cuwo.packet import ChunkItemData
-from cuwo.bytes cimport ByteReader
+from cuwo.static import StaticEntityHeader
+from cuwo.bytes cimport ByteReader, create_reader
+from cuwo.entity import ItemData
 
-from libc.stdint cimport uintptr_t, uint32_t
+from libc.stdint cimport uintptr_t, uint32_t, uint8_t
 from libc.stdlib cimport malloc, free
+from libcpp.string cimport string
 
 cdef extern from "tgen.h" nogil:
     cdef cppclass Memory:
@@ -32,6 +35,7 @@ cdef extern from "tgen.h" nogil:
         uint32_t translate(char *)
         uint32_t read_dword(uint32_t)
         void read(uint32_t, char*, uint32_t)
+        uint8_t read_byte(uint32_t)
 
     extern Memory mem
 
@@ -42,11 +46,11 @@ cdef extern from "tgen.h" nogil:
     void tgen_dump_mem(const char * filename)
     uint32_t tgen_generate_debug_chunk(const char *, uint32_t, uint32_t)
     uint32_t tgen_get_heap_base()
+    uint32_t tgen_get_manager()
+    void tgen_read_str(uint32_t addr, string&)
+    void tgen_read_wstr(uint32_t addr, string&)
 
 from libcpp.vector cimport vector
-
-# cdef extern from "stddef.h" nogil:
-#     ctypedef unsigned int uintptr_t
 
 
 # alpha:
@@ -95,13 +99,117 @@ def get_heap_base():
     return tgen_get_heap_base()
 
 
+# createdef.py helpers
+
+# MSVC std::map
+# _Nodeptr _Left; // left subtree, or smallest element if head
+# _Nodeptr _Parent;   // parent, or root of tree if head
+# _Nodeptr _Right;    // right subtree, or largest element if head
+# char _Color;    // _Red or _Black, _Black if head
+# char _Isnil;    // true only if head (also nil) node
+# char pad[2];
+# value_type _Myval;  // the stored value, unused if head
+
+
+cdef bytes read_str(uint32_t addr):
+    cdef string v
+    tgen_read_str(addr, v)
+    return (&v[0])[:v.size()]
+
+
+cdef str read_wstr(uint32_t addr):
+    cdef string v
+    tgen_read_wstr(addr, v)
+    return ((&v[0])[:v.size()]).decode('utf_16_le')
+
+
+cdef bint is_nil(uint32_t ptr):
+    return mem.read_byte(ptr + 13) == 1
+
+
+cdef uint32_t get_right(uint32_t ptr):
+    return mem.read_dword(ptr + 8)
+
+
+cdef uint32_t get_left(uint32_t ptr):
+    return mem.read_dword(ptr + 0)
+
+
+cdef uint32_t get_parent(uint32_t ptr):
+    return mem.read_dword(ptr + 4)
+
+
+cdef uint32_t get_min(uint32_t ptr):
+    while not is_nil(get_left(ptr)):
+        ptr = get_left(ptr)
+    return ptr
+
+
+cdef dict map_to_dict(uint32_t addr, func):
+    cdef dict values = {}
+    cdef uint32_t ptr = get_left(mem.read_dword(addr))
+    cdef uint32_t test_ptr
+    while not is_nil(ptr):
+        func(ptr + 16, values)
+        if not is_nil(get_right(ptr)):
+            ptr = get_min(get_right(ptr))
+        else:
+            while True:
+                test_ptr = get_parent(ptr)
+                if is_nil(test_ptr) or ptr != get_right(test_ptr):
+                    break
+                ptr = test_ptr
+            ptr = test_ptr
+
+    return values
+
+
+def get_single_key_item(uint32_t addr, dict values):
+    cdef uint32_t key = mem.read_dword(addr)
+    cdef str value = read_wstr(addr+4)
+    values[key] = value
+
+
+def get_double_key_item(uint32_t addr, dict values):
+    cdef tuple key = (mem.read_dword(addr), mem.read_dword(addr+4))
+    cdef str value = read_wstr(addr+8)
+    values[key] = value
+
+
+def get_static_names():
+    return map_to_dict(tgen_get_manager() + 8388876, get_single_key_item)
+
+
+def get_entity_names():
+    return map_to_dict(tgen_get_manager() + 8388868, get_single_key_item)
+
+
+def get_item_names():
+    return map_to_dict(tgen_get_manager() + 8388916, get_double_key_item)
+
+
+def get_location_names():
+    return map_to_dict(tgen_get_manager() + 8388900, get_double_key_item)
+
+
+def get_quarter_names():
+    return map_to_dict(tgen_get_manager() + 8388908, get_double_key_item)
+
+
+def get_skill_names():
+    return map_to_dict(tgen_get_manager() + 8388884, get_single_key_item)
+
+
+def get_ability_names():
+    return map_to_dict(tgen_get_manager() + 8388892, get_single_key_item)
+
+
 cdef int get_block_type(ChunkEntry * block) nogil:
     return block.a & 0x1F
 
 
 cdef tuple get_block_tuple(ChunkEntry * block):
     return (block.r, block.g, block.b)
-
 
 cdef class XYProxy:
     cdef ChunkXY * data
@@ -268,10 +376,148 @@ cdef struct ChunkData:
     ChunkXY items[256*256]
 
 
+"""
+struct SomeStaticEntitySubData
+{
+    uint32_t header;
+    ItemData data;
+}
+
+struct SomeStaticEntityData
+{
+    SomeStaticEntitySubData * vec_start;
+    SomeStaticEntitySubData * vec_end;
+    uint32_t vec_capacity;
+}
+
+struct StaticEntity
+{
+    StaticEntityHeader header;
+    SomeStaticEntityData * vec_start;
+    SomeStaticEntityData * vec_end;
+    uint32_t vec_capacity;
+    uint32_t something1;
+    ItemData item; // (88)
+    uint32_t something2;
+    uint32_t something3;
+    uint32_t something4;
+    uint32_t something5;
+    uint32_t something6;
+    uint32_t something7;
+
+};
+
+struct ChunkParent, size 200
+{
+  int vtable; - pointer
+  int b; - pointer
+  int c; - value (size?)
+  StaticEntity * static_entities_start;
+  StaticEntity * static_entities_end;
+  _DWORD static_entities_capacity;
+  _DWORD some1_4bytep_start;
+  _DWORD some1_4bytep_end;
+  _DWORD some1_capacity;
+  _DWORD some4_start;
+  _DWORD some4_end;
+  _DWORD some4_capacity;
+  _DWORD chunkitems_start;
+  _DWORD chunkitems_end;
+  _DWORD chunkitems_capacity;
+  _DWORD some9_start;
+  _DWORD some9_end;
+  _DWORD some9_capacity;
+  _DWORD some8_start;
+  _DWORD some8_end;
+  _DWORD some8_capacity;
+  _DWORD some7_start;
+  _DWORD some7_end;
+  _DWORD some7_capacity;
+  _DWORD chunk_x;
+  _DWORD chunk_y;
+  _DWORD some2_20byte_start;
+  _DWORD some2_20byte_end;
+  _DWORD some2_capacity;
+  _BYTE word74;
+  _BYTE has_chunkitems;
+  _BYTE byte76;
+  _BYTE pad;
+  _DWORD dword78;
+  _DWORD dword7C;
+  _DWORD dword80;
+  _BYTE byte84;
+  _BYTE pad2[3];
+  _DWORD some5_start;
+  _DWORD some5_end;
+  _DWORD some5_capacity;
+  _DWORD some6_start;
+  _DWORD some6_end;
+  _DWORD some6_capacity;
+  _DWORD dwordA0;
+  _DWORD dwordA4;
+  ChunkEntry *chunk_data;
+  _DWORD other_chunk_data;
+  struct _RTL_CRITICAL_SECTION rtl_critical_sectionB0;
+};
+"""
+
+
+cdef class StaticEntityItems:
+    cdef public:
+        list items
+
+    def __cinit__(self, uint32_t addr):
+        cdef uint32_t vec_start = mem.read_dword(addr)
+        cdef uint32_t vec_end = mem.read_dword(addr+4)
+        cdef uint32_t vec_capacity = mem.read_dword(addr+8)
+
+        cdef ByteReader reader = create_reader(mem.translate(vec_start),
+                                               vec_end - vec_start)
+        self.items = []
+        cdef uint32_t header
+        cdef object item
+        for _ in range((vec_end - vec_start) // 4):
+            header = reader.read_uint32()
+            item = ItemData()
+            item.read(reader)
+            self.items.append((header, item))
+
+
+cdef class StaticEntity:
+    cdef public:
+        object header
+        list items
+        object item
+
+    def __cinit__(self, ByteReader reader):
+        self.header = StaticEntityHeader()
+        self.header.read(reader)
+        cdef uint32_t vec_start = reader.read_uint32()
+        cdef uint32_t vec_end = reader.read_uint32()
+        cdef uint32_t vec_capacity = reader.read_uint32()
+        cdef uint32_t something1 = reader.read_uint32()
+        self.item = ItemData()
+        self.item.read(reader)
+        cdef uint32_t something2 = reader.read_uint32()
+        cdef uint32_t something3 = reader.read_uint32()
+        cdef uint32_t something4 = reader.read_uint32()
+        cdef uint32_t something5 = reader.read_uint32()
+        cdef uint32_t something6 = reader.read_uint32()
+        cdef uint32_t something7 = reader.read_uint32()
+
+        self.items = []
+        cdef uint32_t vec_item
+        for _ in range((vec_end - vec_start) // 4):
+            vec_item = mem.read_dword(vec_start)
+            self.items.append(StaticEntityItems(vec_item))
+            vec_start += 4
+
+
 cdef class Chunk:
     cdef ChunkData data
     cdef public:
         list items
+        list static_entities
         int x, y
 
     def __init__(self, x, y):
@@ -283,16 +529,29 @@ cdef class Chunk:
             addr = tgen_generate_chunk(x_int, y_int)
             self.read_chunk(addr)
 
+        cdef ByteReader reader
+        cdef uint32_t start
+        cdef uint32_t end
+
+        # read static entities
+        self.static_entities = []
+        start = mem.read_dword(addr + 12)
+        end = mem.read_dword(addr + 16)
+
+        reader = create_reader(mem.translate(start), end - start)
+
+        cdef StaticEntity entity
+        while reader.get_left() > 0:
+            entity = StaticEntity.__new__(StaticEntity, reader)
+            self.static_entities.append(entity)
+
         # read chunk items
         self.items = []
-        cdef ByteReader reader
 
-        cdef uint32_t start_items = mem.read_dword(addr + 48)
-        cdef uint32_t end_items = mem.read_dword(addr + 52)
+        start = mem.read_dword(addr + 48)
+        end = mem.read_dword(addr + 52)
 
-        cdef uint32_t size = end_items - start_items
-        cdef char[:] arr = <char[:size]>mem.translate(start_items)
-        reader = ByteReader.__new__(ByteReader, arr)
+        reader = create_reader(mem.translate(start), end - start)
         while reader.get_left() > 0:
             item = ChunkItemData()
             item.read(reader)

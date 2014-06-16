@@ -318,7 +318,7 @@ cdef class EntityData:
         list equipment
         list skills
         unsigned int mana_cubes
-        unicode name
+        str name
         uint64_t mask
 
     def __cinit__(self):

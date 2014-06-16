@@ -25,145 +25,7 @@
 
 #define MANAGER_ADDRESS mem.manager
 
-/*
-struct SomeStaticEntitySubData
-{
-    uint32_t header;
-    ItemData data;
-}
-
-struct SomeStaticEntityData
-{
-    SomeStaticEntitySubData * vec_start;
-    SomeStaticEntitySubData * vec_end;
-    uint32_t vec_capacity;
-}
-
-struct StaticEntity
-{
-    StaticEntityHeader header;
-    SomeStaticEntityData * vec_start;
-    SomeStaticEntityData * vec_end;
-    uint32_t vec_capacity;
-    uint32_t something1;
-    ItemData item; // (88)
-    uint32_t something2;
-    uint32_t something3;
-    uint32_t something4;
-    uint32_t something5;
-    uint32_t something6;
-    uint32_t something7;
-
-};
-
-struct ChunkParent, size 200
-{
-  int vtable; - pointer
-  int b; - pointer
-  int c; - value (size?)
-  StaticEntity * static_entities_start;
-  StaticEntity * static_entities_end;
-  _DWORD static_entities_capacity;
-  _DWORD some1_4bytep_start;
-  _DWORD some1_4bytep_end;
-  _DWORD some1_capacity;
-  _DWORD some4_start;
-  _DWORD some4_end;
-  _DWORD some4_capacity;
-  _DWORD chunkitems_start;
-  _DWORD chunkitems_end;
-  _DWORD chunkitems_capacity;
-  _DWORD some9_start;
-  _DWORD some9_end;
-  _DWORD some9_capacity;
-  _DWORD some8_start;
-  _DWORD some8_end;
-  _DWORD some8_capacity;
-  _DWORD some7_start;
-  _DWORD some7_end;
-  _DWORD some7_capacity;
-  _DWORD chunk_x;
-  _DWORD chunk_y;
-  _DWORD some2_20byte_start;
-  _DWORD some2_20byte_end;
-  _DWORD some2_capacity;
-  _BYTE word74;
-  _BYTE has_chunkitems;
-  _BYTE byte76;
-  _BYTE pad;
-  _DWORD dword78;
-  _DWORD dword7C;
-  _DWORD dword80;
-  _BYTE byte84;
-  _BYTE pad2[3];
-  _DWORD some5_start;
-  _DWORD some5_end;
-  _DWORD some5_capacity;
-  _DWORD some6_start;
-  _DWORD some6_end;
-  _DWORD some6_capacity;
-  _DWORD dwordA0;
-  _DWORD dwordA4;
-  ChunkEntry *chunk_data;
-  _DWORD other_chunk_data;
-  struct _RTL_CRITICAL_SECTION rtl_critical_sectionB0;
-};
-
-*/
-
-// void save_chunk(uint32_t addr, ChunkData * data)
-// {
-//     // read items
-//     uint32_t start_items = mem.read_dword(addr + 48);
-//     uint32_t end_items = mem.read_dword(addr + 52);
-//     data->item_size = end_items - start_items;
-//     data->item_data = new char[data->item_size];
-//     mem.read(start_items, data->item_data, data->item_size);
-
-//     uint32_t entry = mem.read_dword(addr + 168);
-//     for (int i = 0; i < 256*256; i++) {
-//         ChunkXY & c = data->items[i];
-//         // uint32_t vtable = mem.read_dword(entry);
-//         // float something = to_ss(mem.read_dword(entry+4));
-//         // float something2 = to_ss(mem.read_dword(entry+8));
-//         // float something3 = to_ss(mem.read_dword(entry+12));
-//         uint32_t something4 = mem.read_dword(entry+16);
-//         uint32_t something5 = mem.read_dword(entry+20);
-//         uint32_t chunk_data = mem.read_dword(entry+24);
-//         uint32_t data_size = mem.read_dword(entry+28); // * 4, size
-//         char * out_data = new char[data_size*4];
-//         mem.read(chunk_data, out_data, data_size*4);
-
-//         // write it out
-//         c.a = something4;
-//         c.b = something5;
-//         c.size = data_size;
-//         c.items = (ChunkEntry*)out_data;
-//         entry += 32;
-//     }
-// }
-
 static SavedHeap saved_heap;
-
-// struct ChunkEntry
-// {
-//     unsigned char r, g, b, a;
-// };
-
-// struct ChunkXY
-// {
-//     int a, b;
-//     unsigned int size;
-//     ChunkEntry * items;
-// };
-
-// struct ChunkData
-// {
-//     int x, y;
-//     ChunkXY items[256*256];
-//     size_t item_size;
-//     char * item_data;
-// };
 
 uint32_t tgen_generate_chunk(uint32_t x, uint32_t y)
 {
@@ -191,7 +53,7 @@ uint32_t tgen_generate_chunk(uint32_t x, uint32_t y)
 }
 
 uint32_t tgen_generate_debug_chunk(const char * filename,
-                                       uint32_t x, uint32_t y)
+                                   uint32_t x, uint32_t y)
 {
     // restore heap
     mem.restore_heap(saved_heap);
@@ -275,4 +137,21 @@ void tgen_dump_mem(const char * filename)
 uint32_t tgen_get_heap_base()
 {
     return mem.translate((char*)mem.heap);
+}
+
+uint32_t tgen_get_manager()
+{
+    return MANAGER_ADDRESS;
+}
+
+// XXX fix for big-endian
+
+void tgen_read_str(uint32_t addr, std::string & str)
+{
+    ((basic_string_char*)mem.translate(addr))->str(str);
+}
+
+void tgen_read_wstr(uint32_t addr, std::string & str)
+{
+    ((basic_string_wchar*)mem.translate(addr))->str(str);
 }

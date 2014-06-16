@@ -19,6 +19,7 @@ import sys
 sys.path.append('..')
 import re
 import collections
+from cuwo import tgen
 
 
 def comment_remover(text):
@@ -61,7 +62,13 @@ class FormattedOutput(object):
     def write_dict(self, name, value):
         self.putln('%s = {' % name)
         self.indent()
-        for index, key in enumerate(sorted(value)):
+
+        def sort_func(key):
+            if isinstance(key, tuple):
+                return key[0] * 500000 + key[1]
+            return key
+
+        for index, key in enumerate(sorted(value, key=sort_func)):
             v = '%s: %r' % (key, value[key])
             if index < len(value) - 1:
                 v += ','
@@ -291,7 +298,7 @@ def main():
                 continue
             if dim:
                 if typ == 'int8':
-                    typ = 'unicode'
+                    typ = 'str'
                 else:
                     typ = 'list'
             else:
@@ -538,24 +545,27 @@ def main():
             sound_name = line[start:end]
             sounds[current_index] = sound_name
 
-    out = FormattedOutput('Structure definition file')
+    out = FormattedOutput('Constant string definition file')
     out.write_dict('SOUNDS', sounds)
 
-    # static entities
-    data_input = open('static_entities.h', 'rb').read().decode('utf-8')
-    data_input = data_input.splitlines()
-    static_entities = {}
-    current_index = None
-    for line in data_input:
-        if 'static_entity_id =' in line:
-            current_index = int(line.split()[-1][:-1])
-        elif 'sub_F565D0' in line:
-            start = line.find('L"') + 2
-            end = line.find('"', start)
-            entity_name = line[start:end]
-            static_entities[current_index] = entity_name
+    print('Writing defs from tgen')
+    tgen.initialize(1234, '../data/')
+    out.write_dict('ITEM_NAMES', tgen.get_item_names())
+    out.write_dict('STATIC_NAMES', tgen.get_static_names())
+    out.write_dict('ENTITY_NAMES', tgen.get_entity_names())
+    out.write_dict('LOCATION_NAMES', tgen.get_location_names())
+    out.write_dict('QUARTER_NAMES', tgen.get_quarter_names())
 
-    out.write_dict('STATIC_NAMES', static_entities)
+    def remove(value, rem):
+        new_dict = {}
+        for k, v in value.items():
+            new_dict[k] = v.replace(rem, '')
+        return new_dict
+
+    out.write_dict('SKILL_NAMES', remove(tgen.get_skill_names(), 'Skill'))
+    out.write_dict('ABILITY_NAMES', remove(tgen.get_ability_names(),
+                                           'Ability'))
+    print('Done')
 
     open('../cuwo/defs.py', 'wb').write(out.get())
 
