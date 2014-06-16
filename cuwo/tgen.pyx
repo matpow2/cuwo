@@ -518,15 +518,15 @@ cdef class Chunk:
     cdef public:
         list items
         list static_entities
-        int x, y
+        uint32_t x, y
 
     def __init__(self, x, y):
-        cdef uint32_t x_int = x
-        cdef uint32_t y_int = y
+        self.x = x
+        self.y = y
 
         cdef uint32_t addr
         with nogil:
-            addr = tgen_generate_chunk(x_int, y_int)
+            addr = tgen_generate_chunk(self.x, self.y)
             self.read_chunk(addr)
 
         cdef ByteReader reader

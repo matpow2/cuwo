@@ -147,8 +147,8 @@ def get_entity_base_health(entity):
 
 
 def get_item_base_hp(level, rarity):
-    level_health = 2 ** ((1 - (1 / (0.05 * (float(level) - 1) + 1))) * 3)
-    rarity_health = 2 ** (float(rarity) * 0.25)
+    level_health = 2 ** ((1 - (1 / (0.05 * (level - 1) + 1))) * 3)
+    rarity_health = 2 ** (rarity * 0.25)
     return level_health * rarity_health
 
 
