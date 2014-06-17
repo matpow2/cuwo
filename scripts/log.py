@@ -57,7 +57,7 @@ class LogServer(ServerScript):
 
         # also write stdout/stderr to log file
         sys.stdout = LoggerWriter(sys.__stdout__, logger, logging.INFO)
-        sys.sterr = LoggerWriter(sys.__stderr__, logger, logging.WARNING)
+        sys.sterr = LoggerWriter(sys.__stderr__, logger, logging.ERROR)
 
         config = self.server.config.base
         logfile = config.log_name
@@ -66,10 +66,13 @@ class LogServer(ServerScript):
             handler = TimedRotatingFileHandler(logfile, when='d')
         else:
             handler = logging.FileHandler(logfile)
+        handler.setFormatter(logging.Formatter(config.file_log_format))
         logger.addHandler(handler)
 
         # log normal logging messages to stdout
-        logger.addHandler(logging.StreamHandler(sys.__stdout__))
+        handler = logging.StreamHandler(sys.__stdout__)
+        handler.setFormatter(logging.Formatter(config.console_log_format))
+        logger.addHandler(handler)
 
         print('cuwo server started on %s' % time.strftime('%c'))
 

@@ -30,6 +30,8 @@ welcome = ["Welcome to %(server_name)s!",
 # Logging variables
 log_name = './logs/log.txt'
 rotate_daily = True
+console_log_format = '%(message)s'
+file_log_format = '[%(asctime)s] %(message)s'
 
 # Profile file. Set to something other than None to enable.
 profile_file = None
