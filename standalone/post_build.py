@@ -56,41 +56,48 @@ def copy_git(src, prefix):
 
 # copy files
 GIT_FILES = ['scripts', 'config']
-REMOVE_FILES = ['w9xpopen.exe', 'dummy']
-
-open('./dist/run.bat', 'wb').write(b'bin\server.exe\r\npause\r\n')
-
-for name in GIT_FILES:
-    copy_git(name, './dist')
-
-for root, sub, files in os.walk('./dist'):
-    for name in files:
-        path = os.path.join(root, name)
-        if name in REMOVE_FILES:
-            os.remove(path)
-
-os.makedirs('./dist/data')
-
-# rewrite config
-git_rev = get_git_rev()
-config = open('./dist/config/base.py', 'rb').read().decode('utf-8')
-config += '\n# Current revision\ngit_rev = %r\n' % git_rev
-open('./dist/config/base.py', 'wb').write(config.encode('utf-8'))
+REMOVE_FILES = ['dummy']
 
 
-filename = 'cuwo-%s.zip' % git_rev
+def main():
+    src_dir = os.path.join('build', os.listdir('./build')[0])
+    copy(src_dir, './dist/bin')
 
-try:
-    os.remove(filename)
-except OSError:
-    pass
+    open('./dist/run.bat', 'wb').write(b'bin\server.exe\r\npause\r\n')
 
-args = ['7z', 'a']
-if len(sys.argv) == 2:
-    args += ['-o%s' % sys.argv[1]]
-args += [filename, 'dist']
+    for name in GIT_FILES:
+        copy_git(name, './dist')
 
-try:
-    subprocess.check_call(args)
-except WindowsError:
-    print('7zip failed - do you have the 7zip directory in PATH?')
+    for root, sub, files in os.walk('./dist'):
+        for name in files:
+            path = os.path.join(root, name)
+            if name in REMOVE_FILES:
+                os.remove(path)
+
+    os.makedirs('./dist/data')
+
+    # rewrite config
+    git_rev = get_git_rev()
+    config = open('./dist/config/base.py', 'rb').read().decode('utf-8')
+    config += '\n# Current revision\ngit_rev = %r\n' % git_rev
+    open('./dist/config/base.py', 'wb').write(config.encode('utf-8'))
+
+    filename = 'cuwo-%s.zip' % git_rev
+
+    try:
+        os.remove(filename)
+    except OSError:
+        pass
+
+    args = ['7z', 'a']
+    if len(sys.argv) == 2:
+        args += ['-o%s' % sys.argv[1]]
+    args += [filename, 'dist']
+
+    try:
+        subprocess.check_call(args)
+    except WindowsError:
+        print('7zip failed - do you have the 7zip directory in PATH?')
+
+if __name__ == '__main__':
+    main()

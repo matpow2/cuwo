@@ -1,4 +1,4 @@
 rmdir /S /Q dist
-mkdir dist
-py -3 build.py py2exe
+rmdir /S /Q build
+py -3 build_cxfreeze.py build
 py -3 post_build.py %*

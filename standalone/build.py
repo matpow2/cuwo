@@ -15,24 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-from distutils.core import setup
-import py2exe
-
 import sys
 sys.path.append('..')
+from cx_Freeze import setup, Executable
 
-setup(
-    console=['../cuwo/server.py'],
-    zipfile=None,
-    options={
-        'py2exe': {
-            'dist_dir': 'dist/bin',
-            'compressed': 1,
-            'optimize': 2,
-            'bundle_files': 3,
-            'includes': ['json', 'platform'],
-            'packages': ['encodings', 'irc3', 'cuwo'],
-            'excludes': ['config'],
-            'dll_excludes': ["mswsock.dll", "powrprof.dll"]
-        }}
-)
+build_options = {'packages': ['encodings', 'irc3', 'cuwo'],
+                 'excludes': ['config'],
+                 'includes': ['json', 'platform']}
+
+executables = [
+    Executable('../cuwo/server.py', base='Console', targetName='server.exe')
+]
+
+setup(options={'build_exe': build_options}, executables=executables)
