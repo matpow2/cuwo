@@ -41,7 +41,7 @@ def get_player(server, value):
         except KeyError:
             pass
         value = value.lower()
-        for player in list(players.values()):
+        for player in players.values():
             name = player.name.lower()
             if name == value:
                 return player

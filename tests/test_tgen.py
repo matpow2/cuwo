@@ -43,5 +43,17 @@ class TerrainGeneratorTests(unittest.TestCase):
 
         self.assertEqual(len(chunk.static_entities), len(source))
 
+        for index, entity in enumerate(chunk.static_entities):
+            header1 = entity.header
+            header2 = source[index]
+            self.assertEqual(header1.entity_type, header2.entity_type)
+            self.assertEqual(header1.pos, header2.pos)
+            self.assertEqual(header1.orientation, header2.orientation)
+            self.assertEqual(header1.size, header2.size)
+            self.assertEqual(header1.closed, header2.closed)
+            self.assertEqual(header1.time_offset, header2.time_offset)
+            self.assertEqual(header1.something8, header2.something8)
+            self.assertEqual(header1.user_id, header2.user_id)
+
 if __name__ == '__main__':
     unittest.main()

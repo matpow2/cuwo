@@ -30,23 +30,23 @@ inline double noise1(int x, int y)
     return 1.0 - (double(nn) / 1073741824.0);
 }
 
-static double cos_table[5000];
-
 void init_noise()
 {
-    for (int i = 0; i < 5000; i++) {
-        cos_table[i] = cos(i * 0.0002 * CW_PI);
-    }
 }
 
-inline double fast_cos(double t)
-{
-    return cos_table[int(t * 5000.01)];
-}
+#ifdef ENABLE_SSE2
+#include "ssemath.h"
 
-inline double cos_interpolate(double a, double b, double t)
+typedef ALIGN16_BEG union {
+  float f[4];
+  v4sf v;
+} ALIGN16_END V4SF;
+
+#endif
+
+inline double cos_interpolate(double a, double b, double co)
 {
-    double f = (1.0 - fast_cos(t)) * 0.5;
+    double f = (1.0 - co) * 0.5;
     return a*(1.0-f) + b*f;
 }
 
@@ -62,9 +62,25 @@ inline double interpolated_noise(double x, double y)
     double v3 = noise1(x_int, y_int+1);
     double v4 = noise1(x_int+1, y_int+1);
 
-    double i1 = cos_interpolate(v1, v2, x_frac);
-    double i2 = cos_interpolate(v3, v4, x_frac);
-    return cos_interpolate(i1, i2, y_frac);
+    double x_cos;
+    double y_cos;
+
+#ifdef ENABLE_SSE2
+    V4SF v;
+    v.f[0] = float(x_frac * CW_PI);
+    v.f[1] = float(y_frac * CW_PI);
+    v.f[2] = v.f[3] = 0.0f;
+    v.v = cos_ps(v.v);
+    x_cos = double(v.f[0]);
+    y_cos = double(v.f[1]);
+#else
+    x_cos = cos(x_frac * CW_PI);
+    y_cos = cos(y_frac * CW_PI);
+#endif
+
+    double i1 = cos_interpolate(v1, v2, x_cos);
+    double i2 = cos_interpolate(v3, v4, x_cos);
+    return cos_interpolate(i1, i2, y_cos);
 }
 
 inline void sub_4D59F0()
@@ -81,7 +97,7 @@ inline uint64_t make_pair(uint32_t a, uint32_t b)
     return (uint64_t(a) << 32) | b;
 }
 
-void sub_4FE970()
+void sub_disabled_4FE970()
 {
     pop_ret();
     uint32_t self = get_self();

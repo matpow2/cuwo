@@ -111,12 +111,6 @@ def get_heap_base():
 # value_type _Myval;  // the stored value, unused if head
 
 
-cdef bytes read_str(uint32_t addr):
-    cdef string v
-    tgen_read_str(addr, v)
-    return (&v[0])[:v.size()]
-
-
 cdef str read_wstr(uint32_t addr):
     cdef string v
     tgen_read_wstr(addr, v)
@@ -530,8 +524,7 @@ cdef class Chunk:
             self.read_chunk(addr)
 
         cdef ByteReader reader
-        cdef uint32_t start
-        cdef uint32_t end
+        cdef uint32_t start, end
 
         # read static entities
         self.static_entities = []

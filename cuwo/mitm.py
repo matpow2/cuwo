@@ -18,7 +18,8 @@
 from cuwo.packet import (PacketHandler, write_packet, ServerChatMessage,
                          CS_PACKETS, SC_PACKETS, EntityUpdate,
                          create_entity_data, JoinPacket, CurrentTime,
-                         ClientChatMessage, UpdateFinished, ServerUpdate)
+                         ClientChatMessage, UpdateFinished, ServerUpdate,
+                         InteractPacket)
 from cuwo import constants
 import sys
 import asyncio
@@ -86,12 +87,18 @@ class FrontendProtocol(asyncio.Protocol):
             entity = self.entities[packet.entity_id]
         packet.update_entity(entity)
 
+    def on_server_update(self, packet):
+        for static_entity in packet.static_entities:
+            print(vars(static_entity))
+
     def on_client_packet(self, packet):
         if packet.packet_id == EntityUpdate.packet_id:
             self.on_entity_update(packet)
         if self.relay_client is None:
             self.relay_packets.append(write_packet(packet))
             return
+        if packet.packet_id == InteractPacket.packet_id:
+            print(vars(packet))
         self.relay_client.transport.write(write_packet(packet))
         if packet.packet_id not in (0,):
             print('Got client packet:', packet.packet_id)
@@ -104,6 +111,8 @@ class FrontendProtocol(asyncio.Protocol):
         elif packet.packet_id == CurrentTime.packet_id:
             # I hate darkness
             packet.time = constants.MAX_TIME / 2
+        elif packet.packet_id == ServerUpdate.packet_id:
+            self.on_server_update(packet)
         self.transport.write(write_packet(packet))
         if packet.packet_id not in (EntityUpdate.packet_id,
                                     UpdateFinished.packet_id,

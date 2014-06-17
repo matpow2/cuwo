@@ -27,7 +27,7 @@ from cuwo.defs import SOUNDS
 from cuwo.loader import Loader
 from cuwo.bytes import ByteReader, ByteWriter, OutOfData
 from cuwo.constants import FULL_MASK, BLOCK_SCALE
-from cuwo.static import StaticEntityHeader
+from cuwo.static import StaticEntityPacket
 import zlib
 
 
@@ -354,23 +354,6 @@ class MissionData(Loader):
         writer.write_uint32(self.something11)
         writer.write_uint32(self.chunk_x)
         writer.write_uint32(self.chunk_y)
-
-
-class StaticEntityPacket(Loader):
-    def read(self, reader):
-        self.chunk_x = reader.read_uint32()
-        self.chunk_y = reader.read_uint32()
-        self.entity_id = reader.read_uint32()
-        reader.skip(4)
-        self.header = StaticEntityHeader()
-        self.header.read(reader)
-
-    def write(self, writer):
-        writer.write_uint32(self.chunk_x)
-        writer.write_uint32(self.chunk_y)
-        writer.write_uint32(self.entity_id)
-        writer.pad(4)
-        self.header.write(writer)
 
 
 class ServerUpdate(Packet):

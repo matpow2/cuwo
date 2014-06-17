@@ -25,6 +25,19 @@ ORIENT_NORTH = 2
 ORIENT_WEST = 3
 
 
+SIT_ENTITIES = {
+    'SleepingMat', 'Stool', 'Bench', 'Bed'
+}
+
+
+OPEN_ENTITIES = {
+    'Window', 'CastleWindow', 'Door'
+}
+
+
+DYNAMIC_ENTITIES = SIT_ENTITIES | OPEN_ENTITIES
+
+
 class StaticEntityHeader(Loader):
     def read(self, reader):
         # memory header starts here (size 72)
@@ -43,7 +56,10 @@ class StaticEntityHeader(Loader):
         # the entity which is using this static entity
         self.user_id = reader.read_uint64()
 
-    def get_type_name(self):
+    def is_dynamic(self):
+        return self.get_name() in DYNAMIC_ENTITIES
+
+    def get_name(self):
         return STATIC_NAMES[self.entity_type]
 
     def write(self, writer):
@@ -60,9 +76,56 @@ class StaticEntityHeader(Loader):
         writer.write_uint64(self.user_id)
 
 
-class StaticEntity(Loader):
+class StaticEntityPacket(Loader):
     def read(self, reader):
-        pass
+        self.chunk_x = reader.read_uint32()
+        self.chunk_y = reader.read_uint32()
+        self.entity_id = reader.read_uint32()
+        reader.skip(4)
+        self.header = StaticEntityHeader()
+        self.header.read(reader)
 
     def write(self, writer):
+        writer.write_uint32(self.chunk_x)
+        writer.write_uint32(self.chunk_y)
+        writer.write_uint32(self.entity_id)
+        writer.pad(4)
+        self.header.write(writer)
+
+
+class StaticEntity(object):
+    def __init__(self, entity_id, header, chunk):
+        self.header = header
+        self.server = chunk.server
+
+        name = header.get_name()
+
+        if name in SIT_ENTITIES:
+            self.interact = self.interact_sit
+        elif name in OPEN_ENTITIES:
+            self.interact = self.interact_open
+
+        self.packet = StaticEntityPacket()
+        self.packet.header = header
+        self.packet.entity_id = entity_id
+        self.packet.chunk_x, self.packet.chunk_y = chunk.pos
+
+    def interact(self, player):
         pass
+
+    def interact_open(self, player):
+        self.header.closed = not self.header.closed
+        self.update()
+
+    def interact_sit(self, player):
+        self.header.user_id = player.entity_id
+        player.mount(self)
+        self.update()
+
+    def on_unmount(self, player):
+        self.header.user_id = 0
+        self.update()
+
+    def update(self):
+        packet = self.server.update_packet
+        packet.static_entities.append(self.packet)

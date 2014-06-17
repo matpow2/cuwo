@@ -553,7 +553,7 @@ class MapViewer(object):
 
 
 def main():
-    viewer = MapViewer(32800, 32800, 26879)
+    viewer = MapViewer(32803, 32803, 26879)
     viewer.run()
 
 if __name__ == '__main__':

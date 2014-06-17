@@ -69,7 +69,7 @@ class _EuclidMetaclass(type):
     @classmethod
     def _create_setstate(cls, slots):
         def __setstate__(self, state):
-            for name, value in list(state.items()):
+            for name, value in state.items():
                 setattr(self, name, value)
         return __setstate__
 

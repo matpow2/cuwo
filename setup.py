@@ -26,6 +26,7 @@ from distutils import log
 from distutils.sysconfig import get_config_vars
 from distutils import spawn
 import subprocess
+import platform
 from cuwo.download import download_dependencies
 
 
@@ -71,6 +72,12 @@ macros = []
 if os.name == 'nt':
     macros += [('_CRT_SECURE_NO_WARNINGS', None)]
 
+has_sse2 = False
+if platform.machine() in ('AMD64', 'x86', 'x86_64', 'i386', 'i686'):
+    print('Using SSE2 optimizations')
+    macros += [('ENABLE_SSE2', None)]
+    has_sse2 = True
+
 ext_modules.append(Extension('terraingen.pydasm', define_macros=macros,
                              sources=['./terraingen/pydasm/libdasm.c',
                                       './terraingen/pydasm/pydasm.pyx']))
@@ -97,10 +104,12 @@ def silent_spawn_nt(cmd, search_path=1, verbose=0, dry_run=0):
         return
     # spawn for NT requires a full path to the .exe
     p = subprocess.Popen([executable] + cmd[1:], stdout=subprocess.PIPE)
-    p.wait()
+    stdout, stderr = p.communicate()
     rc = p.returncode
     if rc == 0:
         return
+    print(stdout.decode('utf-8'))
+    print(stderr.decode('utf-8'))
     # and this reflects the command running but failing
     raise spawn.DistutilsExecError(
         "command '%s' failed with exit status %d" % (cmd[0], rc))
@@ -162,9 +171,9 @@ class build_ext(_build_ext.build_ext):
         includes = converter.get_includes(is_msvc)
         extra_args = []
         if is_msvc:
-            extra_args += ['/wd4102', '/EHsc', '/MP']
+            extra_args += ['/wd4102', '/EHsc', '/MP', '/arch:SSE2']
         else:
-            extra_args += ['-w', '-fPIC', '-g0']
+            extra_args += ['-w', '-fPIC', '-g0', '-march=native']
 
         class compile_state:
             index = 0
