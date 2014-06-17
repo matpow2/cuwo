@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Static entity implementation
+"""
+
 from cuwo.loader import Loader
 from cuwo.defs import STATIC_NAMES
 
@@ -46,7 +50,7 @@ class StaticEntityHeader(Loader):
         self.pos = reader.read_qvec3()
         self.orientation = reader.read_uint32()
         self.size = reader.read_vec3()
-        self.closed = reader.read_uint8()
+        self.closed = reader.read_uint8() == 1
         reader.skip(3)
         # time offset to use for e.g. opening doors
         # seems to be in ms, for windows/doors goes from 0-1000
@@ -68,7 +72,7 @@ class StaticEntityHeader(Loader):
         writer.write_qvec3(self.pos)
         writer.write_uint32(self.orientation)
         writer.write_vec3(self.size)
-        writer.write_uint8(self.closed)
+        writer.write_uint8(int(self.closed))
         writer.pad(3)
         writer.write_uint32(self.time_offset)
         writer.write_uint32(self.something8)
@@ -94,6 +98,8 @@ class StaticEntityPacket(Loader):
 
 
 class StaticEntity(object):
+    open_time = None
+
     def __init__(self, entity_id, header, chunk):
         self.header = header
         self.server = chunk.server
@@ -104,6 +110,7 @@ class StaticEntity(object):
             self.interact = self.interact_sit
         elif name in OPEN_ENTITIES:
             self.interact = self.interact_open
+            header.closed = True
 
         self.packet = StaticEntityPacket()
         self.packet.header = header
@@ -114,6 +121,8 @@ class StaticEntity(object):
         pass
 
     def interact_open(self, player):
+        offset = 1.0 - self.get_time_offset()
+        self.open_time = self.server.loop.time() - offset
         self.header.closed = not self.header.closed
         self.update()
 
@@ -126,6 +135,13 @@ class StaticEntity(object):
         self.header.user_id = 0
         self.update()
 
+    def get_time_offset(self):
+        if self.open_time is None:
+            return 1.0
+        t = self.server.loop.time() - self.open_time
+        return min(1.0, t)
+
     def update(self):
+        self.header.time_offset = int(self.get_time_offset() * 1e3)
         packet = self.server.update_packet
         packet.static_entities.append(self.packet)
