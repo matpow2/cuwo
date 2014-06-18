@@ -27,3 +27,6 @@ pyenv install 3.4.1 --skip-existing
 pyenv local 3.4.1
 pip install -r requirements.txt
 python setup.py build_ext --inplace
+
+chmod +x run_server.sh
+chmod +x update.sh
