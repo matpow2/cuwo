@@ -693,6 +693,7 @@ for table in (CS_PACKETS, SC_PACKETS):
 
 class PacketHandler:
     data = b''
+    stopping = False
 
     def __init__(self, table, callback):
         self.table = table
@@ -708,9 +709,13 @@ class PacketHandler:
                     break
                 packet = read_packet(reader, self.table)
                 self.callback(packet)
+                if self.stopping:
+                    return
         except OutOfData as e:
             if e.reader is not reader:
                 raise e
-        except StopIteration:
-            return
         self.data = self.data[pos:]
+
+    def stop(self):
+        self.stopping = True
+        self.feed = lambda x: None

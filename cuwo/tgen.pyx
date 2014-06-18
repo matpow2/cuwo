@@ -24,6 +24,7 @@ from cuwo.packet import ChunkItemData
 from cuwo.static import StaticEntityHeader
 from cuwo.bytes cimport ByteReader, create_reader
 from cuwo.entity import ItemData
+from cuwo.common import validate_chunk_pos
 
 from libc.stdint cimport uintptr_t, uint32_t, uint8_t
 from libc.stdlib cimport malloc, free
@@ -83,6 +84,8 @@ def initialize(seed, path):
 
 
 def generate(x, y):
+    if not validate_chunk_pos(x, y):
+        return None
     return Chunk(x, y)
 
 
@@ -371,25 +374,30 @@ cdef struct ChunkData:
 
 
 """
-struct SomeStaticEntitySubData
+struct ItemWithHeader
 {
     uint32_t header;
     ItemData data;
 }
 
-struct SomeStaticEntityData
+struct ItemWithHeaderList
 {
-    SomeStaticEntitySubData * vec_start;
-    SomeStaticEntitySubData * vec_end;
-    uint32_t vec_capacity;
+    ItemWithHeader * vec_start;
+    ItemWithHeader * vec_end;
+    ItemWithHeader * vec_capacity;
+}
+
+struct ItemWithHeaderLists
+{
+    ItemWithHeaderList * vec_start;
+    ItemWithHeaderList * vec_end;
+    ItemWithHeaderList * vec_capacity;
 }
 
 struct StaticEntity
 {
     StaticEntityHeader header;
-    SomeStaticEntityData * vec_start;
-    SomeStaticEntityData * vec_end;
-    uint32_t vec_capacity;
+    ItemWithHeaderLists item_with_header_lists;
     uint32_t something1;
     ItemData item; // (88)
     uint32_t something2;
@@ -398,8 +406,67 @@ struct StaticEntity
     uint32_t something5;
     uint32_t something6;
     uint32_t something7;
-
 };
+
+struct ItemWithExtra size 304
+{
+    ItemWithHeaderLists lists;
+    _DWORD something1;
+    ItemData item;
+    _DWORD something_added1;
+    _DWORD something_added2;
+}
+
+struct DynamicEntity (size 4336)
+{
+    uint32_t vtable // 0
+    char pad[4] // 4
+    float something // 8
+    char something[28] // 12
+    uint32_t something1 // 40
+    uint32_t entity_type // 44
+    uint8_t something // 48
+    uint8_t something // 49
+    char pad[2] // 50
+    uint16_t level // 52
+    char something[18] // 54
+    uint32_t something_chunk_pos // 72
+    uint32_t something_chunk_pos // 76
+    uint8_t something // 80
+    char pad[3] // 81
+    uint32_t something // 84
+    uint8_t something // 88
+    char pad[3] // 89
+    uint32_t something // 92
+    uint32_t something // 96
+    uint32_t something // 100
+    uint32_t something // 104
+    uint32_t something // 108
+    uint32_t something // 112
+    116: AppearanceData (end 288)
+    288: ItemData items[13] // end 3928
+    3928: float something
+    3932: float something
+    3936: float something
+    3940: float something
+    3944: float something
+    3948: ItemWithExtra (end 4252)
+    4252: uint32_t something
+    4256: uint32_t something
+    4260: uint32_t something
+    4264: uint32_t something
+    4268: uint32_t id vector (end 4280)
+    4280: uint32_t something (end 4280)
+    4284: uint32_t id vector (end 4292)
+    4292: uint32_t something
+    4296: uint32_t something
+    4300: uint8_t something
+    4301: char something[19]
+    4320: uint32_t something
+    4324: uint32_t something
+    4328: uint8_t something
+    4329: char pad[7] // most likely have some int64 in there
+}
 
 struct ChunkParent, size 200
 {
@@ -409,11 +476,11 @@ struct ChunkParent, size 200
   StaticEntity * static_entities_start;
   StaticEntity * static_entities_end;
   _DWORD static_entities_capacity;
-  _DWORD some1_4bytep_start;
-  _DWORD some1_4bytep_end;
+  _DWORD some1_4bytep_start; // something with normal entities
+  _DWORD some1_4bytep_end; // something with normal entities
   _DWORD some1_capacity;
-  _DWORD some4_start;
-  _DWORD some4_end;
+  _DWORD some4_start; // 4bytep
+  _DWORD some4_end; // 4bytep
   _DWORD some4_capacity;
   _DWORD chunkitems_start;
   _DWORD chunkitems_end;
@@ -447,7 +514,7 @@ struct ChunkParent, size 200
   _DWORD some6_start;
   _DWORD some6_end;
   _DWORD some6_capacity;
-  _DWORD dwordA0;
+  _DWORD start_something_dynamic_entities;
   _DWORD dwordA4;
   ChunkEntry *chunk_data;
   _DWORD other_chunk_data;

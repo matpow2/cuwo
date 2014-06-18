@@ -32,8 +32,11 @@ struct AppearanceData
   _BYTE hair_green;
   _BYTE hair_blue;
   _BYTE pad[1];
+
+  /* _WORD instead, maybe? */
   _BYTE movement_flags;
   _BYTE entity_flags;
+
   float scale;
   float bounding_radius;
   float bounding_height;
@@ -77,7 +80,11 @@ struct AppearanceData
 #define ACCEL_BIT 3
 #define EXTRA_VEL_BIT 4
 #define LOOK_PITCH_BIT 5
+#define PHYSICS_BIT 6
+#define HOSTILE_BIT 7
+#define TYPE_BIT 8
 #define MODE_BIT 9
+#define MODE_TIME_BIT 10
 #define APPEARANCE_BIT 13
 #define FLAGS_BIT 14
 #define CLASS_BIT 21

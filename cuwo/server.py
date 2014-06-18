@@ -33,6 +33,7 @@ from cuwo import entity
 from cuwo.static import StaticEntity
 from cuwo.loop import LoopingCall
 import functools
+import faulthandler
 
 try:
     from cuwo.world import World
@@ -163,9 +164,8 @@ class CubeWorldConnection(asyncio.Protocol):
         if self.disconnected:
             return
         if packet is None:
-            print('Invalid packet received')
-            self.disconnect()
-            raise StopIteration()
+            self.on_invalid_packet('data')
+            return
         handler = self.packet_handlers.get(packet.packet_id, None)
         if handler is None:
             # print 'Unhandled client packet: %s' % packet.packet_id
@@ -232,9 +232,13 @@ class CubeWorldConnection(asyncio.Protocol):
         self.mounted_entity = entity
 
     def on_pos_update(self):
-        chunk = get_chunk(self.position)
-        if not self.chunk or chunk != self.chunk.pos:
-            self.chunk = self.server.get_chunk(*chunk)
+        try:
+            chunk_pos = get_chunk(self.position)
+        except ValueError:
+            self.on_invalid_packet('position')
+            return
+        if not self.chunk or chunk_pos != self.chunk.pos:
+            self.chunk = self.server.get_chunk(*chunk_pos)
         self.scripts.call('on_pos_update')
 
     def on_chat_packet(self, packet):
@@ -295,6 +299,13 @@ class CubeWorldConnection(asyncio.Protocol):
         self.server.update_packet.shoot_actions.append(packet)
 
     # handlers
+
+    def on_invalid_packet(self, message):
+        name = self.name or self.entity_id or self.address[0]
+        print('Received invalid %r data from %r, '
+              'disconnecting' % (message, name))
+        self.packet_handler.stop()
+        self.disconnect()
 
     def on_join(self):
         if self.scripts.call('on_join').result is False:
@@ -486,7 +497,7 @@ class CubeWorldServer:
         item.something3 = item.something5 = item.something6 = 0
         item.pos = pos
         item.item_data = item_data
-        self.chunks[get_chunk(pos)].add_item(item)
+        self.get_chunk(*get_chunk(pos)).add_item(item)
 
     def update(self):
         self.scripts.call('update')
@@ -669,6 +680,9 @@ class CubeWorldServer:
 
 
 def main():
+    # make sure we enable crash logging as early as possible
+    faulthandler.enable()
+
     # for py2exe
     if hasattr(sys, 'frozen'):
         path = os.path.dirname(sys.executable)
