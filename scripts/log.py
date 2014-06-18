@@ -68,17 +68,21 @@ class LogServer(ServerScript):
             handler = logging.FileHandler(logfile)
         handler.setFormatter(logging.Formatter(config.file_log_format))
         logger.addHandler(handler)
+        self.file_handler = handler
 
         # log normal logging messages to stdout
         handler = logging.StreamHandler(sys.__stdout__)
         handler.setFormatter(logging.Formatter(config.console_log_format))
         logger.addHandler(handler)
+        self.console_handler = handler
 
         print('cuwo server started on %s' % time.strftime('%c'))
 
     def on_unload(self):
-        self.file_observer.stop()
-        self.observer.stop()
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
+        self.file_handler.close()
+        self.console_handler.close()
 
 
 def get_class():
