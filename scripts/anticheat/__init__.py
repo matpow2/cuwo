@@ -17,7 +17,8 @@
 
 """ Anti Cheat script for Cuwo by Sarcen """
 
-from cuwo.constants import RANGER_CLASS
+from cuwo.constants import (RANGER_CLASS, ATTACKING_FLAG, STEALTH_FLAG,
+                            GLIDER_FLAG)
 from cuwo.script import ServerScript, ConnectionScript
 from cuwo.common import (get_power, get_item_name, is_bit_set,
                          get_entity_max_health)
@@ -25,9 +26,7 @@ from cuwo.packet import ServerUpdate, PickupAction
 from .constants import (LOG_LEVEL_VERBOSE, LOG_LEVEL_DEFAULT, CUWO_ANTICHEAT,
                         LEGAL_RECIPE_ITEMS, LEGAL_ITEMS, LEGAL_CLASSES,
                         LEGAL_ITEMSLOTS, TWOHANDED_WEAPONS, CLASS_WEAPONS,
-                        CLASS_ARMOR, ARMOR_IDS, ABILITIES, APPEARANCES,
-                        FLAGS_1_ATTACKING, FLAGS_2_RANGER_STEALTH,
-                        FLAGS_1_GLIDER_ACTIVE)
+                        CLASS_ARMOR, ARMOR_IDS, ABILITIES, APPEARANCES)
 
 import re
 import math
@@ -775,40 +774,34 @@ class AntiCheatConnection(ConnectionScript):
         entity_data = self.connection.entity_data
         appearance = entity_data.appearance
 
-        if appearance.movement_flags != 0:
-            self.log("invalid appearance flags, movement_flags={flags}"
+        if appearance.flags != 0:
+            self.log("invalid appearance flags={flags}"
                      .format(flags=appearance.movement_flags),
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if appearance.entity_flags != 0:
-            self.log("invalid appearance flags, entity_flags={flags}"
-                     .format(flags=appearance.entity_flags),
-                     LOG_LEVEL_VERBOSE)
-            return True
-
-        if not entity_data.entity_type in APPEARANCES:
+        if entity_data.entity_type not in APPEARANCES:
             self.log("invalid entity_type (race), entity_type={entity_type}"
                      .format(entity_type=entity_data.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         app = APPEARANCES[entity_data.entity_type]
-        if not is_similar(appearance.scale, app['scale']):
+        if not is_similar(appearance.scale.x, app['scale']):
             self.log("invalid appearance, scale={field} entity_type={t}"
                      .format(field=appearance.scale,
                              t=entity_data.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if not is_similar(appearance.bounding_radius, app['radius']):
+        if not is_similar(appearance.scale.y, app['radius']):
             self.log("invalid appearance, radius={field} entity_type={t}"
                      .format(field=appearance.bounding_radius,
                              t=entity_data.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if not is_similar(appearance.bounding_height, app['height']):
+        if not is_similar(appearance.scale.z, app['height']):
             self.log("invalid appearance, height={field} entity_type={t}"
                      .format(field=appearance.bounding_height,
                              t=entity_data.entity_type),
@@ -1029,11 +1022,9 @@ class AntiCheatConnection(ConnectionScript):
         entity_data = self.connection.entity_data
         # This is when holding control, doesnt need to be on a wall
 
-        flags_1 = entity_data.flags_1
-        flags_2 = entity_data.flags_2
+        flags = entity_data.flags
 
-        if (is_bit_set(flags_2, FLAGS_2_RANGER_STEALTH) and
-                entity_data.class_type != RANGER_CLASS):
+        if flags & STEALTH_FLAG and entity_data.class_type != RANGER_CLASS:
             self.log("none ranger class using ranger stealth. class={classid}"
                      .format(classid=entity_data.class_type),
                      LOG_LEVEL_VERBOSE)
@@ -1041,11 +1032,11 @@ class AntiCheatConnection(ConnectionScript):
 
         # Glider resetting attack animations bug
         # Rapidly switching between will be seen as bug abusing.
-        if is_bit_set(flags_1, FLAGS_1_ATTACKING):
+        if flags & ATTACKING_FLAG:
             self.last_attacking = self.loop.time()
             self.attack_count += 1
 
-        if is_bit_set(flags_1, FLAGS_1_GLIDER_ACTIVE):
+        if flags & GLIDER_FLAG:
             self.last_glider_active = self.loop.time()
             self.glider_count += 1
 
@@ -1066,10 +1057,10 @@ class AntiCheatConnection(ConnectionScript):
 
     def check_flying(self):
         entity_data = self.connection.entity_data
-        flags_1 = entity_data.flags_1
+        flags = entity_data.flags
         # in the air when, not gliding, not "on ground", not swimming, not
         # climbing
-        if not (is_bit_set(flags_1, FLAGS_1_GLIDER_ACTIVE)
+        if not (flags & GLIDER_FLAG
                 or is_bit_set(entity_data.physics_flags, 0)
                 or is_bit_set(entity_data.physics_flags, 1)
                 or is_bit_set(entity_data.physics_flags, 2)

@@ -20,7 +20,7 @@ Static entity implementation
 """
 
 from cuwo.loader import Loader
-from cuwo.defs import STATIC_NAMES
+from cuwo.strings import STATIC_NAMES
 
 
 ORIENT_SOUTH = 0
@@ -35,7 +35,7 @@ SIT_ENTITIES = {
 
 
 OPEN_ENTITIES = {
-    'Window', 'CastleWindow', 'Door'
+    'Window', 'CastleWindow', 'Door', 'Chest'
 }
 
 

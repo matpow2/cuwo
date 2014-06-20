@@ -49,6 +49,9 @@ class World:
         self.cache = {}
         loop.run_in_executor(None, self.run_gen, seed)
 
+    def update(self):
+        pass
+
     def stop(self):
         self.gen_queue.put(None)
 

@@ -117,17 +117,20 @@ cdef class ByteWriter:
     cpdef bytes get(self):
         return get_stream_data(self.stream)
 
-    cpdef write_vec3(self, value):
+    cpdef bint write_vec3(self, value):
         self.write_float(value.x)
         self.write_float(value.y)
         self.write_float(value.z)
+        return True
 
-    cpdef write_ivec3(self, value):
+    cpdef bint write_ivec3(self, value):
         self.write_int32(value.x)
         self.write_int32(value.y)
         self.write_int32(value.z)
+        return True
 
-    cpdef write_qvec3(self, value):
+    cpdef bint write_qvec3(self, value):
         self.write_int64(value.x)
         self.write_int64(value.y)
         self.write_int64(value.z)
+        return True

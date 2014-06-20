@@ -17,9 +17,9 @@
 
 from cuwo.packet import (PacketHandler, write_packet, ServerChatMessage,
                          CS_PACKETS, SC_PACKETS, EntityUpdate,
-                         create_entity_data, JoinPacket, CurrentTime,
-                         ClientChatMessage, UpdateFinished, ServerUpdate,
-                         InteractPacket)
+                         JoinPacket, CurrentTime, ClientChatMessage,
+                         UpdateFinished, ServerUpdate, InteractPacket)
+from cuwo import entity as entitydata
 from cuwo import constants
 import sys
 import asyncio
@@ -81,15 +81,17 @@ class FrontendProtocol(asyncio.Protocol):
 
     def on_entity_update(self, packet):
         if packet.entity_id not in self.entities:
-            entity = create_entity_data()
+            entity = entitydata.EntityData()
             self.entities[packet.entity_id] = entity
+            print('Created new entity:', packet.entity_id)
         else:
             entity = self.entities[packet.entity_id]
         packet.update_entity(entity)
 
     def on_server_update(self, packet):
-        for static_entity in packet.static_entities:
-            print(vars(static_entity))
+        pass
+        # for static_entity in packet.static_entities:
+        #     print(vars(static_entity.header))
 
     def on_client_packet(self, packet):
         if packet.packet_id == EntityUpdate.packet_id:

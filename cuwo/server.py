@@ -18,18 +18,18 @@
 from cuwo.packet import (PacketHandler, write_packet, CS_PACKETS,
                          ClientVersion, JoinPacket, SeedData, EntityUpdate,
                          ClientChatMessage, ServerChatMessage,
-                         create_entity_data, UpdateFinished, CurrentTime,
-                         ServerUpdate, ServerFull, ServerMismatch,
-                         INTERACT_DROP, INTERACT_PICKUP, ChunkItemData,
-                         ChunkItems, InteractPacket, PickupAction,
-                         HitPacket, ShootPacket, INTERACT_NORMAL)
+                         UpdateFinished, CurrentTime, ServerUpdate,
+                         ServerFull, ServerMismatch, INTERACT_DROP,
+                         INTERACT_PICKUP, ChunkItemData, ChunkItems,
+                         InteractPacket, PickupAction, HitPacket, ShootPacket,
+                         INTERACT_NORMAL)
 from cuwo.types import IDPool, MultikeyDict, AttributeSet
 from cuwo import constants
 from cuwo.common import (get_clock_string, parse_clock, parse_command,
-                         get_chunk, filter_string)
+                         get_chunk, filter_string, get_entity_max_health)
 from cuwo.script import ScriptManager
 from cuwo.config import ConfigObject
-from cuwo import entity
+from cuwo import entity as entitydata
 from cuwo.static import StaticEntity
 from cuwo.loop import LoopingCall
 import functools
@@ -187,7 +187,7 @@ class CubeWorldConnection(asyncio.Protocol):
 
     def on_entity_packet(self, packet):
         if self.entity_data is None:
-            self.entity_data = create_entity_data()
+            self.entity_data = entitydata.EntityData()
             self.server.entities[self.entity_id] = self.entity_data
 
         mask = packet.update_entity(self.entity_data)
@@ -198,32 +198,32 @@ class CubeWorldConnection(asyncio.Protocol):
 
         self.scripts.call('on_entity_update', mask=mask)
         # XXX clean this up
-        if entity.is_pos_set(mask):
+        if entitydata.is_pos_set(mask):
             self.on_pos_update()
-        if entity.is_vel_set(mask):
+        if entitydata.is_vel_set(mask):
             if self.mounted_entity:
                 self.mount(None)
-        if entity.is_mode_set(mask):
+        if entitydata.is_mode_set(mask):
             self.scripts.call('on_mode_update')
-        if entity.is_class_set(mask):
+        if entitydata.is_class_set(mask):
             self.scripts.call('on_class_update')
-        if entity.is_name_set(mask):
+        if entitydata.is_name_set(mask):
             self.scripts.call('on_name_update')
-        if entity.is_multiplier_set(mask):
+        if entitydata.is_multiplier_set(mask):
             self.scripts.call('on_multiplier_update')
-        if entity.is_level_set(mask):
+        if entitydata.is_level_set(mask):
             self.scripts.call('on_level_update')
-        if entity.is_equipment_set(mask):
+        if entitydata.is_equipment_set(mask):
             self.scripts.call('on_equipment_update')
-        if entity.is_skill_set(mask):
+        if entitydata.is_skill_set(mask):
             self.scripts.call('on_skill_update')
-        if entity.is_appearance_set(mask):
+        if entitydata.is_appearance_set(mask):
             self.scripts.call('on_appearance_update')
-        if entity.is_charged_mp_set(mask):
+        if entitydata.is_charged_mp_set(mask):
             self.scripts.call('on_charged_mp_update')
-        if entity.is_flags_set(mask):
+        if entitydata.is_flags_set(mask):
             self.scripts.call('on_flags_update')
-        if entity.is_consumable_set(mask):
+        if entitydata.is_consumable_set(mask):
             self.scripts.call('on_consumable_update')
 
     def mount(self, entity):
@@ -372,7 +372,7 @@ class CubeWorldConnection(asyncio.Protocol):
         return self.entity_data.name
 
 
-class Chunk(object):
+class Chunk:
     data = None
 
     def __init__(self, server, x, y):
@@ -408,6 +408,12 @@ class Chunk(object):
             new_entity = StaticEntity(entity_id, header, self)
             self.static_entities[entity_id] = new_entity
 
+        if self.server.config.base.use_entities:
+            for data in self.data.dynamic_entities:
+                entity = Entity(data)
+                self.server.update_entities.add(entity)
+                self.server.entities[entity.entity_id] = entity.data
+
         self.update()
 
     def add_item(self, item):
@@ -436,6 +442,22 @@ class Chunk(object):
         self.server.updated_chunks.add(self)
 
 
+class Entity:
+    def __init__(self, data):
+        self.data = entitydata.EntityData()
+        data.set_entity(self.data)
+        self.set_hp()
+        self.data.mask = constants.FULL_MASK
+        self.entity_id = data.entity_id
+
+    def set_hp(self, value=None):
+        self.data.hp = value or get_entity_max_health(self.data)
+        self.data.mask |= entitydata.HP_FLAG
+
+    def update(self):
+        pass
+
+
 class CubeWorldServer:
     exit_code = None
     world = None
@@ -452,6 +474,7 @@ class CubeWorldServer:
         self.connections = set()
         self.players = MultikeyDict()
 
+        self.update_entities = set()
         self.entities = {}
         self.entity_ids = IDPool(1)
 
@@ -501,6 +524,9 @@ class CubeWorldServer:
 
     def update(self):
         self.scripts.call('update')
+
+        for entity in self.update_entities:
+            entity.update()
 
         # entity updates
         for entity_id, data in self.entities.items():
@@ -613,7 +639,7 @@ class CubeWorldServer:
             if command:
                 return command
 
-    # data store methods
+    # binary data store methods
 
     def load_data(self, name, default=None):
         path = './%s.dat' % name

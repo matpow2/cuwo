@@ -17,7 +17,7 @@
 
 
 cimport cython
-from cuwo.common cimport int64_t, uint64_t
+from libc.stdint cimport int64_t, uint64_t
 
 
 cdef extern from "bytes_c.cpp":
@@ -63,21 +63,30 @@ cdef class ByteReader:
         char * pos
         object py_data
 
+    @cython.final
     cdef inline void init(self, char * data, size_t size):
         self.start = data
         self.end = data + size
         self.pos = self.start
 
+    @cython.final
     cpdef inline unsigned int tell(self):
         return self.pos - self.start
 
+    @cython.final
     cpdef inline seek(self, int pos, int whence=?)
+
+    @cython.final
     cpdef str read_ascii(self, unsigned int size)
+
+    @cython.final
     cpdef inline bytes read(self, unsigned int size=?)
 
+    @cython.final
     cpdef inline unsigned int get_left(self):
         return self.end - self.pos
 
+    @cython.final
     cdef inline char * check_available(self, unsigned int size) except NULL:
         cdef char * data = self.pos
         if data + size > self.end:
@@ -86,6 +95,7 @@ cdef class ByteReader:
         self.pos += size
         return data
 
+    @cython.final
     cpdef inline bytes read_string(self, unsigned int size):
         cdef char * data = self.check_available(size)
         cdef unsigned int i
@@ -96,57 +106,74 @@ cdef class ByteReader:
             return data[:size]
         return data[:i]
 
+    @cython.final
     cpdef inline skip(self, unsigned int size):
         cdef unsigned int end_pos = self.tell() + size
         self.seek(end_pos)
         if end_pos != self.tell():
             raise_out_of_data(self)
 
+    @cython.final
     cpdef inline rewind(self, int size):
         self.seek(-size, 1)
 
+    @cython.final
     cpdef inline char read_int8(self) except *:
         cdef char * data = self.check_available(1)
         return read_int8(data)
 
+    @cython.final
     cpdef inline unsigned char read_uint8(self) except *:
         cdef char * data = self.check_available(1)
         return read_uint8(data)
 
+    @cython.final
     cpdef inline short read_int16(self) except *:
         cdef char * data = self.check_available(2)
         return read_int16(data)
 
+    @cython.final
     cpdef inline unsigned short read_uint16(self) except *:
         cdef char * data = self.check_available(2)
         return read_uint16(data)
 
+    @cython.final
     cpdef inline int read_int32(self) except *:
         cdef char * data = self.check_available(4)
         return read_int32(data)
 
+    @cython.final
     cpdef inline unsigned int read_uint32(self) except *:
         cdef char * data = self.check_available(4)
         return read_uint32(data)
 
+    @cython.final
     cpdef inline int64_t read_int64(self) except *:
         cdef char * data = self.check_available(8)
         return read_int64(data)
 
+    @cython.final
     cpdef inline uint64_t read_uint64(self) except *:
         cdef char * data = self.check_available(8)
         return read_uint64(data)
 
+    @cython.final
     cpdef inline double read_float(self) except *:
         cdef char * data = self.check_available(4)
         return read_float(data)
 
+    @cython.final
     cpdef inline double read_double(self) except *:
         cdef char * data = self.check_available(8)
         return read_double(data)
 
+    @cython.final
     cpdef object read_vec3(self)
+
+    @cython.final
     cpdef object read_ivec3(self)
+
+    @cython.final
     cpdef object read_qvec3(self)
 
 
@@ -155,58 +182,94 @@ cdef class ByteWriter:
     cdef:
         void * stream
 
+    @cython.final
     cpdef inline size_t tell(self):
         return get_write_pos(self.stream)
 
-    cpdef inline write(self, bytes data):
+    @cython.final
+    cpdef inline bint write(self, bytes data):
         write(self.stream, data, len(data))
+        return True
 
-    cpdef inline write_string(self, bytes value, size_t size):
+    @cython.final
+    cpdef inline bint write_string(self, bytes value, size_t size):
         cdef size_t string_size = len(value)
         cdef size_t write_size = min(size, string_size)
         write(self.stream, value, write_size)
         write_pad(self.stream, size - write_size)
+        return True
 
-    cpdef inline write_ascii(self, str value, size_t size):
+    @cython.final
+    cpdef inline bint write_ascii(self, str value, size_t size):
         cdef bytes new_value = value.encode('ascii', 'ignore')
         self.write_string(new_value, size)
+        return True
 
-    cpdef inline pad(self, size_t size):
+    @cython.final
+    cpdef inline bint pad(self, size_t size):
         write_pad(self.stream, size)
+        return True
 
-    cpdef inline write_int8(self, char value):
+    @cython.final
+    cpdef inline bint write_int8(self, char value):
         write_int8(self.stream, value)
+        return True
 
-    cpdef inline write_uint8(self, unsigned char value):
+    @cython.final
+    cpdef inline bint write_uint8(self, unsigned char value):
         write_uint8(self.stream, value)
+        return True
 
-    cpdef inline write_int16(self, short value):
+    @cython.final
+    cpdef inline bint write_int16(self, short value):
         write_int16(self.stream, value)
+        return True
 
-    cpdef inline write_uint16(self, unsigned short value):
+    @cython.final
+    cpdef inline bint write_uint16(self, unsigned short value):
         write_uint16(self.stream, value)
+        return True
 
-    cpdef inline write_int32(self, int value):
+    @cython.final
+    cpdef inline bint write_int32(self, int value):
         write_int32(self.stream, value)
+        return True
 
-    cpdef inline write_uint32(self, unsigned int value):
+    @cython.final
+    cpdef inline bint write_uint32(self, unsigned int value):
         write_uint32(self.stream, value)
+        return True
 
-    cpdef inline write_int64(self, int64_t value):
+    @cython.final
+    cpdef inline bint write_int64(self, int64_t value):
         write_int64(self.stream, value)
+        return True
 
-    cpdef inline write_uint64(self, uint64_t value):
+    @cython.final
+    cpdef inline bint write_uint64(self, uint64_t value):
         write_uint64(self.stream, value)
+        return True
 
-    cpdef inline write_float(self, double value):
+    @cython.final
+    cpdef inline bint write_float(self, double value):
         write_float(self.stream, value)
+        return True
 
-    cpdef inline write_double(self, double value):
+    @cython.final
+    cpdef inline bint write_double(self, double value):
         write_double(self.stream, value)
+        return True
 
-    cpdef write_vec3(self, value)
-    cpdef write_ivec3(self, value)
-    cpdef write_qvec3(self, value)
+    @cython.final
+    cpdef bint write_vec3(self, value) except *
+
+    @cython.final
+    cpdef bint write_ivec3(self, value) except *
+
+    @cython.final
+    cpdef bint write_qvec3(self, value) except *
+
+    @cython.final
     cpdef bytes get(self)
 
 

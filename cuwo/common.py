@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-from cuwo import constants, defs
+from cuwo import constants
+from cuwo import strings
 
 import shlex
 import os
@@ -221,12 +222,12 @@ def get_item_name(item):
         name.append(constants.MATERIAL_NAMES[item.material])
 
     try:
-        name.append(defs.ITEM_NAMES[(item.type, item.sub_type)])
+        name.append(strings.ITEM_NAMES[(item.type, item.sub_type)])
     except KeyError:
         pass
 
-    if item.type == 19 and item.sub_type in defs.ENTITY_NAMES:
-        name.append(defs.ENTITY_NAMES[item.sub_type])
+    if item.type == 19 and item.sub_type in strings.ENTITY_NAMES:
+        name.append(strings.ENTITY_NAMES[item.sub_type])
 
     power = get_power(item.level)
     name.append("+{power}".format(power=power))

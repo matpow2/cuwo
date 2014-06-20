@@ -23,10 +23,13 @@ Terraingen wrapper
 from cuwo.packet import ChunkItemData
 from cuwo.static import StaticEntityHeader
 from cuwo.bytes cimport ByteReader, create_reader
-from cuwo.entity import ItemData
+from cuwo.entity import ItemData, AppearanceData
 from cuwo.common import validate_chunk_pos
+from cuwo.strings import ENTITY_NAMES
+from cuwo.constants import BLOCK_SCALE
+from cuwo.vector import Vector3
 
-from libc.stdint cimport uintptr_t, uint32_t, uint8_t
+from libc.stdint cimport uintptr_t, uint32_t, uint8_t, uint64_t
 from libc.stdlib cimport malloc, free
 from libcpp.string cimport string
 
@@ -373,157 +376,7 @@ cdef struct ChunkData:
     ChunkXY items[256*256]
 
 
-"""
-struct ItemWithHeader
-{
-    uint32_t header;
-    ItemData data;
-}
-
-struct ItemWithHeaderList
-{
-    ItemWithHeader * vec_start;
-    ItemWithHeader * vec_end;
-    ItemWithHeader * vec_capacity;
-}
-
-struct ItemWithHeaderLists
-{
-    ItemWithHeaderList * vec_start;
-    ItemWithHeaderList * vec_end;
-    ItemWithHeaderList * vec_capacity;
-}
-
-struct StaticEntity
-{
-    StaticEntityHeader header;
-    ItemWithHeaderLists item_with_header_lists;
-    uint32_t something1;
-    ItemData item; // (88)
-    uint32_t something2;
-    uint32_t something3;
-    uint32_t something4;
-    uint32_t something5;
-    uint32_t something6;
-    uint32_t something7;
-};
-
-struct ItemWithExtra size 304
-{
-    ItemWithHeaderLists lists;
-    _DWORD something1;
-    ItemData item;
-    _DWORD something_added1;
-    _DWORD something_added2;
-}
-
-struct DynamicEntity (size 4336)
-{
-    uint32_t vtable // 0
-    char pad[4] // 4
-    float something // 8
-    char something[28] // 12
-    uint32_t something1 // 40
-    uint32_t entity_type // 44
-    uint8_t something // 48
-    uint8_t something // 49
-    char pad[2] // 50
-    uint16_t level // 52
-    char something[18] // 54
-    uint32_t something_chunk_pos // 72
-    uint32_t something_chunk_pos // 76
-    uint8_t something // 80
-    char pad[3] // 81
-    uint32_t something // 84
-    uint8_t something // 88
-    char pad[3] // 89
-    uint32_t something // 92
-    uint32_t something // 96
-    uint32_t something // 100
-    uint32_t something // 104
-    uint32_t something // 108
-    uint32_t something // 112
-    116: AppearanceData (end 288)
-    288: ItemData items[13] // end 3928
-    3928: float something
-    3932: float something
-    3936: float something
-    3940: float something
-    3944: float something
-    3948: ItemWithExtra (end 4252)
-    4252: uint32_t something
-    4256: uint32_t something
-    4260: uint32_t something
-    4264: uint32_t something
-    4268: uint32_t id vector (end 4280)
-    4280: uint32_t something (end 4280)
-    4284: uint32_t id vector (end 4292)
-    4292: uint32_t something
-    4296: uint32_t something
-    4300: uint8_t something
-    4301: char something[19]
-    4320: uint32_t something
-    4324: uint32_t something
-    4328: uint8_t something
-    4329: char pad[7] // most likely have some int64 in there
-}
-
-struct ChunkParent, size 200
-{
-  int vtable; - pointer
-  int b; - pointer
-  int c; - value (size?)
-  StaticEntity * static_entities_start;
-  StaticEntity * static_entities_end;
-  _DWORD static_entities_capacity;
-  _DWORD some1_4bytep_start; // something with normal entities
-  _DWORD some1_4bytep_end; // something with normal entities
-  _DWORD some1_capacity;
-  _DWORD some4_start; // 4bytep
-  _DWORD some4_end; // 4bytep
-  _DWORD some4_capacity;
-  _DWORD chunkitems_start;
-  _DWORD chunkitems_end;
-  _DWORD chunkitems_capacity;
-  _DWORD some9_start;
-  _DWORD some9_end;
-  _DWORD some9_capacity;
-  _DWORD some8_start;
-  _DWORD some8_end;
-  _DWORD some8_capacity;
-  _DWORD some7_start;
-  _DWORD some7_end;
-  _DWORD some7_capacity;
-  _DWORD chunk_x;
-  _DWORD chunk_y;
-  _DWORD some2_20byte_start;
-  _DWORD some2_20byte_end;
-  _DWORD some2_capacity;
-  _BYTE word74;
-  _BYTE has_chunkitems;
-  _BYTE byte76;
-  _BYTE pad;
-  _DWORD dword78;
-  _DWORD dword7C;
-  _DWORD dword80;
-  _BYTE byte84;
-  _BYTE pad2[3];
-  _DWORD some5_start;
-  _DWORD some5_end;
-  _DWORD some5_capacity;
-  _DWORD some6_start;
-  _DWORD some6_end;
-  _DWORD some6_capacity;
-  _DWORD start_something_dynamic_entities;
-  _DWORD dwordA4;
-  ChunkEntry *chunk_data;
-  _DWORD other_chunk_data;
-  struct _RTL_CRITICAL_SECTION rtl_critical_sectionB0;
-};
-"""
-
-
-cdef class StaticEntityItems:
+cdef class ItemWithHeaderList:
     cdef public:
         list items
 
@@ -542,6 +395,16 @@ cdef class StaticEntityItems:
             item = ItemData()
             item.read(reader)
             self.items.append((header, item))
+
+
+cdef list read_item_with_header_lists(uint32_t start, uint32_t end):
+    cdef list items = []
+    cdef uint32_t vec_item
+    for _ in range((end - start) // 4):
+        vec_item = mem.read_dword(start)
+        items.append(ItemWithHeaderList(vec_item))
+        start += 4
+    return items
 
 
 cdef class StaticEntity:
@@ -566,12 +429,125 @@ cdef class StaticEntity:
         cdef uint32_t something6 = reader.read_uint32()
         cdef uint32_t something7 = reader.read_uint32()
 
-        self.items = []
-        cdef uint32_t vec_item
-        for _ in range((vec_end - vec_start) // 4):
-            vec_item = mem.read_dword(vec_start)
-            self.items.append(StaticEntityItems(vec_item))
-            vec_start += 4
+        self.items = read_item_with_header_lists(vec_start, vec_end)
+
+
+cdef class DynamicEntity:
+    cdef public:
+        object pos
+        uint32_t hostile_type
+        uint32_t class_type
+        uint32_t specialization
+        uint32_t entity_type
+        uint32_t level
+        uint64_t entity_id
+        uint32_t flags_bit_3
+        float yaw
+        uint32_t power_base
+        uint32_t not_used19
+        uint32_t not_used20
+        uint32_t not_used21
+        uint32_t not_used22
+        object appearance
+        list equipment
+        float max_hp_multiplier
+        float shoot_speed
+        float damage_multiplier
+        float armor_multiplier
+        float resi_multiplier
+        uint32_t unknown_or_not_used4
+        str name
+
+    def __cinit__(self, ByteReader reader):
+        reader.seek(16)
+        self.pos = reader.read_qvec3()
+        self.hostile_type = reader.read_uint8()
+        reader.skip(3)
+        self.entity_type = reader.read_uint32()
+        self.class_type = reader.read_uint8()
+        self.specialization = reader.read_uint8()
+        reader.skip(2)
+        self.level = reader.read_uint32()
+        reader.skip(4*4)
+        self.entity_id = reader.read_uint64()
+        self.flags_bit_3 = reader.read_uint8()
+        reader.skip(3)
+        self.yaw = reader.read_float()
+        self.power_base = reader.read_uint8()
+        reader.skip(3)
+        self.not_used19 = reader.read_uint8()
+        reader.skip(3)
+        self.not_used20 = reader.read_uint32()
+        self.not_used21 = reader.read_uint32()
+        self.not_used22 = reader.read_uint32()
+        reader.skip(4*2)
+        self.appearance = AppearanceData()
+        self.appearance.read(reader)
+
+        self.equipment = []
+
+        cdef object item
+        for _ in range(13):
+            item = ItemData()
+            item.read(reader)
+            self.equipment.append(item)
+
+        reader.skip(304) # ItemWithExtra
+
+        reader.skip(11 * 4)
+        self.unknown_or_not_used4 = reader.read_uint32()
+        self.name = reader.read_ascii(16)
+        reader.skip(4*3 + 1 + 7)
+
+    def set_entity(self, object entity):
+        entity.pos = self.pos
+        entity.spawn_pos = self.pos.copy()
+        entity.hostile_type = self.hostile_type
+        entity.entity_type = self.entity_type
+        entity.class_type = self.class_type
+        entity.specialization = self.specialization
+        entity.level = self.level
+
+        if self.flags_bit_3:
+            entity.flags |= 1 << 3
+        else:
+            entity.flags &= ~(1 << 3)
+
+        entity.body_yaw = self.yaw
+        entity.power_base = self.power_base
+        entity.not_used19 = self.not_used19
+        entity.not_used20 = self.not_used20
+        entity.not_used21 = self.not_used21
+        entity.not_used22 = self.not_used22
+
+        entity.appearance = self.appearance
+        entity.equipment = self.equipment
+        entity.max_hp_multiplier = self.max_hp_multiplier
+        entity.shoot_speed = self.shoot_speed
+        entity.damage_multiplier = self.damage_multiplier
+        entity.armor_multiplier = self.armor_multiplier
+        entity.resi_multiplier = self.resi_multiplier
+        entity.unknown_or_not_used4
+
+        entity.name = self.name
+
+        if self.appearance.flags & 0x200:
+            entity.appearance.scale *= 2.0
+
+        cdef float off_z = entity.appearance.scale.z * 0.5 + 0.1
+        entity.pos.z += off_z * BLOCK_SCALE
+
+        # some default values
+        entity.consumable = ItemData()
+        entity.velocity = Vector3()
+        entity.accel = Vector3()
+        entity.extra_vel = Vector3()
+        entity.ray_hit = Vector3()
+        entity.start_chunk = Vector3()
+        entity.skills = [0] * 11
+
+    def get_type(self):
+        return ENTITY_NAMES[self.entity_type]
 
 
 cdef class Chunk:
@@ -579,6 +555,7 @@ cdef class Chunk:
     cdef public:
         list items
         list static_entities
+        list dynamic_entities
         uint32_t x, y
 
     def __init__(self, x, y):
@@ -590,20 +567,33 @@ cdef class Chunk:
             addr = tgen_generate_chunk(self.x, self.y)
             self.read_chunk(addr)
 
-        cdef ByteReader reader
+        cdef ByteReader reader = create_reader(NULL, 0)
         cdef uint32_t start, end
+
+        # read dynamic entities
+        self.dynamic_entities = []
+        start = mem.read_dword(addr + 24)
+        end = mem.read_dword(addr + 28)
+
+        cdef DynamicEntity dynamic
+        cdef uint32_t new_addr
+        for i in range(0, end - start, 4):
+            new_addr = mem.read_dword(start + i)
+            reader.init(mem.translate(new_addr), 4336)
+            dynamic = DynamicEntity.__new__(DynamicEntity, reader)
+            self.dynamic_entities.append(dynamic)
 
         # read static entities
         self.static_entities = []
         start = mem.read_dword(addr + 12)
         end = mem.read_dword(addr + 16)
 
-        reader = create_reader(mem.translate(start), end - start)
+        reader.init(mem.translate(start), end - start)
 
-        cdef StaticEntity entity
+        cdef StaticEntity static
         while reader.get_left() > 0:
-            entity = StaticEntity.__new__(StaticEntity, reader)
-            self.static_entities.append(entity)
+            static = StaticEntity.__new__(StaticEntity, reader)
+            self.static_entities.append(static)
 
         # read chunk items
         self.items = []
@@ -611,7 +601,7 @@ cdef class Chunk:
         start = mem.read_dword(addr + 48)
         end = mem.read_dword(addr + 52)
 
-        reader = create_reader(mem.translate(start), end - start)
+        reader.init(mem.translate(start), end - start)
         while reader.get_left() > 0:
             item = ChunkItemData()
             item.read(reader)

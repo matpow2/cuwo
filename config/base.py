@@ -55,3 +55,7 @@ update_fps = 50
 # Turns on world simulation and enables terrain generation (depends on
 # cuwo.tgen). This may not be needed for barebones PvP servers.
 use_world = True
+
+# Experimental support for mobs and NPCs. This is still work in progress, do
+# not expect good results.
+use_entities = False

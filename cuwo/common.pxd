@@ -14,6 +14,3 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
-
-ctypedef signed long long int64_t
-ctypedef unsigned long long uint64_t

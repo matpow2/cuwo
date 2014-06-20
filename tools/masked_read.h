@@ -12,7 +12,7 @@
   read_4_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->hit_counter);
   read_4_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->last_hit_time);
   read_172_masked(vector, (int)bitmask, (unsigned int *)&vector2, &actor_data2->appearance);
-  read_2_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->flags_1);
+  read_2_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->flags);
   read_4_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->roll_time);
   read_4_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->stun_time);
   read_4_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->slowed_time);
@@ -37,7 +37,7 @@
   read_8_masked(vector, (int)bitmask, (unsigned int *)&vector2, (__m128i *)&actor_data2->unknown_or_not_used1);
   read_1_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->power_base);
   read_4_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->unknown_or_not_used4);
-  read_12_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->unknown_or_not_used5);
+  read_12_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->start_chunk);
   read_24_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->spawn_pos);
   read_12_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->not_used20);
   read_1_masked(vector, (int)bitmask, (unsigned int *)&vector2, (int)&actor_data2->not_used19);

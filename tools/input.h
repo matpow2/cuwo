@@ -32,14 +32,10 @@ struct AppearanceData
   _BYTE hair_green;
   _BYTE hair_blue;
   _BYTE pad[1];
+  _WORD flags;
 
-  /* _WORD instead, maybe? */
-  _BYTE movement_flags;
-  _BYTE entity_flags;
+  vec3 scale; /* old: scale, bounding_radius, bounding_height */
 
-  float scale;
-  float bounding_radius;
-  float bounding_height;
   signed short head_model;
   signed short hair_model;
   signed short hand_model;
@@ -72,8 +68,7 @@ struct AppearanceData
   vec3 wing_offset;
 };
 
-#define FLAGS_1_HOSTILE 0x20
-
+/* mask bits */
 #define POS_BIT 0
 #define ORIENT_BIT 1
 #define VEL_BIT 2
@@ -85,16 +80,43 @@ struct AppearanceData
 #define TYPE_BIT 8
 #define MODE_BIT 9
 #define MODE_TIME_BIT 10
+#define HIT_COUNTER_BIT 11
+#define LAST_HIT_BIT 12
 #define APPEARANCE_BIT 13
 #define FLAGS_BIT 14
+#define ROLL_BIT 15
+#define STUN_BIT 16
+#define SLOWED_BIT 17
+#define MAKE_BLUE_BIT 18
+#define SPEED_UP_BIT 19
+#define SHOW_PATCH_BIT 20
 #define CLASS_BIT 21
+#define SPECIALIZATION_BIT 22
 #define CHARGED_MP_BIT 23
+/* #define NOT_USED1_BIT 24 */
+/* #define NOT_USED2_BIT 25 */
+#define RAY_BIT 26
+#define HP_BIT 27
+#define MP_BIT 28
+#define BLOCK_POWER_BIT 29
 #define MULTIPLIER_BIT 30
+/* #define NOT_USED3_BIT 31 */
+/* #define NOT_USED4_BIT 32 */
 #define LEVEL_BIT 33
+#define XP_BIT 34
+#define OWNER_BIT 35
+/* #define UNKNOWN1_BIT 36 */
+#define POWER_BASE_BIT 37
+/* #define UNKNOWN2_BIT 38 */
+#define START_CHUNK_BIT 39
+#define SPAWN_BIT 40
+/* #define NOT_USED5_BIT 41 */
+/* #define NOT_USED6_BIT 42 */
 #define CONSUMABLE_BIT 43
 #define EQUIPMENT_BIT 44
 #define NAME_BIT 45
 #define SKILL_BIT 46
+#define MANA_CUBES_BIT 47
 
 struct EntityData
 {
@@ -116,8 +138,7 @@ struct EntityData
   _DWORD hit_counter;
   _DWORD last_hit_time;
   AppearanceData appearance;
-  _BYTE flags_1; /* has hostile flags */
-  _BYTE flags_2;
+  _WORD flags; /* has hostile flags */
   char gap_116[2];
   _DWORD roll_time;
   signed int stun_time;
@@ -129,12 +150,15 @@ struct EntityData
   _BYTE specialization;
   char gap_132[2];
   float charged_mp;
+
   _DWORD not_used_1;
   _DWORD not_used_2;
   _DWORD not_used_3;
+
   _DWORD not_used_4;
   _DWORD not_used_5;
   _DWORD not_used_6;
+
   vec3 ray_hit;
   float hp;
   float mp;
@@ -149,22 +173,28 @@ struct EntityData
   char gap_17E[2];
   _DWORD level;
   _DWORD current_xp;
+
   uint64_t parent_owner; /* used for pets, guess by Somer, originally 2 DWORDs*/
+
   _DWORD unknown_or_not_used1; // probably a uint64
   _DWORD unknown_or_not_used2;
+
   _BYTE power_base;
   char gap_199[3];
   _DWORD unknown_or_not_used4;
-  _DWORD unknown_or_not_used5;
-  _DWORD not_used11;
-  _DWORD not_used12;
+
+  ivec3 start_chunk;
+
   _DWORD super_weird;
   qvec3 spawn_pos;
   _BYTE not_used19;
   char gap_1C9[3];
+
+  // ivec3 or vec3 or 3*4 bytes
   _DWORD not_used20;
   _DWORD not_used21;
   _DWORD not_used22;
+
   ItemData consumable;
   ItemData equipment[13];
   _DWORD skills[11];

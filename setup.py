@@ -117,14 +117,16 @@ def silent_spawn_nt(cmd, search_path=1, verbose=0, dry_run=0):
 
 class build_ext(_build_ext.build_ext):
     user_options = _build_ext.build_ext.user_options + [
+        ('build-tgen', None, 'force rebuild of tgen'),
         ('disable-tgen', None, 'disables the tgen extension'),
         ('no-parallel', None, 'disables parallel tgen build'),
         ('email=', None, 'email to use for package downloads'),
-        ('password=', None, 'password to use for package downloads')
+        ('password=', None, 'password to use for package downloads'),
+        ('debug-info', None, 'enable debug info')
     ]
 
     boolean_options = _build_ext.build_ext.boolean_options + [
-        'disable-tgen', 'no-parallel'
+        'disable-tgen', 'no-parallel', 'debug-info', 'build-tgen'
     ]
 
     def initialize_options(self):
@@ -133,11 +135,17 @@ class build_ext(_build_ext.build_ext):
         self.no_parallel = False
         self.email = None
         self.password = None
+        self.debug_info = False
+        self.build_tgen = False
 
     def build_extensions(self):
         self.check_extensions_list(self.extensions)
 
         for ext in self.extensions:
+            if self.debug_info:
+                ext.extra_compile_args += ["-Zi", "/Od"]
+                ext.extra_link_args += ["-debug"]
+
             if ext.name == 'cuwo.tgen':
                 if self.disable_tgen:
                     continue
@@ -146,7 +154,7 @@ class build_ext(_build_ext.build_ext):
             self.build_extension(ext)
 
     def generate_tgen_sources(self, ext):
-        if not self.force and os.path.isdir('./terraingen/gensrc'):
+        if not self.build_tgen and os.path.isdir('./terraingen/gensrc'):
             return
 
         # get Server.exe if we don't have it already

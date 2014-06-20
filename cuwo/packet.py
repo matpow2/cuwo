@@ -21,24 +21,14 @@
 # definitions in your own work, it would be nice with a little notice of
 # where you got them from (i.e. cuwo) :-)
 
-from cuwo.entity import (EntityData, AppearanceData, ItemData,
-                         read_masked_data, write_masked_data, get_masked_size)
-from cuwo.defs import SOUNDS
+from cuwo.entity import (EntityData, ItemData, read_masked_data,
+                         write_masked_data, get_masked_size)
+from cuwo.strings import SOUNDS
 from cuwo.loader import Loader
 from cuwo.bytes import ByteReader, ByteWriter, OutOfData
 from cuwo.constants import FULL_MASK, BLOCK_SCALE
 from cuwo.static import StaticEntityPacket
 import zlib
-
-
-def create_entity_data():
-    data = EntityData()
-    data.appearance = AppearanceData()
-    data.consumable = ItemData()
-    data.equipment = []
-    for _ in range(13):
-        data.equipment.append(ItemData())
-    return data
 
 
 def read_list(reader, item_class):
@@ -199,7 +189,6 @@ class ParticleData(Loader):
         self.color_alpha = reader.read_float()
         self.scale = reader.read_float()
         self.count = reader.read_uint32()
-        # v  0 = Solid, 1 = Bombs, 3 = No accel/spread, 4 = No Gravity, ...
         self.particle_type = reader.read_uint32()
         self.spreading = reader.read_float()
         self.something18 = reader.read_uint32()

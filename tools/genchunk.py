@@ -64,13 +64,12 @@ def convert_qmo(data, path):
 def convert_pos(x, y, f):
     print('Generating', x, y)
     data = tgen.generate(x, y)
-    for entity in data.static_entities:
-        if not entity.items:
-            continue
-        print('Has items')
-    import code
-    code.interact(local=locals())
-    print(data.static_entities)
+    for index, entity in enumerate(data.dynamic_entities):
+        scale = entity.appearance.scale
+        print('Dynamic entity %s: %s, level %s, scale %s' % (index,
+                                                             entity.get_type(),
+                                                             entity.level,
+                                                             scale))
     # print('Converting...')
     # convert_qmo(data, f)
 

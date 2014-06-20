@@ -90,7 +90,8 @@ TYPE_DEF = {
     'char': 'int8',
     'float': 'float',
     'vec3': 'vec3',
-    'qvec3': 'qvec3'
+    'qvec3': 'qvec3',
+    'ivec3': 'ivec3'
 }
 
 TYPE_SIZE = {
@@ -102,8 +103,9 @@ TYPE_SIZE = {
     'uint64': 8,
     'uint32': 4,
     'int32': 4,
-    'vec3': 4 * 3,
-    'qvec3': 8 * 3,
+    'vec3': 4*3,
+    'qvec3': 8*3,
+    'ivec3': 4*3,
     'float': 4
 }
 
@@ -116,9 +118,14 @@ DEFAULTS = {
     'uint64': 0,
     'uint32': 0,
     'int32': 0,
-    'vec3': 'Vector3(0, 0, 0)',
-    'qvec3': 'Vector3(0, 0, 0)',
-    'float': 0.0
+    'float': 0.0,
+    'vec3': 'Vector3()',
+    'qvec3': 'Vector3()',
+    'ivec3': 'Vector3()'
+}
+
+PYTHON_OBJECTS = {
+    'vec3', 'qvec3', 'ivec3'
 }
 
 CYTHON_TYPES = {
@@ -132,6 +139,7 @@ CYTHON_TYPES = {
     'uint64': 'uint64_t',
     'vec3': 'object',
     'qvec3': 'object',
+    'ivec3': 'object',
     'float': 'double',
     'double': 'double'
 }
@@ -258,8 +266,9 @@ def main():
 
     out = FormattedOutput('Entity data read/write')
     out.putln('cimport cython')
-    out.putln('from cuwo.common cimport int64_t, uint64_t')
+    out.putln('from libc.stdint cimport int64_t, uint64_t')
     out.putln('from cuwo.bytes cimport ByteReader, ByteWriter')
+    out.putln('from cuwo.vector import Vector3')
     out.putln()
     out.putln()
 
@@ -268,10 +277,15 @@ def main():
             for d in struct.defs:
                 name, val = d
                 out.putln('%s = %s' % (name, val))
+                if not name.endswith('_BIT'):
+                    continue
+                val = 1 << eval(val)
+                name = '%s_FLAG' % name.replace('_BIT', '')
+                out.putln('%s = %s' % (name, hex(val)))
             out.putln()
             out.putln()
 
-        out.putln('@cython.final')
+        # out.putln('@cython.final')
         out.putln('cdef class %s:' % struct.name)
         out.indent()
 
@@ -292,6 +306,11 @@ def main():
 
         out.putln('cdef public:')
         out.indent()
+
+        has_cinit = struct.name == 'EntityData'
+        lists = []
+        objects = []
+
         for attr in struct.attrs:
             name, typ, dim, spec = attr.get()
             if name == 'pad':
@@ -300,8 +319,13 @@ def main():
                 if typ == 'int8':
                     typ = 'str'
                 else:
+                    has_cinit = True
+                    lists.append((typ, name, dim))
                     typ = 'list'
             else:
+                if typ in PYTHON_OBJECTS or spec:
+                    has_cinit = True
+                    objects.append((typ, name))
                 typ = CYTHON_TYPES.get(typ, typ)
             out.putln('%s %s' % (typ, name))
         if struct.name == 'EntityData':
@@ -309,10 +333,30 @@ def main():
         out.dedent()
         out.putln()
 
-        if struct.name == 'EntityData':
+        if has_cinit:
             out.putln('def __cinit__(self):')
             out.indent()
-            out.putln('self.mask = 0')
+            if struct.name == 'EntityData':
+                out.putln('self.mask = 0')
+
+            for (typ, name, dim) in lists:
+                out.putln('self.%s = []' % name)
+                out.putln('for _ in range(%s):' % dim)
+                out.indent()
+                if typ in DEFAULTS:
+                    value = DEFAULTS[typ]
+                else:
+                    value = '%s.__new__(%s)' % (typ, typ)
+                out.putln('self.%s.append(%s)' % (name, value))
+                out.dedent()
+
+            for (typ, name) in objects:
+                if typ in DEFAULTS:
+                    value = DEFAULTS[typ]
+                else:
+                    value = '%s.__new__(%s)' % (typ, typ)
+                out.putln('self.%s = %s' % (name, value))
+
             out.dedent()
             out.putln()
 
@@ -328,19 +372,15 @@ def main():
                 out.putln('self.%s = reader.read_ascii(%s)' % (name, dim))
                 continue
             if dim is not None:
-                out.putln('self.%s = []' % name)
-                out.putln('for _ in range(%s):' % dim)
+                out.putln('for i in range(%s):' % dim)
                 out.indent()
                 if spec:
-                    out.putln('new_item = %s()' % typ)
-                    out.putln('(<%s>new_item).read(reader)' % typ)
-                    out.putln('self.%s.append(new_item)' % name)
+                    out.putln('(<%s>self.%s[i]).read(reader)' % (typ, name))
                 else:
-                    out.putln('self.%s.append(reader.read_%s())' % (name, typ))
+                    out.putln('self.%s[i] = reader.read_%s()' % (name, typ))
                 out.dedent()
                 continue
             if spec:
-                out.putln('self.%s = %s()' % (name, typ))
                 out.putln('self.%s.read(reader)' % name)
             else:
                 out.putln('self.%s = reader.read_%s()' % (name, typ))
@@ -545,7 +585,7 @@ def main():
             sound_name = line[start:end]
             sounds[current_index] = sound_name
 
-    out = FormattedOutput('Constant string definition file')
+    out = FormattedOutput('Constant string definitions')
     out.write_dict('SOUNDS', sounds)
 
     print('Writing defs from tgen')
@@ -567,7 +607,7 @@ def main():
                                            'Ability'))
     print('Done')
 
-    open('../cuwo/defs.py', 'wb').write(out.get())
+    open('../cuwo/strings.py', 'wb').write(out.get())
 
 
 if __name__ == "__main__":
