@@ -91,7 +91,7 @@ def main():
 
     args = ['7z', 'a']
     if len(sys.argv) == 2:
-        args += ['-o%s' % sys.argv[1]]
+        filename = os.path.join(sys.argv[1], filename)
     args += [filename, 'dist']
 
     try:

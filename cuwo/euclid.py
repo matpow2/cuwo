@@ -286,6 +286,11 @@ class Vector3:
         self.y = y
         self.z = z
 
+    def set(self, x=0, y=0, z=0):
+        self.x = x
+        self.y = y
+        self.z = z
+
     def __copy__(self):
         return self.__class__(self.x, self.y, self.z)
 

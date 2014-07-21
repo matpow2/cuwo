@@ -65,14 +65,12 @@ In terms of the protocol and features, the following has been implemented:
 * Item pickup/drop
 * Time management
 * Terrain generator
+* Interactive objects (doors, beds)
 
 A lot is still to be implemented gameplay-wise. Most importantly, NPCs and mobs
 have not been implemented yet. The terrain generator is completely working now,
 but work still needs to be put into creating intelligent AI and proper
 behaviour.
-
-Also, interactive objects (like doors, beds), have not been implemented
-yet, but with the terrain generator, it should be a fairly simple feature.
 
 Other features include
 * MITM proxy (for reverse-engineering)
@@ -81,6 +79,10 @@ Other features include
 
 FAQ
 ===
+
+* **Q.** I get `ImportError: No module named 'cuwo.entity'` when running cuwo.
+
+* **A.** See the instructions for running/building cuwo.
 
 * **Q.** How do I pronounce 'cuwo'?
 
