@@ -221,6 +221,7 @@ class ConnectionScript(BaseScript):
 
         self.parent = parent
         self.server = parent.server
+        self.world = parent.world
         self.loop = connection.loop
         self.connection = connection
         connection.scripts.add(self)
@@ -263,7 +264,10 @@ class ConnectionScript(BaseScript):
         self.connection.scripts.remove(self)
         self.parent.children.remove(self)
         self.on_unload()
-        self.parent = self.connection = self.server = None
+        self.parent = None
+        self.connection = None
+        self.server = None
+        self.world = None
 
 
 class ServerScript(BaseScript):
@@ -274,6 +278,7 @@ class ServerScript(BaseScript):
         self.script_name = self.__module__.split('.')[1]
 
         self.server = server
+        self.world = server.world
         self.loop = server.loop
         server.scripts.add(self)
         self.children = []
@@ -304,6 +309,7 @@ class ServerScript(BaseScript):
             script.unload()
         self.children = None
         self.server = None
+        self.world = None
 
     def call_command(self, user, command, args):
         if self.commands is None:

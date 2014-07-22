@@ -202,7 +202,47 @@ def player(script, name):
     klass = CLASS_NAMES[typ]
     spec = CLASS_SPECIALIZATIONS[typ][entity.specialization]
     level = entity.level
-    return "'%s' is a lvl %s %s (%s)" % (player.name, level, klass, spec)
+    return '%r is a lvl %s %s (%s)' % (player.name, level, klass, spec)
+
+
+
+@command
+@admin
+def addrights(script, player, *rights):
+    """Give rights to user"""
+    player = script.get_player(player)
+    rights = set(rights) & player.rights
+    player.rights.update(rights)
+    if rights:
+        rights = ', '.join((repr(right) for right in rights))
+    else:
+        rights = 'no'
+    return '%s rights given to %r' % (rights, player.name)
+
+
+@command
+@admin
+def removerights(script, player, *rights):
+    """Remove rights from user"""
+    player = script.get_player(player)
+    rights = set(rights) & player.rights
+    player.rights.difference_update(rights)
+    if rights:
+        rights = ', '.join((repr(right) for right in rights))
+    else:
+        rights = 'no'
+    return '%s rights removed from %r' % (rights, player.name)
+
+
+@command
+def rights(script, player=None):
+    player = script.get_player(player)
+    rights = player.rights
+    if rights:
+        rights = ', '.join((repr(right) for right in player.rights))
+    else:
+        rights = 'no'
+    return '%r has %s rights' % (player.name, rights)
 
 
 @command

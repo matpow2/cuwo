@@ -170,9 +170,7 @@ class Chunk:
             self.static_entities[entity_id] = new_entity
 
         if self.world.use_entities:
-            print('create entities')
             for data in self.data.dynamic_entities:
-                print('new:', data)
                 entity = self.world.entity_class(self.world, data.entity_id)
                 data.set_entity(entity)
 
