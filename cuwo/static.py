@@ -35,7 +35,7 @@ SIT_ENTITIES = {
 
 
 OPEN_ENTITIES = {
-    'Window', 'CastleWindow', 'Door', 'Chest'
+    'Window', 'CastleWindow', 'Door', 'BigDoor', 'Chest'
 }
 
 
@@ -95,53 +95,3 @@ class StaticEntityPacket(Loader):
         writer.write_uint32(self.entity_id)
         writer.pad(4)
         self.header.write(writer)
-
-
-class StaticEntity(object):
-    open_time = None
-
-    def __init__(self, entity_id, header, chunk):
-        self.header = header
-        self.server = chunk.server
-
-        name = header.get_name()
-
-        if name in SIT_ENTITIES:
-            self.interact = self.interact_sit
-        elif name in OPEN_ENTITIES:
-            self.interact = self.interact_open
-            header.closed = True
-
-        self.packet = StaticEntityPacket()
-        self.packet.header = header
-        self.packet.entity_id = entity_id
-        self.packet.chunk_x, self.packet.chunk_y = chunk.pos
-
-    def interact(self, player):
-        pass
-
-    def interact_open(self, player):
-        offset = 1.0 - self.get_time_offset()
-        self.open_time = self.server.loop.time() - offset
-        self.header.closed = not self.header.closed
-        self.update()
-
-    def interact_sit(self, player):
-        self.header.user_id = player.entity_id
-        player.mount(self)
-        self.update()
-
-    def on_unmount(self, player):
-        self.header.user_id = 0
-        self.update()
-
-    def get_time_offset(self):
-        if self.open_time is None:
-            return 1.0
-        t = self.server.loop.time() - self.open_time
-        return min(1.0, t)
-
-    def update(self):
-        self.header.time_offset = int(self.get_time_offset() * 1e3)
-        packet = self.server.update_packet
-        packet.static_entities.append(self.packet)

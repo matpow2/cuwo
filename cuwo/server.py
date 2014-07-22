@@ -23,23 +23,18 @@ from cuwo.packet import (PacketHandler, write_packet, CS_PACKETS,
                          INTERACT_PICKUP, ChunkItemData, ChunkItems,
                          InteractPacket, PickupAction, HitPacket, ShootPacket,
                          INTERACT_NORMAL)
-from cuwo.types import IDPool, MultikeyDict, AttributeSet
+from cuwo.types import MultikeyDict, AttributeSet
 from cuwo import constants
 from cuwo.common import (get_clock_string, parse_clock, parse_command,
-                         get_chunk, filter_string, get_entity_max_health)
+                         get_chunk, filter_string)
 from cuwo.script import ScriptManager
 from cuwo.config import ConfigObject
 from cuwo import entity as entitydata
-from cuwo.static import StaticEntity
+from cuwo import static
 from cuwo.loop import LoopingCall
+from cuwo import world
 import functools
 import faulthandler
-
-try:
-    from cuwo.world import World
-    has_world = True
-except ImportError:
-    has_world = False
 
 import os
 import sys
@@ -60,13 +55,52 @@ mismatch_packet = ServerMismatch()
 server_full_packet = ServerFull()
 
 
+class Entity(world.Entity):
+    pass
+
+
+class StaticEntity(world.StaticEntity):
+    def __init__(self, entity_id, header, chunk):
+        super().__init__(entity_id, header, chunk)
+        self.packet = static.StaticEntityPacket()
+        self.packet.header = header
+        self.packet.entity_id = entity_id
+        self.packet.chunk_x, self.packet.chunk_y = chunk.pos
+
+    def update(self):
+        super().update()
+        update_packet = self.world.server.update_packet
+        update_packet.static_entities.append(self.packet)
+
+
+class Chunk(world.Chunk):
+    def update(self):
+        self.world.server.updated_chunks.add(self)
+
+    def on_update(self, update_packet):
+        item_list = ChunkItems()
+        item_list.chunk_x, item_list.chunk_y = self.pos
+        item_list.items = self.items
+        update_packet.chunk_items.append(item_list)
+
+
+class World(world.World):
+    chunk_class = Chunk
+    entity_class = Entity
+    static_entity_class = StaticEntity
+
+    def __init__(self, server, *arg, **kw):
+        super().__init__(*arg, **kw)
+        self.server = server
+
+
 class CubeWorldConnection(asyncio.Protocol):
     """
     Protocol used for players
     """
     has_joined = False
     entity_id = None
-    entity_data = None
+    entity = None
     disconnected = False
     scripts = None
     chunk = None
@@ -74,6 +108,7 @@ class CubeWorldConnection(asyncio.Protocol):
 
     def __init__(self, server):
         self.server = server
+        self.world = server.world
         self.loop = server.loop
 
     def connection_made(self, transport):
@@ -148,10 +183,10 @@ class CubeWorldConnection(asyncio.Protocol):
         if self.has_joined:
             del self.server.players[self]
             print('Player %s left' % self.name)
-        if self.entity_data is not None:
-            del self.server.entities[self.entity_id]
-        if self.entity_id is not None:
-            self.server.entity_ids.put_back(self.entity_id)
+        if self.entity is not None:
+            self.entity.destroy()
+        elif self.entity_id is not None:
+            self.world.entity_ids.put_back(self.entity_id)
         if self.scripts is not None:
             self.scripts.unload()
 
@@ -178,21 +213,19 @@ class CubeWorldConnection(asyncio.Protocol):
             self.send_packet(mismatch_packet)
             self.disconnect()
             return
-        server = self.server
-        self.entity_id = server.entity_ids.pop()
+        self.entity_id = self.world.entity_ids.pop()
         join_packet.entity_id = self.entity_id
         self.send_packet(join_packet)
-        seed_packet.seed = server.config.base.seed
+        seed_packet.seed = self.server.config.base.seed
         self.send_packet(seed_packet)
 
     def on_entity_packet(self, packet):
-        if self.entity_data is None:
-            self.entity_data = entitydata.EntityData()
-            self.server.entities[self.entity_id] = self.entity_data
+        if self.entity is None:
+            self.entity = Entity(self.world, self.entity_id)
 
-        mask = packet.update_entity(self.entity_data)
-        self.entity_data.mask |= mask
-        if not self.has_joined and getattr(self.entity_data, 'name', None):
+        mask = packet.update_entity(self.entity)
+        self.entity.mask |= mask
+        if not self.has_joined and getattr(self.entity, 'name', None):
             self.on_join()
             return
 
@@ -238,7 +271,7 @@ class CubeWorldConnection(asyncio.Protocol):
             self.on_invalid_packet('position')
             return
         if not self.chunk or chunk_pos != self.chunk.pos:
-            self.chunk = self.server.get_chunk(*chunk_pos)
+            self.chunk = self.world.get_chunk(chunk_pos)
         self.scripts.call('on_pos_update')
 
     def on_chat_packet(self, packet):
@@ -264,14 +297,14 @@ class CubeWorldConnection(asyncio.Protocol):
                 return
             self.server.drop_item(packet.item_data, pos)
         elif interact_type == INTERACT_PICKUP:
-            chunk = self.server.get_chunk(packet.chunk_x, packet.chunk_y)
+            chunk = self.world.get_chunk((packet.chunk_x, packet.chunk_y))
             try:
                 item = chunk.remove_item(packet.item_index)
             except IndexError:
                 return
             self.give_item(item)
         elif interact_type == INTERACT_NORMAL:
-            chunk = self.server.get_chunk(packet.chunk_x, packet.chunk_y)
+            chunk = self.world.get_chunk((packet.chunk_x, packet.chunk_y))
             try:
                 chunk.get_entity(packet.item_index).interact(self)
             except KeyError:
@@ -313,7 +346,7 @@ class CubeWorldConnection(asyncio.Protocol):
 
         print('Player %s joined' % self.name)
         for player in self.server.players.values():
-            entity_packet.set_entity(player.entity_data, player.entity_id)
+            entity_packet.set_entity(player.entity, player.entity_id)
             self.send_packet(entity_packet)
 
         self.server.players[(self.entity_id,)] = self
@@ -361,101 +394,15 @@ class CubeWorldConnection(asyncio.Protocol):
 
     @property
     def position(self):
-        if self.entity_data is None:
+        if self.entity is None:
             return None
-        return self.entity_data.pos
+        return self.entity.pos
 
     @property
     def name(self):
-        if self.entity_data is None:
+        if self.entity is None:
             return None
-        return self.entity_data.name
-
-
-class Chunk:
-    data = None
-
-    def __init__(self, server, x, y):
-        self.server = server
-        self.pos = (x, y)
-        self.items = []
-        self.static_entities = {}
-        self.start_packet = ServerUpdate()
-
-        if not server.world:
-            return
-        self.f = server.world.get_chunk(x, y)
-        self.f.add_done_callback(self.on_chunk)
-
-    def send_start_data(self, player, f=None):
-        if not self.server.world:
-            return
-        if not self.data:
-            self.f.add_done_callback(functools.partial(self.send_start_data,
-                                                       player))
-            return
-
-    def on_chunk(self, f):
-        self.data = f.result()
-
-        self.items.extend(self.data.items)
-        self.data.items = []
-
-        for entity_id, data in enumerate(self.data.static_entities):
-            header = data.header
-            if not header.is_dynamic():
-                continue
-            new_entity = StaticEntity(entity_id, header, self)
-            self.static_entities[entity_id] = new_entity
-
-        if self.server.config.base.use_entities:
-            for data in self.data.dynamic_entities:
-                entity = Entity(data)
-                self.server.update_entities.add(entity)
-                self.server.entities[entity.entity_id] = entity.data
-
-        self.update()
-
-    def add_item(self, item):
-        self.items.append(item)
-        self.update()
-
-    def remove_item(self, index):
-        ret = self.items.pop(index).item_data
-        self.update()
-        return ret
-
-    def on_update(self, packet):
-        item_list = ChunkItems()
-        item_list.chunk_x, item_list.chunk_y = self.pos
-        item_list.items = self.items
-        packet.chunk_items.append(item_list)
-
-    def get_entity(self, entity_id):
-        return self.static_entities[entity_id]
-
-    def on_post_update(self):
-        for item in self.items:
-            item.drop_time = 0
-
-    def update(self):
-        self.server.updated_chunks.add(self)
-
-
-class Entity:
-    def __init__(self, data):
-        self.data = entitydata.EntityData()
-        data.set_entity(self.data)
-        self.set_hp()
-        self.data.mask = constants.FULL_MASK
-        self.entity_id = data.entity_id
-
-    def set_hp(self, value=None):
-        self.data.hp = value or get_entity_max_health(self.data)
-        self.data.mask |= entitydata.HP_FLAG
-
-    def update(self):
-        pass
+        return self.entity.name
 
 
 class CubeWorldServer:
@@ -473,10 +420,6 @@ class CubeWorldServer:
 
         self.connections = set()
         self.players = MultikeyDict()
-
-        self.update_entities = set()
-        self.entities = {}
-        self.entity_ids = IDPool(1)
 
         self.chunks = {}
         self.updated_chunks = set()
@@ -501,8 +444,8 @@ class CubeWorldServer:
         self.set_clock('12:00')
 
         # world
-        if has_world and base.use_world:
-            self.world = World(self.loop, base.seed)
+        self.world = World(self, self.loop, base.seed, base.use_tgen,
+                           base.use_entities)
 
         # start listening
         asyncio.Task(self.create_server(self.build_protocol,
@@ -520,18 +463,15 @@ class CubeWorldServer:
         item.something3 = item.something5 = item.something6 = 0
         item.pos = pos
         item.item_data = item_data
-        self.get_chunk(*get_chunk(pos)).add_item(item)
+        self.world.get_chunk(get_chunk(pos)).add_item(item)
 
     def update(self):
         self.scripts.call('update')
 
-        for entity in self.update_entities:
-            entity.update()
-
         # entity updates
-        for entity_id, data in self.entities.items():
-            entity_packet.set_entity(data, entity_id, data.mask)
-            data.mask = 0
+        for entity_id, entity in self.world.entities.items():
+            entity_packet.set_entity(entity, entity_id, entity.mask)
+            entity.mask = 0
             self.broadcast_packet(entity_packet)
         self.broadcast_packet(update_finished_packet)
 
@@ -563,18 +503,6 @@ class CubeWorldServer:
         data = write_packet(packet)
         for player in self.players.values():
             player.transport.write(data)
-
-    # chunk
-
-    def get_chunk(self, x, y):
-        key = (x, y)
-        try:
-            return self.chunks[key]
-        except KeyError:
-            pass
-        chunk = Chunk(self, x, y)
-        self.chunks[key] = chunk
-        return chunk
 
     # line/string formatting options based on config
 

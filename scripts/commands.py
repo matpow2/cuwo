@@ -137,7 +137,7 @@ def damage_player(script, player, damage=0, stun_duration=0):
 def kill(script, name=None):
     """Kills a player."""
     player = script.get_player(name)
-    damage_player(script, player, damage=player.entity_data.hp + 100.0)
+    damage_player(script, player, damage=player.entity.hp + 100.0)
     message = '%s was killed' % player.name
     print(message)
     script.server.send_chat(message)
@@ -197,7 +197,7 @@ def whowhere(script):
 def player(script, name):
     """Returns information about a player."""
     player = script.get_player(name)
-    entity = player.entity_data
+    entity = player.entity
     typ = entity.class_type
     klass = CLASS_NAMES[typ]
     spec = CLASS_SPECIALIZATIONS[typ][entity.specialization]

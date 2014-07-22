@@ -52,9 +52,9 @@ port = 12345
 # The vanilla server uses 50, but 20 or 25 may be more sensible.
 update_fps = 50
 
-# Turns on world simulation and enables terrain generation (depends on
-# cuwo.tgen). This may not be needed for barebones PvP servers.
-use_world = True
+# Enables terrain generation (depends on cuwo.tgen). This may not be needed
+# for barebones PvP servers.
+use_tgen = True
 
 # Experimental support for mobs and NPCs. This is still work in progress, do
 # not expect good results.

@@ -20,8 +20,7 @@
 from cuwo.constants import (RANGER_CLASS, ATTACKING_FLAG, STEALTH_FLAG,
                             GLIDER_FLAG)
 from cuwo.script import ServerScript, ConnectionScript
-from cuwo.common import (get_power, get_item_name, is_bit_set,
-                         get_entity_max_health)
+from cuwo.common import get_power, get_item_name, is_bit_set
 from cuwo.packet import ServerUpdate, PickupAction
 from .constants import (LOG_LEVEL_VERBOSE, LOG_LEVEL_DEFAULT, CUWO_ANTICHEAT,
                         LEGAL_RECIPE_ITEMS, LEGAL_ITEMS, LEGAL_CLASSES,
@@ -141,17 +140,16 @@ class AntiCheatConnection(ConnectionScript):
             return False
 
     def update_max_health(self):
-        entity_data = self.connection.entity_data
-        self.max_health = get_entity_max_health(entity_data)
+        self.max_health = self.connection.entity.get_max_hp()
 
     def check_max_health(self, no_strikes=False):
-        entity_data = self.connection.entity_data
-        if entity_data.hp > self.max_health + 1:
+        entity = self.connection.entity
+        if entity.hp > self.max_health + 1:
             self.max_hp_strikes += 1
 
             if no_strikes or self.max_hp_strikes > self.max_max_hp_strikes:
                 self.log("character hp higher than max hp: {hp}/{max}"
-                         .format(hp=entity_data.hp,
+                         .format(hp=entity.hp,
                                  max=self.max_health), LOG_LEVEL_VERBOSE)
                 self.remove_cheater('health hack')
                 return False
@@ -184,21 +182,21 @@ class AntiCheatConnection(ConnectionScript):
             return False
 
     def on_mode_update(self, event=None):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
 
-        if (entity_data.current_mode == 0
+        if (entity.current_mode == 0
                 and self.combat_end_time == 0):
             self.combat_end_time = self.loop.time()
 
-        if entity_data.current_mode != 0:
+        if entity.current_mode != 0:
             self.combat_end_time = 0
 
         if self.has_illegal_mode():
             self.remove_cheater('illegal character mode (ability)')
             return False
 
-        if entity_data.current_mode != 0:
-            if self.use_ability(entity_data.current_mode) is False:
+        if entity.current_mode != 0:
+            if self.use_ability(entity.current_mode) is False:
                 self.remove_cheater('cooldown hack')
                 return False
 
@@ -233,15 +231,15 @@ class AntiCheatConnection(ConnectionScript):
             return False
 
     def on_entity_update(self, event):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
         self.time_since_update = self.loop.time() - self.last_entity_update
         self.last_entity_update = self.loop.time()
 
         self.last_mana = self.mana
         self.last_health = self.health
 
-        self.mana = entity_data.mp
-        self.health = entity_data.hp
+        self.mana = entity.mp
+        self.health = entity.hp
 
         if is_bit_set(event.mask, 7):
             if self.check_hostile_type() is False:
@@ -356,26 +354,26 @@ class AntiCheatConnection(ConnectionScript):
         connection.disconnect()
 
     def has_illegal_name(self):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
 
-        if re.search(self.name_filter, entity_data.name) is None:
+        if re.search(self.name_filter, entity.name) is None:
             self.log("character name does not meet requirements: {name}"
-                     .format(name=entity_data.name), LOG_LEVEL_VERBOSE)
+                     .format(name=entity.name), LOG_LEVEL_VERBOSE)
             return True
 
         return False
 
     def has_illegal_items(self):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
 
         for slotindex in range(13):
-            if entity_data.equipment[slotindex].type == 0:
+            if entity.equipment[slotindex].type == 0:
                 continue
 
-            if self.is_item_illegal(entity_data.equipment[slotindex]):
+            if self.is_item_illegal(entity.equipment[slotindex]):
                 return True
 
-            if self.is_equipped_illegal(entity_data.equipment[slotindex],
+            if self.is_equipped_illegal(entity.equipment[slotindex],
                                         slotindex):
                 return True
 
@@ -458,17 +456,17 @@ class AntiCheatConnection(ConnectionScript):
         return False
 
     def is_equipped_illegal(self, item, in_slotindex):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
 
         power_item = get_power(item.level)
-        power_char = get_power(entity_data.level)
+        power_char = get_power(entity.level)
         if power_item > power_char:
             self.log(("item level too high for character "
                       "item: level:{level1} (power: {power1}) "
                       "character: level:{level2} (power: {power2})")
                      .format(level1=item.level,
                              power1=power_item,
-                             level2=entity_data.level,
+                             level2=entity.level,
                              power2=power_char), LOG_LEVEL_VERBOSE)
             return True
 
@@ -490,50 +488,50 @@ class AntiCheatConnection(ConnectionScript):
 
         if in_slotindex == 6 and item.sub_type in TWOHANDED_WEAPONS:
             if (self.allow_dual_wield is False
-                    and entity_data.equipment[7].type != 0):
+                    and entity.equipment[7].type != 0):
                 self.log("dual wield bug" +
                         (" weapon (slot6) = {item1}" +
                          " weapon (slot7) = {item2}")
                          .format(item1=item.sub_type,
-                                 item2=entity_data.equipment[7].sub_type),
+                                 item2=entity.equipment[7].sub_type),
                          LOG_LEVEL_VERBOSE)
                 return True
-            if entity_data.equipment[7].sub_type in TWOHANDED_WEAPONS:
+            if entity.equipment[7].sub_type in TWOHANDED_WEAPONS:
                 self.log("dual wield two handers" +
                         (" weapon (slot6) = {item1}" +
                          " weapon (slot7) = {item2}")
-                         .format(item1=entity_data.equipment[6].sub_type,
-                                 item2=entity_data.equipment[7].sub_type),
+                         .format(item1=entity.equipment[6].sub_type,
+                                 item2=entity.equipment[7].sub_type),
                          LOG_LEVEL_VERBOSE)
                 return True
 
         if in_slotindex == 7 and item.sub_type in TWOHANDED_WEAPONS:
             if (self.allow_dual_wield is False
-                    and entity_data.equipment[6].type != 0):
+                    and entity.equipment[6].type != 0):
                 self.log("dual wield bug" +
                         (" weapon (slot6) = {item1}" +
                          " weapon (slot7) = {item2}")
-                         .format(item1=entity_data.equipment[6].sub_type,
+                         .format(item1=entity.equipment[6].sub_type,
                                  item2=item.sub_type),
                          LOG_LEVEL_VERBOSE)
                 return True
 
         if (item.type == 3 and
-                not item.sub_type in CLASS_WEAPONS[entity_data.class_type]):
+                not item.sub_type in CLASS_WEAPONS[entity.class_type]):
             self.log("weapon not allowed for class" +
                      " subtype={subtype} class={classid} item={item}"
                      .format(subtype=item.sub_type,
-                             classid=entity_data.class_type,
+                             classid=entity.class_type,
                              item=get_item_name(item)),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if (item.type in ARMOR_IDS and
-                not item.material in CLASS_ARMOR[entity_data.class_type]):
+                not item.material in CLASS_ARMOR[entity.class_type]):
             self.log("armor not allowed for class " +
                      " material={material} class={classid} item={item}"
                      .format(material=item.material,
-                             classid=entity_data.class_type,
+                             classid=entity.class_type,
                              item=get_item_name(item)),
                      LOG_LEVEL_VERBOSE)
             return True
@@ -541,8 +539,8 @@ class AntiCheatConnection(ConnectionScript):
         return False
 
     def has_illegal_consumable(self):
-        entity_data = self.connection.entity_data
-        item = entity_data.consumable
+        entity = self.connection.entity
+        item = entity.consumable
 
         # no consumable equiped
         if item.type == 0:
@@ -552,23 +550,23 @@ class AntiCheatConnection(ConnectionScript):
             return True
 
         power_item = get_power(item.level)
-        power_char = get_power(entity_data.level)
+        power_char = get_power(entity.level)
         if power_item > power_char:
             self.log(("consumable level too high for character " +
                      "item: level:{level1} (power: {power1}) " +
                      "character: level:{level2} (power: {power2})")
                      .format(level1=item.level,
                              power1=power_item,
-                             level2=entity_data.level,
+                             level2=entity.level,
                              power2=power_char), LOG_LEVEL_VERBOSE)
             return True
 
         return False
 
     def has_illegal_skills(self):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
         total_skillpoints = 0
-        for item in entity_data.skills:
+        for item in entity.skills:
             if item < 0:
                 self.log("negative amount of skill points in a skill",
                          LOG_LEVEL_VERBOSE)
@@ -576,32 +574,32 @@ class AntiCheatConnection(ConnectionScript):
 
             total_skillpoints = total_skillpoints + item
 
-        if total_skillpoints > (entity_data.level - 1) * 2:
+        if total_skillpoints > (entity.level - 1) * 2:
             self.log("spend more skills then are available",
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.skills[1] > 0 and entity_data.skills[0] < 5:
+        if entity.skills[1] > 0 and entity.skills[0] < 5:
             self.log("pet master learned without enough prerequisite points",
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.skills[3] > 0 and entity_data.skills[2] < 5:
+        if entity.skills[3] > 0 and entity.skills[2] < 5:
             self.log("hang gliding learned without enough prerequisite points",
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.skills[5] > 0 and entity_data.skills[4] < 5:
+        if entity.skills[5] > 0 and entity.skills[4] < 5:
             self.log("sailing learned without enough prerequisite points",
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.skills[7] > 0 and entity_data.skills[6] < 5:
+        if entity.skills[7] > 0 and entity.skills[6] < 5:
             self.log("skill 2 learned without enough prerequisite points",
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.skills[8] > 0 and entity_data.skills[7] < 5:
+        if entity.skills[8] > 0 and entity.skills[7] < 5:
             self.log("skill 3 learned without enough prerequisite points",
                      LOG_LEVEL_VERBOSE)
             return True
@@ -609,8 +607,8 @@ class AntiCheatConnection(ConnectionScript):
         return False
 
     def has_illegal_mode(self):
-        entity_data = self.connection.entity_data
-        mode = entity_data.current_mode
+        entity = self.connection.entity
+        mode = entity.current_mode
 
         if mode == 0:
             return False
@@ -624,31 +622,31 @@ class AntiCheatConnection(ConnectionScript):
         ability = ABILITIES[mode]
 
         if 'class' in ability:
-            if not entity_data.class_type in ability['class']:
+            if not entity.class_type in ability['class']:
                 self.log("ability or mode not allowed for class:" +
                          "mode={mode} class={classid}"
                          .format(mode=mode,
-                                 classid=entity_data.class_type),
+                                 classid=entity.class_type),
                          LOG_LEVEL_VERBOSE)
                 return True
 
         if 'spec' in ability:
-            if entity_data.specialization != ability['spec']:
+            if entity.specialization != ability['spec']:
                 self.log("ability or mode not allowed for class spec:" +
                          "mode={mode} class={classid} spec={spec}"
                          .format(mode=mode,
-                                 classid=entity_data.class_type,
-                                 spec=entity_data.specialization),
+                                 classid=entity.class_type,
+                                 spec=entity.specialization),
                          LOG_LEVEL_VERBOSE)
                 return True
 
         if 'weapon' in ability:
-            weap1 = entity_data.equipment[6].sub_type
-            weap2 = entity_data.equipment[7].sub_type
+            weap1 = entity.equipment[6].sub_type
+            weap2 = entity.equipment[7].sub_type
 
-            if entity_data.equipment[6].type == 0:
+            if entity.equipment[6].type == 0:
                 weap1 = -1  # Treating unarmed as -1
-            if entity_data.equipment[7].type == 0:
+            if entity.equipment[7].type == 0:
                 weap2 = -1  # Treating unarmed as -1
 
             if (not weap1 in ability['weapon'] and
@@ -693,86 +691,86 @@ class AntiCheatConnection(ConnectionScript):
         return True
 
     def has_illegal_class(self):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
 
-        if not entity_data.class_type in LEGAL_CLASSES:
+        if not entity.class_type in LEGAL_CLASSES:
             self.log("invalid character class {classid}"
-                     .format(classid=entity_data.class_type),
+                     .format(classid=entity.class_type),
                      LOG_LEVEL_VERBOSE)
             return True
         return False
 
     def has_illegal_level(self):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
 
-        if entity_data.level > self.level_cap:
+        if entity.level > self.level_cap:
             return True
         return False
 
     def has_illegal_multiplier(self):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
 
-        if entity_data.max_hp_multiplier != 100:
+        if entity.max_hp_multiplier != 100:
             self.log("invalid max hp multiplier mult={mult}"
-                     .format(mult=entity_data.max_hp_multiplier),
+                     .format(mult=entity.max_hp_multiplier),
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.shoot_speed != 1:
+        if entity.shoot_speed != 1:
             self.log("invalid attack speed multiplier mult={mult}"
-                     .format(mult=entity_data.shoot_speed),
+                     .format(mult=entity.shoot_speed),
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.damage_multiplier != 1:
+        if entity.damage_multiplier != 1:
             self.log("invalid max damage multiplier mult={mult}"
-                     .format(mult=entity_data.damage_multiplier),
+                     .format(mult=entity.damage_multiplier),
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.armor_multiplier != 1:
+        if entity.armor_multiplier != 1:
             self.log("invalid max armor multiplier mult={mult}"
-                     .format(mult=entity_data.armor_multiplier),
+                     .format(mult=entity.armor_multiplier),
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.resi_multiplier != 1:
+        if entity.resi_multiplier != 1:
             self.log("invalid max resi multiplier mult={mult}"
-                     .format(mult=entity_data.resi_multiplier),
+                     .format(mult=entity.resi_multiplier),
                      LOG_LEVEL_VERBOSE)
             return True
 
         return False
 
     def has_illegal_charged_mp(self):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
 
-        if entity_data.charged_mp > 1:
+        if entity.charged_mp > 1:
             self.log("charged mp multiplier above 1, charged_mp={mult}"
-                     .format(mult=entity_data.charged_mp),
+                     .format(mult=entity.charged_mp),
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.class_type == 1:
+        if entity.class_type == 1:
             # -1 check for warriors because they have a bug that can make them
             # go negative while blocking
-            if entity_data.charged_mp < -2:
+            if entity.charged_mp < -2:
                 self.log("charged mp multiplier below 2, charged_mp={mult}"
-                         .format(mult=entity_data.charged_mp),
+                         .format(mult=entity.charged_mp),
                          LOG_LEVEL_VERBOSE)
                 return True
         else:
-            if entity_data.charged_mp < 0:
+            if entity.charged_mp < 0:
                 self.log("charged mp multiplier below 0, charged_mp={mult}"
-                         .format(mult=entity_data.charged_mp),
+                         .format(mult=entity.charged_mp),
                          LOG_LEVEL_VERBOSE)
                 return True
 
         return False
 
     def has_illegal_appearance(self):
-        entity_data = self.connection.entity_data
-        appearance = entity_data.appearance
+        entity = self.connection.entity
+        appearance = entity.appearance
 
         if appearance.flags != 0:
             self.log("invalid appearance flags={flags}"
@@ -780,253 +778,253 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if entity_data.entity_type not in APPEARANCES:
+        if entity.entity_type not in APPEARANCES:
             self.log("invalid entity_type (race), entity_type={entity_type}"
-                     .format(entity_type=entity_data.entity_type),
+                     .format(entity_type=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
-        app = APPEARANCES[entity_data.entity_type]
+        app = APPEARANCES[entity.entity_type]
         if not is_similar(appearance.scale.x, app['scale']):
             self.log("invalid appearance, scale={field} entity_type={t}"
                      .format(field=appearance.scale,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not is_similar(appearance.scale.y, app['radius']):
             self.log("invalid appearance, radius={field} entity_type={t}"
                      .format(field=appearance.bounding_radius,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not is_similar(appearance.scale.z, app['height']):
             self.log("invalid appearance, height={field} entity_type={t}"
                      .format(field=appearance.bounding_height,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not appearance.head_model in app['model_head']:
             self.log("invalid appearance, head model={field} entity_type={t}"
                      .format(field=appearance.head_model,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not appearance.hair_model in app['model_hair']:
             self.log("invalid appearance, hair model={field} entity_type={t}"
                      .format(field=appearance.hair_model,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not appearance.hand_model in app['model_hand']:
             self.log("invalid appearance, hand model={field} entity_type={t}"
                      .format(field=appearance.hand_model,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not appearance.foot_model in app['model_feet']:
             self.log("invalid appearance, foot model={field} entity_type={t}"
                      .format(field=appearance.foot_model,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not appearance.body_model in app['model_body']:
             self.log("invalid appearance, body model={field} entity_type={t}"
                      .format(field=appearance.body_model,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not appearance.back_model in app['model_back']:
             self.log("invalid appearance, back model={field} entity_type={t}"
                      .format(field=appearance.back_model,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not appearance.shoulder_model in app['model_shoulder']:
             self.log("invalid appearance, shoulder model={f} entity_type={t}"
                      .format(f=appearance.shoulder_model,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not appearance.wing_model in app['model_wing']:
             self.log("invalid appearance, wing model={field} entity_type={t}"
                      .format(field=appearance.wing_model,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not is_similar(appearance.head_scale, app['scale_head']):
             self.log("invalid appearance, head scale={field} entity_type={t}"
                      .format(field=appearance.head_scale,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not is_similar(appearance.hand_scale, app['scale_hand']):
             self.log("invalid appearance, hand scale={field} entity_type={t}"
                      .format(field=appearance.hand_scale,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not is_similar(appearance.body_scale, app['scale_body']):
             self.log("invalid appearance, body scale={field} entity_type={t}"
                      .format(field=appearance.body_scale,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not is_similar(appearance.foot_scale, app['scale_feet']):
             self.log("invalid appearance, foot scale={field} entity_type={t}"
                      .format(field=appearance.foot_scale,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not is_similar(appearance.shoulder_scale, app['scale_shoulder']):
             self.log("invalid appearance, shoulder scale={f} entity_type={t}"
                      .format(f=appearance.shoulder_scale,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not is_similar(appearance.weapon_scale, app['scale_weapon']):
             self.log("invalid appearance, weapon scale={field} entity_type={t}"
                      .format(field=appearance.weapon_scale,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not is_similar(appearance.back_scale, app['scale_back']):
             self.log("invalid appearance, back scale={field} entity_type={t}"
                      .format(field=appearance.back_scale,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not is_similar(appearance.wing_scale, app['scale_wing']):
             self.log("invalid appearance, wing scale={field} entity_type={t}"
                      .format(field=appearance.wing_scale,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if not is_similar(appearance.unknown, app['scale_unknown']):
             self.log("invalid appearance, unknown scale={f} entity_type={t}"
                      .format(f=appearance.unknown,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.body_pitch != 0:
             self.log("invalid appearance, body_pitch={field} entity_type={t}"
                      .format(field=appearance.body_pitch,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.arm_pitch != 0:
             self.log("invalid appearance, arm_pitch={field} entity_type={t}"
                      .format(field=appearance.arm_pitch,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.arm_roll != 0:
             self.log("invalid appearance, arm_roll={field} entity_type={t}"
                      .format(field=appearance.arm_roll,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.arm_yaw != 0:
             self.log("invalid appearance, arm_yaw={field} entity_type={t}"
                      .format(field=appearance.arm_yaw,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.feet_pitch != 0:
             self.log("invalid appearance, feet_pitch={field} entity_type={t}"
                      .format(field=appearance.feet_pitch,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.wing_pitch != 0:
             self.log("invalid appearance, wing_pitch={field} entity_type={t}"
                      .format(field=appearance.wing_pitch,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.back_pitch != 0:
             self.log("invalid appearance, back_pitch={field} entity_type={t}"
                      .format(field=appearance.back_pitch,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.body_offset != app['offset_body']:
             self.log("invalid appearance, body offset={field} entity_type={t}"
                      .format(field=appearance.body_offset,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.head_offset != app['offset_head']:
             self.log("invalid appearance, head offset={field} entity_type={t}"
                      .format(field=appearance.head_offset,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.hand_offset != app['offset_hand']:
             self.log("invalid appearance, hand offset={field} entity_type={t}"
                      .format(field=appearance.hand_offset,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.foot_offset != app['offset_foot']:
             self.log("invalid appearance, foot offset={field} entity_type={t}"
                      .format(field=appearance.foot_offset,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.back_offset != app['offset_back']:
             self.log("invalid appearance, back offset={field} entity_type={t}"
                      .format(field=appearance.back_offset,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         if appearance.wing_offset != app['offset_wing']:
             self.log("invalid appearance, wing offset={field} entity_type={t}"
                      .format(field=appearance.wing_offset,
-                             t=entity_data.entity_type),
+                             t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
     def has_illegal_flags(self):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
         # This is when holding control, doesnt need to be on a wall
 
-        flags = entity_data.flags
+        flags = entity.flags
 
-        if flags & STEALTH_FLAG and entity_data.class_type != RANGER_CLASS:
+        if flags & STEALTH_FLAG and entity.class_type != RANGER_CLASS:
             self.log("none ranger class using ranger stealth. class={classid}"
-                     .format(classid=entity_data.class_type),
+                     .format(classid=entity.class_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
@@ -1049,22 +1047,22 @@ class AntiCheatConnection(ConnectionScript):
         if (self.glider_count > self.glider_abuse_count and
                 self.attack_count > self.glider_abuse_count):
             self.log("glider reset attack animation bug abuse."
-                     .format(classid=entity_data.class_type),
+                     .format(classid=entity.class_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
         return False
 
     def check_flying(self):
-        entity_data = self.connection.entity_data
-        flags = entity_data.flags
+        entity = self.connection.entity
+        flags = entity.flags
         # in the air when, not gliding, not "on ground", not swimming, not
         # climbing
         if not (flags & GLIDER_FLAG
-                or is_bit_set(entity_data.physics_flags, 0)
-                or is_bit_set(entity_data.physics_flags, 1)
-                or is_bit_set(entity_data.physics_flags, 2)
-                or entity_data.hp <= 0):
+                or is_bit_set(entity.physics_flags, 0)
+                or is_bit_set(entity.physics_flags, 1)
+                or is_bit_set(entity.physics_flags, 2)
+                or entity.hp <= 0):
             self.air_time += self.time_since_update
 
             if self.air_time > self.max_air_time:
@@ -1074,13 +1072,13 @@ class AntiCheatConnection(ConnectionScript):
             self.air_time = 0
 
     def check_speed(self):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
 
         if not self.last_pos is None:
-            mx = (entity_data.pos.x-self.last_pos.x) ** 2
-            my = (entity_data.pos.y-self.last_pos.y) ** 2
+            mx = (entity.pos.x-self.last_pos.x) ** 2
+            my = (entity.pos.y-self.last_pos.y) ** 2
             self.distance_traveled += math.sqrt(mx + my)
-        self.last_pos = entity_data.pos
+        self.last_pos = entity.pos
         self.time_traveled += self.time_since_update
         if self.time_traveled > 0.5:
             speed = self.distance_traveled / self.time_traveled
@@ -1089,11 +1087,11 @@ class AntiCheatConnection(ConnectionScript):
             self.distance_traveled = 0
 
     def check_hit_counter(self):
-        entity_data = self.connection.entity_data
+        entity = self.connection.entity
 
-        if entity_data.hit_counter < 0:
+        if entity.hit_counter < 0:
             self.log("negative hit counter. hits={hits}"
-                     .format(hits=entity_data.hit_counter),
+                     .format(hits=entity.hit_counter),
                      LOG_LEVEL_VERBOSE)
             self.remove_cheater('illegal hit counter')
             return False
@@ -1101,12 +1099,12 @@ class AntiCheatConnection(ConnectionScript):
         if self.loop.time() - self.last_hit_time > 4 + self.last_hit_margin:
             self.hit_counter = 0
 
-        hit_counter_diff = entity_data.hit_counter - self.hit_counter
+        hit_counter_diff = entity.hit_counter - self.hit_counter
         if hit_counter_diff > self.max_hit_counter_difference:
             self.hit_counter_strikes += 1
             if self.hit_counter_strikes > self.max_hit_counter_strikes:
                 self.log("hit counter mismatch, hits={hits}, expected={exp}"
-                         .format(hits=entity_data.hit_counter,
+                         .format(hits=entity.hit_counter,
                                  exp=self.hit_counter),
                          LOG_LEVEL_VERBOSE)
                 self.remove_cheater('illegal hit counter')
@@ -1115,20 +1113,20 @@ class AntiCheatConnection(ConnectionScript):
             self.hit_counter_strikes = 0
 
     def check_hostile_type(self):
-        entity_data = self.connection.entity_data
-        if entity_data.hostile_type != 0:
+        entity = self.connection.entity
+        if entity.hostile_type != 0:
             self.log("invalid hostile_type={t}"
-                     .format(t=entity_data.hostile_type),
+                     .format(t=entity.hostile_type),
                      LOG_LEVEL_VERBOSE)
             self.remove_cheater('illegal hostile type')
             return False
 
     def check_last_hit(self):
-        entity_data = self.connection.entity_data
-        if entity_data.hp <= 0:
+        entity = self.connection.entity
+        if entity.hp <= 0:
             return
 
-        last_hit_rc = (float(entity_data.last_hit_time) / 1000.0)
+        last_hit_rc = (float(entity.last_hit_time) / 1000.0)
         if self.last_hit_time == 0:
             self.last_hit_time = self.loop.time() - last_hit_rc
         last_hit_pk = self.loop.time() - self.last_hit_time
