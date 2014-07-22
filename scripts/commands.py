@@ -209,7 +209,7 @@ def player(script, name):
 @command
 @admin
 def addrights(script, player, *rights):
-    """Give rights to user"""
+    """Gives rights to a user."""
     player = script.get_player(player)
     rights = set(rights) & player.rights
     player.rights.update(rights)
@@ -223,7 +223,7 @@ def addrights(script, player, *rights):
 @command
 @admin
 def removerights(script, player, *rights):
-    """Remove rights from user"""
+    """Removes rights from a user."""
     player = script.get_player(player)
     rights = set(rights) & player.rights
     player.rights.difference_update(rights)
@@ -236,6 +236,7 @@ def removerights(script, player, *rights):
 
 @command
 def rights(script, player=None):
+    """Displays the rights of a user."""
     player = script.get_player(player)
     rights = player.rights
     if rights:

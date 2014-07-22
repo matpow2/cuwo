@@ -172,6 +172,8 @@ class CubeWorldConnection(asyncio.Protocol):
         self.packet_handler.feed(data)
 
     def disconnect(self, reason=None):
+        if self.disconnected:
+            return
         self.transport.close()
         self.connection_lost(reason)
 
@@ -193,6 +195,8 @@ class CubeWorldConnection(asyncio.Protocol):
     # packet methods
 
     def send_packet(self, packet):
+        if self.disconnected:
+            return
         self.transport.write(write_packet(packet))
 
     def on_packet(self, packet):
