@@ -575,6 +575,7 @@ class CubeWorldServer:
         for script in self.scripts.get():
             if script.commands is None:
                 continue
+            name = script.aliases.get(name, name)
             command = script.commands.get(name, None)
             if command:
                 return command
