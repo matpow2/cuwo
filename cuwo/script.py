@@ -59,17 +59,17 @@ def get_player(server, value):
 class Command:
     def __init__(self, func):
         self.func = func
-        self.original = original = getattr(func, 'func', func)
-        self.name = original.__name__
-        self.module = original.__module__
-        self.user_types = getattr(original, 'user_types', None)
-        self.doc = original.__doc__
+        self.base = base = get_command_base(func)
+        self.name = base.__name__
+        self.module = base.__module__
+        self.user_types = getattr(base, 'user_types', None)
+        self.doc = base.__doc__
         self.__call__ = func
 
         # parse function object information
 
         # get min args
-        func_info = inspect.getargspec(original)
+        func_info = inspect.getargspec(base)
         self.min_args = len(func_info.args) - 1
         if func_info.defaults is not None:
             self.min_args -= len(func_info.defaults)
@@ -89,7 +89,7 @@ class Command:
         return "%s\n%s" % (self.doc, syntax)
 
     def get_syntax(self):
-        func_info = inspect.getargspec(self.original)
+        func_info = inspect.getargspec(self.base)
         has_defaults = func_info.defaults is not None
         if has_defaults:
             defaults_start = len(func_info.args) - len(func_info.defaults)
@@ -113,14 +113,36 @@ class Command:
         return 'Syntax: /' + ' '.join(arguments)
 
 
+def get_command_base(func):
+    return getattr(func, 'func', func)
+
+
+def set_command_base(new_func, func):
+    new_func.func = func
+
+
 def command(func, klass=None):
     command = Command(func)
     if klass is None:
         klass = sys.modules[command.module].get_class()
     if klass.commands is None:
         klass.commands = {}
+        klass.aliases = {}
     klass.commands[command.name] = command
+
+    base = get_command_base(func)
+    for alias in getattr(base, 'aliases', ()):
+        klass.aliases[alias] = command.name
     return func
+
+
+def alias(*aliases):
+    """Aliases the command to additional names."""
+    def dec(func):
+        base = get_command_base(func)
+        base.aliases = aliases
+        return func
+    return dec
 
 
 def restrict(*user_types):
@@ -130,9 +152,9 @@ def restrict(*user_types):
             if script.connection.rights.isdisjoint(user_types):
                 raise InsufficientRights()
             return func(script, *arg, **kw)
-        original = getattr(func, 'func', func)
-        original.user_types = user_types
-        new_func.func = original
+        base = get_command_base(func)
+        base.user_types = user_types
+        set_command_base(new_func, base)
         return new_func
     return dec
 
@@ -273,6 +295,7 @@ class ConnectionScript(BaseScript):
 class ServerScript(BaseScript):
     connection_class = ConnectionScript
     commands = None
+    aliases = None
 
     def __init__(self, server):
         self.script_name = self.__module__.split('.')[1]
@@ -314,7 +337,9 @@ class ServerScript(BaseScript):
     def call_command(self, user, command, args):
         if self.commands is None:
             return
-        command = self.commands.get(command.lower(), None)
+        command = command.lower()
+        command = self.aliases.get(command, command)
+        command = self.commands.get(command, None)
         if not command:
             return
         user.parent = self  # for ScriptInterface

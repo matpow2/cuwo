@@ -42,6 +42,13 @@ OPEN_ENTITIES = {
 DYNAMIC_ENTITIES = SIT_ENTITIES | OPEN_ENTITIES
 
 
+def get_type(name):
+    for k, v in STATIC_NAMES.items():
+        if v != name:
+            continue
+        return k
+
+
 class StaticEntityHeader(Loader):
     def read(self, reader):
         # memory header starts here (size 72)

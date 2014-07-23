@@ -17,6 +17,7 @@
 
 from cuwo import constants
 from cuwo import strings
+from cuwo.vector import Vector2
 
 import shlex
 import os
@@ -90,9 +91,8 @@ def validate_chunk_pos(x, y):
 
 
 def get_chunk(vec):
-    pos = (int(vec.x / constants.CHUNK_SCALE),
-           int(vec.y / constants.CHUNK_SCALE))
-    if not validate_chunk_pos(*pos):
+    pos = Vector2(vec.x, vec.y) // constants.CHUNK_SCALE
+    if not validate_chunk_pos(pos.x, pos.y):
         raise ValueError('invalid position')
     return pos
 

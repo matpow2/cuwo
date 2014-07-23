@@ -29,7 +29,7 @@ from cuwo.strings import ENTITY_NAMES
 from cuwo.constants import BLOCK_SCALE
 from cuwo.vector import Vector3
 
-from libc.stdint cimport uintptr_t, uint32_t, uint8_t, uint64_t
+from libc.stdint cimport uintptr_t, uint32_t, uint8_t, uint64_t, int64_t
 from libc.stdlib cimport malloc, free
 from libcpp.string cimport string
 
@@ -684,6 +684,10 @@ cdef class Chunk:
 
     def get_render(self, off_x=0.0, off_y=0.0):
         return RenderBuffer(self, off_x, off_y)
+
+    def get_height(self, x, y):
+        cdef ChunkXY * data = self.get_xy(x, y)
+        return (<int64_t>(data.a) + <int64_t>(data.size))
 
     def __getitem__(self, index):
         cdef XYProxy proxy = XYProxy()

@@ -31,9 +31,12 @@ import sys
 
 class LoggerWriter:
     data = ''
+    errors = 'strict'
 
     def __init__(self, fp, logger, level):
         self.fp = fp
+        self.errors = fp.errors
+        self.encoding = fp.encoding
         self.logger = logger
         self.level = level
 

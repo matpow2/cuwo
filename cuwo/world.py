@@ -24,7 +24,7 @@ from queue import Queue
 import asyncio
 from cuwo import entity as entitydata
 from cuwo import static
-from cuwo.common import get_item_hp, get_max_xp
+from cuwo.common import get_item_hp, get_max_xp, get_chunk
 from cuwo.types import IDPool
 from cuwo import constants
 
@@ -164,8 +164,6 @@ class Chunk:
 
         for entity_id, data in enumerate(self.data.static_entities):
             header = data.header
-            if not header.is_dynamic():
-                continue
             new_entity = self.world.static_entity_class(entity_id, header,
                                                         self)
             self.static_entities[entity_id] = new_entity
@@ -248,6 +246,18 @@ class World:
         f = asyncio.Future()
         self.gen_queue.put((pos, f), False)
         return f
+
+    def get_height(self, pos):
+        chunk_pos = get_chunk(pos)
+        try:
+            chunk = self.chunks[chunk_pos]
+        except KeyError:
+            return None
+        if chunk.data is None:
+            return None
+        pos -= chunk_pos * constants.CHUNK_SCALE
+        pos //= constants.BLOCK_SCALE
+        return chunk.data.get_height(pos.x, pos.y) * constants.BLOCK_SCALE
 
     def run_gen(self, seed):
         tgen.initialize(seed, self.data_path)

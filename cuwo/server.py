@@ -440,6 +440,10 @@ class CubeWorldServer:
         self.update_loop = LoopingCall(self.update)
         self.update_loop.start(1.0 / base.update_fps, now=False)
 
+        # world
+        self.world = World(self, self.loop, base.seed, base.use_tgen,
+                           base.use_entities)
+
         # server-related
         self.git_rev = base.get('git_rev', None)
 
@@ -455,10 +459,6 @@ class CubeWorldServer:
         self.extra_elapsed_time = 0.0
         self.start_time = loop.time()
         self.set_clock('12:00')
-
-        # world
-        self.world = World(self, self.loop, base.seed, base.use_tgen,
-                           base.use_entities)
 
         # start listening
         asyncio.Task(self.create_server(self.build_protocol,

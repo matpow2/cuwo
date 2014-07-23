@@ -19,9 +19,11 @@
 Default set of commands bundled with cuwo
 """
 
-from cuwo.script import ServerScript, command, admin
+from cuwo.script import ServerScript, command, admin, alias
 from cuwo.common import get_chunk
-from cuwo.constants import CLASS_NAMES, CLASS_SPECIALIZATIONS
+from cuwo import constants
+from cuwo import static
+from cuwo.vector import Vector3
 import platform
 
 
@@ -181,8 +183,8 @@ def player(script, name):
     player = script.get_player(name)
     entity = player.entity
     typ = entity.class_type
-    klass = CLASS_NAMES[typ]
-    spec = CLASS_SPECIALIZATIONS[typ][entity.specialization]
+    klass = constants.CLASS_NAMES[typ]
+    spec = constants.CLASS_SPECIALIZATIONS[typ][entity.specialization]
     level = entity.level
     return '%r is a lvl %s %s (%s)' % (player.name, level, klass, spec)
 
@@ -225,6 +227,54 @@ def rights(script, player=None):
     else:
         rights = 'no'
     return '%r has %s rights' % (player.name, rights)
+
+
+def create_teleport_packet(pos, chunk_pos, user_id):
+    packet = static.StaticEntityPacket()
+    header = static.StaticEntityHeader()
+    packet.header = header
+    packet.chunk_x = chunk_pos[0]
+    packet.chunk_y = chunk_pos[1]
+    packet.entity_id = 0
+    header.entity_type = static.get_type('Bench')
+    header.size = Vector3(0, 0, 0)
+    header.closed = True
+    header.orientation = static.ORIENT_SOUTH
+    header.pos = pos
+    header.time_offset = 0
+    header.something8 = 0
+    header.user_id = user_id
+    return packet
+
+
+@command
+@admin
+@alias('t')
+def teleport(script, a, b=None):
+    """Teleport to a chunk or player."""
+    entity = script.connection.entity
+
+    if b is None:
+        player = script.get_player(a)
+        pos = player.entity.pos
+    else:
+        pos = Vector3(int(a), int(b), 0) * constants.CHUNK_SCALE
+        pos.z = script.world.get_height(pos.xy) or entity.pos.z
+
+    update_packet = script.server.update_packet
+    chunk = script.connection.chunk
+
+    packet = create_teleport_packet(pos, chunk.pos, entity.entity_id)
+    update_packet.static_entities.append(packet)
+
+    def add_packet():
+        if chunk.static_entities:
+            chunk.static_entities[0].update()
+        else:
+            packet = create_teleport_packet(pos, chunk.pos, 0)
+            update_packet.static_entities.append(packet)
+
+    script.loop.call_later(0.1, add_packet)
 
 
 @command
