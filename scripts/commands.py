@@ -22,8 +22,6 @@ Default set of commands bundled with cuwo
 from cuwo.script import ServerScript, command, admin
 from cuwo.common import get_chunk
 from cuwo.constants import CLASS_NAMES, CLASS_SPECIALIZATIONS
-from cuwo.packet import HitPacket, HIT_NORMAL
-from cuwo.vector import Vector3
 import platform
 
 
@@ -116,28 +114,12 @@ def pm(script, name, *message):
     return 'PM sent'
 
 
-def damage_player(script, player, damage=0, stun_duration=0):
-    packet = HitPacket()
-    packet.entity_id = player.entity_id
-    packet.target_id = player.entity_id
-    packet.hit_type = HIT_NORMAL
-    packet.damage = damage
-    packet.critical = 1
-    packet.stun_duration = stun_duration
-    packet.something8 = 0
-    packet.pos = player.position
-    packet.hit_dir = Vector3()
-    packet.skill_hit = 0
-    packet.show_light = 0
-    script.server.update_packet.player_hits.append(packet)
-
-
 @command
 @admin
 def kill(script, name=None):
     """Kills a player."""
     player = script.get_player(name)
-    damage_player(script, player, damage=player.entity.hp + 100.0)
+    player.entity.kill()
     message = '%s was killed' % player.name
     print(message)
     script.server.send_chat(message)
@@ -148,7 +130,7 @@ def kill(script, name=None):
 def stun(script, name, milliseconds=1000):
     """Stuns a player for a specified duration of time."""
     player = script.get_player(name)
-    damage_player(script, player, stun_duration=int(milliseconds))
+    player.entity.damage(stun_duration=int(milliseconds))
     message = '%s was stunned' % player.name
     print(message)
     script.server.send_chat(message)
@@ -159,7 +141,7 @@ def stun(script, name, milliseconds=1000):
 def heal(script, name=None, hp=1000):
     """Heals a player by a specified amount."""
     player = script.get_player(name)
-    damage_player(script, player, damage=-int(hp))
+    player.damage(-int(hp))
     message = '%s was healed' % player.name
     return message
 
@@ -203,7 +185,6 @@ def player(script, name):
     spec = CLASS_SPECIALIZATIONS[typ][entity.specialization]
     level = entity.level
     return '%r is a lvl %s %s (%s)' % (player.name, level, klass, spec)
-
 
 
 @command

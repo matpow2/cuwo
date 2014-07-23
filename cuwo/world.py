@@ -22,10 +22,11 @@ World manager
 import os
 from queue import Queue
 import asyncio
-from cuwo.entity import EntityData
+from cuwo import entity as entitydata
 from cuwo import static
 from cuwo.common import get_item_hp, get_max_xp
 from cuwo.types import IDPool
+from cuwo import constants
 
 try:
     from cuwo import tgen
@@ -34,7 +35,7 @@ except ImportError:
     has_tgen = False
 
 
-class Entity(EntityData):
+class Entity(entitydata.EntityData):
     def __init__(self, world, entity_id=None):
         super().__init__()
 
@@ -173,6 +174,7 @@ class Chunk:
             for data in self.data.dynamic_entities:
                 entity = self.world.entity_class(self.world, data.entity_id)
                 data.set_entity(entity)
+                entity.reset()
 
         self.update()
 

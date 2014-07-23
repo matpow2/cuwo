@@ -15,14 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
-from cuwo.packet import (PacketHandler, write_packet, CS_PACKETS,
-                         ClientVersion, JoinPacket, SeedData, EntityUpdate,
-                         ClientChatMessage, ServerChatMessage,
-                         UpdateFinished, CurrentTime, ServerUpdate,
-                         ServerFull, ServerMismatch, INTERACT_DROP,
-                         INTERACT_PICKUP, ChunkItemData, ChunkItems,
-                         InteractPacket, PickupAction, HitPacket, ShootPacket,
-                         INTERACT_NORMAL)
+from cuwo import packet as packets
 from cuwo.types import MultikeyDict, AttributeSet
 from cuwo import constants
 from cuwo.common import (get_clock_string, parse_clock, parse_command,
@@ -33,7 +26,7 @@ from cuwo import entity as entitydata
 from cuwo import static
 from cuwo.loop import LoopingCall
 from cuwo import world
-import functools
+from cuwo.vector import Vector3
 import faulthandler
 
 import os
@@ -45,18 +38,34 @@ import signal
 import socket
 
 # initialize packet instances for sending
-join_packet = JoinPacket()
-seed_packet = SeedData()
-chat_packet = ServerChatMessage()
-entity_packet = EntityUpdate()
-update_finished_packet = UpdateFinished()
-time_packet = CurrentTime()
-mismatch_packet = ServerMismatch()
-server_full_packet = ServerFull()
+join_packet = packets.JoinPacket()
+seed_packet = packets.SeedData()
+chat_packet = packets.ServerChatMessage()
+entity_packet = packets.EntityUpdate()
+update_finished_packet = packets.UpdateFinished()
+time_packet = packets.CurrentTime()
+mismatch_packet = packets.ServerMismatch()
+server_full_packet = packets.ServerFull()
 
 
 class Entity(world.Entity):
-    pass
+    def kill(self):
+        self.damage(self.hp + 100.0)
+
+    def damage(self, damage=0, stun_duration=0):
+        packet = packets.HitPacket()
+        packet.entity_id = self.entity_id
+        packet.target_id = self.entity_id
+        packet.hit_type = packets.HIT_NORMAL
+        packet.damage = damage
+        packet.critical = 1
+        packet.stun_duration = stun_duration
+        packet.something8 = 0
+        packet.pos = self.pos
+        packet.hit_dir = Vector3()
+        packet.skill_hit = 0
+        packet.show_light = 0
+        self.world.server.update_packet.player_hits.append(packet)
 
 
 class StaticEntity(world.StaticEntity):
@@ -78,7 +87,7 @@ class Chunk(world.Chunk):
         self.world.server.updated_chunks.add(self)
 
     def on_update(self, update_packet):
-        item_list = ChunkItems()
+        item_list = packets.ChunkItems()
         item_list.chunk_x, item_list.chunk_y = self.pos
         item_list.items = self.items
         update_packet.chunk_items.append(item_list)
@@ -152,15 +161,16 @@ class CubeWorldConnection(asyncio.Protocol):
             return
 
         self.packet_handlers = {
-            ClientVersion.packet_id: self.on_version_packet,
-            EntityUpdate.packet_id: self.on_entity_packet,
-            ClientChatMessage.packet_id: self.on_chat_packet,
-            InteractPacket.packet_id: self.on_interact_packet,
-            HitPacket.packet_id: self.on_hit_packet,
-            ShootPacket.packet_id: self.on_shoot_packet
+            packets.ClientVersion.packet_id: self.on_version_packet,
+            packets.EntityUpdate.packet_id: self.on_entity_packet,
+            packets.ClientChatMessage.packet_id: self.on_chat_packet,
+            packets.InteractPacket.packet_id: self.on_interact_packet,
+            packets.HitPacket.packet_id: self.on_hit_packet,
+            packets.ShootPacket.packet_id: self.on_shoot_packet
         }
 
-        self.packet_handler = PacketHandler(CS_PACKETS, self.on_packet)
+        self.packet_handler = packets.PacketHandler(packets.CS_PACKETS,
+                                                    self.on_packet)
 
         server.connections.add(self)
         self.rights = AttributeSet()
@@ -197,7 +207,7 @@ class CubeWorldConnection(asyncio.Protocol):
     def send_packet(self, packet):
         if self.disconnected:
             return
-        self.transport.write(write_packet(packet))
+        self.transport.write(packets.write_packet(packet))
 
     def on_packet(self, packet):
         if self.disconnected:
@@ -293,21 +303,21 @@ class CubeWorldConnection(asyncio.Protocol):
     def on_interact_packet(self, packet):
         interact_type = packet.interact_type
         item = packet.item_data
-        if interact_type == INTERACT_DROP:
+        if interact_type == packets.INTERACT_DROP:
             pos = self.position.copy()
             pos.z -= constants.BLOCK_SCALE
             if self.scripts.call('on_drop', item=item,
                                  pos=pos).result is False:
                 return
             self.server.drop_item(packet.item_data, pos)
-        elif interact_type == INTERACT_PICKUP:
+        elif interact_type == packets.INTERACT_PICKUP:
             chunk = self.world.get_chunk((packet.chunk_x, packet.chunk_y))
             try:
                 item = chunk.remove_item(packet.item_index)
             except IndexError:
                 return
             self.give_item(item)
-        elif interact_type == INTERACT_NORMAL:
+        elif interact_type == packets.INTERACT_NORMAL:
             chunk = self.world.get_chunk((packet.chunk_x, packet.chunk_y))
             try:
                 chunk.get_entity(packet.item_index).interact(self)
@@ -372,13 +382,12 @@ class CubeWorldConnection(asyncio.Protocol):
     # other methods
 
     def send_chat(self, value):
-        packet = ServerChatMessage()
-        packet.entity_id = 0
-        packet.value = value
-        self.send_packet(packet)
+        chat_packet.entity_id = 0
+        chat_packet.value = value
+        self.send_packet(chat_packet)
 
     def give_item(self, item):
-        action = PickupAction()
+        action = packets.PickupAction()
         action.entity_id = self.entity_id
         action.item_data = item
         self.server.update_packet.pickups.append(action)
@@ -419,7 +428,7 @@ class CubeWorldServer:
         base = config.base
 
         # game-related
-        self.update_packet = ServerUpdate()
+        self.update_packet = packets.ServerUpdate()
         self.update_packet.reset()
 
         self.connections = set()
@@ -459,7 +468,7 @@ class CubeWorldServer:
         return CubeWorldConnection(self)
 
     def drop_item(self, item_data, pos):
-        item = ChunkItemData()
+        item = packets.ChunkItemData()
         item.drop_time = 750
         # XXX provide sane values for these
         item.scale = 0.1
@@ -498,13 +507,12 @@ class CubeWorldServer:
         self.broadcast_packet(time_packet)
 
     def send_chat(self, value):
-        packet = ServerChatMessage()
-        packet.entity_id = 0
-        packet.value = value
-        self.broadcast_packet(packet)
+        chat_packet.entity_id = 0
+        chat_packet.value = value
+        self.broadcast_packet(chat_packet)
 
     def broadcast_packet(self, packet):
-        data = write_packet(packet)
+        data = packets.write_packet(packet)
         for player in self.players.values():
             player.transport.write(data)
 
