@@ -55,6 +55,7 @@ class CTFConnection(ConnectionScript):
                 if abs(base.pos - entity.pos) < COLLISION_RADIUS:
                     self.flag.set_position(self.flag.spawn_pos)
                     self.server.send_chat('%s scored a point!' % entity.name)
+                    self.flag.holder = None
                     self.flag = None
                     break
             else:
