@@ -47,10 +47,12 @@ update_finished_packet = packets.UpdateFinished()
 time_packet = packets.CurrentTime()
 mismatch_packet = packets.ServerMismatch()
 server_full_packet = packets.ServerFull()
-sound_packet = packets.SoundAction()
+extra_server_update = packets.ServerUpdate()
 
 
 class Entity(world.Entity):
+    connection = None
+
     def kill(self):
         self.damage(self.hp + 100.0)
 
@@ -68,6 +70,11 @@ class Entity(world.Entity):
         packet.skill_hit = 0
         packet.show_light = 0
         self.world.server.update_packet.player_hits.append(packet)
+        if self.hp <= 0:
+            return
+        self.hp -= damage
+        if self.connection and self.hp <= 0:
+            self.connection.scripts.call('on_die', killer=None)
 
 
 class StaticEntity(world.StaticEntity):
@@ -238,6 +245,7 @@ class CubeWorldConnection(asyncio.Protocol):
     def on_entity_packet(self, packet):
         if self.entity is None:
             self.entity = self.world.create_entity(self.entity_id)
+            self.entity.connection = self
 
         mask = packet.update_entity(self.entity)
         self.entity.mask |= mask
@@ -384,6 +392,18 @@ class CubeWorldConnection(asyncio.Protocol):
 
     # other methods
 
+    def play_sound(self, name, pos=None, pitch=1.0, volume=1.0):
+        extra_server_update.reset()
+        sound = packets.SoundAction()
+        sound.set_name(name)
+        if pos is None:
+            pos = self.entity.pos
+        sound.pos = pos
+        sound.pitch = pitch
+        sound.volume = volume
+        extra_server_update.sound_actions.append(sound)
+        self.send_packet(extra_server_update)
+
     def send_chat(self, value):
         chat_packet.entity_id = 0
         chat_packet.value = value
@@ -513,6 +533,24 @@ class CubeWorldServer:
         chat_packet.entity_id = 0
         chat_packet.value = value
         self.broadcast_packet(chat_packet)
+
+    def play_sound(self, name, pos=None, pitch=1.0, volume=1.0):
+        sound = packets.SoundAction()
+        sound.set_name(name)
+        sound.pitch = pitch
+        sound.volume = volume
+
+        if pos is not None:
+            sound.pos = pos
+            self.update_packet.sound_action.append(sound)
+            return
+
+        extra_server_update.reset()
+
+        for player in self.players.values():
+            sound.pos = player.entity.pos
+            extra_server_update.sound_actions = [sound]
+            player.send_packet(extra_server_update)
 
     def broadcast_packet(self, packet):
         data = packets.write_packet(packet)

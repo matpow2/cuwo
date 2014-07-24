@@ -229,6 +229,16 @@ def rights(script, player=None):
     return '%r has %s rights' % (player.name, rights)
 
 
+@command
+@admin
+def sound(script, name):
+    """Plays a global sound."""
+    try:
+        script.server.play_sound(name)
+    except KeyError:
+        return 'No such sound'
+
+
 def create_teleport_packet(pos, chunk_pos, user_id):
     packet = static.StaticEntityPacket()
     header = static.StaticEntityHeader()

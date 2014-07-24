@@ -27,10 +27,14 @@ from cuwo.common import format_time
 from cuwo import packet as packets
 from cuwo.vector import Vector3
 from cuwo import constants
+from cuwo import entity as entitydata
 
 
 ROUND_START = 'CTF round started! Ending in {time}'
-ROUND_END = 'CTF round ended!'
+ROUND_END = '{name} won the round with {points} points!'
+SCORE_POINT = '{name} scored a point!'
+TAKE_FLAG = '{name} took a flag!'
+DROP_FLAG = '{name} dropped the flag!'
 NEXT_ROUND = 'Next round starting in {time}'
 NOT_PLACING = 'No entity is being placed'
 
@@ -41,20 +45,30 @@ COLLISION_RADIUS = constants.BLOCK_SCALE
 class CTFConnection(ConnectionScript):
     place_entity = None
     flag = None
+    points = 0
 
     def on_entity_update(self, event):
         entity = self.entity
 
-        if self.place_entity:
+        if not self.parent.playing or entity.hp <= 0:
+            return
+
+        mask = event.mask
+
+        if self.place_entity and entitydata.is_ray_set(mask):
             pos = entity.get_ray_hit()
             pos.z += constants.BLOCK_SCALE // 4
             self.place_entity.set_position(pos)
+
+        if not entitydata.is_pos_set(mask):
+            return
 
         if self.flag is not None:
             for base in self.parent.bases:
                 if abs(base.pos - entity.pos) < COLLISION_RADIUS:
                     self.flag.set_position(self.flag.spawn_pos)
-                    self.server.send_chat('%s scored a point!' % entity.name)
+                    self.server.send_chat(SCORE_POINT.format(name=entity.name))
+                    self.server.play_sound(self.parent.config.score_sound)
                     self.flag.holder = None
                     self.flag = None
                     break
@@ -66,7 +80,8 @@ class CTFConnection(ConnectionScript):
             if flag.holder is not None or flag.placing:
                 continue
             if abs(flag.pos - entity.pos) < COLLISION_RADIUS:
-                self.server.send_chat('%s took a flag!' % entity.name)
+                self.server.send_chat(TAKE_FLAG.format(name=entity.name))
+                self.server.play_sound(self.parent.config.take_sound)
                 self.flag = flag
                 flag.holder = self
                 flag.set_position(entity.pos)
@@ -81,8 +96,10 @@ class CTFConnection(ConnectionScript):
     def remove_flag(self):
         if not self.flag:
             return
-        self.server.send_chat('%s dropped a flag!' % self.entity.name)
+        self.server.send_chat(DROP_FLAG.format(name=self.entity.name))
+        self.server.play_sound(self.parent.config.drop_sound)
         self.flag.holder = None
+        self.flag = None
 
 
 def make_int_color(r, g, b, a):
@@ -91,6 +108,7 @@ def make_int_color(r, g, b, a):
 
 class CTFServer(ServerScript):
     connection_class = CTFConnection
+    playing = False
 
     def on_load(self):
         self.config = self.server.config.ctf
@@ -139,14 +157,42 @@ class CTFServer(ServerScript):
         server = self.server
 
         while True:
+            # round start
+            self.playing = True
+            server.play_sound(config.start_sound)
+            for entities in (self.flags, self.bases):
+                for entity in entities:
+                    entity.set_position(entity.spawn_pos)
+
+            for player in self.children:
+                player.points = 0
+
             message = ROUND_START.format(time=format_time(config.duration))
             print(message)
             server.send_chat(message)
             yield from asyncio.sleep(config.duration)
 
-            print(ROUND_END)
-            server.send_chat(ROUND_END)
+            # round end
+            self.playing = False
+            server.play_sound(config.end_sound)
 
+            winner = None
+            for player in self.children:
+                if winner is None or winner.points < player.points:
+                    winner = player
+
+            if winner is None:
+                name = 'nobody'
+            else:
+                name = winner.entity.name
+
+            message = ROUND_END.format(name=name, points=winner.points)
+            print(message)
+            server.send_chat(message)
+
+            yield from asyncio.sleep(1)
+
+            # round restart
             message = NEXT_ROUND.format(time=format_time(config.restart_time))
             print(message)
             server.send_chat(message)
