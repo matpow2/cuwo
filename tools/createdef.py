@@ -330,12 +330,12 @@ def main():
                     lists.append((typ, name, dim))
                     typ = 'list'
             else:
-                if typ in PYTHON_OBJECTS or spec:
-                    has_cinit = True
-                    objects.append((typ, name))
-                elif attr.default:
+                if attr.default:
                     defaults.append((name, attr.default))
                     has_cinit = True
+                elif typ in PYTHON_OBJECTS or spec:
+                    has_cinit = True
+                    objects.append((typ, name))
                 typ = CYTHON_TYPES.get(typ, typ)
             out.putln('%s %s' % (typ, name))
         if struct.name == 'EntityData':

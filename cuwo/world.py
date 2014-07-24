@@ -66,7 +66,10 @@ class Entity(entitydata.EntityData):
         return strings.ENTITY_NAMES[self.entity_type]
 
     def set_type(self, name):
-        self.entity_type = strings.ENTITY_IDS[name]
+        if name is None:
+            self.entity_type = 0xFFFFFFFF
+        else:
+            self.entity_type = strings.ENTITY_IDS[name]
         self.mask |= entitydata.TYPE_FLAG
 
     def get_ray_hit(self):

@@ -299,6 +299,17 @@ def unload(script, name):
 
 
 @command
+@admin
+def reload(script, name):
+    """Reloads a script at runtime."""
+    name = str(name)
+    if not script.server.unload_script(name):
+        return 'Script %r is not loaded' % name
+    script.server.load_script(name, update=True)
+    return 'Script %r reloaded' % name
+
+
+@command
 def scripts(script):
     """Lists the currently loaded scripts."""
     return 'Scripts: ' + ', '.join(script.server.scripts.items)

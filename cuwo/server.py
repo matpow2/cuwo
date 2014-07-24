@@ -36,6 +36,7 @@ import traceback
 import asyncio
 import signal
 import socket
+import importlib
 
 # initialize packet instances for sending
 join_packet = packets.JoinPacket()
@@ -46,6 +47,7 @@ update_finished_packet = packets.UpdateFinished()
 time_packet = packets.CurrentTime()
 mismatch_packet = packets.ServerMismatch()
 server_full_packet = packets.ServerFull()
+sound_packet = packets.SoundAction()
 
 
 class Entity(world.Entity):
@@ -341,6 +343,7 @@ class CubeWorldConnection(asyncio.Protocol):
         target.hp -= packet.damage
         if target.hp <= 0:
             self.scripts.call('on_kill', target=target)
+            target.scripts.call('on_die', killer=self.entity)
 
     def on_shoot_packet(self, packet):
         self.server.update_packet.shoot_actions.append(packet)
@@ -530,13 +533,15 @@ class CubeWorldServer:
 
     # script methods
 
-    def load_script(self, name):
+    def load_script(self, name, update=False):
         try:
             return self.scripts[name]
         except KeyError:
             pass
         try:
             mod = __import__('scripts.%s' % name, globals(), locals(), [name])
+            if update:
+                importlib.reload(mod)
         except ImportError as e:
             traceback.print_exc()
             return None

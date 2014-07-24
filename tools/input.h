@@ -181,16 +181,16 @@ struct EntityData
 
   _BYTE power_base;
   char gap_199[3];
-  int32_t unknown_or_not_used4 = -1;
+  int unknown_or_not_used4 = -1;
 
-  ivec3 start_chunk;
+  ivec3 start_chunk = Vector3(-1, -1, 0);
 
   _DWORD super_weird;
   qvec3 spawn_pos;
   _BYTE not_used19;
   char gap_1C9[3];
 
-  ivec3 not_used20;
+  ivec3 not_used20 = Vector3(-1, -1, 0);
 
   ItemData consumable;
   ItemData equipment[13];

@@ -183,10 +183,10 @@ class ParticleData(Loader):
     def read(self, reader):
         self.pos = reader.read_qvec3()
         self.accel = reader.read_vec3()
-        self.color_red = reader.read_float()
-        self.color_blue = reader.read_float()
-        self.color_green = reader.read_float()
-        self.color_alpha = reader.read_float()
+        self.color = (reader.read_float(),
+                      reader.read_float(),
+                      reader.read_float(),
+                      reader.read_float())
         self.scale = reader.read_float()
         self.count = reader.read_uint32()
         self.particle_type = reader.read_uint32()
@@ -196,10 +196,11 @@ class ParticleData(Loader):
     def write(self, writer):
         writer.write_qvec3(self.pos)
         writer.write_vec3(self.accel)
-        writer.write_float(self.color_red)
-        writer.write_float(self.color_blue)
-        writer.write_float(self.color_green)
-        writer.write_float(self.color_alpha)
+        r, g, b, a = self.color
+        writer.write_float(r)
+        writer.write_float(g)
+        writer.write_float(b)
+        writer.write_float(a)
         writer.write_float(self.scale)
         writer.write_uint32(self.count)
         writer.write_uint32(self.particle_type)

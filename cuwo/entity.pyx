@@ -425,7 +425,7 @@ cdef class EntityData:
         unsigned int unknown_or_not_used1
         unsigned int unknown_or_not_used2
         unsigned char power_base
-        unsigned int unknown_or_not_used4
+        int unknown_or_not_used4
         object start_chunk
         unsigned int super_weird
         object spawn_pos
@@ -452,9 +452,7 @@ cdef class EntityData:
         self.extra_vel = Vector3()
         self.appearance = AppearanceData.__new__(AppearanceData)
         self.ray_hit = Vector3()
-        self.start_chunk = Vector3()
         self.spawn_pos = Vector3()
-        self.not_used20 = Vector3()
         self.consumable = ItemData.__new__(ItemData)
         self.hostile_type = 3
         self.stun_time = -3000
@@ -463,7 +461,9 @@ cdef class EntityData:
         self.damage_multiplier = 1
         self.armor_multiplier = 1
         self.resi_multiplier = 1
-        self.unknown_or_not_used4 = 4294967295
+        self.unknown_or_not_used4 = -1
+        self.start_chunk = Vector3(-1, -1, 0)
+        self.not_used20 = Vector3(-1, -1, 0)
         self.name = ''
 
     cpdef read(self, ByteReader reader):
@@ -522,7 +522,7 @@ cdef class EntityData:
         self.unknown_or_not_used2 = reader.read_uint32()
         self.power_base = reader.read_uint8()
         reader.skip(3)
-        self.unknown_or_not_used4 = reader.read_uint32()
+        self.unknown_or_not_used4 = reader.read_int32()
         self.start_chunk = reader.read_ivec3()
         self.super_weird = reader.read_uint32()
         self.spawn_pos = reader.read_qvec3()
@@ -593,7 +593,7 @@ cdef class EntityData:
         writer.write_uint32(self.unknown_or_not_used2)
         writer.write_uint8(self.power_base)
         writer.pad(3)
-        writer.write_uint32(self.unknown_or_not_used4)
+        writer.write_int32(self.unknown_or_not_used4)
         writer.write_ivec3(self.start_chunk)
         writer.write_uint32(self.super_weird)
         writer.write_qvec3(self.spawn_pos)
@@ -859,7 +859,7 @@ cpdef uint64_t read_masked_data(EntityData entity, ByteReader reader):
     if mask & (<uint64_t>1 << 37) != 0:
         entity.power_base = reader.read_uint8()
     if mask & (<uint64_t>1 << 38) != 0:
-        entity.unknown_or_not_used4 = reader.read_uint32()
+        entity.unknown_or_not_used4 = reader.read_int32()
     if mask & (<uint64_t>1 << 39) != 0:
         entity.start_chunk = reader.read_ivec3()
     if mask & (<uint64_t>1 << 40) != 0:
@@ -1076,7 +1076,7 @@ cpdef write_masked_data(EntityData entity, ByteWriter writer, uint64_t mask):
     if mask & (<uint64_t>1 << 37) != 0:
         writer.write_uint8(entity.power_base)
     if mask & (<uint64_t>1 << 38) != 0:
-        writer.write_uint32(entity.unknown_or_not_used4)
+        writer.write_int32(entity.unknown_or_not_used4)
     if mask & (<uint64_t>1 << 39) != 0:
         writer.write_ivec3(entity.start_chunk)
     if mask & (<uint64_t>1 << 40) != 0:
