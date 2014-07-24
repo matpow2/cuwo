@@ -19,21 +19,24 @@
 World manager
 """
 
-import os
-from queue import Queue
-import asyncio
 from cuwo import entity as entitydata
 from cuwo import static
 from cuwo.common import get_item_hp, get_max_xp, get_chunk
 from cuwo.types import IDPool
 from cuwo import constants
 from cuwo import strings
+from cuwo.vector import Vector3
 
 try:
     from cuwo import tgen
     has_tgen = True
 except ImportError:
     has_tgen = False
+
+import os
+from queue import Queue
+import asyncio
+import math
 
 
 class Entity(entitydata.EntityData):
@@ -74,6 +77,14 @@ class Entity(entitydata.EntityData):
 
     def get_ray_hit(self):
         return self.pos + self.ray_hit * constants.BLOCK_SCALE
+
+    def get_look_dir(self):
+        yaw = math.radians(self.body_yaw + 90)
+        pitch = math.radians(self.body_pitch)
+        x = math.cos(yaw) * math.cos(pitch)
+        y = math.sin(yaw) * math.cos(pitch)
+        z = math.sin(pitch)
+        return Vector3(x, y, z)
 
     def get_max_hp(self):
         hp = self.get_base_hp()

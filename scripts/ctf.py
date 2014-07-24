@@ -39,7 +39,7 @@ NEXT_ROUND = 'Next round starting in {time}'
 NOT_PLACING = 'No entity is being placed'
 
 
-COLLISION_RADIUS = constants.BLOCK_SCALE
+COLLISION_RADIUS = constants.BLOCK_SCALE * 2
 
 
 class CTFConnection(ConnectionScript):
@@ -60,7 +60,7 @@ class CTFConnection(ConnectionScript):
             pos.z += constants.BLOCK_SCALE // 4
             self.place_entity.set_position(pos)
 
-        if not entitydata.is_pos_set(mask):
+        if not entitydata.is_pos_set(mask) and not entitydata.is_ray_set(mask):
             return
 
         if self.flag is not None:
@@ -73,7 +73,9 @@ class CTFConnection(ConnectionScript):
                     self.flag = None
                     break
             else:
-                self.flag.set_position(entity.pos)
+                new_pos = entity.pos.copy()
+                new_pos -= entity.get_look_dir() * constants.BLOCK_SCALE * 2
+                self.flag.set_position(new_pos)
             return
 
         for flag in self.parent.flags:
