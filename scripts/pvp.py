@@ -25,13 +25,13 @@ from cuwo.constants import HOSTILE_FLAG
 
 class VersusConnection(ConnectionScript):
     def on_join(self, event):
-        self.connection.entity.flags |= HOSTILE_FLAG
+        self.entity.flags |= HOSTILE_FLAG
 
     def on_flags_update(self, event):
-        self.connection.entity.flags |= HOSTILE_FLAG
+        self.entity.flags |= HOSTILE_FLAG
 
     def on_kill(self, event):
-        self.server.send_chat('%s killed %s!' % (self.connection.name,
+        self.server.send_chat('%s killed %s!' % (self.entity.name,
                                                  event.target.name))
 
 

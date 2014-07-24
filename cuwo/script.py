@@ -291,6 +291,10 @@ class ConnectionScript(BaseScript):
         self.server = None
         self.world = None
 
+    @property
+    def entity(self):
+        return self.connection.entity
+
 
 class ServerScript(BaseScript):
     connection_class = ConnectionScript

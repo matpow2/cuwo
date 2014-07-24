@@ -25,6 +25,7 @@ cimport cython
 from libc.stdint cimport int64_t, uint64_t
 from cuwo.bytes cimport ByteReader, ByteWriter
 from cuwo.vector import Vector3
+from cuwo import strings
 
 
 cdef class ItemUpgrade:
@@ -67,6 +68,7 @@ cdef class ItemData:
         self.items = []
         for _ in range(32):
             self.items.append(ItemUpgrade.__new__(ItemUpgrade))
+        self.level = 1
 
     cpdef read(self, ByteReader reader):
         self.type = reader.read_uint8()
@@ -149,6 +151,17 @@ cdef class AppearanceData:
         self.foot_offset = Vector3()
         self.back_offset = Vector3()
         self.wing_offset = Vector3()
+        self.hair_red = 255
+        self.hair_green = 255
+        self.hair_blue = 255
+        self.head_model = -1
+        self.hair_model = -1
+        self.hand_model = -1
+        self.foot_model = -1
+        self.body_model = -1
+        self.back_model = -1
+        self.shoulder_model = -1
+        self.wing_model = -1
 
     cpdef read(self, ByteReader reader):
         self.not_used_1 = reader.read_uint8()
@@ -229,6 +242,54 @@ cdef class AppearanceData:
         writer.write_vec3(self.foot_offset)
         writer.write_vec3(self.back_offset)
         writer.write_vec3(self.wing_offset)
+
+    def get_head(self):
+        return strings.MODEL_NAMES[self.head_model]
+
+    def set_head(self, name):
+        self.head_model = strings.MODEL_IDS[name]
+
+    def get_hair(self):
+        return strings.MODEL_NAMES[self.hair_model]
+
+    def set_hair(self, name):
+        self.hair_model = strings.MODEL_IDS[name]
+
+    def get_hand(self):
+        return strings.MODEL_NAMES[self.hand_model]
+
+    def set_hand(self, name):
+        self.hand_model = strings.MODEL_IDS[name]
+
+    def get_foot(self):
+        return strings.MODEL_NAMES[self.foot_model]
+
+    def set_foot(self, name):
+        self.foot_model = strings.MODEL_IDS[name]
+
+    def get_body(self):
+        return strings.MODEL_NAMES[self.body_model]
+
+    def set_body(self, name):
+        self.body_model = strings.MODEL_IDS[name]
+
+    def get_back(self):
+        return strings.MODEL_NAMES[self.back_model]
+
+    def set_back(self, name):
+        self.back_model = strings.MODEL_IDS[name]
+
+    def get_shoulder(self):
+        return strings.MODEL_NAMES[self.shoulder_model]
+
+    def set_shoulder(self, name):
+        self.shoulder_model = strings.MODEL_IDS[name]
+
+    def get_wing(self):
+        return strings.MODEL_NAMES[self.wing_model]
+
+    def set_wing(self, name):
+        self.wing_model = strings.MODEL_IDS[name]
 
 
 POS_BIT = 0
@@ -369,9 +430,7 @@ cdef class EntityData:
         unsigned int super_weird
         object spawn_pos
         unsigned char not_used19
-        unsigned int not_used20
-        unsigned int not_used21
-        unsigned int not_used22
+        object not_used20
         ItemData consumable
         list equipment
         list skills
@@ -395,7 +454,17 @@ cdef class EntityData:
         self.ray_hit = Vector3()
         self.start_chunk = Vector3()
         self.spawn_pos = Vector3()
+        self.not_used20 = Vector3()
         self.consumable = ItemData.__new__(ItemData)
+        self.hostile_type = 3
+        self.stun_time = -3000
+        self.hp = 500
+        self.max_hp_multiplier = 100
+        self.damage_multiplier = 1
+        self.armor_multiplier = 1
+        self.resi_multiplier = 1
+        self.unknown_or_not_used4 = 4294967295
+        self.name = ''
 
     cpdef read(self, ByteReader reader):
         self.pos = reader.read_qvec3()
@@ -459,9 +528,7 @@ cdef class EntityData:
         self.spawn_pos = reader.read_qvec3()
         self.not_used19 = reader.read_uint8()
         reader.skip(3)
-        self.not_used20 = reader.read_uint32()
-        self.not_used21 = reader.read_uint32()
-        self.not_used22 = reader.read_uint32()
+        self.not_used20 = reader.read_ivec3()
         self.consumable.read(reader)
         for i in range(13):
             (<ItemData>self.equipment[i]).read(reader)
@@ -532,9 +599,7 @@ cdef class EntityData:
         writer.write_qvec3(self.spawn_pos)
         writer.write_uint8(self.not_used19)
         writer.pad(3)
-        writer.write_uint32(self.not_used20)
-        writer.write_uint32(self.not_used21)
-        writer.write_uint32(self.not_used22)
+        writer.write_ivec3(self.not_used20)
         self.consumable.write(writer)
         for item in self.equipment:
             item.write(writer)
@@ -800,9 +865,7 @@ cpdef uint64_t read_masked_data(EntityData entity, ByteReader reader):
     if mask & (<uint64_t>1 << 40) != 0:
         entity.spawn_pos = reader.read_qvec3()
     if mask & (<uint64_t>1 << 41) != 0:
-        entity.not_used20 = reader.read_uint32()
-        entity.not_used21 = reader.read_uint32()
-        entity.not_used22 = reader.read_uint32()
+        entity.not_used20 = reader.read_ivec3()
     if mask & (<uint64_t>1 << 42) != 0:
         entity.not_used19 = reader.read_uint8()
     if mask & (<uint64_t>1 << 43) != 0:
@@ -1019,9 +1082,7 @@ cpdef write_masked_data(EntityData entity, ByteWriter writer, uint64_t mask):
     if mask & (<uint64_t>1 << 40) != 0:
         writer.write_qvec3(entity.spawn_pos)
     if mask & (<uint64_t>1 << 41) != 0:
-        writer.write_uint32(entity.not_used20)
-        writer.write_uint32(entity.not_used21)
-        writer.write_uint32(entity.not_used22)
+        writer.write_ivec3(entity.not_used20)
     if mask & (<uint64_t>1 << 42) != 0:
         writer.write_uint8(entity.not_used19)
     if mask & (<uint64_t>1 << 43) != 0:

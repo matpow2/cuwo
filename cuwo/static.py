@@ -20,7 +20,7 @@ Static entity implementation
 """
 
 from cuwo.loader import Loader
-from cuwo.strings import STATIC_NAMES
+from cuwo import strings
 
 
 ORIENT_SOUTH = 0
@@ -42,13 +42,6 @@ OPEN_ENTITIES = {
 DYNAMIC_ENTITIES = SIT_ENTITIES | OPEN_ENTITIES
 
 
-def get_type(name):
-    for k, v in STATIC_NAMES.items():
-        if v != name:
-            continue
-        return k
-
-
 class StaticEntityHeader(Loader):
     def read(self, reader):
         # memory header starts here (size 72)
@@ -68,10 +61,13 @@ class StaticEntityHeader(Loader):
         self.user_id = reader.read_uint64()
 
     def is_dynamic(self):
-        return self.get_name() in DYNAMIC_ENTITIES
+        return self.get_type() in DYNAMIC_ENTITIES
 
-    def get_name(self):
-        return STATIC_NAMES[self.entity_type]
+    def get_type(self):
+        return strings.STATIC_NAMES[self.entity_type]
+
+    def set_type(self, name):
+        self.entity_type = strings.STATIC_IDS[name]
 
     def write(self, writer):
         writer.write_uint32(self.entity_type)

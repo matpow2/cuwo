@@ -79,6 +79,10 @@ __metaclass__ = _EuclidMetaclass
 class Vector2:
     __slots__ = ['x', 'y']
 
+    @property
+    def xy(self):
+        return Vector2(self.x, self.y)
+
     def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
@@ -111,10 +115,6 @@ class Vector2:
 
     def __len__(self):
         return 2
-
-    @property
-    def xy(self):
-        return Vector2(self.x, self.y)
 
     def __getitem__(self, key):
         return (self.x, self.y)[key]
@@ -286,6 +286,10 @@ class Vector3:
 
     def __hash__(self):
         return hash((self.x, self.y, self.z))
+
+    @property
+    def xy(self):
+        return Vector2(self.x, self.y)
 
     def set(self, x=0, y=0, z=0):
         self.x = x

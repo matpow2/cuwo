@@ -18,7 +18,7 @@ struct ItemData
   _BYTE material;
   _BYTE flags;
   _BYTE pad2[1];
-  signed short level;
+  signed short level = 1;
   _BYTE pad3[2];
   ItemUpgrade items[32];
   _DWORD upgrade_count;
@@ -28,22 +28,22 @@ struct AppearanceData
 {
   _BYTE not_used_1;
   _BYTE not_used_2;
-  _BYTE hair_red;
-  _BYTE hair_green;
-  _BYTE hair_blue;
+  _BYTE hair_red = 255;
+  _BYTE hair_green = 255;
+  _BYTE hair_blue = 255;
   _BYTE pad[1];
   _WORD flags;
 
   vec3 scale; /* old: scale, bounding_radius, bounding_height */
 
-  signed short head_model;
-  signed short hair_model;
-  signed short hand_model;
-  signed short foot_model;
-  signed short body_model;
-  signed short back_model;
-  signed short shoulder_model;
-  signed short wing_model;
+  signed short head_model = -1;
+  signed short hair_model = -1;
+  signed short hand_model = -1;
+  signed short foot_model = -1;
+  signed short body_model = -1;
+  signed short back_model = -1;
+  signed short shoulder_model = -1;
+  signed short wing_model = -1;
   float head_scale;
   float body_scale;
   float hand_scale;
@@ -129,7 +129,7 @@ struct EntityData
   vec3 extra_vel;
   float look_pitch;
   _DWORD physics_flags;
-  _BYTE hostile_type;
+  _BYTE hostile_type = 3;
   char gap_51[3];
   _DWORD entity_type; /* needs to be changed */
   _BYTE current_mode;
@@ -141,7 +141,7 @@ struct EntityData
   _WORD flags; /* has hostile flags */
   char gap_116[2];
   _DWORD roll_time;
-  signed int stun_time;
+  signed int stun_time = -3000;
   _DWORD slowed_time;
   _DWORD make_blue_time;
   _DWORD speed_up_time;
@@ -160,14 +160,14 @@ struct EntityData
   _DWORD not_used_6;
 
   vec3 ray_hit;
-  float hp;
+  float hp = 500;
   float mp;
   float block_power;
-  float max_hp_multiplier;
+  float max_hp_multiplier = 100;
   float shoot_speed;
-  float damage_multiplier;
-  float armor_multiplier;
-  float resi_multiplier;
+  float damage_multiplier = 1;
+  float armor_multiplier = 1;
+  float resi_multiplier = 1;
   _BYTE not_used7;
   _BYTE not_used8;
   char gap_17E[2];
@@ -181,7 +181,7 @@ struct EntityData
 
   _BYTE power_base;
   char gap_199[3];
-  _DWORD unknown_or_not_used4;
+  int32_t unknown_or_not_used4 = -1;
 
   ivec3 start_chunk;
 
@@ -190,10 +190,7 @@ struct EntityData
   _BYTE not_used19;
   char gap_1C9[3];
 
-  // ivec3 or vec3 or 3*4 bytes
-  _DWORD not_used20;
-  _DWORD not_used21;
-  _DWORD not_used22;
+  ivec3 not_used20;
 
   ItemData consumable;
   ItemData equipment[13];

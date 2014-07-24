@@ -235,7 +235,7 @@ class CubeWorldConnection(asyncio.Protocol):
 
     def on_entity_packet(self, packet):
         if self.entity is None:
-            self.entity = Entity(self.world, self.entity_id)
+            self.entity = self.world.create_entity(self.entity_id)
 
         mask = packet.update_entity(self.entity)
         self.entity.mask |= mask
@@ -583,7 +583,7 @@ class CubeWorldServer:
     # binary data store methods
 
     def load_data(self, name, default=None):
-        path = './%s.dat' % name
+        path = './save/%s.dat' % name
         try:
             with open(path, 'rU') as fp:
                 data = fp.read()
@@ -592,7 +592,7 @@ class CubeWorldServer:
         return eval(data)
 
     def save_data(self, name, value):
-        path = './%s.dat' % name
+        path = './save/%s.dat' % name
         data = pprint.pformat(value, width=1)
         with open(path, 'w') as fp:
             fp.write(data)

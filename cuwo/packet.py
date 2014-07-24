@@ -23,7 +23,7 @@
 
 from cuwo.entity import (EntityData, ItemData, read_masked_data,
                          write_masked_data, get_masked_size)
-from cuwo.strings import SOUNDS
+from cuwo import strings
 from cuwo.loader import Loader
 from cuwo.bytes import ByteReader, ByteWriter, OutOfData
 from cuwo.constants import FULL_MASK, BLOCK_SCALE
@@ -215,7 +215,10 @@ class SoundAction(Loader):
         self.volume = reader.read_float()
 
     def get_name(self):
-        return SOUNDS[self.sound_index]
+        return strings.SOUND_NAMES[self.sound_index]
+
+    def set_name(self, name):
+        self.sound_index = strings.SOUND_IDS[name]
 
     def write(self, writer):
         writer.write_vec3(self.pos / float(BLOCK_SCALE))

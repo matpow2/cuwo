@@ -236,7 +236,7 @@ def create_teleport_packet(pos, chunk_pos, user_id):
     packet.chunk_x = chunk_pos[0]
     packet.chunk_y = chunk_pos[1]
     packet.entity_id = 0
-    header.entity_type = static.get_type('Bench')
+    header.set_name('Bench')
     header.size = Vector3(0, 0, 0)
     header.closed = True
     header.orientation = static.ORIENT_SOUTH
@@ -267,14 +267,14 @@ def teleport(script, a, b=None):
     packet = create_teleport_packet(pos, chunk.pos, entity.entity_id)
     update_packet.static_entities.append(packet)
 
-    def add_packet():
+    def send_reset_packet():
         if chunk.static_entities:
             chunk.static_entities[0].update()
         else:
             packet = create_teleport_packet(pos, chunk.pos, 0)
             update_packet.static_entities.append(packet)
 
-    script.loop.call_later(0.1, add_packet)
+    script.loop.call_later(0.1, send_reset_packet)
 
 
 @command

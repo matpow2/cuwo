@@ -84,6 +84,32 @@ def parse_clock(value):
     return v
 
 
+def format_time(time, use_seconds=True):
+    time = int(time)
+    days = time // (1440 * 60)
+    time -= days * 1440 * 60
+    hours = time // (60 * 60)
+    time -= hours * 60 * 60
+    minutes = time // 60
+    seconds = time - minutes * 60 if use_seconds else 0
+    if days == hours == minutes == seconds == 0:
+        return 'less than a %s' % ('second' if use_seconds else 'minute')
+    days_s = '%s day' % days if days > 0 else None
+    hours_s = '%s hour' % hours if hours > 0 else None
+    minutes_s = '%s minute' % minutes if minutes > 0 else None
+    seconds_s = '%s second' % seconds if seconds > 0 else None
+    if days > 1:
+        days_s += 's'
+    if hours > 1:
+        hours_s += 's'
+    if minutes > 1:
+        minutes_s += 's'
+    if seconds > 1:
+        seconds_s += 's'
+    text = ', '.join(s for s in (days_s, hours_s, minutes_s, seconds_s) if s)
+    return text
+
+
 def validate_chunk_pos(x, y):
     return (x >= 0 and x < constants.MAX_CHUNK and
             y >= 0 and y < constants.MAX_CHUNK)

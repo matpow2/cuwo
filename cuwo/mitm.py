@@ -30,6 +30,7 @@ class BackendProtocol(asyncio.Protocol):
     def __init__(self, protocol):
         self.protocol = protocol
         protocol.relay_client = self
+        protocol.got_relay_client()
 
     def connection_made(self, transport):
         self.transport = transport
@@ -122,7 +123,7 @@ class FrontendProtocol(asyncio.Protocol):
                                     ServerUpdate.packet_id):
             print('Got server packet:', packet.packet_id)
 
-    def got_relay_client(self, f):
+    def got_relay_client(self):
         for data in self.relay_packets:
             self.relay_client.transport.write(data)
         self.relay_packets = None
@@ -132,7 +133,7 @@ class FrontendProtocol(asyncio.Protocol):
         print('On connection')
         co = self.loop.create_connection(lambda: BackendProtocol(self),
                                          '127.0.0.1', 12346)
-        asyncio.Task(co).add_done_callback(self.got_relay_client)
+        asyncio.Task(co)
 
     def connection_lost(self, reason):
         self.disconnected = True

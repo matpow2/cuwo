@@ -36,7 +36,7 @@ def comment_remover(text):
     return re.sub(pattern, replacer, text)
 
 
-class FormattedOutput(object):
+class FormattedOutput:
     def __init__(self, description):
         self.data = ''
         self.indentation = 0
@@ -58,6 +58,10 @@ class FormattedOutput(object):
         self.indentation -= 1
         if self.indentation < 0:
             raise TypeError('invalid indentation')
+
+    def write_inverse_dict(self, name, original):
+        self.putln('%s = {v: k for k, v in %s.items()}' % (name, original))
+        self.putln()
 
     def write_dict(self, name, value):
         self.putln('%s = {' % name)
@@ -269,6 +273,7 @@ def main():
     out.putln('from libc.stdint cimport int64_t, uint64_t')
     out.putln('from cuwo.bytes cimport ByteReader, ByteWriter')
     out.putln('from cuwo.vector import Vector3')
+    out.putln('from cuwo import strings')
     out.putln()
     out.putln()
 
@@ -310,6 +315,7 @@ def main():
         has_cinit = struct.name == 'EntityData'
         lists = []
         objects = []
+        defaults = []
 
         for attr in struct.attrs:
             name, typ, dim, spec = attr.get()
@@ -318,6 +324,7 @@ def main():
             if dim:
                 if typ == 'int8':
                     typ = 'str'
+                    defaults.append((name, "''"))
                 else:
                     has_cinit = True
                     lists.append((typ, name, dim))
@@ -326,6 +333,9 @@ def main():
                 if typ in PYTHON_OBJECTS or spec:
                     has_cinit = True
                     objects.append((typ, name))
+                elif attr.default:
+                    defaults.append((name, attr.default))
+                    has_cinit = True
                 typ = CYTHON_TYPES.get(typ, typ)
             out.putln('%s %s' % (typ, name))
         if struct.name == 'EntityData':
@@ -356,6 +366,9 @@ def main():
                 else:
                     value = '%s.__new__(%s)' % (typ, typ)
                 out.putln('self.%s = %s' % (name, value))
+
+            for (name, default) in defaults:
+                out.putln('self.%s = %s' % (name, default))
 
             out.dedent()
             out.putln()
@@ -427,6 +440,26 @@ def main():
 
             for index in sorted(bits):
                 name = bits[index]
+
+        elif struct.name == 'AppearanceData':
+            for attr in struct.attrs:
+                if attr.name.endswith('_model'):
+                    name = attr.name.split('_')[0]
+
+                    out.putln()
+
+                    out.putln('def get_%s(self):' % name)
+                    out.indent()
+                    out.putln('return strings.MODEL_NAMES[self.%s]'
+                              % attr.name)
+                    out.dedent()
+
+                    out.putln()
+
+                    out.putln('def set_%s(self, name):' % name)
+                    out.indent()
+                    out.putln('self.%s = strings.MODEL_IDS[name]' % attr.name)
+                    out.dedent()
 
         out.dedent()
         out.putln()
@@ -585,16 +618,56 @@ def main():
             sound_name = line[start:end]
             sounds[current_index] = sound_name
 
+    # models
+    model_input = open('models.h', 'rb').read().decode('utf-8')
+    model_input = model_input.splitlines()
+    models = {-1: None}
+    current_name = None
+    for line in model_input:
+        if 'std_string_append' in line:
+            if current_name is not None:
+                print(line)
+                raise NotImplementedError()
+            start = line.rfind(', ') + 2
+            line = line[start:-2]
+            if line.startswith('(const char *)'):
+                line = line.replace('(const char *)', '')
+            if line in ('"cubequest4.cub"', '&byte_135B530', '"data1.db"'):
+                continue
+            name, ext = eval(line).split('.')
+            current_name = name
+        elif current_name is None:
+            continue
+        model_id = None
+        if line.endswith('];'):
+            start = line.rfind('[') + 1
+            model_id = int(line[start:-2])
+        elif 'this_4pointer_off' in line:
+            start = line.rfind(', ') + 2
+            model_id = int(line[start:-2])
+        else:
+            continue
+        models[model_id] = current_name
+        current_name = None
+
     out = FormattedOutput('Constant string definitions')
-    out.write_dict('SOUNDS', sounds)
+    out.write_dict('SOUND_NAMES', sounds)
+    out.write_inverse_dict('SOUND_IDS', 'SOUND_NAMES')
+    out.write_dict('MODEL_NAMES', models)
+    out.write_inverse_dict('MODEL_IDS', 'MODEL_NAMES')
 
     print('Writing defs from tgen')
     tgen.initialize(1234, '../data/')
     out.write_dict('ITEM_NAMES', tgen.get_item_names())
+    out.write_inverse_dict('ITEM_IDS', 'ITEM_NAMES')
     out.write_dict('STATIC_NAMES', tgen.get_static_names())
+    out.write_inverse_dict('STATIC_IDS', 'STATIC_NAMES')
     out.write_dict('ENTITY_NAMES', tgen.get_entity_names())
+    out.write_inverse_dict('ENTITY_IDS', 'ENTITY_NAMES')
     out.write_dict('LOCATION_NAMES', tgen.get_location_names())
+    out.write_inverse_dict('LOCATION_IDS', 'LOCATION_NAMES')
     out.write_dict('QUARTER_NAMES', tgen.get_quarter_names())
+    out.write_inverse_dict('QUARTER_IDS', 'QUARTER_NAMES')
 
     def remove(value, rem):
         new_dict = {}
@@ -603,8 +676,10 @@ def main():
         return new_dict
 
     out.write_dict('SKILL_NAMES', remove(tgen.get_skill_names(), 'Skill'))
+    out.write_inverse_dict('SKILL_IDS', 'SKILL_NAMES')
     out.write_dict('ABILITY_NAMES', remove(tgen.get_ability_names(),
                                            'Ability'))
+    out.write_inverse_dict('ABILITY_IDS', 'ABILITY_NAMES')
     print('Done')
 
     open('../cuwo/strings.py', 'wb').write(out.get())

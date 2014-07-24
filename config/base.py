@@ -11,7 +11,7 @@ seed = 26879
 time_modifier = 1.0
 
 # List of scripts to run on the server on startup.
-# Consider turning on 'pvp', i.e. player versus player
+# Consider turning one of the game modes on: pvp, ctf
 scripts = ['log', 'ddos', 'commands', 'welcome', 'ban', 'console', 'master',
            'anticheat']
 

@@ -27,6 +27,7 @@ from cuwo import static
 from cuwo.common import get_item_hp, get_max_xp, get_chunk
 from cuwo.types import IDPool
 from cuwo import constants
+from cuwo import strings
 
 try:
     from cuwo import tgen
@@ -56,6 +57,20 @@ class Entity(entitydata.EntityData):
     def set_hp(self, value=None):
         self.hp = value or self.get_max_hp()
         self.mask |= entitydata.HP_FLAG
+
+    def set_position(self, pos):
+        self.pos = pos
+        self.mask |= entitydata.POS_FLAG
+
+    def get_type(self):
+        return strings.ENTITY_NAMES[self.entity_type]
+
+    def set_type(self, name):
+        self.entity_type = strings.ENTITY_IDS[name]
+        self.mask |= entitydata.TYPE_FLAG
+
+    def get_ray_hit(self):
+        return self.pos + self.ray_hit * constants.BLOCK_SCALE
 
     def get_max_hp(self):
         hp = self.get_base_hp()
@@ -105,7 +120,7 @@ class StaticEntity:
         self.header = header
         self.world = chunk.world
 
-        name = header.get_name()
+        name = header.get_type()
 
         if name in static.SIT_ENTITIES:
             self.interact = self.interact_sit
@@ -170,7 +185,7 @@ class Chunk:
 
         if self.world.use_entities:
             for data in self.data.dynamic_entities:
-                entity = self.world.entity_class(self.world, data.entity_id)
+                entity = self.world.create_entity(data.entity_id)
                 data.set_entity(entity)
                 entity.reset()
 
@@ -226,6 +241,9 @@ class World:
         self.gen_queue = Queue()
         self.cache = {}
         loop.run_in_executor(None, self.run_gen, seed)
+
+    def create_entity(self, entity_id=None):
+        return self.entity_class(self, entity_id)
 
     def update(self):
         pass
