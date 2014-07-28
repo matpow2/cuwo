@@ -445,9 +445,7 @@ cdef class DynamicEntity:
         float yaw
         uint32_t power_base
         uint32_t not_used19
-        uint32_t not_used20
-        uint32_t not_used21
-        uint32_t not_used22
+        object not_used20
         object appearance
         list equipment
         float max_hp_multiplier
@@ -477,9 +475,7 @@ cdef class DynamicEntity:
         reader.skip(3)
         self.not_used19 = reader.read_uint8()
         reader.skip(3)
-        self.not_used20 = reader.read_uint32()
-        self.not_used21 = reader.read_uint32()
-        self.not_used22 = reader.read_uint32()
+        self.not_used20 = reader.read_ivec3()
         reader.skip(4*2)
         self.appearance = AppearanceData()
         self.appearance.read(reader)
@@ -517,8 +513,6 @@ cdef class DynamicEntity:
         entity.power_base = self.power_base
         entity.not_used19 = self.not_used19
         entity.not_used20 = self.not_used20
-        entity.not_used21 = self.not_used21
-        entity.not_used22 = self.not_used22
 
         entity.appearance = self.appearance
         entity.equipment = self.equipment
