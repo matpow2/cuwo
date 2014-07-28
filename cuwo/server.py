@@ -336,7 +336,7 @@ class CubeWorldConnection(asyncio.Protocol):
 
     def on_hit_packet(self, packet):
         try:
-            target = self.server.entities[packet.target_id]
+            target = self.world.entities[packet.target_id]
         except KeyError:
             return
 
