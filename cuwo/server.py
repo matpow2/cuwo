@@ -349,9 +349,12 @@ class CubeWorldConnection(asyncio.Protocol):
         if target.hp <= 0:
             return
         target.hp -= packet.damage
-        if target.hp <= 0:
-            self.scripts.call('on_kill', target=target)
-            target.scripts.call('on_die', killer=self.entity)
+        if target.hp > 0:
+            return
+        self.scripts.call('on_kill', target=target)
+        if not target.connection:
+            return
+        target.connection.scripts.call('on_die', killer=self.entity)
 
     def on_shoot_packet(self, packet):
         self.server.update_packet.shoot_actions.append(packet)
