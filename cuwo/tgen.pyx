@@ -429,7 +429,8 @@ cdef class StaticEntity:
         cdef uint32_t something6 = reader.read_uint32()
         cdef uint32_t something7 = reader.read_uint32()
 
-        self.items = read_item_with_header_lists(vec_start, vec_end)
+        ## disabled for now
+        # self.items = read_item_with_header_lists(vec_start, vec_end)
 
 
 cdef class DynamicEntity:
