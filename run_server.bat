@@ -1,2 +1,2 @@
-py -3 -m cuwo.server
+C:\Windows\py.exe -3 -m cuwo.server
 pause
