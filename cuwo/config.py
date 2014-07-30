@@ -16,12 +16,15 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import glob
 
 
 class ConfigDict(dict):
     def __getattr__(self, name):
-        return self[name]
+        try:
+            return self[name]
+        except KeyError:
+            raise KeyError('Missing entry %r in configuration file %s.' %
+                           (name, self.filename)) from None
 
 
 class ConfigObject:
@@ -29,14 +32,26 @@ class ConfigObject:
         self.directory = directory
         self.reload()
 
+    def load(self, name):
+        path = os.path.join(self.directory, name + '.py')
+        path = os.path.abspath(path)
+
+        try:
+            with open(path) as fp:
+                data = fp.read()
+        except FileNotFoundError:
+            raise FileNotFoundError('Could not find configuration file %s.'
+                                    % path) from None
+
+        new_dict = ConfigDict()
+        new_dict.filename = path
+        exec(compile(data, path, 'exec'), {}, new_dict)
+        self.config_dict[name] = new_dict
+
     def reload(self):
         self.config_dict = {}
-        spec = os.path.join(self.directory, '*.py')
-        for path in glob.glob(spec):
-            name = os.path.splitext(os.path.basename(path))[0]
-            new_dict = ConfigDict()
-            exec(compile(open(path).read(), path, 'exec'), {}, new_dict)
-            self.config_dict[name] = new_dict
 
     def __getattr__(self, name):
+        if name not in self.config_dict:
+            self.load(name)
         return self.config_dict[name]
