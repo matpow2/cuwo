@@ -368,6 +368,8 @@ cdef struct ChunkEntry:
     unsigned char r, g, b, a
 
 cdef struct ChunkXY:
+    # cube::Field
+
     int a, b  # b is not actually used
     unsigned int size
     ChunkEntry * items
@@ -434,6 +436,8 @@ cdef class StaticEntity:
 
 
 cdef class DynamicEntity:
+    # cube::Spawn
+
     cdef public:
         object pos
         uint32_t hostile_type
@@ -546,6 +550,8 @@ cdef class DynamicEntity:
 
 
 cdef class Chunk:
+    # chunk::Zone
+
     cdef ChunkData data
     cdef public:
         list items

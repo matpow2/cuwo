@@ -70,7 +70,7 @@ class Command:
 
         # get min args
         func_info = inspect.getargspec(base)
-        self.min_args = len(func_info.args) - 1
+        self.min_args = self.max_args = len(func_info.args) - 1
         if func_info.defaults is not None:
             self.min_args -= len(func_info.defaults)
 
@@ -348,7 +348,7 @@ class ServerScript(BaseScript):
             return
         user.parent = self  # for ScriptInterface
 
-        if len(args) < command.min_args:
+        if len(args) < command.min_args or len(args) > command.max_args:
             return command.get_syntax()
 
         try:
