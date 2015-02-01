@@ -143,7 +143,7 @@ def stun(script, name, milliseconds=1000):
 def heal(script, name=None, hp=1000):
     """Heals a player by a specified amount."""
     player = script.get_player(name)
-    player.damage(-int(hp))
+    player.entity.damage(-int(hp))
     message = '%s was healed' % player.name
     return message
 
@@ -246,7 +246,7 @@ def create_teleport_packet(pos, chunk_pos, user_id):
     packet.chunk_x = chunk_pos[0]
     packet.chunk_y = chunk_pos[1]
     packet.entity_id = 0
-    header.set_name('Bench')
+    header.set_type('Bench')
     header.size = Vector3(0, 0, 0)
     header.closed = True
     header.orientation = static.ORIENT_SOUTH

@@ -672,6 +672,7 @@ class CubeWorldServer:
         self.exit_code = code
         if self.world:
             self.world.stop()
+        self.scripts.unload()
         self.loop.stop()
 
     # asyncio wrappers

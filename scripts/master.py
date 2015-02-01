@@ -101,7 +101,7 @@ class MasterClient(MasterProtocol):
 
     def connection_made(self, transport):
         self.transport = transport
-        asyncio.Task(self.send_loop())
+        self.task = asyncio.Task(self.send_loop())
 
     @asyncio.coroutine
     def send_loop(self):
@@ -134,14 +134,17 @@ class MasterRelay(ServerScript):
     def on_load(self):
         asyncio.Task(self.start())
 
+    def on_unload(self):
+        self.protocol.task.cancel()
+
     @asyncio.coroutine
     def start(self):
         config = self.server.config
         master = config.master
         remote = (master.server, master.port)
         local_port = config.base.port
-        protocol = MasterClient(self.server, remote)
-        yield from self.server.create_datagram_endpoint(lambda: protocol,
+        self.protocol = MasterClient(self.server, remote)
+        yield from self.server.create_datagram_endpoint(lambda: self.protocol,
                                                         port=local_port)
 
     def on_new_connection(self, event):
