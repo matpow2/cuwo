@@ -69,7 +69,7 @@ from libcpp.vector cimport vector
 # - 1 bit, used in mesh renderer (caves, darkness? should be empty)
 # - 1 bit, ?
 
-cdef enum:
+cpdef enum BlockType:
     EMPTY_TYPE = 0
     WATER_TYPE = 2
     WATER2_TYPE = 3
@@ -211,6 +211,7 @@ cdef int get_block_type(ChunkEntry * block) nogil:
 cdef tuple get_block_tuple(ChunkEntry * block):
     return (block.r, block.g, block.b)
 
+
 cdef class XYProxy:
     cdef ChunkXY * data
 
@@ -225,9 +226,13 @@ cdef class XYProxy:
     def __len__(self):
         return self.data.size
 
-    def __getitem__(self, index):
+    def __getitem__(self, int index):
         cdef ChunkEntry * data = &self.data.items[index]
         return get_block_tuple(data)
+
+    cpdef int get_type(self, int index):
+        cdef ChunkEntry * data = &self.data.items[index]
+        return get_block_type(data)
 
 
 cdef struct Vertex:
