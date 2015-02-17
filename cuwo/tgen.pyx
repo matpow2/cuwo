@@ -220,7 +220,7 @@ cdef int get_block_type(ChunkEntry * block) nogil:
     return block.a & 0x1F
 
 cdef bint get_block_breakable(ChunkEntry * block) nogil:
-    return (block.a & 0x40) != 0
+    return (block.a & 0x20) != 0
 
 cdef tuple get_block_tuple(ChunkEntry * block):
     return (block.r, block.g, block.b)
