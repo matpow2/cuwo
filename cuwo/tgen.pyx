@@ -56,25 +56,37 @@ cdef extern from "tgen.h" nogil:
 
 from libcpp.vector cimport vector
 
+# block types:
+# (courtesy of UserXXX, found by static analysis)
+#
+# Constant  | Type             | Solid | Accepts color
+# --------- | ---------------- | ----- | -------------
+# 0         | Empty            | No    | No
+# 1         | Solid (Unknown)  | Yes   | Yes
+# 2         | Water            | No    | No
+# 3         | Flat Water       | Yes   | The sides take the specified color,
+#           | (walkable)       |       | top side looks like water
+# 4         | Solid (Grass)    | Yes   | Yes
+# 5         | Solid (Unknown)  | Yes   | Yes
+# 6         | Solid (Mountain) | Yes   | Yes
+# 7         | Solid (Unknown)  | Yes   | Yes
+# 8         | Solid (Trees)    | Yes   | Yes
 
 # alpha:
-# - 5 bits, block type
-#   - 0: empty
-#   - 2: water
-#   - 3: also water?
-#   - 4: grass
-#   - 6: mountain, layer under grass
-#   - 8: trees
-# - 1 bit, unknown (not used in mesh renderer?)
+# - 5 bits, block type, see block type table above
+# - 1 bit, set if breakable by bombs/bosses (found by static analysis)
 # - 1 bit, used in mesh renderer (caves, darkness? should be empty)
 # - 1 bit, ?
 
 cpdef enum BlockType:
     EMPTY_TYPE = 0
+    SOLID1_TYPE = 1
     WATER_TYPE = 2
-    WATER2_TYPE = 3
+    FLATWATER_TYPE = 3
     GRASS_TYPE = 4
+    SOLID2_TYPE = 5
     MOUNTAIN_TYPE = 6
+    SOLID3_TYPE = 7
     TREE_TYPE = 8
 
 
@@ -207,6 +219,8 @@ def get_ability_names():
 cdef int get_block_type(ChunkEntry * block) nogil:
     return block.a & 0x1F
 
+cdef bint get_block_breakable(ChunkEntry * block) nogil:
+    return (block.a & 0x40) != 0
 
 cdef tuple get_block_tuple(ChunkEntry * block):
     return (block.r, block.g, block.b)
@@ -231,8 +245,10 @@ cdef class XYProxy:
         return get_block_tuple(data)
 
     cpdef int get_type(self, int index):
-        cdef ChunkEntry * data = &self.data.items[index]
-        return get_block_type(data)
+        return get_block_type(&self.data.items[index])
+
+    cpdef bint get_breakable(self, int index):
+        return get_block_breakable(&self.data.items[index])
 
 
 cdef struct Vertex:
