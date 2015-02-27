@@ -66,6 +66,10 @@ names = [
 includes = ['./cuwo', './terraingen/include', './terraingen/src']
 
 lib_dir = './lib'
+try:
+    os.makedirs(lib_dir)
+except OSError:
+    pass
 
 macros = []
 
