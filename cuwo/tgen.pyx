@@ -59,18 +59,34 @@ from libcpp.vector cimport vector
 # block types:
 # (courtesy of UserXXX, found by static analysis)
 #
+# Special blocks:
 # Constant  | Type             | Solid | Accepts color
 # --------- | ---------------- | ----- | -------------
 # 0         | Empty            | No    | No
-# 1         | Solid (Unknown)  | Yes   | Yes
 # 2         | Water            | No    | No
 # 3         | Flat Water       | Yes   | The sides take the specified color,
-#           | (walkable)       |       | top side looks like water
-# 4         | Solid (Grass)    | Yes   | Yes
-# 5         | Solid (Unknown)  | Yes   | Yes
-# 6         | Solid (Mountain) | Yes   | Yes
-# 7         | Solid (Unknown)  | Yes   | Yes
-# 8         | Solid (Trees)    | Yes   | Yes
+#           | (walkable)       |       | top side looks like water 
+#
+# Solid blocks with color:
+# Constant | Description
+# -------- | ----------------
+# 1        | Unknown
+# 4        | Grass
+# 5        | Fields near cities and cliffs (the border of the plateaus found
+#          | in e.g. "normal" lands) except in lava lands
+# 6        | Rocks / Buildings (in cities and for quest buildings e.g.
+#          | castles) / Cliffs in lava lands
+# 7        | Trunks and limbs (everything that is "wood") of trees
+# 8        | Leafs of trees, this includes the snow on the "leafs" of trees in
+#          | snowy lands
+# 9        | Sand
+# 10       | Snow
+# 11       | Unknown
+# 12       | Floor in lava lands
+# 13       | Unknown
+# 14       | Roofs of houses in cities, but only on normal houses, special
+#          | buildings like the training buildings use 6
+# 15       | Unknown
 
 # alpha:
 # - 5 bits, block type, see block type table above
@@ -84,10 +100,17 @@ cpdef enum BlockType:
     WATER_TYPE = 2
     FLATWATER_TYPE = 3
     GRASS_TYPE = 4
-    SOLID2_TYPE = 5
+    FIELD_TYPE = 5
     MOUNTAIN_TYPE = 6
-    SOLID3_TYPE = 7
-    TREE_TYPE = 8
+    WOOD_TYPE = 7
+    LEAF_TYPE = 8
+    SAND_TYPE = 9
+    SNOW_TYPE = 10
+    SOLID2_TYPE = 11
+    LAVA_TYPE = 12
+    SOLID3_TYPE = 13
+    ROOF_TYPE = 14
+    SOLID4_TYPE = 15
 
 
 def initialize(seed, path):
