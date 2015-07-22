@@ -60,7 +60,7 @@ cdef class ItemData:
         unsigned char rarity
         unsigned char material
         unsigned char flags
-        short level
+        unsigned short level
         list items
         unsigned int upgrade_count
 
@@ -80,7 +80,7 @@ cdef class ItemData:
         self.material = reader.read_uint8()
         self.flags = reader.read_uint8()
         reader.skip(1)
-        self.level = reader.read_int16()
+        self.level = reader.read_uint16()
         reader.skip(2)
         for i in range(32):
             (<ItemUpgrade>self.items[i]).read(reader)
@@ -96,7 +96,7 @@ cdef class ItemData:
         writer.write_uint8(self.material)
         writer.write_uint8(self.flags)
         writer.pad(1)
-        writer.write_int16(self.level)
+        writer.write_uint16(self.level)
         writer.pad(2)
         for item in self.items:
             item.write(writer)

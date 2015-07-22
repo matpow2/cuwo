@@ -18,7 +18,8 @@ struct ItemData
   _BYTE material;
   _BYTE flags;
   _BYTE pad2[1];
-  signed short level = 1;
+  /* signed? probably not: https://bpaste.net/show/cbab9c88524a */
+  _WORD level = 1;
   _BYTE pad3[2];
   ItemUpgrade items[32];
   _DWORD upgrade_count;
