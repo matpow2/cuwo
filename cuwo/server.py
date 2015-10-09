@@ -427,7 +427,8 @@ class CubeWorldConnection(asyncio.Protocol):
     def kick(self, reason=None):
         if reason is not None:
             self.send_chat('You have been kicked: %s' % reason)
-            self.server.send_chat('%s has been kicked: %s' % (self.name, reason))
+            self.server.send_chat('%s has been kicked: %s' %
+                    (self.name, reason))
         else:
             self.send_chat('You have been kicked')
             self.server.send_chat('%s has been kicked' % (self.name)
