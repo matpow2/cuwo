@@ -431,7 +431,7 @@ class CubeWorldConnection(asyncio.Protocol):
                     (self.name, reason))
         else:
             self.send_chat('You have been kicked')
-            self.server.send_chat('%s has been kicked' % (self.name)
+            self.server.send_chat('%s has been kicked' % self.name)
         self.disconnect()
 
     # convenience methods
