@@ -4,7 +4,8 @@ server = 'irc.esper.net'
 password = None
 port = 6667
 ssl = False
-ssl_verify = True
+# False / "CERT_NONE" / "CERT_OPTIONAL" / "CERT_REQUIRED"
+ssl_verify = "CERT_REQUIRED"
 channel = '#cuwo.bots'
 channel_password = None
 commandprefix = '.'
