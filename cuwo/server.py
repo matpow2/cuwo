@@ -424,10 +424,14 @@ class CubeWorldConnection(asyncio.Protocol):
             self.loop.call_later(current_time, self.send_chat, line)
             current_time += 2
 
-    def kick(self, reason):
-        self.send_chat('You have been kicked: %s' % reason)
+    def kick(self, reason=None):
+        if reason is not None:
+            self.send_chat('You have been kicked: %s' % reason)
+            self.server.send_chat('%s has been kicked: %s' % (self.name, reason))
+        else:
+            self.send_chat('You have been kicked')
+            self.server.send_chat('%s has been kicked' % (self.name)
         self.disconnect()
-        self.server.send_chat('%s has been kicked: %s' % (self.name, reason))
 
     # convenience methods
 
