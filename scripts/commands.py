@@ -79,10 +79,10 @@ def help(script, name=None):
 
 @command
 @admin
-def kick(script, name):
+def kick(script, name, *reason):
     """Kicks the specified player."""
     player = script.get_player(name)
-    player.kick()
+    player.kick(reason)
 
 
 @command
