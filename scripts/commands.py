@@ -81,6 +81,7 @@ def help(script, name=None):
 @admin
 def kick(script, name, *reason):
     """Kicks the specified player."""
+    reason = ' '.join(reason) or 'No reason specified'
     player = script.get_player(name)
     player.kick(reason)
 
