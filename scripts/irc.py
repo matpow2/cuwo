@@ -212,7 +212,8 @@ class IRCScriptServer(ServerScript):
         ]
 
         bot = irc3.IrcBot(nick=irc.nickname, autojoins=[self.channel],
-                          host=irc.server, port=irc.port, ssl=False,
+                          host=irc.server, port=irc.port, ssl=irc.ssl,
+                          ssl_verify=irc.ssl_verify,
                           includes=plugins, script=self)
         bot.create_connection()
 
