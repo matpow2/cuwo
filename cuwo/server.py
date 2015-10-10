@@ -206,7 +206,8 @@ class CubeWorldConnection(asyncio.Protocol):
             print('Player %s left' % self.name)
         if self.entity is not None:
             self.entity.destroy()
-        elif self.entity_id is not None:
+        if self.entity_id is not None:
+            # XXX handle this in Entity.destroy?
             self.world.entity_ids.put_back(self.entity_id)
         if self.scripts is not None:
             self.scripts.unload()
