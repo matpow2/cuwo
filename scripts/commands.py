@@ -26,6 +26,8 @@ from cuwo import static
 from cuwo.vector import Vector3
 import platform
 
+MAX_STUN_TIME = 1000 * 60  # 60 seconds in milliseconds
+
 
 class CommandServer(ServerScript):
     pass
@@ -132,6 +134,13 @@ def kill(script, name=None):
 @admin
 def stun(script, name, milliseconds=1000):
     """Stuns a player for a specified duration of time."""
+
+    # Limit the stun time to a reasonable value as too high values can crash the server.
+    # Also disallow negative values just in case.
+    milliseconds = abs(milliseconds)
+    if milliseconds > MAX_STUN_TIME:
+        return 'Stun time is too long. Please specify a value lower than %d.' % MAX_STUN_TIME
+
     player = script.get_player(name)
     player.entity.damage(stun_duration=int(milliseconds))
     message = '%s was stunned' % player.name
