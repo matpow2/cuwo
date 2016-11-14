@@ -135,11 +135,12 @@ def kill(script, name=None):
 def stun(script, name, milliseconds=1000):
     """Stuns a player for a specified duration of time."""
 
-    # Limit the stun time to a reasonable value as too high values can crash the server.
+    # Limit the stun time to as too high values can crash the server.
     # Also disallow negative values just in case.
     milliseconds = abs(milliseconds)
     if milliseconds > MAX_STUN_TIME:
-        return 'Stun time is too long. Please specify a value lower than %d.' % MAX_STUN_TIME
+        err = 'Stun time is too long. Please specify a value lower than %d.'
+        return err % MAX_STUN_TIME
 
     player = script.get_player(name)
     player.entity.damage(stun_duration=int(milliseconds))
