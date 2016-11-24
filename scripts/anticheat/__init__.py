@@ -300,6 +300,11 @@ class AntiCheatConnection(ConnectionScript):
         if damage >= 0:
             self.last_hit_time = self.loop.time()
             self.hit_counter += 1
+            
+        # Should prevent character corruption
+        if event.packet.damage > 10000 or event.packet.damage < -10000:
+            self.remove_cheater('damage too high')
+            return False
 
         # how far away did this hit hit from where the target actually is
         hitdistance = (packet.pos - event.target.pos).magnitude_squared()
