@@ -149,24 +149,24 @@ static void TGEN_THISCALL orphan_imp_wrapc(uint32_t v0, uint32_t pad)
     orphan_imp((uint32_t)v0);
 }
 
-static uint32_t TGEN_CDECL _libm_sse2_cos_precise_imp_wrapc(uint32_t v0)
+static double TGEN_CDECL _libm_sse2_cos_precise_imp_wrapc(double v0)
 {
-    return (uint32_t)_libm_sse2_cos_precise_imp((double)v0);
+    return (double)_libm_sse2_cos_precise_imp((double)v0);
 }
 
-static uint32_t TGEN_CDECL _libm_sse2_sin_precise_imp_wrapc(uint32_t v0)
+static double TGEN_CDECL _libm_sse2_sin_precise_imp_wrapc(double v0)
 {
-    return (uint32_t)_libm_sse2_sin_precise_imp((double)v0);
+    return (double)_libm_sse2_sin_precise_imp((double)v0);
 }
 
-static uint32_t TGEN_CDECL _libm_sse2_sqrt_precise_imp_wrapc(uint32_t v0)
+static double TGEN_CDECL _libm_sse2_sqrt_precise_imp_wrapc(double v0)
 {
-    return (uint32_t)_libm_sse2_sqrt_precise_imp((double)v0);
+    return (double)_libm_sse2_sqrt_precise_imp((double)v0);
 }
 
-static uint32_t TGEN_CDECL _libm_sse2_pow_precise_imp_wrapc(uint32_t v0, uint32_t v1)
+static double TGEN_CDECL _libm_sse2_pow_precise_imp_wrapc(double v0, double v1)
 {
-    return (uint32_t)_libm_sse2_pow_precise_imp((double)v0, (double)v1);
+    return (double)_libm_sse2_pow_precise_imp((double)v0, (double)v1);
 }
 
 static uint32_t TGEN_THISCALL basic_istream_char_ctor_imp_wrapc(uint32_t v0, uint32_t pad, uint32_t v1, uint32_t v2, uint32_t v3)

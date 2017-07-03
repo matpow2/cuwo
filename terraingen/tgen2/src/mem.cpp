@@ -126,7 +126,7 @@ void unwrite_protect_memory(void * ptr, size_t size, bool exec)
 
 #ifdef IS_X64
 
-static std::function<void()> wrap_f;
+static void (*wrap_f)();
 
 DWORD CALLBACK thread_wrap(LPVOID)
 {
@@ -164,7 +164,7 @@ typedef NTSTATUS WINAPI NtQueryInformationThread_t(
     PVOID ThreadInformation, ULONG ThreadInformationLength,
     PULONG ReturnLength);
 
-void run_with_stack(std::function<void()> f)
+void run_with_stack(void (*f)())
 {
     wrap_f = f;
 
@@ -201,7 +201,7 @@ void run_with_stack(std::function<void()> f)
 
 #else
 
-void run_with_stack(std::function<void()> f)
+void run_with_stack(void (*f)())
 {
     f();
 }

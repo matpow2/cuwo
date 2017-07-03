@@ -26,24 +26,32 @@ const char * translate_path(char * path)
     return translated_path.c_str();
 }
 
+static void * tgen_generate_chunk_return;
+static uint32_t tgen_generate_chunk_x;
+static uint32_t tgen_generate_chunk_y;
+static void tgen_generate_chunk_call()
+{
+    uint32_t x = tgen_generate_chunk_x;
+    uint32_t y = tgen_generate_chunk_y;
+
+    call_x86_thiscall_3(
+        get_mem_va(0x5183D0), (uint32_t)manager_data, x, y);
+
+    // save_chunk_now();
+    // return 0;
+    // address 405E30 is
+    // void * __thiscall get_sector_chunk_data(__int64 chunk_pos)
+    tgen_generate_chunk_return = (void*)call_x86_thiscall_3(
+        get_mem_va(0x405E30), (uint32_t)manager_data, x, y
+    );
+}
+
 void * tgen_generate_chunk(uint32_t x, uint32_t y)
 {
-    void * ret;
-
-    CALL_WITH_STACK(
-        call_x86_thiscall_3(
-            get_mem_va(0x5183D0), (uint32_t)manager_data, x, y);
-
-        // save_chunk_now();
-        // return 0;
-        // address 405E30 is
-        // void * __thiscall get_sector_chunk_data(__int64 chunk_pos)
-        ret = (void*)call_x86_thiscall_3(
-            get_mem_va(0x405E30), (uint32_t)manager_data, x, y
-        );
-    );
-
-    return ret;
+    tgen_generate_chunk_x = x;
+    tgen_generate_chunk_y = y;
+    run_with_stack(tgen_generate_chunk_call);
+    return tgen_generate_chunk_return;
 }
 
 #if 0

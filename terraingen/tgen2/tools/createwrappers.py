@@ -107,6 +107,11 @@ def encode_c(data):
     out += vals + '\n};'
     return out
 
+def get_c_type(typ):
+    if typ == 'double':
+        return 'double'
+    return 'uint32_t'
+
 def add_func(name, patch, callconv, func_prot):
     if name == 'ignore':
         print('skipping', func_prot)
@@ -179,14 +184,14 @@ def add_func(name, patch, callconv, func_prot):
         state.asm.append((name, func_name))
 
     extract_this = (callconv == 'thiscall' and not state.is_x64)
-    c_args = [f'uint32_t v{i}' for i in range(len(args))]
+    c_args = [f'{get_c_type(args[i])} v{i}' for i in range(len(args))]
     if extract_this:
         c_args.insert(1, 'uint32_t pad')
     c_args = ', '.join(c_args)
     if ret == 'void':
         c_ret = 'void'
     else:
-        c_ret = 'uint32_t'
+        c_ret = get_c_type(ret)
 
     c_ret_final = c_ret
     if not state.is_x64:
@@ -204,7 +209,7 @@ def add_func(name, patch, callconv, func_prot):
     if c_ret == 'void':
         state.output_c += f'    {call};\n'
     else:
-        state.output_c += f'    return (uint32_t){call};\n'
+        state.output_c += f'    return ({c_ret}){call};\n'
     state.output_c += f'}}\n\n'
 
     print(name, patch, ret, args)
@@ -302,9 +307,9 @@ def do_callers():
                 asm += f'pop {reg}\n'
             asm += f'ret\n'
 
-            if callconv == 'thiscall' and state.is_msvc and state.is_x64 and i == 3:
-                print(asm)
-                input()
+            # if callconv == 'thiscall' and state.is_msvc and state.is_x64 and i == 3:
+            #     print(asm)
+            #     input()
             asm = get_asm(asm)
             asm = encode_c(asm)
             c_args = ['void*'] + ['uint32_t'] * i

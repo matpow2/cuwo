@@ -114,10 +114,11 @@ class ChunkManager(object):
     def run(self):
         print('Initializing tgen...')
         tgen.initialize(self.parent.seed, './data/')
+        print('Done')
         while self.running:
             key = self.gen_queue.get()
             x, y = key
-            # print 'Generating chunk', x, y
+            print('Generating chunk', x, y)
             off_x = (x - self.parent.chunk_x) * 256.0
             off_y = (y - self.parent.chunk_y) * 256.0
             data = tgen.generate(x, y).get_render(off_x, off_y)

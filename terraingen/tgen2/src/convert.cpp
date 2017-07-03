@@ -1,5 +1,4 @@
 #include "pe-parse/parser-library/parse.h"
-#include "pe-parse/parser-library/parse.h"
 #include "undname/undname.h"
 #include <stdio.h>
 #include <iostream>
@@ -260,9 +259,9 @@ int do_secs(void *N, VA secBase,
 
     sections.emplace_back(
         Section{secName, secBase, secBase + s.Misc.VirtualSize, sec_data});
-    std::cout << "Sec Name: " << secName << std::endl;
+    // std::cout << "Sec Name: " << secName << std::endl;
     int32_t offset = (uint32_t)sec_data - (uint32_t)secBase;
-    std::cout << "Offset: " << to_string<VA>(offset, std::hex) << '\n';
+    // std::cout << "Offset: " << to_string<VA>(offset, std::hex) << '\n';
 
     return 0;
 }
@@ -342,9 +341,11 @@ static void init_static()
     }
 }
 
+extern const char * translate_path(char * v);
+
 void real_main()
 {
-    parsed_pe * p = ParsePEFromFile("../../../data/Server.exe");
+    parsed_pe * p = ParsePEFromFile(translate_path("Server.exe"));
     imagebase = p->peHeader.nt.OptionalHeader.ImageBase;
     GetEntryPoint(p, entrypoint);
 
@@ -361,9 +362,6 @@ void real_main()
     init_static();
 
     call_x86_cdecl_0(get_entry_point());
-
-    // void * tgen_generate_chunk(uint32_t x, uint32_t y);
-    // void * chunk = tgen_generate_chunk(5, 5);
 }
 
 void tgen_init()
@@ -371,11 +369,16 @@ void tgen_init()
     static bool initialized = false;
     if (initialized)
         return;
-    CALL_WITH_STACK(real_main());
+    run_with_stack(real_main);
     initialized = true;
 }
 
 int main(int argc, char * argv[])
 {
+    void tgen_set_seed(uint32_t seed);
+    tgen_set_seed(26879);
     tgen_init();
+
+    void * tgen_generate_chunk(uint32_t x, uint32_t y);
+    void * chunk = tgen_generate_chunk(32803, 32803);
 }

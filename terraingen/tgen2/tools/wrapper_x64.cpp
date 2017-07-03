@@ -472,9 +472,9 @@ static unsigned char _libm_sse2_cos_precise_imp_asm[] =
 0xd, 0xcb, 0xc3
 };
 
-static uint32_t _libm_sse2_cos_precise_imp_wrapc(uint32_t v0)
+static double _libm_sse2_cos_precise_imp_wrapc(double v0)
 {
-    return (uint32_t)_libm_sse2_cos_precise_imp((double)v0);
+    return (double)_libm_sse2_cos_precise_imp((double)v0);
 }
 
 static unsigned char _libm_sse2_sin_precise_imp_asm[] = 
@@ -487,9 +487,9 @@ static unsigned char _libm_sse2_sin_precise_imp_asm[] =
 0xd, 0xcb, 0xc3
 };
 
-static uint32_t _libm_sse2_sin_precise_imp_wrapc(uint32_t v0)
+static double _libm_sse2_sin_precise_imp_wrapc(double v0)
 {
-    return (uint32_t)_libm_sse2_sin_precise_imp((double)v0);
+    return (double)_libm_sse2_sin_precise_imp((double)v0);
 }
 
 static unsigned char _libm_sse2_sqrt_precise_imp_asm[] = 
@@ -502,9 +502,9 @@ static unsigned char _libm_sse2_sqrt_precise_imp_asm[] =
 0xd, 0xcb, 0xc3
 };
 
-static uint32_t _libm_sse2_sqrt_precise_imp_wrapc(uint32_t v0)
+static double _libm_sse2_sqrt_precise_imp_wrapc(double v0)
 {
-    return (uint32_t)_libm_sse2_sqrt_precise_imp((double)v0);
+    return (double)_libm_sse2_sqrt_precise_imp((double)v0);
 }
 
 static unsigned char _libm_sse2_pow_precise_imp_asm[] = 
@@ -517,9 +517,9 @@ static unsigned char _libm_sse2_pow_precise_imp_asm[] =
 0xd, 0xcb, 0xc3
 };
 
-static uint32_t _libm_sse2_pow_precise_imp_wrapc(uint32_t v0, uint32_t v1)
+static double _libm_sse2_pow_precise_imp_wrapc(double v0, double v1)
 {
-    return (uint32_t)_libm_sse2_pow_precise_imp((double)v0, (double)v1);
+    return (double)_libm_sse2_pow_precise_imp((double)v0, (double)v1);
 }
 
 static unsigned char basic_istream_char_ctor_imp_asm[] = 

@@ -11,9 +11,7 @@ void free_mem(void * ptr, size_t size);
 void read_protect_memory(void * ptr, size_t size);
 void write_protect_memory(void * ptr, size_t size, bool exec);
 void unwrite_protect_memory(void * ptr, size_t size, bool exec);
-void run_with_stack(std::function<void()> f);
-
-#define CALL_WITH_STACK(X) run_with_stack([&]() { X; })
+void run_with_stack(void (*f)());
 
 struct SavedHeap
 {
