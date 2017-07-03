@@ -6,6 +6,9 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <sys/mman.h>
+#include <pthread.h>
 #endif
 
 #ifdef _WIN64
@@ -206,8 +209,6 @@ void run_with_stack(void (*f)())
 
 #else
 
-#include <pthread.h>
-
 static void (*wrap_f)();
 
 static void * thread_start(void *arg)
@@ -227,7 +228,7 @@ void run_with_stack(void (*f)())
     pthread_attr_setstack(&attr, sp, stack_size);
     pthread_create(&thr, attrp, &thread_start, NULL);
     pthread_attr_destroy(attrp);
-    pthread_join(&thr);
+    pthread_join(&thr, NULL);
 }
 
 #endif
