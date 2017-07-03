@@ -1,9 +1,12 @@
-#include <windows.h>
 #include <assert.h>
 #include <iostream>
 #include "mem.h"
 #include "config.h"
 #include <stdio.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #ifdef _WIN64
 // from LuaJIT
@@ -126,6 +129,8 @@ void unwrite_protect_memory(void * ptr, size_t size, bool exec)
 
 #ifdef IS_X64
 
+#ifdef _WIN32
+
 static void (*wrap_f)();
 
 DWORD CALLBACK thread_wrap(LPVOID)
@@ -198,6 +203,34 @@ void run_with_stack(void (*f)())
     ResumeThread(thread);
     WaitForSingleObject(thread, INFINITE);
 }
+
+#else
+
+#include <pthread.h>
+
+static void (*wrap_f)();
+
+static void * thread_start(void *arg)
+{
+    wrap_f();
+}
+
+void run_with_stack(void (*f)())
+{
+    pthread_t thr;
+    pthread_attr_t attr;
+    pthread_attr_t *attrp = &attr;
+
+    pthread_attr_init(&attr);
+    int stack_size = 1024 * 1024 * 2;
+    static void * sp = alloc_mem(stack_size);
+    pthread_attr_setstack(&attr, sp, stack_size);
+    pthread_create(&thr, attrp, &thread_start, NULL);
+    pthread_attr_destroy(attrp);
+    pthread_join(&thr);
+}
+
+#endif
 
 #else
 
