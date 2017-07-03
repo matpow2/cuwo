@@ -54,6 +54,8 @@ from cuwo.download import download_dependencies
 # filter_flags('CXXFLAGS')
 # filter_flags('ARCHFLAGS')
 
+macros = []
+compile_args = []
 ext_modules = []
 
 names = [
@@ -65,11 +67,13 @@ includes = ['./cuwo',
             './terraingen/tgen2/src',
             './terraingen/tgen2/external']
 
-macros = []
 
 if os.name == 'nt':
     macros += [('_CRT_SECURE_NO_WARNINGS', None),
                ('WIN32', 1)]
+    compile_args.append('/std:c++11')
+else:
+    compile_args.append('-std=c++11')
 
 has_sse2 = False
 if platform.machine() in ('AMD64', 'x86', 'x86_64', 'i386', 'i686'):
@@ -88,12 +92,14 @@ tgen_sources = [
 ]
 tgen_module = Extension('cuwo.tgen', ['./cuwo/tgen.pyx'] + tgen_sources,
                         language='c++', include_dirs=includes,
+                        extra_compile_args=compile_args,
                         define_macros=macros)
 ext_modules.append(tgen_module)
 
 for name in names:
     ext_modules.append(Extension(name, ['./%s.pyx' % name.replace('.', '/')],
                                  language='c++', include_dirs=includes,
+                                 extra_compile_args=compile_args,
                                  define_macros=macros))
 
 # class build_ext(_build_ext.build_ext):
