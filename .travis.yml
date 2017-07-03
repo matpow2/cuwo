@@ -3,6 +3,9 @@ sudo: false
 dist: trusty
 python:
  - '3.6'
+before_install:
+ - mkdir data
+ - wget http://cuwo.org/get_executable.php -P ./data/Server.exe
 install:
  - pip install -r requirements.txt
  - python setup.py build_ext --inplace

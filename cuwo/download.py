@@ -87,6 +87,10 @@ def get_input(prompt):
 
 
 def download_prompt(*files, email=None, password=None):
+    if 'TRAVIS' in os.environ:
+        # Do not prompt if on Travis.
+        return download_package(*files)
+
     if email and password:
         if not validate(email, password):
             print('Invalid login details, skipping package')
