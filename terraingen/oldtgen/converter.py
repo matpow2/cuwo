@@ -2357,7 +2357,9 @@ def main():
     parser.add_argument('file', help='path to Server.exe')
     args = parser.parse_args()
 
-    convert(args.file)
+    with open(args.file, 'rb') as fp:
+        data = fp.read()
+    convert(data)
 
 if __name__ == '__main__':
     main()

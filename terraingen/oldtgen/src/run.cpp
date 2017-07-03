@@ -101,6 +101,11 @@ const char * translate_path(char * path)
     return translated_path.c_str();
 }
 
+uint32_t tgen_get_manager()
+{
+    return (uint32_t)manager_addr;
+}
+
 void tgen_set_path(const char * dir)
 {
     data_path = dir;
