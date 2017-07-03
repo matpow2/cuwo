@@ -1,6 +1,8 @@
 #ifndef TGEN_CONFIG_H
 #define TGEN_CONFIG_H
 
+#include <stdint.h>
+
 #if defined(_M_X64) || defined(__amd64__)
 #define IS_X64
 #endif

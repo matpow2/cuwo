@@ -74,6 +74,7 @@ if os.name == 'nt':
     compile_args.append('/std:c++11')
 else:
     compile_args.append('-std=c++11')
+    compile_args.append('-fpermissive')
 
 has_sse2 = False
 if platform.machine() in ('AMD64', 'x86', 'x86_64', 'i386', 'i686'):

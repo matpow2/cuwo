@@ -9,6 +9,8 @@
 #include "config.h"
 #include <stdio.h>
 #include "call.h"
+#include <vector>
+#include <string.h>
 
 using namespace peparse;
 

@@ -22,6 +22,7 @@
 
 #include <sstream>
 #include "msvcstring.h"
+#include "config.h"
 
 // structs
 
