@@ -1,6 +1,9 @@
 language: python
+sudo: false
+dist: trusty
 python:
  - '3.6'
 install:
  - pip install -r requirements.txt
  - python setup.py build_ext --inplace
+script: python ./tools/testtgen.py
