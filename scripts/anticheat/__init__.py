@@ -217,7 +217,7 @@ class AntiCheatConnection(ConnectionScript):
 
     def on_consumable_update(self, event=None):
         if self.has_illegal_consumable():
-            self.remove_cheater('illegal consumable equiped')
+            self.remove_cheater('illegal consumable equipped')
             return False
 
     def on_flags_update(self, event=None):
@@ -542,7 +542,7 @@ class AntiCheatConnection(ConnectionScript):
         entity = self.connection.entity
         item = entity.consumable
 
-        # no consumable equiped
+        # no consumable equipped
         if item.type == 0:
             return False
 
