@@ -59,6 +59,7 @@ void * alloc_exec(size_t size)
 #else
     void* ptr = mmap(0, size, PROT_READ | PROT_WRITE | PROT_EXEC,
                      MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, 0);
+    assert((uintptr_t)ptr <= 0xFFFFFFFF);
     assert(ptr != MAP_FAILED);
 #endif
     return ptr;
@@ -71,6 +72,7 @@ void * alloc_mem(size_t size)
 #else
     void * ptr = mmap(0, size, PROT_READ | PROT_WRITE,
                       MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, 0);
+    assert((uintptr_t)ptr <= 0xFFFFFFFF);
     assert(ptr != MAP_FAILED);
 #endif
     return ptr;

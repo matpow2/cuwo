@@ -391,6 +391,9 @@ void tgen_init()
     static bool initialized = false;
     if (initialized)
         return;
+#if defined(IS_X64) && !defined(_WIN32)
+    startup_func();
+#endif 
     run_with_stack(real_main);
     initialized = true;
 }

@@ -80,6 +80,15 @@ use32
 
 '''
 
+startup = x86_call_base + '''
+startup:
+X86_Start
+push 0x2b
+pop ds
+X86_End
+ret
+'''
+
 class state:
     is_msvc = False
     output_c = ''
@@ -334,6 +343,16 @@ def do_callers():
                               f'imp.asm_size);\\\n')
             setup_callers += (f'{name} = (uint32_t (*)({c_args}))f;\\\n')
             setup_callers += '}'
+
+    if is_x64 and not is_msvc:
+        startup_asm = get_asm(startup)
+        state.output_c += f'uint32_t (*startup_func)();\n'
+        state.output_h += f'extern uint32_t (*startup_func)();\n'
+        state.output_c += f'unsigned char startup_asm[] = {startup_asm}\n\n'
+        imports.append(f'{{"startup_func", '
+                       f'Import{{&startup_asm[0], sizeof startup_asm, '
+                       f'NULL}}}}')
+
     state.output_c += setup_callers + '\n\n'
     return imports
 
@@ -383,8 +402,6 @@ for (is_msvc, is_x64) in ((True, True), (False, True),
 
     state.output_c += (f'std::vector<Patch> patches(\n'
                        f'{{\n{patches}\n}}\n);')
-
-
 
     name = 'wrapper'
     if is_msvc:
