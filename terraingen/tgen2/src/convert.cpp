@@ -264,6 +264,7 @@ int do_secs(void *N, VA secBase,
     int64_t offset = (uint64_t)sec_data - (uint64_t)secBase;
 #ifndef NDEBUG
     std::cout << "Sec Name: " << secName << std::endl;
+    std::cout << "New offset: " << (uint64_t)sec_data << '\n';
     std::cout << "Offset: " << offset << '\n';
 #endif
 
