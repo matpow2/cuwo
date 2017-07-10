@@ -261,10 +261,10 @@ int do_secs(void *N, VA secBase,
 
     sections.emplace_back(
         Section{secName, secBase, secBase + s.Misc.VirtualSize, sec_data});
-    int32_t offset = (uint32_t)sec_data - (uint32_t)secBase;
+    int64_t offset = (uint64_t)sec_data - (uint64_t)secBase;
 #ifndef NDEBUG
     std::cout << "Sec Name: " << secName << std::endl;
-    std::cout << "Offset: " << to_string<VA>(offset, std::hex) << '\n';
+    std::cout << "Offset: " << offset << '\n';
 #endif
 
     return 0;
