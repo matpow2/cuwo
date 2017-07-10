@@ -346,6 +346,7 @@ def do_callers():
 
     if is_x64 and not is_msvc:
         startup_asm = get_asm(startup)
+        startup_asm = encode_c(startup_asm)
         state.output_c += f'uint32_t (*startup_func)();\n'
         state.output_h += f'extern uint32_t (*startup_func)();\n'
         state.output_c += f'unsigned char startup_asm[] = {startup_asm}\n\n'
