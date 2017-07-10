@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.0)
 set (CMAKE_CXX_STANDARD 11)
 project(tgen)
 
@@ -16,6 +16,7 @@ set(SRC
     ${SRC}
 )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -std=c++11")
 
 add_executable(tgen ${SRC})
 target_include_directories(tgen PUBLIC
@@ -23,4 +24,4 @@ target_include_directories(tgen PUBLIC
                            ${EXTERNAL_DIR}
                            )
 target_compile_definitions(tgen PUBLIC)
-target_link_libraries(tgen LINK_PUBLIC)
+target_link_libraries(tgen LINK_PUBLIC pthread dl)

@@ -23,8 +23,8 @@ echo 'python setup.py build_ext --inplace' >> update.sh
 source run_pyenv.sh
 
 pyenv update
-pyenv install 3.4.1 --skip-existing
-pyenv local 3.4.1
+pyenv install 3.6.1 --skip-existing
+pyenv local 3.6.1
 pip install -r requirements.txt
 python setup.py build_ext --inplace
 
