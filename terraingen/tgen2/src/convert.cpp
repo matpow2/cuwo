@@ -365,10 +365,6 @@ void real_main()
 
     do_patches();
 
-#ifdef IS_X64
-    SETUP_CALLERS();
-#endif
-
 #ifndef NDEBUG
     std::cout << "init static\n";
 #endif
@@ -391,6 +387,9 @@ void tgen_init()
     static bool initialized = false;
     if (initialized)
         return;
+#ifdef IS_X64
+    SETUP_CALLERS();
+#endif
 #if defined(IS_X64) && !defined(_WIN32)
     startup_func();
 #endif 
