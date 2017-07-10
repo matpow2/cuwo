@@ -272,7 +272,7 @@ extern "C" {
     int heap_munmap(void * ptr, int size)
     {
         if (size == 0)
-            return NULL;
+            return 0;
         // std::cout << "Free: " << size << '\n';
         free_mem(ptr, size);
         return 0;

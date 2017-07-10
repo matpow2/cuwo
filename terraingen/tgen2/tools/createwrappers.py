@@ -86,7 +86,12 @@ class state:
 
 temp_bin_path = os.path.join(os.path.dirname(__file__), 'temp.bin')
 temp_asm_path = os.path.join(os.path.dirname(__file__), 'temp.asm')
-fasm_path = os.path.join(os.path.dirname(__file__), 'fasm', 'FASM.exe')
+
+for path in ('fasm/FASM.exe', 'fasm/fasm.x64', 'fasm/fasm'):
+    fasm_path = os.path.join(os.path.dirname(__file__), path)
+    if not os.path.isfile(fasm_path):
+        continue
+
 def get_asm(asm):
     with open(temp_asm_path, 'w', encoding='utf-8') as fp:
         fp.write(asm)
