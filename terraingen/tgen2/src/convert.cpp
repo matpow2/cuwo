@@ -348,6 +348,8 @@ extern const char * translate_path(char * v);
 void real_main()
 {
     parsed_pe * p = ParsePEFromFile(translate_path("Server.exe"));
+    if (p == NULL)
+        std::cout << "Could not find Server.exe\n";
     imagebase = p->peHeader.nt.OptionalHeader.ImageBase;
     GetEntryPoint(p, entrypoint);
 
