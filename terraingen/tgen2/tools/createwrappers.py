@@ -352,6 +352,12 @@ def do_callers():
         imports.append(f'{{"startup_func", '
                        f'Import{{&startup_asm[0], sizeof startup_asm, '
                        f'NULL}}}}')
+        setup_callers += '\\\n{\\\n'
+        setup_callers += f'Import & imp = imports["startup_func"];\\\n'
+        setup_callers += (f'void * f = load_x86(imp.asm_data, '
+                          f'imp.asm_size);\\\n')
+        setup_callers += (f'startup_func = (uint32_t (*)())f;\\\n')
+        setup_callers += '}'
 
     state.output_c += setup_callers + '\n\n'
     return imports
@@ -408,8 +414,8 @@ for (is_msvc, is_x64) in ((True, True), (False, True),
         name += '_msvc'
     if is_x64:
         name += '_x64'
-    cpp_filename = name + '.cpp'
-    h_filename = name + '.h'
+    cpp_filename = os.path.join(os.path.dirname(__file__), name + '.cpp')
+    h_filename = os.path.join(os.path.dirname(__file__), name + '.h')
 
     with open(cpp_filename, 'w', encoding='utf-8') as fp:
         fp.write(state.output_c)

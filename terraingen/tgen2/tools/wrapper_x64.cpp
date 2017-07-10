@@ -1216,6 +1216,9 @@ unsigned char call_x86_stdcall_3_asm[] = {
 0x83, 0x4, 0x24, 0x5, 0xcb, 0x5e, 0xc3
 };
 
+uint32_t (*startup_func)();
+unsigned char startup_asm[] = b'\xe8\x00\x00\x00\x00\xc7D$\x04#\x00\x00\x00\x83\x04$\r\xcbj+\x1fj3\xe8\x00\x00\x00\x00\x83\x04$\x05\xcb\xc3'
+
 #define SETUP_CALLERS()\
 {\
 Import & imp = imports["call_x86_thiscall_0"];\
@@ -1276,6 +1279,11 @@ call_x86_stdcall_2 = (uint32_t (*)(void*, uint32_t, uint32_t))f;\
 Import & imp = imports["call_x86_stdcall_3"];\
 void * f = load_x86(imp.asm_data, imp.asm_size);\
 call_x86_stdcall_3 = (uint32_t (*)(void*, uint32_t, uint32_t, uint32_t))f;\
+}\
+{\
+Import & imp = imports["startup_func"];\
+void * f = load_x86(imp.asm_data, imp.asm_size);\
+startup_func = (uint32_t (*)())f;\
 }
 
 std::unordered_map<std::string, Import> imports(
@@ -1349,7 +1357,8 @@ std::unordered_map<std::string, Import> imports(
 {"call_x86_stdcall_0", Import{&call_x86_stdcall_0_asm[0], sizeof call_x86_stdcall_0_asm, NULL}},
 {"call_x86_stdcall_1", Import{&call_x86_stdcall_1_asm[0], sizeof call_x86_stdcall_1_asm, NULL}},
 {"call_x86_stdcall_2", Import{&call_x86_stdcall_2_asm[0], sizeof call_x86_stdcall_2_asm, NULL}},
-{"call_x86_stdcall_3", Import{&call_x86_stdcall_3_asm[0], sizeof call_x86_stdcall_3_asm, NULL}}
+{"call_x86_stdcall_3", Import{&call_x86_stdcall_3_asm[0], sizeof call_x86_stdcall_3_asm, NULL}},
+{"startup_func", Import{&startup_asm[0], sizeof startup_asm, NULL}}
 }
 );std::vector<Patch> patches(
 {
