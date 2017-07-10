@@ -334,6 +334,9 @@ static void init_static()
 {
     unsigned int i = 0;
     for (VA p = STATIC_START; p < STATIC_END; p += 4, ++i) {
+#ifndef NDEBUG
+        std::cout << "static: " << p << '\n';
+#endif
         uint32_t dw = get_dword_va(p);
         if (has_ignore_static(i)) {
             continue;
