@@ -143,8 +143,14 @@ def add_func(name, patch, callconv, func_prot):
             cur_arg_order = arg_order_msvc
         else:
             cur_arg_order = arg_order
+
         asm += f'    push r12\n'
         asm += f'    mov r12, rsp\n'
+
+        if not state.is_msvc:
+            asm += f'    push rdi\n'
+            asm += f'    push rsi\n'
+
         if callconv == 'thiscall':
             dest = cur_arg_order[0]
             if dest != 'rcx':
@@ -170,6 +176,11 @@ def add_func(name, patch, callconv, func_prot):
         asm += f'    mov rax, 0x1122334455667788\n'
         asm += f'    call rax\n'
         asm += f'    mov rsp, r12\n'
+
+        if not state.is_msvc:
+            asm += f'    pop rsi\n'
+            asm += f'    pop rdi\n'
+
         asm += f'    pop r12\n'
         asm += f'    X64_End\n'
         asm += f'    use32\n'
