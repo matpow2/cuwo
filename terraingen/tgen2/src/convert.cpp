@@ -399,9 +399,13 @@ void tgen_init()
 
 int main(int argc, char * argv[])
 {
+    std::cout << "set seed" << '\n';
     void tgen_set_seed(uint32_t seed);
     tgen_set_seed(26879);
+    std::cout << "init" << '\n';
     tgen_init();
+    std::cout << "generate" << '\n';
     void * tgen_generate_chunk(uint32_t x, uint32_t y);
     void * chunk = tgen_generate_chunk(32803, 32803);
+    std::cout << "done" << '\n';
 }

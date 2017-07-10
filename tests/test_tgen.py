@@ -16,6 +16,9 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+
+import sys
+sys.path.append('.')
 from cuwo import tgen
 from cuwo.bytes import ByteReader
 from cuwo.static import StaticEntityHeader
