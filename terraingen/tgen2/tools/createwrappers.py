@@ -321,8 +321,9 @@ def do_callers():
 
             asm += f'X86_Start\n'
             if not state.is_msvc:
-                asm += 'push 0x2b\n'
-                asm += 'pop ds\n'
+                for seg in ('ds', 'es'):
+                    asm += f'push 0x2b\n'
+                    asm += f'pop {seg}\n'
             asm += f'call eax\n'
             asm += f'X86_End\n'
 
