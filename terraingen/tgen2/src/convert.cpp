@@ -347,6 +347,9 @@ extern const char * translate_path(char * v);
 
 void real_main()
 {
+#ifndef NDEBUG
+    std::cout << "real_main()\n";
+#endif
     parsed_pe * p = ParsePEFromFile(translate_path("Server.exe"));
     if (p == NULL)
         std::cout << "Could not find Server.exe\n";

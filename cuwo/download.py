@@ -137,3 +137,18 @@ def download_dependencies(email=None, password=None):
         filename = get_data_path(name)
         with open(filename, 'wb') as fp:
             fp.write(files[index])
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(
+        description='Download Cube World assets using a Picroma account'
+    )
+    parser.add_argument('email')
+    parser.add_argument('password')
+    args = parser.parse()
+    download_dependencies(parser.email, parser.password)
+
+
+if __name__ == '__main__':
+    main()
