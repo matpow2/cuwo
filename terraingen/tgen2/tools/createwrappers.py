@@ -145,11 +145,10 @@ def add_func(name, patch, callconv, func_prot):
             cur_arg_order = arg_order
 
         asm += f'    push r12\n'
-        asm += f'    mov r12, rsp\n'
-
         if not state.is_msvc:
             asm += f'    push rdi\n'
             asm += f'    push rsi\n'
+        asm += f'    mov r12, rsp\n'
 
         if callconv == 'thiscall':
             dest = cur_arg_order[0]
@@ -189,10 +188,14 @@ def add_func(name, patch, callconv, func_prot):
         else:
             asm += f'    ret\n'
 
+        # if not state.is_msvc and state.is_x64:
+        #     print(asm)
+        #     input()
         asm = get_asm(asm)
         asm = encode_c(asm)
         asm_c = f'static unsigned char {func_name}_asm[] = \n' + asm + '\n\n'
         state.output_c += asm_c
+
 
     if patch is not None:
         state.patches.append((patch, func_name))
