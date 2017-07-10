@@ -80,15 +80,6 @@ use32
 
 '''
 
-startup = x86_call_base + '''
-startup:
-X86_Start
-push 0x2b
-pop ds
-X86_End
-ret
-'''
-
 class state:
     is_msvc = False
     output_c = ''
@@ -311,6 +302,9 @@ def do_callers():
                 asm += thiscall_prolog
 
             asm += f'X86_Start\n'
+            if not state.is_msvc:
+                asm += 'push 0x2b\n'
+                asm += 'pop ds\n'
             asm += f'call eax\n'
             asm += f'X86_End\n'
 
@@ -343,22 +337,6 @@ def do_callers():
                               f'imp.asm_size);\\\n')
             setup_callers += (f'{name} = (uint32_t (*)({c_args}))f;\\\n')
             setup_callers += '}'
-
-    if is_x64 and not is_msvc:
-        startup_asm = get_asm(startup)
-        startup_asm = encode_c(startup_asm)
-        state.output_c += f'uint32_t (*startup_func)();\n'
-        state.output_h += f'extern uint32_t (*startup_func)();\n'
-        state.output_c += f'unsigned char startup_asm[] = {startup_asm}\n\n'
-        imports.append(f'{{"startup_func", '
-                       f'Import{{&startup_asm[0], sizeof startup_asm, '
-                       f'NULL}}}}')
-        setup_callers += '\\\n{\\\n'
-        setup_callers += f'Import & imp = imports["startup_func"];\\\n'
-        setup_callers += (f'void * f = load_x86(imp.asm_data, '
-                          f'imp.asm_size);\\\n')
-        setup_callers += (f'startup_func = (uint32_t (*)())f;\\\n')
-        setup_callers += '}'
 
     state.output_c += setup_callers + '\n\n'
     return imports

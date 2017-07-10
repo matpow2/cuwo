@@ -10,4 +10,3 @@ extern uint32_t (*call_x86_stdcall_0)(void*);
 extern uint32_t (*call_x86_stdcall_1)(void*, uint32_t);
 extern uint32_t (*call_x86_stdcall_2)(void*, uint32_t, uint32_t);
 extern uint32_t (*call_x86_stdcall_3)(void*, uint32_t, uint32_t, uint32_t);
-extern uint32_t (*startup_func)();

@@ -390,9 +390,6 @@ void tgen_init()
 #ifdef IS_X64
     SETUP_CALLERS();
 #endif
-#if defined(IS_X64) && !defined(_WIN32)
-    startup_func();
-#endif 
     run_with_stack(real_main);
     initialized = true;
 }
