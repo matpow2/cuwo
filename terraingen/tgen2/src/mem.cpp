@@ -218,6 +218,8 @@ static void * thread_start(void *arg)
 
 void run_with_stack(void (*f)())
 {
+    wrap_f = f;
+
     pthread_t thr;
     pthread_attr_t attr;
     pthread_attr_t *attrp = &attr;
