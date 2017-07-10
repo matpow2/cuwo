@@ -147,7 +147,7 @@ def main():
     parser.add_argument('email')
     parser.add_argument('password')
     args = parser.parse_args()
-    download_dependencies(parser.email, parser.password)
+    download_dependencies(args.email, args.password)
 
 
 if __name__ == '__main__':
