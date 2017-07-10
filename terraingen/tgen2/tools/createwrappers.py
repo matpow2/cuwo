@@ -222,10 +222,10 @@ def add_func(name, patch, callconv, func_prot):
     print_name = name
     if not print_name:
         print_name = func_name
-    if name != '_setjmp3':
-        state.output_c += f'#ifndef NDEBUG\n'
-        state.output_c += f"    std::cout << \"{print_name}\" << '\\n';\n"
-        state.output_c += f'#endif\n'
+    # if name != '_setjmp3':
+    #     state.output_c += f'#ifndef NDEBUG\n'
+    #     state.output_c += f"    std::cout << \"{print_name}\" << '\\n';\n"
+    #     state.output_c += f'#endif\n'
     c_args_call = [f'({args[i]})v{i}' for i in range(len(args))]
     c_args_call = ', '.join(c_args_call)
     call = f'{func_name}({c_args_call})'
