@@ -228,7 +228,7 @@ void run_with_stack(void (*f)())
     pthread_attr_setstack(&attr, sp, stack_size);
     pthread_create(&thr, attrp, &thread_start, NULL);
     pthread_attr_destroy(attrp);
-    pthread_join(&thr, NULL);
+    pthread_join(thr, NULL);
 }
 
 #endif
