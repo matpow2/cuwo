@@ -361,9 +361,21 @@ void real_main()
     SETUP_CALLERS();
 #endif
 
+#ifndef NDEBUG
+    std::cout << "init static\n";
+#endif
+
     init_static();
 
+#ifndef NDEBUG
+    std::cout << "do entry point\n";
+#endif
+
     call_x86_cdecl_0(get_entry_point());
+
+#ifndef NDEBUG
+    std::cout << "done\n";
+#endif
 }
 
 void tgen_init()
