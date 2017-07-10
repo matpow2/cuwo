@@ -139,6 +139,7 @@ def add_func(name, patch, callconv, func_prot):
         asm += f'{func_name}_wrap:\n'
         asm += f'    X64_Start\n'
         asm += f'    use64\n'
+        push_off = 12
         if state.is_msvc:
             cur_arg_order = arg_order_msvc
         else:
@@ -148,6 +149,7 @@ def add_func(name, patch, callconv, func_prot):
         if not state.is_msvc:
             asm += f'    push rdi\n'
             asm += f'    push rsi\n'
+            push_off += 8*2
         asm += f'    mov r12, rsp\n'
 
         if callconv == 'thiscall':
@@ -162,10 +164,10 @@ def add_func(name, patch, callconv, func_prot):
                 continue
             try:
                 reg = cur_arg_order[i+arg_off]
-                asm_arg += f'    mov {reg}, [r12+{12+i*4}]\n'
+                asm_arg += f'    mov {reg}, [r12+{push_off+i*4}]\n'
             except IndexError:
                 pushes += 1
-                asm_arg += f'    push qword [r12+{12+i*4}]\n'
+                asm_arg += f'    push qword [r12+{push_off+i*4}]\n'
 
         rsp_sub = 128 # red zone
         if pushes % 2 == 1:
