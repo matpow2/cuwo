@@ -82,7 +82,7 @@ def main():
     config += '\n# Current revision\ngit_rev = %r\n' % git_rev
     open('./dist/config/base.py', 'wb').write(config.encode('utf-8'))
 
-    filename = 'cuwo-%s.zip' % git_rev
+    filename = 'cuwo.zip'
 
     try:
         os.remove(filename)
