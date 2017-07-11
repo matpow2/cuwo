@@ -20,6 +20,7 @@ after_test:
   # If tests are successful, create binary packages for the project.
   - "cd standalone"
   - "call build.bat"
+  - "echo %APPVEYOR_JOB_NAME%"
   - ps: "ls dist"
 
 artifacts:
