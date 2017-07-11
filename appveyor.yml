@@ -40,7 +40,7 @@ build_script:
 
 test_script:
   # Run the project tests
-  - "python tests/test_tgen.py"
+  # - "python tests/test_tgen.py"
 
 after_test:
   # If tests are successful, create binary packages for the project.
