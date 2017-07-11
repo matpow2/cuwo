@@ -29,7 +29,7 @@ test_script:
 after_test:
   # If tests are successful, create binary packages for the project.
   - "cd standalone"
-  - "./build.bat"
+  - "call build.bat"
   - ps: "ls dist"
 
 artifacts:
