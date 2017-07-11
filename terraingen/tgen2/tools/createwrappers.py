@@ -185,7 +185,7 @@ def add_func(name, patch, table, callconv, func_prot):
         asm += f'    pop r12\n'
         asm += f'    X64_End\n'
         asm += f'    use32\n'
-        if callconv in ('stdcall', 'thiscall', 'vectorcall'):
+        if callconv in ('stdcall', 'thiscall'):
             asm += f'    ret {(len(args)-arg_off)*4}\n'
         else:
             asm += f'    ret\n'
@@ -233,7 +233,7 @@ def add_func(name, patch, table, callconv, func_prot):
         ret_code = '    return ret_val;\n'
         state.output_c += f'    {c_ret} ret_val = ({c_ret}){call};\n'
     
-    if False: # name != '_setjmp3':
+    if name != '_setjmp3':
         state.output_c += f'#ifndef NDEBUG\n'
 
         print_args = [f' << " " << v{i} ' for i in range(len(args))]
