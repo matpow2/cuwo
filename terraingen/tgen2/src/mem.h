@@ -16,12 +16,12 @@ void run_with_stack(void (*f)());
 struct SavedHeap
 {
     char * heap;
-    size_t heap_size;
+    uint32_t heap_size;
     void * state;
 };
 
-void save_heap(SavedHeap & data);
-void restore_heap(const SavedHeap & data);
+void save_heap(SavedHeap * data);
+void restore_heap(const SavedHeap * data);
 void * heap_alloc(uint32_t size);
 void heap_dealloc(void * p);
 

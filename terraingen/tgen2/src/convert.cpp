@@ -396,6 +396,8 @@ void real_main()
 #endif
 }
 
+extern SavedHeap saved_heap;
+
 void tgen_init()
 {
     static bool initialized = false;
@@ -406,6 +408,7 @@ void tgen_init()
 #endif
     run_with_stack(real_main);
     initialized = true;
+    save_heap(&saved_heap);
 }
 
 int main(int argc, char * argv[])

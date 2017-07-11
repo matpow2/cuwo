@@ -246,43 +246,84 @@ void run_with_stack(void (*f)())
 
 #endif
 
+static unsigned char * heap;
+static uint32_t heap_offset;
+
 extern "C" {
-    #define HAVE_MMAP 1
-    #define HAVE_MORECORE 0
+    #define HAVE_MORECORE 1
+    #define HAVE_MMAP 0
     #define USE_DL_PREFIX
-    #define MMAP heap_mmap
-    #define DIRECT_MMAP heap_mmap
-    #define MUNMAP heap_munmap
-    void * heap_mmap(int size);
-    int heap_munmap(void * ptr, int size);
+    #define MORECORE heap_morecore
+    void * heap_morecore(int size);
     #include "dlmalloc.c"
 
-    void * heap_mmap(int size)
+    void * heap_morecore(int size)
     {
-        if (size == 0)
-            return NULL;
-        // std::cout << "Alloc: " << size << '\n';
-        void * ret = alloc_mem(size);
+        if (heap == NULL)
+            heap = (unsigned char*)alloc_mem(HEAP_SIZE);
+        void * ret = (void*)(heap + heap_offset);
+        heap_offset += size;
 
-        if (ret == NULL) {
-            std::cout << "Out of memory" << std::endl;
+        if (heap_offset >= HEAP_SIZE) {
+            std::cout << "Heap too small: " << heap_offset << " "
+                << HEAP_SIZE << std::endl;
             exit(0);
         }
         return ret;
     }
-
-    int heap_munmap(void * ptr, int size)
-    {
-        if (size == 0)
-            return 0;
-        // std::cout << "Free: " << size << '\n';
-        free_mem(ptr, size);
-        return 0;
-    }
 }
 
-extern "C" void * dlmalloc(size_t);
-extern "C" void dlfree(void*);
+void save_heap(SavedHeap * data)
+{
+    data->heap = new char[heap_offset];
+    data->heap_size = heap_offset;
+    memcpy(data->heap, heap, heap_offset);
+    data->state = new malloc_state;
+    memcpy(data->state, gm, sizeof(malloc_state));
+}
+
+void restore_heap(const SavedHeap * data)
+{
+    memcpy(heap, data->heap, data->heap_size);
+    heap_offset = data->heap_size;
+    memcpy(gm, data->state, sizeof(malloc_state));
+}
+
+
+// extern "C" {
+//     #define HAVE_MMAP 1
+//     #define HAVE_MORECORE 0
+//     #define USE_DL_PREFIX
+//     #define MMAP heap_mmap
+//     #define DIRECT_MMAP heap_mmap
+//     #define MUNMAP heap_munmap
+//     void * heap_mmap(int size);
+//     int heap_munmap(void * ptr, int size);
+//     #include "dlmalloc.c"
+
+//     void * heap_mmap(int size)
+//     {
+//         if (size == 0)
+//             return NULL;
+//         // std::cout << "Alloc: " << size << '\n';
+//         void * ret = alloc_mem(size);
+
+//         if (ret == NULL) {
+//             std::cout << "Out of memory" << std::endl;
+//             exit(0);
+//         }
+//         return ret;
+//     }
+
+//     int heap_munmap(void * ptr, int size)
+//     {
+//         if (size == 0)
+//             return 0;
+//         // std::cout << "Free: " << size << '\n';
+//         free_mem(ptr, size);
+//         return 0;
+//     }
+// }
 
 void * manager_data = NULL;
 
@@ -299,19 +340,4 @@ void heap_dealloc(void * p)
     dlfree(p);
 }
 
-void save_heap(SavedHeap & data)
-{
-    // data.heap = new char[heap_offset];
-    // data.heap_size = heap_offset;
-    // memcpy(data.heap, heap, heap_offset);
-    // data.state = new malloc_state;
-    // memcpy(data.state, gm, sizeof(malloc_state));
-}
-
-void restore_heap(const SavedHeap & data)
-{
-    // memcpy(heap, data.heap, data.heap_size);
-    // heap_offset = data.heap_size;
-    // memcpy(gm, data.state, sizeof(malloc_state));
-}
 

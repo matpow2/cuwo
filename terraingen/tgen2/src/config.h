@@ -18,6 +18,8 @@ static const uint32_t VA_CREATE_STRING_FROM_CSTR = 0x401A40;
 static const uint32_t VA_GENERATOR = 0x518630;
 static const uint32_t VA_GET_SECTOR_CHUNK_DATA = 0x406290;
 
+static const uint32_t HEAP_SIZE = 72 * 1024 * 1024;
+
 inline bool has_ignore_static(unsigned int x)
 {
     // return x == 0x5566C0 || x == 0x5566D0 || x == 0x5566E0;

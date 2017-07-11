@@ -26,6 +26,7 @@ const char * translate_path(char * path)
     return translated_path.c_str();
 }
 
+SavedHeap saved_heap;
 static void * tgen_generate_chunk_return;
 static uint32_t tgen_generate_chunk_x;
 static uint32_t tgen_generate_chunk_y;
@@ -46,6 +47,7 @@ static void tgen_generate_chunk_call()
 
 void * tgen_generate_chunk(uint32_t x, uint32_t y)
 {
+    restore_heap(&saved_heap);
     tgen_generate_chunk_x = x;
     tgen_generate_chunk_y = y;
     run_with_stack(tgen_generate_chunk_call);
