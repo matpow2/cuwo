@@ -192,7 +192,7 @@ class ScriptManager:
         self.cached_calls.clear()
 
     def unload(self):
-        for script in self.items.values():
+        for script in self.items.copy().values():
             script.unload()
 
     def get(self):

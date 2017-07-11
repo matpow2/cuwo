@@ -705,9 +705,6 @@ def main():
         root = os.path.abspath(os.path.join(path, '..'))
         sys.path.append(root)
 
-        from cuwo.download import download_dependencies
-        download_dependencies()
-
     config = ConfigObject('./config')
 
     if sys.platform == 'win32':
@@ -717,6 +714,10 @@ def main():
         asyncio.set_event_loop(loop)
     else:
         loop = asyncio.get_event_loop()
+
+    if config.base.use_tgen:
+        from cuwo.download import download_dependencies
+        download_dependencies()
 
     server = CubeWorldServer(loop, config)
 

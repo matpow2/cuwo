@@ -26,12 +26,7 @@ from cuwo.types import IDPool
 from cuwo import constants
 from cuwo import strings
 from cuwo.vector import Vector3
-
-try:
-    from cuwo import tgen
-    has_tgen = True
-except ImportError:
-    has_tgen = False
+from cuwo import tgen
 
 import os
 from queue import Queue
@@ -232,20 +227,18 @@ class World:
     entity_class = Entity
 
     def __init__(self, loop, seed, use_tgen=True, use_entities=True):
-        for name in ('data1.db', 'data4.db'):
-            path = os.path.join(self.data_path, name)
-            if os.path.isfile(path):
-                continue
-            path = os.path.abspath(path)
-            raise FileNotFoundError('Missing asset file %r' % path)
+        if use_tgen:
+            for name in ('data1.db', 'data4.db', 'Server.exe'):
+                path = os.path.join(self.data_path, name)
+                if os.path.isfile(path):
+                    continue
+                path = os.path.abspath(path)
+                raise FileNotFoundError('Missing asset file %r' % path)
 
         self.loop = loop
-
-        self.use_tgen = has_tgen and use_tgen
+        self.use_tgen = use_tgen
         self.use_entities = use_entities
-
         self.chunks = {}
-
         self.entities = {}
         self.entity_ids = IDPool(1)
 

@@ -121,19 +121,22 @@ def get_data_path(name):
 
 def download_dependencies(email=None, password=None):
     names = ('data1.db', 'data4.db', 'Server.exe')
+    download_names = []
 
     for name in names:
         if not os.path.isfile(get_data_path(name)):
-            break
-    else:
+            download_names.append(name)
+
+    if not download_names:
         return
 
     try:
-        files = download_prompt(*names, email=email, password=password)
+        files = download_prompt(*download_names,
+                                email=email, password=password)
     except ValidateError:
         return
 
-    for index, name in enumerate(names):
+    for index, name in enumerate(download_names):
         filename = get_data_path(name)
         with open(filename, 'wb') as fp:
             fp.write(files[index])
