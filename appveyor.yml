@@ -17,7 +17,7 @@ install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "pip install --disable-pip-version-check --user --upgrade pip"
   - "pip install -r requirements.txt"
-  - "pip install cx_Freeze"
+  - "pip install cx_Freeze irc3"
 
 build_script:
   - "python setup.py build_ext --inplace"
