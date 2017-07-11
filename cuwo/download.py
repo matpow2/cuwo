@@ -120,7 +120,7 @@ def get_data_path(name):
 
 
 def download_dependencies(email=None, password=None):
-    names = ('data1.db', 'data4.db')
+    names = ('data1.db', 'data4.db', 'Server.exe')
 
     for name in names:
         if not os.path.isfile(get_data_path(name)):

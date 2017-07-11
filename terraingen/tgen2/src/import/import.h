@@ -23,6 +23,7 @@ struct Patch
 #endif
     void * c_func;
     uint32_t patch_addr;
+    uint32_t patch_table;
 };
 
 extern std::unordered_map<std::string, Import> imports;

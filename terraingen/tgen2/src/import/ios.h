@@ -354,7 +354,8 @@ void basic_ios_wchar_dtor(uint32_t self)
 }
 
 // ostream_writecstr
-// patch: 0x4120D0
+// old patch: 0x4120D0
+// patch: 0x412710
 uint32_t sub_4120D0(uint32_t stream, char * value)
 {
     std::stringstream & str = *current_stream;
@@ -364,7 +365,8 @@ uint32_t sub_4120D0(uint32_t stream, char * value)
 }
 
 // ostream_writestr
-// patch: 0x4C6970
+// old patch: 0x4C6970
+// patch: 0x4C6580
 uint32_t sub_4C6970(uint32_t stream, basic_string_char* v)
 {
     std::stringstream & str = *current_stream;
@@ -374,7 +376,8 @@ uint32_t sub_4C6970(uint32_t stream, basic_string_char* v)
 }
 
 // copy_iostream_to_str
-// patch: 0x4D8B70
+// old patch: 0x4D8B70
+// patch: 0x4D8F70
 // thiscall
 basic_string_char * sub_4D8B70(uint32_t self, basic_string_char* stdstring)
 {
@@ -389,8 +392,8 @@ basic_string_char * sub_4D8B70(uint32_t self, basic_string_char* stdstring)
 
     // use address 401A00, which is create_string_from_cstr
     // signature: string * __thiscall f(char* str, int size)
-    call_x86_thiscall_3(get_mem_va(0x401A00), (uint32_t)stdstring,
-                        (uint32_t)str_guest, res.size());
+    call_x86_thiscall_3(get_mem_va(VA_CREATE_STRING_FROM_CSTR),
+                        (uint32_t)stdstring, (uint32_t)str_guest, res.size());
 
     heap_dealloc(str_guest);
 

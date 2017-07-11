@@ -11,9 +11,6 @@ static unsigned char free_imp_asm[] =
 
 static void free_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "free" << '\n';
-#endif
     free_imp((void *)v0);
 }
 
@@ -29,10 +26,8 @@ static unsigned char new_imp_asm[] =
 
 static uint32_t new_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "void * __cdecl operator new(unsigned int)" << '\n';
-#endif
-    return (uint32_t)new_imp((uint32_t)v0);
+    uint32_t ret_val = (uint32_t)new_imp((uint32_t)v0);
+    return ret_val;
 }
 
 static unsigned char malloc_imp_asm[] = 
@@ -47,10 +42,8 @@ static unsigned char malloc_imp_asm[] =
 
 static uint32_t malloc_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "malloc" << '\n';
-#endif
-    return (uint32_t)malloc_imp((uint32_t)v0);
+    uint32_t ret_val = (uint32_t)malloc_imp((uint32_t)v0);
+    return ret_val;
 }
 
 static unsigned char delete_func_imp_asm[] = 
@@ -65,9 +58,6 @@ static unsigned char delete_func_imp_asm[] =
 
 static void delete_func_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "void __cdecl operator delete(void *)" << '\n';
-#endif
     delete_func_imp((void *)v0);
 }
 
@@ -83,9 +73,6 @@ static unsigned char delete_arr_func_imp_asm[] =
 
 static void delete_arr_func_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "void __cdecl operator delete[](void *)" << '\n';
-#endif
     delete_arr_func_imp((void *)v0);
 }
 
@@ -102,10 +89,8 @@ static unsigned char memcpy_imp_asm[] =
 
 static uint32_t memcpy_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "memcpy" << '\n';
-#endif
-    return (uint32_t)memcpy_imp((void *)v0, (void *)v1, (uint32_t)v2);
+    uint32_t ret_val = (uint32_t)memcpy_imp((void *)v0, (void *)v1, (uint32_t)v2);
+    return ret_val;
 }
 
 static unsigned char strcmp_imp_asm[] = 
@@ -121,10 +106,8 @@ static unsigned char strcmp_imp_asm[] =
 
 static uint32_t strcmp_imp_wrapc(uint32_t v0, uint32_t v1)
 {
-#ifndef NDEBUG
-    std::cout << "strcmp" << '\n';
-#endif
-    return (uint32_t)strcmp_imp((const char *)v0, (const char *)v1);
+    uint32_t ret_val = (uint32_t)strcmp_imp((const char *)v0, (const char *)v1);
+    return ret_val;
 }
 
 static unsigned char memcmp_imp_asm[] = 
@@ -140,10 +123,8 @@ static unsigned char memcmp_imp_asm[] =
 
 static uint32_t memcmp_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "memcmp" << '\n';
-#endif
-    return (uint32_t)memcmp_imp((const char *)v0, (const char *)v1, (uint32_t)v2);
+    uint32_t ret_val = (uint32_t)memcmp_imp((const char *)v0, (const char *)v1, (uint32_t)v2);
+    return ret_val;
 }
 
 static unsigned char abort_imp_asm[] = 
@@ -158,9 +139,6 @@ static unsigned char abort_imp_asm[] =
 
 static void abort_imp_wrapc()
 {
-#ifndef NDEBUG
-    std::cout << "abort" << '\n';
-#endif
     abort_imp();
 }
 
@@ -176,9 +154,6 @@ static unsigned char terminateYAXXZ_imp_asm[] =
 
 static void terminateYAXXZ_imp_wrapc()
 {
-#ifndef NDEBUG
-    std::cout << "void __cdecl terminate(void)" << '\n';
-#endif
     terminateYAXXZ_imp();
 }
 
@@ -195,10 +170,8 @@ static unsigned char WSAStartup_imp_asm[] =
 
 static uint32_t WSAStartup_imp_wrapc(uint32_t v0, uint32_t v1)
 {
-#ifndef NDEBUG
-    std::cout << "ORDINAL_WS2_32.DLL_115" << '\n';
-#endif
-    return (uint32_t)WSAStartup_imp((uint32_t)v0, (uint32_t)v1);
+    uint32_t ret_val = (uint32_t)WSAStartup_imp((uint32_t)v0, (uint32_t)v1);
+    return ret_val;
 }
 
 static unsigned char InitializeCriticalSectionAndSpinCount_imp_asm[] = 
@@ -214,10 +187,8 @@ static unsigned char InitializeCriticalSectionAndSpinCount_imp_asm[] =
 
 static uint32_t InitializeCriticalSectionAndSpinCount_imp_wrapc(uint32_t v0, uint32_t v1)
 {
-#ifndef NDEBUG
-    std::cout << "InitializeCriticalSectionAndSpinCount" << '\n';
-#endif
-    return (uint32_t)InitializeCriticalSectionAndSpinCount_imp((uint32_t)v0, (uint32_t)v1);
+    uint32_t ret_val = (uint32_t)InitializeCriticalSectionAndSpinCount_imp((uint32_t)v0, (uint32_t)v1);
+    return ret_val;
 }
 
 static unsigned char DeleteCriticalSection_imp_asm[] = 
@@ -232,9 +203,6 @@ static unsigned char DeleteCriticalSection_imp_asm[] =
 
 static void DeleteCriticalSection_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "DeleteCriticalSection" << '\n';
-#endif
     DeleteCriticalSection_imp((uint32_t)v0);
 }
 
@@ -250,10 +218,8 @@ static unsigned char rand_imp_asm[] =
 
 static uint32_t rand_imp_wrapc()
 {
-#ifndef NDEBUG
-    std::cout << "rand" << '\n';
-#endif
-    return (uint32_t)rand_imp();
+    uint32_t ret_val = (uint32_t)rand_imp();
+    return ret_val;
 }
 
 static unsigned char srand_imp_asm[] = 
@@ -268,9 +234,6 @@ static unsigned char srand_imp_asm[] =
 
 static void srand_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "srand" << '\n';
-#endif
     srand_imp((uint32_t)v0);
 }
 
@@ -286,10 +249,8 @@ static unsigned char IsProcessorFeaturePresent_imp_asm[] =
 
 static uint32_t IsProcessorFeaturePresent_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "IsProcessorFeaturePresent" << '\n';
-#endif
-    return (uint32_t)IsProcessorFeaturePresent_imp((uint32_t)v0);
+    uint32_t ret_val = (uint32_t)IsProcessorFeaturePresent_imp((uint32_t)v0);
+    return ret_val;
 }
 
 static unsigned char _beginthread_imp_asm[] = 
@@ -305,9 +266,6 @@ static unsigned char _beginthread_imp_asm[] =
 
 static void _beginthread_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "_beginthread" << '\n';
-#endif
     _beginthread_imp((uint32_t)v0, (uint32_t)v1, (uint32_t)v2);
 }
 
@@ -323,10 +281,8 @@ static unsigned char EncodePointer_imp_asm[] =
 
 static uint32_t EncodePointer_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "EncodePointer" << '\n';
-#endif
-    return (uint32_t)EncodePointer_imp((uint32_t)v0);
+    uint32_t ret_val = (uint32_t)EncodePointer_imp((uint32_t)v0);
+    return ret_val;
 }
 
 static unsigned char memmove_imp_asm[] = 
@@ -342,10 +298,8 @@ static unsigned char memmove_imp_asm[] =
 
 static uint32_t memmove_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "memmove" << '\n';
-#endif
-    return (uint32_t)memmove_imp((void *)v0, (const void *)v1, (uint32_t)v2);
+    uint32_t ret_val = (uint32_t)memmove_imp((void *)v0, (const void *)v1, (uint32_t)v2);
+    return ret_val;
 }
 
 static unsigned char memset_imp_asm[] = 
@@ -361,10 +315,8 @@ static unsigned char memset_imp_asm[] =
 
 static uint32_t memset_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "memset" << '\n';
-#endif
-    return (uint32_t)memset_imp((void *)v0, (int32_t)v1, (uint32_t)v2);
+    uint32_t ret_val = (uint32_t)memset_imp((void *)v0, (int32_t)v1, (uint32_t)v2);
+    return ret_val;
 }
 
 static unsigned char fseek_imp_asm[] = 
@@ -380,10 +332,8 @@ static unsigned char fseek_imp_asm[] =
 
 static uint32_t fseek_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "fseek" << '\n';
-#endif
-    return (uint32_t)fseek_imp((uint32_t)v0, (uint32_t)v1, (uint32_t)v2);
+    uint32_t ret_val = (uint32_t)fseek_imp((uint32_t)v0, (uint32_t)v1, (uint32_t)v2);
+    return ret_val;
 }
 
 static unsigned char fwrite_imp_asm[] = 
@@ -400,10 +350,8 @@ static unsigned char fwrite_imp_asm[] =
 
 static uint32_t fwrite_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3)
 {
-#ifndef NDEBUG
-    std::cout << "fwrite" << '\n';
-#endif
-    return (uint32_t)fwrite_imp((const void *)v0, (uint32_t)v1, (uint32_t)v2, (uint32_t)v3);
+    uint32_t ret_val = (uint32_t)fwrite_imp((const void *)v0, (uint32_t)v1, (uint32_t)v2, (uint32_t)v3);
+    return ret_val;
 }
 
 static unsigned char fclose_imp_asm[] = 
@@ -418,10 +366,8 @@ static unsigned char fclose_imp_asm[] =
 
 static uint32_t fclose_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "fclose" << '\n';
-#endif
-    return (uint32_t)fclose_imp((uint32_t)v0);
+    uint32_t ret_val = (uint32_t)fclose_imp((uint32_t)v0);
+    return ret_val;
 }
 
 static unsigned char _setjmp_imp_asm[] = 
@@ -436,10 +382,8 @@ static unsigned char _setjmp_imp_asm[] =
 
 static uint32_t _setjmp_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "_setjmp" << '\n';
-#endif
-    return (uint32_t)_setjmp_imp((uint32_t)v0);
+    uint32_t ret_val = (uint32_t)_setjmp_imp((uint32_t)v0);
+    return ret_val;
 }
 
 static unsigned char InitializeCriticalSection_imp_asm[] = 
@@ -454,9 +398,6 @@ static unsigned char InitializeCriticalSection_imp_asm[] =
 
 static void InitializeCriticalSection_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "InitializeCriticalSection" << '\n';
-#endif
     InitializeCriticalSection_imp((uint32_t)v0);
 }
 
@@ -472,9 +413,6 @@ static unsigned char EnterCriticalSection_imp_asm[] =
 
 static void EnterCriticalSection_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "EnterCriticalSection" << '\n';
-#endif
     EnterCriticalSection_imp((uint32_t)v0);
 }
 
@@ -490,9 +428,6 @@ static unsigned char LeaveCriticalSection_imp_asm[] =
 
 static void LeaveCriticalSection_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "LeaveCriticalSection" << '\n';
-#endif
     LeaveCriticalSection_imp((uint32_t)v0);
 }
 
@@ -509,10 +444,8 @@ static unsigned char InterlockedCompareExchange_imp_asm[] =
 
 static uint32_t InterlockedCompareExchange_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "InterlockedCompareExchange" << '\n';
-#endif
-    return (uint32_t)InterlockedCompareExchange_imp((uint32_t *)v0, (uint32_t)v1, (uint32_t)v2);
+    uint32_t ret_val = (uint32_t)InterlockedCompareExchange_imp((uint32_t *)v0, (uint32_t)v1, (uint32_t)v2);
+    return ret_val;
 }
 
 static unsigned char _setjmp3_imp_asm[] = 
@@ -543,9 +476,6 @@ static unsigned char orphan_imp_asm[] =
 
 static void orphan_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "public: void __thiscall std::_Container_base0::_Orphan_all(void)" << '\n';
-#endif
     orphan_imp((uint32_t)v0);
 }
 
@@ -556,15 +486,13 @@ static unsigned char _libm_sse2_cos_precise_imp_asm[] =
 0x80, 0x0, 0x0, 0x0, 0x48, 0xb8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33,
 0x22, 0x11, 0xff, 0xd0, 0x4c, 0x89, 0xe4, 0x41, 0x5c, 0xe8, 0x0, 0x0,
 0x0, 0x0, 0xc7, 0x44, 0x24, 0x4, 0x23, 0x0, 0x0, 0x0, 0x83, 0x4, 0x24,
-0xd, 0xcb, 0xc3
+0xd, 0xcb, 0xc2, 0x4, 0x0
 };
 
 static double _libm_sse2_cos_precise_imp_wrapc(double v0)
 {
-#ifndef NDEBUG
-    std::cout << "_libm_sse2_cos_precise" << '\n';
-#endif
-    return (double)_libm_sse2_cos_precise_imp((double)v0);
+    double ret_val = (double)_libm_sse2_cos_precise_imp((double)v0);
+    return ret_val;
 }
 
 static unsigned char _libm_sse2_sin_precise_imp_asm[] = 
@@ -574,15 +502,13 @@ static unsigned char _libm_sse2_sin_precise_imp_asm[] =
 0x80, 0x0, 0x0, 0x0, 0x48, 0xb8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33,
 0x22, 0x11, 0xff, 0xd0, 0x4c, 0x89, 0xe4, 0x41, 0x5c, 0xe8, 0x0, 0x0,
 0x0, 0x0, 0xc7, 0x44, 0x24, 0x4, 0x23, 0x0, 0x0, 0x0, 0x83, 0x4, 0x24,
-0xd, 0xcb, 0xc3
+0xd, 0xcb, 0xc2, 0x4, 0x0
 };
 
 static double _libm_sse2_sin_precise_imp_wrapc(double v0)
 {
-#ifndef NDEBUG
-    std::cout << "_libm_sse2_sin_precise" << '\n';
-#endif
-    return (double)_libm_sse2_sin_precise_imp((double)v0);
+    double ret_val = (double)_libm_sse2_sin_precise_imp((double)v0);
+    return ret_val;
 }
 
 static unsigned char _libm_sse2_sqrt_precise_imp_asm[] = 
@@ -592,15 +518,13 @@ static unsigned char _libm_sse2_sqrt_precise_imp_asm[] =
 0x80, 0x0, 0x0, 0x0, 0x48, 0xb8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33,
 0x22, 0x11, 0xff, 0xd0, 0x4c, 0x89, 0xe4, 0x41, 0x5c, 0xe8, 0x0, 0x0,
 0x0, 0x0, 0xc7, 0x44, 0x24, 0x4, 0x23, 0x0, 0x0, 0x0, 0x83, 0x4, 0x24,
-0xd, 0xcb, 0xc3
+0xd, 0xcb, 0xc2, 0x4, 0x0
 };
 
 static double _libm_sse2_sqrt_precise_imp_wrapc(double v0)
 {
-#ifndef NDEBUG
-    std::cout << "_libm_sse2_sqrt_precise" << '\n';
-#endif
-    return (double)_libm_sse2_sqrt_precise_imp((double)v0);
+    double ret_val = (double)_libm_sse2_sqrt_precise_imp((double)v0);
+    return ret_val;
 }
 
 static unsigned char _libm_sse2_pow_precise_imp_asm[] = 
@@ -610,15 +534,13 @@ static unsigned char _libm_sse2_pow_precise_imp_asm[] =
 0x80, 0x0, 0x0, 0x0, 0x48, 0xb8, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33,
 0x22, 0x11, 0xff, 0xd0, 0x4c, 0x89, 0xe4, 0x41, 0x5c, 0xe8, 0x0, 0x0,
 0x0, 0x0, 0xc7, 0x44, 0x24, 0x4, 0x23, 0x0, 0x0, 0x0, 0x83, 0x4, 0x24,
-0xd, 0xcb, 0xc3
+0xd, 0xcb, 0xc2, 0x8, 0x0
 };
 
 static double _libm_sse2_pow_precise_imp_wrapc(double v0, double v1)
 {
-#ifndef NDEBUG
-    std::cout << "_libm_sse2_pow_precise" << '\n';
-#endif
-    return (double)_libm_sse2_pow_precise_imp((double)v0, (double)v1);
+    double ret_val = (double)_libm_sse2_pow_precise_imp((double)v0, (double)v1);
+    return ret_val;
 }
 
 static unsigned char basic_istream_char_ctor_imp_asm[] = 
@@ -634,10 +556,8 @@ static unsigned char basic_istream_char_ctor_imp_asm[] =
 
 static uint32_t basic_istream_char_ctor_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3)
 {
-#ifndef NDEBUG
-    std::cout << "public: __thiscall std::basic_istream<char,struct std::char_traits<char> >::basic_istream<char,struct std::char_traits<char> >(class std::basic_streambuf<char,struct std::char_traits<char> > *,bool)" << '\n';
-#endif
-    return (uint32_t)basic_istream_char_ctor_imp((uint32_t)v0, (uint32_t)v1, (uint32_t)v2, (uint32_t)v3);
+    uint32_t ret_val = (uint32_t)basic_istream_char_ctor_imp((uint32_t)v0, (uint32_t)v1, (uint32_t)v2, (uint32_t)v3);
+    return ret_val;
 }
 
 static unsigned char basic_streambuf_char_ctor_imp_asm[] = 
@@ -652,10 +572,8 @@ static unsigned char basic_streambuf_char_ctor_imp_asm[] =
 
 static uint32_t basic_streambuf_char_ctor_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "protected: __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::basic_streambuf<char,struct std::char_traits<char> >(void)" << '\n';
-#endif
-    return (uint32_t)basic_streambuf_char_ctor_imp((uint32_t)v0);
+    uint32_t ret_val = (uint32_t)basic_streambuf_char_ctor_imp((uint32_t)v0);
+    return ret_val;
 }
 
 static unsigned char basic_streambuf_char__Init_empty_imp_asm[] = 
@@ -670,9 +588,6 @@ static unsigned char basic_streambuf_char__Init_empty_imp_asm[] =
 
 static void basic_streambuf_char__Init_empty_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "protected: void __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::_Init(void)" << '\n';
-#endif
     basic_streambuf_char__Init_empty_imp((uint32_t)v0);
 }
 
@@ -689,9 +604,6 @@ static unsigned char basic_ios_char_setstate_reraise_imp_asm[] =
 
 static void basic_ios_char_setstate_reraise_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "public: void __thiscall std::basic_ios<char,struct std::char_traits<char> >::setstate(int,bool)" << '\n';
-#endif
     basic_ios_char_setstate_reraise_imp((uint32_t)v0, (uint32_t)v1, (uint32_t)v2);
 }
 
@@ -707,9 +619,6 @@ static unsigned char basic_streambuf_char_dtor_imp_asm[] =
 
 static void basic_streambuf_char_dtor_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "public: virtual __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::~basic_streambuf<char,struct std::char_traits<char> >(void)" << '\n';
-#endif
     basic_streambuf_char_dtor_imp((uint32_t)v0);
 }
 
@@ -725,9 +634,6 @@ static unsigned char basic_istream_char_dtor_imp_asm[] =
 
 static void basic_istream_char_dtor_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "public: virtual __thiscall std::basic_istream<char,struct std::char_traits<char> >::~basic_istream<char,struct std::char_traits<char> >(void)" << '\n';
-#endif
     basic_istream_char_dtor_imp((uint32_t)v0);
 }
 
@@ -743,9 +649,6 @@ static unsigned char basic_ios_char_dtor_imp_asm[] =
 
 static void basic_ios_char_dtor_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "public: virtual __thiscall std::basic_ios<char,struct std::char_traits<char> >::~basic_ios<char,struct std::char_traits<char> >(void)" << '\n';
-#endif
     basic_ios_char_dtor_imp((uint32_t)v0);
 }
 
@@ -762,10 +665,8 @@ static unsigned char _Fiopen_imp_asm[] =
 
 static uint32_t _Fiopen_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "struct _iobuf * __cdecl std::_Fiopen(char const *,int,int)" << '\n';
-#endif
-    return (uint32_t)_Fiopen_imp((char *)v0, (uint32_t)v1, (uint32_t)v2);
+    uint32_t ret_val = (uint32_t)_Fiopen_imp((char *)v0, (uint32_t)v1, (uint32_t)v2);
+    return ret_val;
 }
 
 static unsigned char basic_istream_char_read_int_imp_asm[] = 
@@ -780,10 +681,8 @@ static unsigned char basic_istream_char_read_int_imp_asm[] =
 
 static uint32_t basic_istream_char_read_int_imp_wrapc(uint32_t v0, uint32_t v1)
 {
-#ifndef NDEBUG
-    std::cout << "public: class std::basic_istream<char,struct std::char_traits<char> > & __thiscall std::basic_istream<char,struct std::char_traits<char> >::operator>>(int &)" << '\n';
-#endif
-    return (uint32_t)basic_istream_char_read_int_imp((uint32_t)v0, (uint32_t *)v1);
+    uint32_t ret_val = (uint32_t)basic_istream_char_read_int_imp((uint32_t)v0, (uint32_t *)v1);
+    return ret_val;
 }
 
 static unsigned char basic_ios_char_ctor_imp_asm[] = 
@@ -798,10 +697,8 @@ static unsigned char basic_ios_char_ctor_imp_asm[] =
 
 static uint32_t basic_ios_char_ctor_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "protected: __thiscall std::basic_ios<char,struct std::char_traits<char> >::basic_ios<char,struct std::char_traits<char> >(void)" << '\n';
-#endif
-    return (uint32_t)basic_ios_char_ctor_imp((uint32_t)v0);
+    uint32_t ret_val = (uint32_t)basic_ios_char_ctor_imp((uint32_t)v0);
+    return ret_val;
 }
 
 static unsigned char basic_iostream_char_ctor_imp_asm[] = 
@@ -817,10 +714,8 @@ static unsigned char basic_iostream_char_ctor_imp_asm[] =
 
 static uint32_t basic_iostream_char_ctor_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "public: __thiscall std::basic_iostream<char,struct std::char_traits<char> >::basic_iostream<char,struct std::char_traits<char> >(class std::basic_streambuf<char,struct std::char_traits<char> > *)" << '\n';
-#endif
-    return (uint32_t)basic_iostream_char_ctor_imp((uint32_t)v0, (uint32_t)v1, (uint32_t)v2);
+    uint32_t ret_val = (uint32_t)basic_iostream_char_ctor_imp((uint32_t)v0, (uint32_t)v1, (uint32_t)v2);
+    return ret_val;
 }
 
 static unsigned char basic_iostream_char_dtor_imp_asm[] = 
@@ -835,9 +730,6 @@ static unsigned char basic_iostream_char_dtor_imp_asm[] =
 
 static void basic_iostream_char_dtor_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "public: virtual __thiscall std::basic_iostream<char,struct std::char_traits<char> >::~basic_iostream<char,struct std::char_traits<char> >(void)" << '\n';
-#endif
     basic_iostream_char_dtor_imp((uint32_t)v0);
 }
 
@@ -853,9 +745,6 @@ static unsigned char ios_base_Ios_base_dtor_imp_asm[] =
 
 static void ios_base_Ios_base_dtor_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "private: static void __cdecl std::ios_base::_Ios_base_dtor(class std::ios_base *)" << '\n';
-#endif
     ios_base_Ios_base_dtor_imp((uint32_t)v0);
 }
 
@@ -872,10 +761,8 @@ static unsigned char basic_streambuf_char_sputn_imp_asm[] =
 
 static uint32_t basic_streambuf_char_sputn_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "public: __int64 __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::sputn(char const *,__int64)" << '\n';
-#endif
-    return (uint32_t)basic_streambuf_char_sputn_imp((uint32_t)v0, (char *)v1, (uint64_t)v2);
+    uint32_t ret_val = (uint32_t)basic_streambuf_char_sputn_imp((uint32_t)v0, (char *)v1, (uint64_t)v2);
+    return ret_val;
 }
 
 static unsigned char __uncaught_exception_imp_asm[] = 
@@ -890,10 +777,8 @@ static unsigned char __uncaught_exception_imp_asm[] =
 
 static uint32_t __uncaught_exception_imp_wrapc()
 {
-#ifndef NDEBUG
-    std::cout << "__uncaught_exception" << '\n';
-#endif
-    return (uint32_t)__uncaught_exception_imp();
+    uint32_t ret_val = (uint32_t)__uncaught_exception_imp();
+    return ret_val;
 }
 
 static unsigned char basic_ostream_char__Osfx_imp_asm[] = 
@@ -908,9 +793,6 @@ static unsigned char basic_ostream_char__Osfx_imp_asm[] =
 
 static void basic_ostream_char__Osfx_imp_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "public: void __thiscall std::basic_ostream<char,struct std::char_traits<char> >::_Osfx(void)" << '\n';
-#endif
     basic_ostream_char__Osfx_imp((uint32_t)v0);
 }
 
@@ -926,10 +808,8 @@ static unsigned char basic_ostream_char_print_int_imp_asm[] =
 
 static uint32_t basic_ostream_char_print_int_imp_wrapc(uint32_t v0, uint32_t v1)
 {
-#ifndef NDEBUG
-    std::cout << "public: class std::basic_ostream<char,struct std::char_traits<char> > & __thiscall std::basic_ostream<char,struct std::char_traits<char> >::operator<<(int)" << '\n';
-#endif
-    return (uint32_t)basic_ostream_char_print_int_imp((uint32_t)v0, (int32_t)v1);
+    uint32_t ret_val = (uint32_t)basic_ostream_char_print_int_imp((uint32_t)v0, (int32_t)v1);
+    return ret_val;
 }
 
 static unsigned char basic_streambuf_char_setg_imp_asm[] = 
@@ -945,9 +825,6 @@ static unsigned char basic_streambuf_char_setg_imp_asm[] =
 
 static void basic_streambuf_char_setg_imp_wrapc(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3)
 {
-#ifndef NDEBUG
-    std::cout << "protected: void __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::setg(char *,char *,char *)" << '\n';
-#endif
     basic_streambuf_char_setg_imp((uint32_t)v0, (uint32_t)v1, (uint32_t)v2, (uint32_t)v3);
 }
 
@@ -963,9 +840,6 @@ static unsigned char basic_ios_wchar_ctor_asm[] =
 
 static void basic_ios_wchar_ctor_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "protected: __thiscall std::basic_ios<wchar_t,struct std::char_traits<wchar_t> >::basic_ios<wchar_t,struct std::char_traits<wchar_t> >(void)" << '\n';
-#endif
     basic_ios_wchar_ctor((uint32_t)v0);
 }
 
@@ -982,9 +856,6 @@ static unsigned char basic_iostream_wchar_ctor_asm[] =
 
 static void basic_iostream_wchar_ctor_wrapc(uint32_t v0, uint32_t v1, uint32_t v2)
 {
-#ifndef NDEBUG
-    std::cout << "public: __thiscall std::basic_iostream<wchar_t,struct std::char_traits<wchar_t> >::basic_iostream<wchar_t,struct std::char_traits<wchar_t> >(class std::basic_streambuf<wchar_t,struct std::char_traits<wchar_t> > *)" << '\n';
-#endif
     basic_iostream_wchar_ctor((uint32_t)v0, (uint32_t)v1, (uint32_t)v2);
 }
 
@@ -1000,9 +871,6 @@ static unsigned char basic_streambuf_wchar_ctor_asm[] =
 
 static void basic_streambuf_wchar_ctor_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "protected: __thiscall std::basic_streambuf<wchar_t,struct std::char_traits<wchar_t> >::basic_streambuf<wchar_t,struct std::char_traits<wchar_t> >(void)" << '\n';
-#endif
     basic_streambuf_wchar_ctor((uint32_t)v0);
 }
 
@@ -1018,9 +886,6 @@ static unsigned char basic_streambuf_wchar_dtor_asm[] =
 
 static void basic_streambuf_wchar_dtor_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "public: virtual __thiscall std::basic_streambuf<wchar_t,struct std::char_traits<wchar_t> >::~basic_streambuf<wchar_t,struct std::char_traits<wchar_t> >(void)" << '\n';
-#endif
     basic_streambuf_wchar_dtor((uint32_t)v0);
 }
 
@@ -1036,9 +901,6 @@ static unsigned char basic_iostream_wchar_dtor_asm[] =
 
 static void basic_iostream_wchar_dtor_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "public: virtual __thiscall std::basic_iostream<wchar_t,struct std::char_traits<wchar_t> >::~basic_iostream<wchar_t,struct std::char_traits<wchar_t> >(void)" << '\n';
-#endif
     basic_iostream_wchar_dtor((uint32_t)v0);
 }
 
@@ -1054,9 +916,6 @@ static unsigned char basic_ios_wchar_dtor_asm[] =
 
 static void basic_ios_wchar_dtor_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "public: virtual __thiscall std::basic_ios<wchar_t,struct std::char_traits<wchar_t> >::~basic_ios<wchar_t,struct std::char_traits<wchar_t> >(void)" << '\n';
-#endif
     basic_ios_wchar_dtor((uint32_t)v0);
 }
 
@@ -1073,10 +932,8 @@ static unsigned char sub_4120D0_asm[] =
 
 static uint32_t sub_4120D0_wrapc(uint32_t v0, uint32_t v1)
 {
-#ifndef NDEBUG
-    std::cout << "sub_4120D0" << '\n';
-#endif
-    return (uint32_t)sub_4120D0((uint32_t)v0, (char *)v1);
+    uint32_t ret_val = (uint32_t)sub_4120D0((uint32_t)v0, (char *)v1);
+    return ret_val;
 }
 
 static unsigned char sub_4C6970_asm[] = 
@@ -1092,10 +949,8 @@ static unsigned char sub_4C6970_asm[] =
 
 static uint32_t sub_4C6970_wrapc(uint32_t v0, uint32_t v1)
 {
-#ifndef NDEBUG
-    std::cout << "sub_4C6970" << '\n';
-#endif
-    return (uint32_t)sub_4C6970((uint32_t)v0, (basic_string_char *)v1);
+    uint32_t ret_val = (uint32_t)sub_4C6970((uint32_t)v0, (basic_string_char *)v1);
+    return ret_val;
 }
 
 static unsigned char sub_4D8B70_asm[] = 
@@ -1110,10 +965,8 @@ static unsigned char sub_4D8B70_asm[] =
 
 static uint32_t sub_4D8B70_wrapc(uint32_t v0, uint32_t v1)
 {
-#ifndef NDEBUG
-    std::cout << "sub_4D8B70" << '\n';
-#endif
-    return (uint32_t)sub_4D8B70((uint32_t)v0, (basic_string_char *)v1);
+    uint32_t ret_val = (uint32_t)sub_4D8B70((uint32_t)v0, (basic_string_char *)v1);
+    return ret_val;
 }
 
 static unsigned char sub_469210_asm[] = 
@@ -1130,10 +983,8 @@ static unsigned char sub_469210_asm[] =
 
 static uint32_t sub_469210_wrapc(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3, uint32_t v4)
 {
-#ifndef NDEBUG
-    std::cout << "sub_469210" << '\n';
-#endif
-    return (uint32_t)sub_469210((uint32_t)v0, (char *)v1, (uint32_t)v2, (uint32_t *)v3, (uint32_t)v4);
+    uint32_t ret_val = (uint32_t)sub_469210((uint32_t)v0, (char *)v1, (uint32_t)v2, (uint32_t *)v3, (uint32_t)v4);
+    return ret_val;
 }
 
 static unsigned char sub_4698F0_asm[] = 
@@ -1150,10 +1001,8 @@ static unsigned char sub_4698F0_asm[] =
 
 static uint32_t sub_4698F0_wrapc(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3, uint32_t v4)
 {
-#ifndef NDEBUG
-    std::cout << "sub_4698F0" << '\n';
-#endif
-    return (uint32_t)sub_4698F0((uint32_t)v0, (uint32_t)v1, (char *)v2, (int32_t)v3, (uint32_t)v4);
+    uint32_t ret_val = (uint32_t)sub_4698F0((uint32_t)v0, (uint32_t)v1, (char *)v2, (int32_t)v3, (uint32_t)v4);
+    return ret_val;
 }
 
 static unsigned char sub_46A090_asm[] = 
@@ -1168,10 +1017,8 @@ static unsigned char sub_46A090_asm[] =
 
 static uint32_t sub_46A090_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "sub_46A090" << '\n';
-#endif
-    return (uint32_t)sub_46A090((uint32_t)v0);
+    uint32_t ret_val = (uint32_t)sub_46A090((uint32_t)v0);
+    return ret_val;
 }
 
 static unsigned char sub_46AE00_asm[] = 
@@ -1186,10 +1033,8 @@ static unsigned char sub_46AE00_asm[] =
 
 static uint32_t sub_46AE00_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "sub_46AE00" << '\n';
-#endif
-    return (uint32_t)sub_46AE00((uint32_t)v0);
+    uint32_t ret_val = (uint32_t)sub_46AE00((uint32_t)v0);
+    return ret_val;
 }
 
 static unsigned char sub_46A3A0_asm[] = 
@@ -1205,10 +1050,8 @@ static unsigned char sub_46A3A0_asm[] =
 
 static uint32_t sub_46A3A0_wrapc(uint32_t v0, uint32_t v1)
 {
-#ifndef NDEBUG
-    std::cout << "sub_46A3A0" << '\n';
-#endif
-    return (uint32_t)sub_46A3A0((uint32_t)v0, (int32_t)v1);
+    uint32_t ret_val = (uint32_t)sub_46A3A0((uint32_t)v0, (int32_t)v1);
+    return ret_val;
 }
 
 static unsigned char sub_46A320_asm[] = 
@@ -1224,10 +1067,8 @@ static unsigned char sub_46A320_asm[] =
 
 static uint32_t sub_46A320_wrapc(uint32_t v0, uint32_t v1)
 {
-#ifndef NDEBUG
-    std::cout << "sub_46A320" << '\n';
-#endif
-    return (uint32_t)sub_46A320((uint32_t)v0, (int32_t)v1);
+    uint32_t ret_val = (uint32_t)sub_46A320((uint32_t)v0, (int32_t)v1);
+    return ret_val;
 }
 
 static unsigned char sub_4633C0_asm[] = 
@@ -1242,10 +1083,8 @@ static unsigned char sub_4633C0_asm[] =
 
 static uint32_t sub_4633C0_wrapc(uint32_t v0)
 {
-#ifndef NDEBUG
-    std::cout << "sub_4633C0" << '\n';
-#endif
-    return (uint32_t)sub_4633C0((uint32_t)v0);
+    uint32_t ret_val = (uint32_t)sub_4633C0((uint32_t)v0);
+    return ret_val;
 }
 
 static unsigned char sub_469530_asm[] = 
@@ -1262,10 +1101,8 @@ static unsigned char sub_469530_asm[] =
 
 static uint32_t sub_469530_wrapc(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3, uint32_t v4)
 {
-#ifndef NDEBUG
-    std::cout << "sub_469530" << '\n';
-#endif
-    return (uint32_t)sub_469530((uint32_t)v0, (uint32_t)v1, (char *)v2, (uint32_t)v3, (uint32_t)v4);
+    uint32_t ret_val = (uint32_t)sub_469530((uint32_t)v0, (uint32_t)v1, (char *)v2, (uint32_t)v3, (uint32_t)v4);
+    return ret_val;
 }
 
 static unsigned char sub_468330_asm[] = 
@@ -1281,10 +1118,8 @@ static unsigned char sub_468330_asm[] =
 
 static uint32_t sub_468330_wrapc(uint32_t v0, uint32_t v1)
 {
-#ifndef NDEBUG
-    std::cout << "sub_468330" << '\n';
-#endif
-    return (uint32_t)sub_468330((char *)v0, (uint32_t *)v1);
+    uint32_t ret_val = (uint32_t)sub_468330((char *)v0, (uint32_t *)v1);
+    return ret_val;
 }
 
 static unsigned char sub_463500_asm[] = 
@@ -1301,10 +1136,8 @@ static unsigned char sub_463500_asm[] =
 
 static uint32_t sub_463500_wrapc(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3, uint32_t v4)
 {
-#ifndef NDEBUG
-    std::cout << "sub_463500" << '\n';
-#endif
-    return (uint32_t)sub_463500((uint32_t)v0, (char *)v1, (uint32_t)v2, (uint32_t)v3, (uint32_t)v4);
+    uint32_t ret_val = (uint32_t)sub_463500((uint32_t)v0, (char *)v1, (uint32_t)v2, (uint32_t)v3, (uint32_t)v4);
+    return ret_val;
 }
 
 static unsigned char sub_46B620_asm[] = 
@@ -1319,9 +1152,6 @@ static unsigned char sub_46B620_asm[] =
 
 static void sub_46B620_wrapc()
 {
-#ifndef NDEBUG
-    std::cout << "sub_46B620" << '\n';
-#endif
     sub_46B620();
 }
 
@@ -1560,19 +1390,19 @@ std::unordered_map<std::string, Import> imports(
 }
 );std::vector<Patch> patches(
 {
-Patch{&sub_4120D0_asm[0], sizeof sub_4120D0_asm, (void*)&sub_4120D0_wrapc, 4268240},
-Patch{&sub_4C6970_asm[0], sizeof sub_4C6970_asm, (void*)&sub_4C6970_wrapc, 5007728},
-Patch{&sub_4D8B70_asm[0], sizeof sub_4D8B70_asm, (void*)&sub_4D8B70_wrapc, 5081968},
-Patch{&sub_469210_asm[0], sizeof sub_469210_asm, (void*)&sub_469210_wrapc, 4624912},
-Patch{&sub_4698F0_asm[0], sizeof sub_4698F0_asm, (void*)&sub_4698F0_wrapc, 4626672},
-Patch{&sub_46A090_asm[0], sizeof sub_46A090_asm, (void*)&sub_46A090_wrapc, 4628624},
-Patch{&sub_46AE00_asm[0], sizeof sub_46AE00_asm, (void*)&sub_46AE00_wrapc, 4632064},
-Patch{&sub_46A3A0_asm[0], sizeof sub_46A3A0_asm, (void*)&sub_46A3A0_wrapc, 4629408},
-Patch{&sub_46A320_asm[0], sizeof sub_46A320_asm, (void*)&sub_46A320_wrapc, 4629280},
-Patch{&sub_4633C0_asm[0], sizeof sub_4633C0_asm, (void*)&sub_4633C0_wrapc, 4600768},
-Patch{&sub_469530_asm[0], sizeof sub_469530_asm, (void*)&sub_469530_wrapc, 4625712},
-Patch{&sub_468330_asm[0], sizeof sub_468330_asm, (void*)&sub_468330_wrapc, 4621104},
-Patch{&sub_463500_asm[0], sizeof sub_463500_asm, (void*)&sub_463500_wrapc, 4601088},
-Patch{&sub_46B620_asm[0], sizeof sub_46B620_asm, (void*)&sub_46B620_wrapc, 4634144}
+Patch{&sub_4120D0_asm[0], sizeof sub_4120D0_asm, (void*)&sub_4120D0_wrapc, 0x412710,0},
+Patch{&sub_4C6970_asm[0], sizeof sub_4C6970_asm, (void*)&sub_4C6970_wrapc, 0x4C6580,0},
+Patch{&sub_4D8B70_asm[0], sizeof sub_4D8B70_asm, (void*)&sub_4D8B70_wrapc, 0x4D8F70,0},
+Patch{&sub_469210_asm[0], sizeof sub_469210_asm, (void*)&sub_469210_wrapc, 0,SQLITE_TABLE+4*72},
+Patch{&sub_4698F0_asm[0], sizeof sub_4698F0_asm, (void*)&sub_4698F0_wrapc, 0,SQLITE_TABLE+4*10},
+Patch{&sub_46A090_asm[0], sizeof sub_46A090_asm, (void*)&sub_46A090_wrapc, 0,SQLITE_TABLE+4*94},
+Patch{&sub_46AE00_asm[0], sizeof sub_46AE00_asm, (void*)&sub_46AE00_wrapc, 0,SQLITE_TABLE+4*57},
+Patch{&sub_46A3A0_asm[0], sizeof sub_46A3A0_asm, (void*)&sub_46A3A0_wrapc, 0,SQLITE_TABLE+4*20},
+Patch{&sub_46A320_asm[0], sizeof sub_46A320_asm, (void*)&sub_46A320_wrapc, 0,SQLITE_TABLE+4*19},
+Patch{&sub_4633C0_asm[0], sizeof sub_4633C0_asm, (void*)&sub_4633C0_wrapc, 0,SQLITE_TABLE+4*16},
+Patch{&sub_469530_asm[0], sizeof sub_469530_asm, (void*)&sub_469530_wrapc, 0,SQLITE_TABLE+4*2},
+Patch{&sub_468330_asm[0], sizeof sub_468330_asm, (void*)&sub_468330_wrapc, 0,SQLITE_TABLE+4*70},
+Patch{&sub_463500_asm[0], sizeof sub_463500_asm, (void*)&sub_463500_wrapc, 0,SQLITE_TABLE+4*55},
+Patch{&sub_46B620_asm[0], sizeof sub_46B620_asm, (void*)&sub_46B620_wrapc, 0,SQLITE_TABLE+4*96}
 }
 );

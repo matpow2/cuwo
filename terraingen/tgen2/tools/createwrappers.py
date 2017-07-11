@@ -117,7 +117,7 @@ def get_c_type(typ):
         return 'double'
     return 'uint32_t'
 
-def add_func(name, patch, callconv, func_prot):
+def add_func(name, patch, table, callconv, func_prot):
     if name == 'ignore':
         print('skipping', func_prot)
     func_prot = func_prot.replace('*', ' * ')
@@ -185,7 +185,7 @@ def add_func(name, patch, callconv, func_prot):
         asm += f'    pop r12\n'
         asm += f'    X64_End\n'
         asm += f'    use32\n'
-        if callconv in ('stdcall', 'thiscall'):
+        if callconv in ('stdcall', 'thiscall', 'vectorcall'):
             asm += f'    ret {(len(args)-arg_off)*4}\n'
         else:
             asm += f'    ret\n'
@@ -198,9 +198,10 @@ def add_func(name, patch, callconv, func_prot):
         asm_c = f'static unsigned char {func_name}_asm[] = \n' + asm + '\n\n'
         state.output_c += asm_c
 
-
-    if patch is not None:
-        state.patches.append((patch, func_name))
+    if patch is not None or table is not None:
+        patch = patch or 0
+        table = table or 0
+        state.patches.append((patch, table, func_name))
     else:
         state.asm.append((name, func_name))
 
@@ -222,17 +223,29 @@ def add_func(name, patch, callconv, func_prot):
     print_name = name
     if not print_name:
         print_name = func_name
-    # if name != '_setjmp3':
-    #     state.output_c += f'#ifndef NDEBUG\n'
-    #     state.output_c += f"    std::cout << \"{print_name}\" << '\\n';\n"
-    #     state.output_c += f'#endif\n'
     c_args_call = [f'({args[i]})v{i}' for i in range(len(args))]
     c_args_call = ', '.join(c_args_call)
     call = f'{func_name}({c_args_call})'
+    ret_code = None
     if c_ret == 'void':
         state.output_c += f'    {call};\n'
     else:
-        state.output_c += f'    return ({c_ret}){call};\n'
+        ret_code = '    return ret_val;\n'
+        state.output_c += f'    {c_ret} ret_val = ({c_ret}){call};\n'
+    
+    if False: # name != '_setjmp3':
+        state.output_c += f'#ifndef NDEBUG\n'
+
+        print_args = [f' << " " << v{i} ' for i in range(len(args))]
+        print_args = ''.join(print_args)
+        state.output_c += f"    std::cout << \"{print_name}\" "
+        state.output_c += f"{print_args}<< "
+        if ret_code is not None:
+            state.output_c += f' " -> " << ret_val << '
+        state.output_c += "'\\n';\n"
+        state.output_c += f'#endif\n'
+    if ret_code is not None:
+        state.output_c += ret_code
     state.output_c += f'}}\n\n'
 
     print(name, patch, ret, args)
@@ -242,28 +255,35 @@ def do_lines(lines):
     callconv = 'cdecl'
     func_prot = ''
     patch = None
+    table = None
     has_func = False
     for line in lines:
         line = line.strip()
         if line.startswith('// stdcall'):
             callconv = 'stdcall'
+        elif line.startswith('// vectorcall'):
+            callconv = 'vectorcall'
         elif line.startswith('// thiscall'):
             callconv = 'thiscall'
         elif line.startswith('// import:'):
             name += line.split(':', 1)[1].strip()
             has_func = True
         elif line.startswith('// patch:'):
-            patch = eval(line.split(':', 1)[1].strip())
+            patch = line.split(':', 1)[1].strip()
+            has_func = True
+        elif line.startswith('// table:'):
+            table = line.split(':', 1)[1].strip()
             has_func = True
         elif has_func and not line.startswith('//'):
             func_prot += line
 
         if has_func and ')' in func_prot:
-            add_func(name, patch, callconv, func_prot)
+            add_func(name, patch, table, callconv, func_prot)
             name = ''
             callconv = 'cdecl'
             func_prot = ''
             patch = None
+            table = None
             has_func = False
 
 def do_callers():
@@ -389,15 +409,16 @@ for (is_msvc, is_x64) in ((True, True), (False, True),
         imports += do_callers()
 
         patches = [(f'Patch{{&{func}_asm[0], sizeof {func}_asm, '
-                             f'(void*)&{func}_wrapc, {patch}}}')
-                    for (patch, func) in state.patches]
+                             f'(void*)&{func}_wrapc, {patch},'
+                             f'{table}}}')
+                    for (patch, table, func) in state.patches]
     else:
         imports = [(f'{{"{name}", '
                     f'Import{{(void*)&{func}_wrapc}}}}')
                     for (name, func) in state.asm]
 
-        patches = [(f'Patch{{(void*)&{func}_wrapc, {patch}}}')
-                    for (patch, func) in state.patches]
+        patches = [(f'Patch{{(void*)&{func}_wrapc, {patch}, {table}}}')
+                    for (patch, table, func) in state.patches]
 
     imports = ',\n'.join(imports)
     patches = ',\n'.join(patches)

@@ -4,12 +4,14 @@
 #include "config.h"
 
 #ifdef _WIN32
+#define TGEN_VECTORCALL __vectorcall
 #define TGEN_THISCALL __fastcall
 #define TGEN_STDCALL __stdcall
 #define TGEN_CDECL
 #else
 #define TGEN_THISCALL __attribute__((fastcall))
 #define TGEN_STDCALL __attribute__((stdcall))
+#define TGEN_VECTORCALL __attribute__((fastcall, sseregparm))
 #define TGEN_CDECL
 #endif
 

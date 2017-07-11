@@ -89,13 +89,15 @@ char * resolve_import(T & imp)
 int do_imports(void *N, VA impAddr, std::string &modName, std::string &symName)
 {
     static unsigned int import_num = 0;
-    // std::cout << "0x" << to_string<VA>(impAddr, std::hex);
     char demangled[1024];
     char * res = __unDName(demangled, symName.c_str(), sizeof(demangled),
                                                  UNDNAME_COMPLETE);
-    // std::cout << import_num << ": " << modName << "|" <<
-    //     symName << "!" << demangled;
-    // std::cout << std::endl;
+#ifndef NDEBUG
+    // std::cout << "0x" << to_string<VA>(impAddr, std::hex);
+    std::cout << import_num << ": " << modName << "|" <<
+        symName << "!" << demangled;
+    std::cout << std::endl;
+#endif
 
     auto it = imports.find(demangled);
     if (it != imports.end()) {
@@ -312,15 +314,24 @@ static void * get_entry_point()
 
 static void do_patches()
 {
+
     for (Patch & patch : patches) {
         // push   0x11223344, ret -> 68 44 33 22 11 C3
         char * x86 = resolve_import(patch);
-        uint8_t * p = (uint8_t*)get_mem_va(patch.patch_addr);
+        uint8_t * p = NULL;
+        if (patch.patch_table != 0) {
+            uint32_t addr = *(uint32_t*)get_mem_va(patch.patch_table);
+            p = (uint8_t*)addr;
+        } else if (patch.patch_addr != 0) {
+            p = (uint8_t*)get_mem_va(patch.patch_addr);
+        }
+        assert(p != NULL);
         *p = 0x68;
         p++;
         *(uint32_t*)p = (uint32_t)x86;
         p += 4;
         *p = 0xC3;
+
     }
 
     // mov esp, ebp -> 89 ec

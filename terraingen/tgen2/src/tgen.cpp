@@ -35,14 +35,12 @@ static void tgen_generate_chunk_call()
     uint32_t y = tgen_generate_chunk_y;
 
     call_x86_thiscall_3(
-        get_mem_va(0x5183D0), (uint32_t)manager_data, x, y);
+        get_mem_va(VA_GENERATOR), (uint32_t)manager_data, x, y);
 
-    // save_chunk_now();
-    // return 0;
     // address 405E30 is
     // void * __thiscall get_sector_chunk_data(__int64 chunk_pos)
     tgen_generate_chunk_return = (void*)call_x86_thiscall_3(
-        get_mem_va(0x405E30), (uint32_t)manager_data, x, y
+        get_mem_va(VA_GET_SECTOR_CHUNK_DATA), (uint32_t)manager_data, x, y
     );
 }
 

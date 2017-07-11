@@ -6,6 +6,5 @@ python:
 install:
  - pip install -r requirements.txt
  - python setup.py build_ext --inplace
- - wget http://cuwo.org/get_executable.php -O ./data/Server.exe
  - python -m cuwo.download travis travispass
 script: python ./tests/test_tgen.py

@@ -16,7 +16,10 @@ set(SRC
     ${SRC}
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -std=c++11")
+if (NOT MSVC)
+    set(LIBS "pthread dl")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -std=c++11")
+endif()
 
 add_executable(tgen ${SRC})
 target_include_directories(tgen PUBLIC
@@ -24,4 +27,6 @@ target_include_directories(tgen PUBLIC
                            ${EXTERNAL_DIR}
                            )
 target_compile_definitions(tgen PUBLIC)
-target_link_libraries(tgen LINK_PUBLIC pthread dl)
+
+
+target_link_libraries(tgen LINK_PUBLIC ${LIBS})

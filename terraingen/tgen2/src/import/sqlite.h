@@ -111,7 +111,7 @@ inline SQLDatabase * get_db(uint32_t v)
 }
 
 // sqlite3_prepare
-// patch: 0x469210
+// table: SQLITE_TABLE+4*72
 int32_t sub_469210(uint32_t db, char * sql, uint32_t num, uint32_t * stm,
                    uint32_t tail)
 {
@@ -122,7 +122,7 @@ int32_t sub_469210(uint32_t db, char * sql, uint32_t num, uint32_t * stm,
 }
 
 // sqlite3_bind_text
-// patch: 0x4698F0
+// table: SQLITE_TABLE+4*10
 int32_t sub_4698F0(uint32_t stm, uint32_t index, char * value,
                    int32_t bytes, uint32_t cb)
 {
@@ -131,7 +131,7 @@ int32_t sub_4698F0(uint32_t stm, uint32_t index, char * value,
 }
 
 // sqlite3_step
-// patch: 0x46A090
+// table: SQLITE_TABLE+4*94
 int32_t sub_46A090(uint32_t stm)
 {
     // std::cout << "sqlite3_step" << std::endl;
@@ -139,7 +139,7 @@ int32_t sub_46A090(uint32_t stm)
 }
 
 // sqlite3_finalize
-// patch: 0x46AE00
+// table: SQLITE_TABLE+4*57
 int32_t sub_46AE00(uint32_t stm)
 {
     // std::cout << "sqlite3_finalize" << std::endl;
@@ -147,7 +147,7 @@ int32_t sub_46AE00(uint32_t stm)
 }
 
 // sqlite3_column_bytes
-// patch: 0x46A3A0
+// table: SQLITE_TABLE+4*20
 int32_t sub_46A3A0(uint32_t stm, int32_t col)
 {
     return get_db(stm)->column_bytes(col);
@@ -155,7 +155,7 @@ int32_t sub_46A3A0(uint32_t stm, int32_t col)
 }
 
 // sqlite3_column_blob
-// patch: 0x46A320
+// table: SQLITE_TABLE+4*19
 void * sub_46A320(uint32_t stm, int32_t col)
 {
     return get_db(stm)->column_blob(col);
@@ -163,7 +163,7 @@ void * sub_46A320(uint32_t stm, int32_t col)
 }
 
 // sqlite3_close
-// patch: 0x4633C0
+// table: SQLITE_TABLE+4*16
 int32_t sub_4633C0(uint32_t db)
 {
     // std::cout << "sqlite3_close" << std::endl;
@@ -175,7 +175,7 @@ int32_t sub_4633C0(uint32_t db)
 }
 
 // sqlite3_bind_blob
-// patch: 0x469530
+// table: SQLITE_TABLE+4*2
 int32_t sub_469530(uint32_t stm, uint32_t index, char * value, uint32_t bytes,
                    uint32_t cb)
 {
@@ -184,7 +184,7 @@ int32_t sub_469530(uint32_t stm, uint32_t index, char * value, uint32_t bytes,
 }
 
 // sqlite3_open
-// patch: 0x468330
+// table: SQLITE_TABLE+4*70
 int32_t sub_468330(char * filename, uint32_t * db)
 {
     // std::cout << "sqlite3_open: " << filename << std::endl;
@@ -204,7 +204,7 @@ int32_t sub_468330(char * filename, uint32_t * db)
 }
 
 // sqlite3_exec
-// patch: 0x463500
+// table: SQLITE_TABLE+4*55
 int32_t sub_463500(uint32_t db, char * sql, uint32_t callback, uint32_t arg,
                    uint32_t err)
 {
@@ -213,7 +213,7 @@ int32_t sub_463500(uint32_t db, char * sql, uint32_t callback, uint32_t arg,
 }
 
 // sqlite3_thread_cleanup
-// patch: 0x46B620
+// table: SQLITE_TABLE+4*96
 void sub_46B620()
 {
     // std::cout << "sqlite_thread_cleanup" << std::endl;

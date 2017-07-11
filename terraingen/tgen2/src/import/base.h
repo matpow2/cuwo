@@ -237,24 +237,28 @@ void orphan_imp(uint32_t self)
 }
 
 // import: _libm_sse2_cos_precise
+// vectorcall
 double _libm_sse2_cos_precise_imp(double v)
 {
     return cos(v);
 }
 
 // import: _libm_sse2_sin_precise
+// vectorcall
 double _libm_sse2_sin_precise_imp(double v)
 {
     return sin(v);
 }
 
 // import: _libm_sse2_sqrt_precise
+// vectorcall
 double _libm_sse2_sqrt_precise_imp(double v)
 {
     return sqrt(v);
 }
 
 // import: _libm_sse2_pow_precise
+// vectorcall
 double _libm_sse2_pow_precise_imp(double v, double v2)
 {
     return pow(v, v2);
