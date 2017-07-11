@@ -1,17 +1,7 @@
 environment:
   matrix:
-
-
-    # Python 2.6.6 is the latest Python 2.6 with a Windows installer
-    # See: https://github.com/ogrisel/python-appveyor-demo/issues/10
-
     - PYTHON: "C:\\Python36"
-      PYTHON_VERSION: "3.6.1"
-      PYTHON_ARCH: "32"
-
     - PYTHON: "C:\\Python36-x64"
-      PYTHON_VERSION: "3.6.1"
-      PYTHON_ARCH: "64"
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
