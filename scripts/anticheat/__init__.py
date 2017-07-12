@@ -86,7 +86,7 @@ class AntiCheatConnection(ConnectionScript):
         config = self.server.config.anticheat
         self.level_cap = config.level_cap
         self.allow_dual_wield = config.allow_dual_wield
-        self._cap = config.rarity_cap
+        self.rarity_cap = config.rarity_cap
         self.name_filter = config.name_filter
         self.log_level = config.log_level
         self.log_message = config.log_message
