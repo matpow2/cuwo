@@ -702,7 +702,13 @@ class AntiCheatConnection(ConnectionScript):
 
     def has_illegal_level(self):
         entity = self.connection.entity
-
+        
+        # Negative levels get crazy
+        if entity.level < 0:
+            self.log("negative level: level = {level}"
+                     .format(level=entity.level), LOG_LEVEL_VERBOSE)
+            return True
+          
         if entity.level > self.level_cap:
             return True
         return False
