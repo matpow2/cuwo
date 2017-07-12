@@ -1,5 +1,5 @@
 ![cuwo](http://mp2.dk/cuwo/logo.png)
-[![Build Status](https://travis-ci.org/matpow2/cuwo.svg?branch=master)](https://travis-ci.org/matpow2/cuwo)
+[![Build Status](https://travis-ci.org/matpow2/cuwo.svg?branch=master)](https://travis-ci.org/matpow2/cuwo) [![Build status](https://ci.appveyor.com/api/projects/status/t1ik17xyn26b8rx7?svg=true)](https://ci.appveyor.com/project/matpow2/cuwo)
 ====
 
 cuwo is an open server implementation for Cube World, written in Python and
