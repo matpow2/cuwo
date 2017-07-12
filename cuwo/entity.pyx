@@ -34,14 +34,14 @@ cdef class ItemUpgrade:
         char y
         char z
         char material
-        unsigned int level
+        int level
 
     cpdef read(self, ByteReader reader):
         self.x = reader.read_int8()
         self.y = reader.read_int8()
         self.z = reader.read_int8()
         self.material = reader.read_int8()
-        self.level = reader.read_uint32()
+        self.level = reader.read_int32()
 
     cpdef write(self, ByteWriter writer):
         writer.write_int8(self.x)
@@ -60,7 +60,7 @@ cdef class ItemData:
         unsigned char rarity
         unsigned char material
         unsigned char flags
-        unsigned short level
+        short level
         list items
         unsigned int upgrade_count
 
@@ -80,7 +80,7 @@ cdef class ItemData:
         self.material = reader.read_uint8()
         self.flags = reader.read_uint8()
         reader.skip(1)
-        self.level = reader.read_uint16()
+        self.level = reader.read_int16()
         reader.skip(2)
         for i in range(32):
             (<ItemUpgrade>self.items[i]).read(reader)
@@ -96,7 +96,7 @@ cdef class ItemData:
         writer.write_uint8(self.material)
         writer.write_uint8(self.flags)
         writer.pad(1)
-        writer.write_uint16(self.level)
+        writer.write_int16(self.level)
         writer.pad(2)
         for item in self.items:
             item.write(writer)
@@ -419,8 +419,8 @@ cdef class EntityData:
         double resi_multiplier
         unsigned char not_used7
         unsigned char not_used8
-        unsigned int level
-        unsigned int current_xp
+        signed int level
+        signed int current_xp
         uint64_t parent_owner
         unsigned int unknown_or_not_used1
         unsigned int unknown_or_not_used2
@@ -515,8 +515,8 @@ cdef class EntityData:
         self.not_used7 = reader.read_uint8()
         self.not_used8 = reader.read_uint8()
         reader.skip(2)
-        self.level = reader.read_uint32()
-        self.current_xp = reader.read_uint32()
+        self.level = reader.read_int32()
+        self.current_xp = reader.read_int32()
         self.parent_owner = reader.read_uint64()
         self.unknown_or_not_used1 = reader.read_uint32()
         self.unknown_or_not_used2 = reader.read_uint32()
@@ -586,8 +586,8 @@ cdef class EntityData:
         writer.write_uint8(self.not_used7)
         writer.write_uint8(self.not_used8)
         writer.pad(2)
-        writer.write_uint32(self.level)
-        writer.write_uint32(self.current_xp)
+        writer.write_int32(self.level)
+        writer.write_int32(self.current_xp)
         writer.write_uint64(self.parent_owner)
         writer.write_uint32(self.unknown_or_not_used1)
         writer.write_uint32(self.unknown_or_not_used2)
