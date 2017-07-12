@@ -492,7 +492,7 @@ cdef class DynamicEntity:
         uint32_t class_type
         uint32_t specialization
         uint32_t entity_type
-        uint32_t level
+        int32_t level
         uint64_t entity_id
         uint32_t flags_bit_3
         float yaw
