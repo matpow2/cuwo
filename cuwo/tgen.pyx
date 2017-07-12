@@ -29,7 +29,7 @@ from cuwo.strings import ENTITY_NAMES
 from cuwo.constants import BLOCK_SCALE
 from cuwo.vector import Vector3
 
-from libc.stdint cimport uintptr_t, uint32_t, uint8_t, uint64_t, int64_t
+from libc.stdint cimport uintptr_t, uint32_t, uint8_t, uint64_t, int64_t, int32_t
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
 from libcpp.string cimport string
