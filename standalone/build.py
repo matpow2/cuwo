@@ -21,8 +21,7 @@ from cx_Freeze import setup, Executable
 
 build_options = {'packages': ['encodings', 'irc3', 'cuwo', 'asyncio'],
                  'excludes': ['config'],
-                 'includes': ['json', 'platform'],
-                 'include_msvcr': True}
+                 'includes': ['json', 'platform']}
 
 executables = [
     Executable('../cuwo/server.py', base='Console', targetName='server.exe')

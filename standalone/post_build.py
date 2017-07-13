@@ -59,11 +59,30 @@ GIT_FILES = ['scripts', 'config']
 REMOVE_FILES = ['dummy']
 
 
+# include files
+CRT_DIR = (r'C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC'
+           r'\redist\{ARCH}\Microsoft.VC140.CRT')
+CRT_FILES = ['msvcp140.dll', 'vcruntime140.dll']
+UCRT_DIR = r'C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x64'
+INCLUDE_FILES = [os.path.join(CRT_DIR, name) for name in CRT_FILES]
+INCLUDE_FILES += [os.path.join(UCRT_DIR, name)
+                  for name in os.listdir(UCRT_DIR)]
+
+
 def main():
     src_dir = os.path.join('build', os.listdir('./build')[0])
     copy(src_dir, './dist/bin')
 
     open('./dist/run.bat', 'wb').write(b'bin\server.exe\r\npause\r\n')
+
+    is_64bits = sys.maxsize > 2**32
+    if is_64bits:
+        arch = 'x64'
+    else:
+        arch = 'x86'
+    for name in INCLUDE_FILES:
+        name = name.format(ARCH=arch)
+        copy(name, os.path.join('./dist/bin', os.path.basename(name)))
 
     for name in GIT_FILES:
         copy_git(name, './dist')
