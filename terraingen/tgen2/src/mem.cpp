@@ -246,8 +246,8 @@ void run_with_stack(void (*f)())
 
 #endif
 
-static unsigned char * heap;
-static uint32_t heap_offset;
+unsigned char * heap;
+uint32_t heap_offset;
 
 extern "C" {
     #define HAVE_MORECORE 1

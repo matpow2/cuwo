@@ -16,6 +16,7 @@ static const uint32_t SERVER_ENTRYPOINT_END = 0x549F9D;
 
 static const uint32_t VA_CREATE_STRING_FROM_CSTR = 0x401A40;
 static const uint32_t VA_GENERATOR = 0x518630;
+static const uint32_t VA_GET_SECTOR = 0x406210;
 static const uint32_t VA_GET_SECTOR_CHUNK_DATA = 0x406290;
 
 static const uint32_t HEAP_SIZE = 72 * 1024 * 1024;

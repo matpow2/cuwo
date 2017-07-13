@@ -48,7 +48,7 @@ cdef class ItemUpgrade:
         writer.write_int8(self.y)
         writer.write_int8(self.z)
         writer.write_int8(self.material)
-        writer.write_uint32(self.level)
+        writer.write_int32(self.level)
 
 
 cdef class ItemData:
@@ -419,8 +419,8 @@ cdef class EntityData:
         double resi_multiplier
         unsigned char not_used7
         unsigned char not_used8
-        signed int level
-        signed int current_xp
+        int level
+        int current_xp
         uint64_t parent_owner
         unsigned int unknown_or_not_used1
         unsigned int unknown_or_not_used2
@@ -848,9 +848,9 @@ cpdef uint64_t read_masked_data(EntityData entity, ByteReader reader):
     if mask & (<uint64_t>1 << 32) != 0:
         entity.not_used8 = reader.read_uint8()
     if mask & (<uint64_t>1 << 33) != 0:
-        entity.level = reader.read_uint32()
+        entity.level = reader.read_int32()
     if mask & (<uint64_t>1 << 34) != 0:
-        entity.current_xp = reader.read_uint32()
+        entity.current_xp = reader.read_int32()
     if mask & (<uint64_t>1 << 35) != 0:
         entity.parent_owner = reader.read_uint64()
     if mask & (<uint64_t>1 << 36) != 0:
@@ -1065,9 +1065,9 @@ cpdef write_masked_data(EntityData entity, ByteWriter writer, uint64_t mask):
     if mask & (<uint64_t>1 << 32) != 0:
         writer.write_uint8(entity.not_used8)
     if mask & (<uint64_t>1 << 33) != 0:
-        writer.write_uint32(entity.level)
+        writer.write_int32(entity.level)
     if mask & (<uint64_t>1 << 34) != 0:
-        writer.write_uint32(entity.current_xp)
+        writer.write_int32(entity.current_xp)
     if mask & (<uint64_t>1 << 35) != 0:
         writer.write_uint64(entity.parent_owner)
     if mask & (<uint64_t>1 << 36) != 0:

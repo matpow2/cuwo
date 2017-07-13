@@ -39,7 +39,8 @@ cdef extern from "tgen.h" nogil:
     void tgen_set_path(const char * dir)
     void tgen_set_seed(uint32_t seed)
     void * tgen_generate_chunk(uint32_t, uint32_t)
-    # void tgen_dump_mem(const char * filename)
+    void tgen_dump_mem(const char * filename)
+    void * tgen_get_heap_base()
     # uint32_t tgen_generate_debug_chunk(const char *, uint32_t, uint32_t)
     void * tgen_get_manager()
     void tgen_read_str(void * addr, string&)
@@ -133,8 +134,11 @@ def generate(x, y):
 #     return tgen_generate_debug_chunk(filename, x, y)
 
 
-# def dump_mem(filename):
-#     tgen_dump_mem(filename)
+def dump_mem(filename):
+    tgen_dump_mem(filename.encode('utf-8'))
+    cdef uint32_t heap_base = <uint32_t>tgen_get_heap_base()
+    cdef uint32_t manager_base = <uint32_t>tgen_get_manager()
+    return (heap_base, manager_base)
 
 
 # createdef.py helpers
@@ -177,12 +181,15 @@ cdef uint32_t get_min(uint32_t ptr):
     return ptr
 
 
-cdef dict map_to_dict(char * addr, func):
+ctypedef void (*map_func)(char * addr, dict values)
+
+
+cdef dict map_to_dict(char * addr, map_func func):
     cdef dict values = {}
     cdef uint32_t ptr = get_left(read_dword(addr))
     cdef uint32_t test_ptr
     while not is_nil(ptr):
-        func(ptr + 16, values)
+        func(<char*>(ptr + 16), values)
         if not is_nil(get_right(ptr)):
             ptr = get_min(get_right(ptr))
         else:
@@ -196,13 +203,13 @@ cdef dict map_to_dict(char * addr, func):
     return values
 
 
-def get_single_key_item(char * addr, dict values):
+cdef void get_single_key_item(char * addr, dict values):
     cdef uint32_t key = read_dword(addr)
     cdef str value = read_wstr(addr+4)
     values[key] = value
 
 
-def get_double_key_item(char * addr, dict values):
+cdef void get_double_key_item(char * addr, dict values):
     cdef tuple key = (read_dword(addr), read_dword(addr+4))
     cdef str value = read_wstr(addr+8)
     values[key] = value

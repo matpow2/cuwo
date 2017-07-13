@@ -4,7 +4,7 @@ struct ItemUpgrade
   char y;
   char z;
   char material;
-  _DWORD level;
+  int level;
 };
 
 struct ItemData
@@ -19,7 +19,7 @@ struct ItemData
   _BYTE flags;
   _BYTE pad2[1];
   /* signed? probably not: https://bpaste.net/show/cbab9c88524a */
-  _WORD level = 1;
+  signed short level = 1;
   _BYTE pad3[2];
   ItemUpgrade items[32];
   _DWORD upgrade_count;
@@ -172,8 +172,8 @@ struct EntityData
   _BYTE not_used7;
   _BYTE not_used8;
   char gap_17E[2];
-  _DWORD level;
-  _DWORD current_xp;
+  signed int level;
+  signed int current_xp;
 
   uint64_t parent_owner; /* used for pets, guess by Somer, originally 2 DWORDs*/
 

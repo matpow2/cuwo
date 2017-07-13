@@ -650,6 +650,29 @@ def main():
         models[model_id] = current_name
         current_name = None
 
+    # abilities
+    lines = open('abilities.h', 'rb').read().decode('utf-8')
+    lines = lines.splitlines()
+    abilities = {}
+    current_indices = []
+    for line in lines:
+        if 'case ' in line:
+            start = line.find('case ') + 5
+            end = line.find(':', start)
+            current_index = int(line[start:end])
+            current_indices.append(current_index)
+        elif 'init_string(' in line:
+            start = line.find('init_string(') + 12
+            end = line.find(')', start)
+            name = line[start:end]
+            if name == 'L"name"' or name.startswith('&'):
+                continue
+            name = name[2:-1]
+            print(current_indices, name)
+            for index in current_indices:
+                abilities[index] = name
+            current_indices = []
+
     out = FormattedOutput('Constant string definitions')
     out.write_dict('SOUND_NAMES', sounds)
     out.write_inverse_dict('SOUND_IDS', 'SOUND_NAMES')
@@ -658,6 +681,7 @@ def main():
 
     print('Writing defs from tgen')
     tgen.initialize(1234, '../data/')
+    print('Heap base:', tgen.dump_mem('mem.dat'))
     out.write_dict('ITEM_NAMES', tgen.get_item_names())
     out.write_inverse_dict('ITEM_IDS', 'ITEM_NAMES')
     out.write_dict('STATIC_NAMES', tgen.get_static_names())

@@ -4,6 +4,7 @@
 #include "mem.h"
 #include "call.h"
 #include "msvcstring.h"
+#include <fstream>
 
 static uint32_t global_seed = 0;
 static std::string translated_path;
@@ -93,17 +94,20 @@ void tgen_set_seed(uint32_t seed)
     global_seed = seed;
 }
 
-// void tgen_dump_mem(const char * filename)
-// {
-//     std::ofstream fp(filename, std::ios::binary);
-//     fp.write(mem.heap, mem.heap_offset);
-//     fp.close();
-// }
+extern unsigned char * heap;
+extern uint32_t heap_offset;
 
-// uint32_t tgen_get_heap_base()
-// {
-//     return mem.translate((char*)mem.heap);
-// }
+void tgen_dump_mem(const char * filename)
+{
+    std::ofstream fp(filename, std::ios::binary);
+    fp.write((const char*)heap, heap_offset);
+    fp.close();
+}
+
+void * tgen_get_heap_base()
+{
+    return heap;
+}
 
 void * tgen_get_manager()
 {
