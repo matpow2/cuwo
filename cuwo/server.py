@@ -713,6 +713,11 @@ def main():
         loop.set_clock_resolution(1 * 1e-3)
         asyncio.set_event_loop(loop)
     else:
+        try:
+            import uvloop
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        except ImportError:
+            pass
         loop = asyncio.get_event_loop()
 
     if config.base.use_tgen:
