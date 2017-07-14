@@ -78,6 +78,7 @@ class Entity(world.Entity):
 
 
 class StaticEntity(world.StaticEntity):
+    changed = False
     def __init__(self, entity_id, header, chunk):
         super().__init__(entity_id, header, chunk)
         self.packet = static.StaticEntityPacket()
@@ -87,6 +88,7 @@ class StaticEntity(world.StaticEntity):
 
     def update(self):
         super().update()
+        self.changed = True
         update_packet = self.world.server.update_packet
         update_packet.static_entities.append(self.packet)
 
@@ -176,7 +178,8 @@ class CubeWorldConnection(asyncio.Protocol):
             packets.InteractPacket.packet_id: self.on_interact_packet,
             packets.HitPacket.packet_id: self.on_hit_packet,
             packets.ShootPacket.packet_id: self.on_shoot_packet,
-            packets.PassivePacket.packet_id: self.on_passive_packet
+            packets.PassivePacket.packet_id: self.on_passive_packet,
+            packets.ChunkDiscovered.packet_id: self.on_discover_packet
         }
 
         self.packet_handler = packets.PacketHandler(packets.CS_PACKETS,
@@ -364,6 +367,19 @@ class CubeWorldConnection(asyncio.Protocol):
     def on_passive_packet(self, packet):
         self.server.update_packet.passive_actions.append(packet)
 
+    def on_discover_packet(self, packet):
+        # update static entities on client
+        extra_server_update.reset()
+        pos = (packet.x, packet.y)
+        if pos in self.server.world.chunks:
+            chunk = self.server.world.chunks[pos]
+            chunk.on_update(extra_server_update)
+            for static in chunk.static_entities.values():
+                if not static.changed:
+                    continue
+                extra_server_update.static_entities.append(static.packet)
+        self.send_packet(extra_server_update)
+
     # handlers
 
     def on_invalid_packet(self, message):
@@ -378,8 +394,8 @@ class CubeWorldConnection(asyncio.Protocol):
             return
 
         print('Player %s joined' % self.name)
-        for player in self.server.players.values():
-            entity_packet.set_entity(player.entity, player.entity_id)
+        for entity_id, entity in self.server.world.entities.items():
+            entity_packet.set_entity(entity, entity_id)
             self.send_packet(entity_packet)
 
         self.server.players[(self.entity_id,)] = self
@@ -466,7 +482,6 @@ class CubeWorldServer:
         self.connections = set()
         self.players = MultikeyDict()
 
-        self.chunks = {}
         self.updated_chunks = set()
 
         self.update_loop = LoopingCall(self.update)
