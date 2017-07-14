@@ -66,7 +66,7 @@ def get_node_value(node, name):
 def download_package(*files):
     package = download(PACKAGE_FILE)
     doc = xml.dom.minidom.parseString(package.decode())
-    result = []
+    result = {}
 
     for node in doc.getElementsByTagName('file'):
         destination = get_node_value(node, 'destination')
@@ -75,7 +75,7 @@ def download_package(*files):
         source = get_node_value(node, 'source')
         print('Downloading {}'.format(destination))
         data = zlib.decompress(download(BASE_URL + source))
-        result.append(data)
+        result[destination] = data
 
     return result
 
@@ -153,11 +153,11 @@ def download_dependencies(email=None, password=None):
     except ValidateError:
         return
 
-    for index, name in enumerate(download_names):
-        data = files[index]
+    for name, data in files.items():
         md5 = hashlib.md5(data).hexdigest()
         if md5 != FILE_HASHES[name]:
-            raise NotImplementedError('Incorrect file data received')
+            raise NotImplementedError(
+                'Incorrect file data received for {}'.format(name))
         filename = get_data_path(name)
         with open(filename, 'wb') as fp:
             fp.write(data)
