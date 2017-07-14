@@ -7,4 +7,5 @@ install:
  - pip install -r requirements.txt
  - python setup.py build_ext --inplace
  - python -m cuwo.download travis travispass
-script: python ./tests/test_tgen.py
+ - ls . && ls ./data
+script: ls . && ls ./data && python ./tests/test_tgen.py
