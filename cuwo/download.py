@@ -35,9 +35,9 @@ VALIDATE_URL = 'https://picroma.com/cwvalidate/'
 BASE_URL = 'https://s3.amazonaws.com/picroma/cwdownload/'
 PACKAGE_FILE = BASE_URL + 'package.xml'
 FILE_HASHES = {
-    'Server.exe': '9c69b731cf197236ce800b44b2abe497',
+    'data4.db': 'b15f077653b02aac52e3ac365c7363e5',
     'data1.db': '5dd75c4fde12d1d1635e3791e26d22df',
-    'data4.db': '043e3ffd6092755c4f4a2780d3d5e291'
+    'Server.exe': '9c69b731cf197236ce800b44b2abe497'
 }
 
 
@@ -125,6 +125,16 @@ def get_data_path(name):
     return os.path.join(os.getcwd(), 'data', name)
 
 
+def check_hash(name, data):
+    expected_md5 = FILE_HASHES[name]
+    md5 = hashlib.md5(data).hexdigest()
+    if md5 == expected_md5:
+        return True
+    print('Invalid MD5 for {}, expected {}, found {}.'.format(
+          name, expected_md5, md5))
+    return False
+
+
 def download_dependencies(email=None, password=None):
     names = list(FILE_HASHES.keys())
     download_names = []
@@ -134,12 +144,8 @@ def download_dependencies(email=None, password=None):
         try:
             with open(path, 'rb') as fp:
                 data = fp.read()
-            expected_md5 = FILE_HASHES[name]
-            md5 = hashlib.md5(data).hexdigest()
-            if md5 == expected_md5:
+            if check_hash(name, data):
                 continue
-            print('Invalid MD5 for {}, expected {}, found {}.'.format(
-                  name, expected_md5, md5))
             download_names.append(name)
         except OSError:
             download_names.append(name)
@@ -154,10 +160,8 @@ def download_dependencies(email=None, password=None):
         return
 
     for name, data in files.items():
-        md5 = hashlib.md5(data).hexdigest()
-        if md5 != FILE_HASHES[name]:
-            raise NotImplementedError(
-                'Incorrect file data received for {}'.format(name))
+        if not check_hash(name, data):
+            raise NotImplementedError()
         filename = get_data_path(name)
         with open(filename, 'wb') as fp:
             fp.write(data)
