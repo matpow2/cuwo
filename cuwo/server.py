@@ -529,6 +529,7 @@ class CubeWorldServer:
         self.scripts.call('update')
 
         # entity updates
+        self.world.update(self.update_loop.dt)
         for entity_id, entity in self.world.entities.items():
             entity_packet.set_entity(entity, entity_id, entity.mask)
             entity.mask = 0

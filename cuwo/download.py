@@ -35,9 +35,9 @@ VALIDATE_URL = 'https://picroma.com/cwvalidate/'
 BASE_URL = 'https://s3.amazonaws.com/picroma/cwdownload/'
 PACKAGE_FILE = BASE_URL + 'package.xml'
 FILE_HASHES = {
-    'data4.db': 'b15f077653b02aac52e3ac365c7363e5',
+    'Server.exe': '9c69b731cf197236ce800b44b2abe497',
     'data1.db': '5dd75c4fde12d1d1635e3791e26d22df',
-    'Server.exe': '9c69b731cf197236ce800b44b2abe497'
+    'data4.db': 'b15f077653b02aac52e3ac365c7363e5'
 }
 
 

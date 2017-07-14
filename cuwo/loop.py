@@ -38,6 +38,7 @@ class LoopingCall:
         self.handle = None
 
     def schedule(self, interval, now):
+        self.dt = interval
         self.handle = self.loop.call_later(interval, self.schedule,
                                            interval, True)
         if now:

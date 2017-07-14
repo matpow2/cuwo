@@ -847,16 +847,16 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if not appearance.back_model in app['model_back']:
+        if not appearance.tail_model in app['model_back']:
             self.log("invalid appearance, back model={field} entity_type={t}"
-                     .format(field=appearance.back_model,
+                     .format(field=appearance.tail_model,
                              t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if not appearance.shoulder_model in app['model_shoulder']:
+        if not appearance.shoulder2_model in app['model_shoulder']:
             self.log("invalid appearance, shoulder model={f} entity_type={t}"
-                     .format(f=appearance.shoulder_model,
+                     .format(f=appearance.shoulder2_model,
                              t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
@@ -896,9 +896,9 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if not is_similar(appearance.shoulder_scale, app['scale_shoulder']):
+        if not is_similar(appearance.shoulder2_scale, app['scale_shoulder']):
             self.log("invalid appearance, shoulder scale={f} entity_type={t}"
-                     .format(f=appearance.shoulder_scale,
+                     .format(f=appearance.shoulder2_scale,
                              t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
@@ -910,9 +910,9 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if not is_similar(appearance.back_scale, app['scale_back']):
+        if not is_similar(appearance.tail_scale, app['scale_back']):
             self.log("invalid appearance, back scale={field} entity_type={t}"
-                     .format(field=appearance.back_scale,
+                     .format(field=appearance.tail_scale,
                              t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
@@ -924,9 +924,9 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if not is_similar(appearance.unknown, app['scale_unknown']):
+        if not is_similar(appearance.shoulder_scale, app['scale_unknown']):
             self.log("invalid appearance, unknown scale={f} entity_type={t}"
-                     .format(f=appearance.unknown,
+                     .format(f=appearance.shoulder_scale,
                              t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True
@@ -1008,9 +1008,9 @@ class AntiCheatConnection(ConnectionScript):
                      LOG_LEVEL_VERBOSE)
             return True
 
-        if appearance.back_offset != app['offset_back']:
+        if appearance.tail_offset != app['offset_back']:
             self.log("invalid appearance, back offset={field} entity_type={t}"
-                     .format(field=appearance.back_offset,
+                     .format(field=appearance.tail_offset,
                              t=entity.entity_type),
                      LOG_LEVEL_VERBOSE)
             return True

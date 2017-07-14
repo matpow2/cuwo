@@ -48,6 +48,17 @@ class Entity(entitydata.EntityData):
         world.entities[entity_id] = self
         self.world = world
 
+    def update(self):
+        return
+        # XXX only works on a server
+        target = next(iter(self.world.server.players.values())).entity
+        target = target.pos
+        d = (target - self.pos).normalized()
+        vel = d * constants.BLOCK_SCALE
+        print('update:', target, d, vel)
+        self.set_velocity(vel)
+        self.set_position(self.pos + vel * self.world.dt)
+
     def reset(self):
         self.set_hp()
         self.mask = constants.FULL_MASK
@@ -59,6 +70,10 @@ class Entity(entitydata.EntityData):
     def set_position(self, pos):
         self.pos = pos
         self.mask |= entitydata.POS_FLAG
+
+    def set_velocity(self, vel):
+        self.velocity = vel
+        self.mask |= entitydata.VEL_FLAG
 
     def get_type(self):
         return strings.ENTITY_NAMES[self.entity_type]
@@ -252,8 +267,14 @@ class World:
     def create_entity(self, entity_id=None):
         return self.entity_class(self, entity_id)
 
-    def update(self):
-        pass
+    def update(self, dt):
+        self.dt = dt
+        if not self.use_entities:
+            return
+        for entity in self.entities.values():
+            if entity.hostile_type != constants.HOSTILE_TYPE:
+                continue
+            entity.update()
 
     def stop(self):
         self.gen_queue.put(None)

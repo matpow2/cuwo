@@ -117,17 +117,17 @@ cdef class AppearanceData:
         short hand_model
         short foot_model
         short body_model
-        short back_model
-        short shoulder_model
+        short tail_model
+        short shoulder2_model
         short wing_model
         double head_scale
         double body_scale
         double hand_scale
         double foot_scale
-        double shoulder_scale
+        double shoulder2_scale
         double weapon_scale
-        double back_scale
-        double unknown
+        double tail_scale
+        double shoulder_scale
         double wing_scale
         double body_pitch
         double arm_pitch
@@ -140,7 +140,7 @@ cdef class AppearanceData:
         object head_offset
         object hand_offset
         object foot_offset
-        object back_offset
+        object tail_offset
         object wing_offset
 
     def __cinit__(self):
@@ -149,7 +149,7 @@ cdef class AppearanceData:
         self.head_offset = Vector3()
         self.hand_offset = Vector3()
         self.foot_offset = Vector3()
-        self.back_offset = Vector3()
+        self.tail_offset = Vector3()
         self.wing_offset = Vector3()
         self.hair_red = 255
         self.hair_green = 255
@@ -159,8 +159,8 @@ cdef class AppearanceData:
         self.hand_model = -1
         self.foot_model = -1
         self.body_model = -1
-        self.back_model = -1
-        self.shoulder_model = -1
+        self.tail_model = -1
+        self.shoulder2_model = -1
         self.wing_model = -1
 
     cpdef read(self, ByteReader reader):
@@ -177,17 +177,17 @@ cdef class AppearanceData:
         self.hand_model = reader.read_int16()
         self.foot_model = reader.read_int16()
         self.body_model = reader.read_int16()
-        self.back_model = reader.read_int16()
-        self.shoulder_model = reader.read_int16()
+        self.tail_model = reader.read_int16()
+        self.shoulder2_model = reader.read_int16()
         self.wing_model = reader.read_int16()
         self.head_scale = reader.read_float()
         self.body_scale = reader.read_float()
         self.hand_scale = reader.read_float()
         self.foot_scale = reader.read_float()
-        self.shoulder_scale = reader.read_float()
+        self.shoulder2_scale = reader.read_float()
         self.weapon_scale = reader.read_float()
-        self.back_scale = reader.read_float()
-        self.unknown = reader.read_float()
+        self.tail_scale = reader.read_float()
+        self.shoulder_scale = reader.read_float()
         self.wing_scale = reader.read_float()
         self.body_pitch = reader.read_float()
         self.arm_pitch = reader.read_float()
@@ -200,7 +200,7 @@ cdef class AppearanceData:
         self.head_offset = reader.read_vec3()
         self.hand_offset = reader.read_vec3()
         self.foot_offset = reader.read_vec3()
-        self.back_offset = reader.read_vec3()
+        self.tail_offset = reader.read_vec3()
         self.wing_offset = reader.read_vec3()
 
     cpdef write(self, ByteWriter writer):
@@ -217,17 +217,17 @@ cdef class AppearanceData:
         writer.write_int16(self.hand_model)
         writer.write_int16(self.foot_model)
         writer.write_int16(self.body_model)
-        writer.write_int16(self.back_model)
-        writer.write_int16(self.shoulder_model)
+        writer.write_int16(self.tail_model)
+        writer.write_int16(self.shoulder2_model)
         writer.write_int16(self.wing_model)
         writer.write_float(self.head_scale)
         writer.write_float(self.body_scale)
         writer.write_float(self.hand_scale)
         writer.write_float(self.foot_scale)
-        writer.write_float(self.shoulder_scale)
+        writer.write_float(self.shoulder2_scale)
         writer.write_float(self.weapon_scale)
-        writer.write_float(self.back_scale)
-        writer.write_float(self.unknown)
+        writer.write_float(self.tail_scale)
+        writer.write_float(self.shoulder_scale)
         writer.write_float(self.wing_scale)
         writer.write_float(self.body_pitch)
         writer.write_float(self.arm_pitch)
@@ -240,7 +240,7 @@ cdef class AppearanceData:
         writer.write_vec3(self.head_offset)
         writer.write_vec3(self.hand_offset)
         writer.write_vec3(self.foot_offset)
-        writer.write_vec3(self.back_offset)
+        writer.write_vec3(self.tail_offset)
         writer.write_vec3(self.wing_offset)
 
     def get_head(self):
@@ -273,17 +273,17 @@ cdef class AppearanceData:
     def set_body(self, name):
         self.body_model = strings.MODEL_IDS[name]
 
-    def get_back(self):
-        return strings.MODEL_NAMES[self.back_model]
+    def get_tail(self):
+        return strings.MODEL_NAMES[self.tail_model]
 
-    def set_back(self, name):
-        self.back_model = strings.MODEL_IDS[name]
+    def set_tail(self, name):
+        self.tail_model = strings.MODEL_IDS[name]
 
-    def get_shoulder(self):
-        return strings.MODEL_NAMES[self.shoulder_model]
+    def get_shoulder2(self):
+        return strings.MODEL_NAMES[self.shoulder2_model]
 
-    def set_shoulder(self, name):
-        self.shoulder_model = strings.MODEL_IDS[name]
+    def set_shoulder2(self, name):
+        self.shoulder2_model = strings.MODEL_IDS[name]
 
     def get_wing(self):
         return strings.MODEL_NAMES[self.wing_model]
