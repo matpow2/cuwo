@@ -367,9 +367,11 @@ void real_main()
 #ifndef NDEBUG
     std::cout << "real_main()\n";
 #endif
-    parsed_pe * p = ParsePEFromFile(translate_path("Server.exe"));
-    if (p == NULL)
-        std::cout << "Could not find Server.exe\n";
+    const char * server_path = translate_path("Server.exe");
+    parsed_pe * p = ParsePEFromFile(server_path);
+    if (p == NULL) {
+        std::cout << "Could not find Server.exe at " << server_path << '\n';
+    }
     imagebase = p->peHeader.nt.OptionalHeader.ImageBase;
     GetEntryPoint(p, entrypoint);
 

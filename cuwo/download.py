@@ -154,9 +154,13 @@ def download_dependencies(email=None, password=None):
         return
 
     for index, name in enumerate(download_names):
+        data = files[index]
+        md5 = hashlib.md5(data).hexdigest()
+        if md5 != FILE_HASHES[name]:
+            raise NotImplementedError('Incorrect file data received')
         filename = get_data_path(name)
         with open(filename, 'wb') as fp:
-            fp.write(files[index])
+            fp.write(data)
 
 
 def main():
