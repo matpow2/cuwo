@@ -189,11 +189,14 @@ class Chunk:
         self.items = []
         self.static_entities = {}
 
+        # XXX for now, dynamic entities belong to a single chunk.
+        self.entities = []
+
         if not world.use_tgen:
             return
 
-        f = world.get_data(pos)
-        f.add_done_callback(self.on_chunk)
+        self.gen_f = world.get_data(pos)
+        self.gen_f.add_done_callback(self.on_chunk)
 
     def on_chunk(self, f):
         self.data = f.result()
@@ -209,9 +212,12 @@ class Chunk:
 
         if self.world.use_entities:
             for data in self.data.dynamic_entities:
+                if data.hostile_type == constants.HOSTILE_TYPE:
+                    continue
                 entity = self.world.create_entity(data.entity_id)
                 data.set_entity(entity)
                 entity.reset()
+                self.entities.append(entity)
 
         self.update()
 
@@ -234,6 +240,13 @@ class Chunk:
     def update(self):
         pass
 
+    def destroy(self):
+        self.gen_f.cancel()
+        for entity in self.entities:
+            entity.destroy()
+        self.entities = []
+        self.data = None
+        del self.world.chunks[self.pos]
 
 class World:
     data_path = './data/'
@@ -261,7 +274,6 @@ class World:
             return
 
         self.gen_queue = Queue()
-        self.cache = {}
         loop.run_in_executor(None, self.run_gen, seed)
 
     def create_entity(self, entity_id=None):
@@ -269,6 +281,8 @@ class World:
 
     def update(self, dt):
         self.dt = dt
+        return
+        # XXX
         if not self.use_entities:
             return
         for entity in self.entities.values():

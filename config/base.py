@@ -56,6 +56,9 @@ update_fps = 50
 # for barebones PvP servers.
 use_tgen = True
 
-# Experimental support for mobs and NPCs. This is still work in progress, do
-# not expect good results.
-use_entities = False
+# Enables NPCs. Currently, only static NPCs work.
+use_entities = True
+
+# Number of seconds before a chunk is destroyed when no player has visited it
+# for a while. For permanent item drops and similar, set this to None.
+chunk_retire_time = 30.0

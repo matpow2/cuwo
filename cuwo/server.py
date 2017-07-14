@@ -94,6 +94,10 @@ class StaticEntity(world.StaticEntity):
 
 
 class Chunk(world.Chunk):
+    def __init__(self, *arg, **kw):
+        super().__init__(*arg, **kw)
+        self.last_visit = self.world.server.loop.time()
+
     def update(self):
         self.world.server.updated_chunks.add(self)
 
@@ -529,6 +533,23 @@ class CubeWorldServer:
         self.scripts.call('update')
 
         # entity updates
+        for player in self.players.values():
+            entity = player.entity
+            chunk_pos = get_chunk(entity.pos)
+            if not chunk_pos in self.world.chunks:
+                continue
+            self.world.get_chunk(chunk_pos).last_visit = self.loop.time()
+
+        # retire any old chunks
+        retire_time = self.config.base.chunk_retire_time
+        if retire_time is not None:
+            t = self.loop.time()
+            for chunk in list(self.world.chunks.values()):
+                elapsed = t - chunk.last_visit
+                if elapsed < retire_time:
+                    continue
+                chunk.destroy()
+
         self.world.update(self.update_loop.dt)
         for entity_id, entity in self.world.entities.items():
             entity_packet.set_entity(entity, entity_id, entity.mask)
