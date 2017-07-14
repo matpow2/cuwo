@@ -175,7 +175,8 @@ class CubeWorldConnection(asyncio.Protocol):
             packets.ClientChatMessage.packet_id: self.on_chat_packet,
             packets.InteractPacket.packet_id: self.on_interact_packet,
             packets.HitPacket.packet_id: self.on_hit_packet,
-            packets.ShootPacket.packet_id: self.on_shoot_packet
+            packets.ShootPacket.packet_id: self.on_shoot_packet,
+            packets.PassivePacket.packet_id: self.on_passive_packet
         }
 
         self.packet_handler = packets.PacketHandler(packets.CS_PACKETS,
@@ -359,6 +360,9 @@ class CubeWorldConnection(asyncio.Protocol):
 
     def on_shoot_packet(self, packet):
         self.server.update_packet.shoot_actions.append(packet)
+
+    def on_passive_packet(self, packet):
+        self.server.update_packet.passive_actions.append(packet)
 
     # handlers
 

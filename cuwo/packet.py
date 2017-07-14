@@ -160,7 +160,7 @@ class Unknown3(Packet):
         writer.write(self.data)
 
 
-class Packet4Struct1(Loader):
+class BlockAction(Loader):
     def read(self, reader):
         self.block_pos = reader.read_ivec3()
         self.color_red = reader.read_uint8()
@@ -351,7 +351,7 @@ class MissionData(Loader):
 
 class ServerUpdate(Packet):
     def reset(self):
-        self.items_1 = []
+        self.block_actions = []
         self.player_hits = []
         self.particles = []
         self.sound_actions = []
@@ -362,7 +362,7 @@ class ServerUpdate(Packet):
         self.pickups = []
         self.kill_actions = []
         self.damage_actions = []
-        self.items_12 = []
+        self.passive_actions = []
         self.missions = []
 
     def read(self, reader):
@@ -370,7 +370,7 @@ class ServerUpdate(Packet):
         decompressed_data = zlib.decompress(reader.read(size))
         reader = ByteReader(decompressed_data)
 
-        self.items_1 = read_list(reader, Packet4Struct1)
+        self.block_actions = read_list(reader, BlockAction)
         self.player_hits = read_list(reader, HitPacket)
         self.particles = read_list(reader, ParticleData)
         self.sound_actions = read_list(reader, SoundAction)
@@ -390,11 +390,10 @@ class ServerUpdate(Packet):
         self.kill_actions = read_list(reader, KillAction)
         self.damage_actions = read_list(reader, DamageAction)
 
-        self.items_12 = []
-        for _ in range(reader.read_uint32()):
-            self.items_12.append(reader.read(40))
+        # EXT: used when NPC wizards/creatures use a right-click targeted
+        # action such as a spell cast. (NPC rclick action?)
+        self.passive_actions = read_list(reader, PassivePacket)
 
-        # objective/quests? not sure
         self.missions = read_list(reader, MissionData)
 
         debug = False
@@ -417,7 +416,7 @@ class ServerUpdate(Packet):
 
     def write(self, writer):
         data = ByteWriter()
-        write_list(data, self.items_1)
+        write_list(data, self.block_actions)
         write_list(data, self.player_hits)
         write_list(data, self.particles)
         write_list(data, self.sound_actions)
@@ -436,10 +435,7 @@ class ServerUpdate(Packet):
         write_list(data, self.pickups)
         write_list(data, self.kill_actions)
         write_list(data, self.damage_actions)
-
-        data.write_uint32(len(self.items_12))
-        for item in self.items_12:
-            data.write(item)
+        write_list(data, self.passive_actions)
 
         write_list(data, self.missions)
 
@@ -471,7 +467,7 @@ class InteractPacket(Packet):
         self.item_data.read(reader)
         self.chunk_x = reader.read_int32()
         self.chunk_y = reader.read_int32()
-        # index of item in ChunkItems
+        # index of item in ChunkItems, -1 when drop
         self.item_index = reader.read_int32()
         self.something4 = reader.read_uint32()
         self.interact_type = reader.read_uint8()
@@ -506,7 +502,7 @@ class HitPacket(Packet):
         self.something8 = reader.read_uint32()  # padding maybe?
         self.pos = reader.read_qvec3()
         self.hit_dir = reader.read_vec3()
-        self.skill_hit = reader.read_uint8()
+        self.skill_hit = reader.read_uint8() # used skill
         self.hit_type = reader.read_uint8()
         self.show_light = reader.read_uint8()
         reader.skip(1)
@@ -527,12 +523,28 @@ class HitPacket(Packet):
         writer.pad(1)
 
 
-class Unknown8(Packet):
+class PassivePacket(Packet):
     def read(self, reader):
-        self.data = reader.read(40)
+        self.entity_id = reader.read_uint64()
+        self.target_id = reader.read_uint64()
+        self.passive_type = reader.read_uint8()
+        reader.skip(3)
+        # below not confirmed
+        self.modifier = reader.read_float()
+        self.duration = reader.read_uint32()
+        reader.skip(4) # padding
+        # equal to source for poison, otherwise 0
+        self.target_id2 = reader.read_uint64()
 
     def write(self, writer):
-        writer.write(self.data)
+        writer.write_uint64(self.entity_id)
+        writer.write_uint64(self.target_id)
+        writer.write_uint64(self.passive_type)
+        writer.pad(3)
+        writer.write_float(self.modifier)
+        writer.write_uint32(self.duration)
+        writer.pad(4)
+        writer.write_uint64(self.target_id2)
 
 
 class ShootPacket(Packet):
@@ -548,14 +560,19 @@ class ShootPacket(Packet):
         self.something15 = reader.read_uint32()
         self.velocity = reader.read_vec3()
         # rand() something, probably damage multiplier
-        self.something19 = reader.read_float()
+        # these are not confirmed
+        self.legacy_damage = reader.read_float() # from ext
+        # ext: 2-4 depending on mana for boomerangs, otherwise 0.5
         self.something20 = reader.read_float()
-        self.something21 = reader.read_float()
-        self.something22 = reader.read_float()  # used stamina? amount of stun?
-        self.something23 = reader.read_uint32()
-        self.something24 = reader.read_uint8()  # skill? is 2 for rmb shoot
+        self.scale = reader.read_float() # from ext
+        # old: used stamina? amount of stun?
+        self.mana = reader.read_float() # from ext
+        self.particles = reader.read_uint32() # from ext, for crossbow m2
+        self.skill = reader.read_uint8()  # skill? is 2 for rmb shoot
         reader.skip(3)
-        self.something25 = reader.read_uint32()
+        # from ext: projectile
+        # 0: arrow, 1: boomerang, 2: magic, 3: ?, 4: rock
+        self.projectile = reader.read_uint32()
         self.something26 = reader.read_uint8()
         reader.skip(3)
         self.something27 = reader.read_uint32()
@@ -572,14 +589,14 @@ class ShootPacket(Packet):
         writer.write_uint32(self.something14)
         writer.write_uint32(self.something15)
         writer.write_vec3(self.velocity)
-        writer.write_float(self.something19)
+        writer.write_float(self.legacy_damage)
         writer.write_float(self.something20)
-        writer.write_float(self.something21)
-        writer.write_float(self.something22)
-        writer.write_uint32(self.something23)
-        writer.write_uint8(self.something24)
+        writer.write_float(self.scale)
+        writer.write_float(self.mana)
+        writer.write_uint32(self.particles)
+        writer.write_uint8(self.skill)
         writer.pad(3)
-        writer.write_uint32(self.something25)
+        writer.write_uint32(self.projectile)
         writer.write_uint8(self.something26)
         writer.pad(3)
         writer.write_uint32(self.something27)
@@ -639,7 +656,7 @@ CS_PACKETS = {
     0: EntityUpdate,
     6: InteractPacket,
     7: HitPacket,
-    8: Unknown8,  # stealth
+    8: PassivePacket,
     9: ShootPacket,
     10: ClientChatMessage,
     11: ChunkDiscovered,

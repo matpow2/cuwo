@@ -42,17 +42,17 @@ struct AppearanceData
   signed short hand_model = -1;
   signed short foot_model = -1;
   signed short body_model = -1;
-  signed short back_model = -1;
-  signed short shoulder_model = -1;
+  signed short tail_model = -1;
+  signed short shoulder2_model = -1;
   signed short wing_model = -1;
   float head_scale;
   float body_scale;
   float hand_scale;
   float foot_scale;
-  float shoulder_scale;
+  float shoulder2_scale;
   float weapon_scale;
-  float back_scale;
-  float unknown;
+  float tail_scale;
+  float shoulder_scale;
   float wing_scale;
   float body_pitch;
   float arm_pitch;
@@ -65,7 +65,7 @@ struct AppearanceData
   vec3 head_offset;
   vec3 hand_offset;
   vec3 foot_offset;
-  vec3 back_offset;
+  vec3 tail_offset;
   vec3 wing_offset;
 };
 
@@ -128,12 +128,12 @@ struct EntityData
   vec3 velocity;
   vec3 accel;
   vec3 extra_vel;
-  float look_pitch;
+  float look_pitch; // head rotation when climbing, etc.
   _DWORD physics_flags;
   _BYTE hostile_type = 3;
   char gap_51[3];
   _DWORD entity_type; /* needs to be changed */
-  _BYTE current_mode;
+  _BYTE current_mode; // skills, etc.
   char gap_59[3];
   _DWORD mode_start_time;
   _DWORD hit_counter;
@@ -144,8 +144,8 @@ struct EntityData
   _DWORD roll_time;
   signed int stun_time = -3000;
   _DWORD slowed_time;
-  _DWORD make_blue_time;
-  _DWORD speed_up_time;
+  _DWORD make_blue_time; // ice effect time
+  _DWORD speed_up_time; // wind effect time
   float show_patch_time;
   _BYTE class_type;
   _BYTE specialization;

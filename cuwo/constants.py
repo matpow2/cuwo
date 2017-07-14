@@ -43,9 +43,9 @@ HOSTILE_FLAG = 1 << 5
 
 FRIENDLY_PLAYER_TYPE = 0
 HOSTILE_TYPE = 1
-FRIENDLY_TYPE = 2
+FRIENDLY_TYPE = 2 # also 4, 5
 
-# XXX verify these through RE
+# hostile const, XXX verify these through RE
 NAMED_FRIENDLY_TYPE = 3
 TARGET_TYPE = 6
 
