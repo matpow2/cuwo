@@ -1422,7 +1422,7 @@ cdef class WrapSpawn:
         self.data[0].something36 = value
     @property
     def entity_id(self):
-        return <int64_t>(<int64_t>self.data[0].entity_id)
+        return <uint64_t>(<uint64_t>self.data[0].entity_id)
     @entity_id.setter
     def entity_id(self, value):
         self.data[0].entity_id = value
@@ -2530,7 +2530,7 @@ cdef class WrapCreature:
         raise NotImplementedError()
     @property
     def entity_id(self):
-        return <int64_t>(<int64_t>self.data[0].entity_id)
+        return <uint64_t>(<uint64_t>self.data[0].entity_id)
     @entity_id.setter
     def entity_id(self, value):
         self.data[0].entity_id = value

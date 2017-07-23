@@ -233,7 +233,7 @@ struct Spawn // size 4336
     uint32_t something34;
     uint32_t something35;
     uint32_t something36;
-    int64_t entity_id;
+    uint64_t entity_id;
     int8_t enable_flag_8_flags_1;
     int8_t pad20[3];
     float body_yaw;
@@ -454,7 +454,7 @@ struct Creature // size 7776
 {
     uint32_t vtable;
     uint8_t f4[4];
-    int64_t entity_id;
+    uint64_t entity_id;
     EntityData entity_data;
     uint32_t ptr32_1178;
     uint32_t dword117C;

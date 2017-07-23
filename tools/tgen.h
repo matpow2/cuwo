@@ -80,7 +80,7 @@ struct Spawn /* size 4336 */
   _DWORD something34;
   _DWORD something35;
   _DWORD something36;
-  __int64 entity_id;
+  uint64_t entity_id;
   char enable_flag_8_flags_1;
   char pad3[3];
   float body_yaw;
@@ -294,7 +294,7 @@ struct Creature
 {
   _DWORD vtable;
   _BYTE f4[4];
-  __int64 entity_id;
+  uint64_t entity_id;
   EntityData entity_data;
   _DWORD ptr32_1178;
   _DWORD dword117C;
