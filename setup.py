@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import sys
 sys.path.append(os.path.dirname(__file__))
-import os
 import numpy
 from distutils.core import setup
 from distutils.extension import Extension
