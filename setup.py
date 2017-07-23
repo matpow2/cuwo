@@ -16,6 +16,7 @@
 # along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+sys.path.append(os.path.dirname(__file__))
 import os
 import numpy
 from distutils.core import setup
