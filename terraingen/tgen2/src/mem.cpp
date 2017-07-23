@@ -234,7 +234,7 @@ void run_with_stack(void (*f)())
     pthread_create(&thr, attrp, &thread_start, NULL);
     pthread_attr_destroy(attrp);
     pthread_join(thr, NULL);
-    free_mem(sp);
+    free_mem(sp, stack_size);
 }
 
 #endif
