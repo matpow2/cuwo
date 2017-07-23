@@ -6,7 +6,7 @@ arg_order = ['rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9']
 arg_order_msvc = ['rcx', 'rdx', 'r8', 'r9']
 arg_order_double = ['xmm0', 'xmm1', 'xmm2', 'xmm3']
 
-preserve_call = ['rbx']
+preserve_call = ['rbp', 'rbx']
 preserve_call_msvc = ['rdi', 'rsi'] + preserve_call
 
 # volatile x64 msvc: RAX, RCX, RDX, R8-R11
