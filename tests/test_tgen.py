@@ -72,7 +72,7 @@ class TerrainGeneratorTests(unittest.TestCase):
             ('generate', (1007, 4972)),
             ('generate', (1007, 4971)),
             ('destroy', (1007, 4973)),
-            ('generate', (1007, 4970)),
+            ('generate', (1007, 4970)), 
             ('destroy', (1007, 4972)),
             ('generate', (1007, 4969))
         ]
