@@ -229,11 +229,12 @@ void run_with_stack(void (*f)())
 
     pthread_attr_init(&attr);
     int stack_size = 1024 * 1024 * 2;
-    static void * sp = alloc_mem(stack_size);
+    void * sp = alloc_mem(stack_size);
     pthread_attr_setstack(&attr, sp, stack_size);
     pthread_create(&thr, attrp, &thread_start, NULL);
     pthread_attr_destroy(attrp);
     pthread_join(thr, NULL);
+    free_mem(sp);
 }
 
 #endif
@@ -350,6 +351,9 @@ void heap_dealloc(void * mem)
     mspace fm = (mspace)get_mstate_for(p);
     if (fm != msp) {
         std::cout << "Memory dealloc not for current heap\n";
+#ifdef _WIN32
+        __debugbreak();
+#endif
     }
     mspace_free((mspace)current_heap->ms, mem);
 }
