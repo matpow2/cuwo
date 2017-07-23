@@ -242,6 +242,12 @@ static void sim_step_call()
     static void * pq1 = alloc_mem(104);
     static void * pq2 = alloc_mem(104);
 
+    static bool print = false;
+    if (!print) {
+        std::cout << "pq: " << (uint32_t)pq1 << " " << (uint32_t)pq2 << '\n';
+        print = true;
+    }
+
     call_x86_thiscall_1(get_mem_va(INIT_PACKET_QUEUE), (uint32_t)pq1);
     call_x86_thiscall_1(get_mem_va(INIT_PACKET_QUEUE), (uint32_t)pq2);
     call_x86_thiscall_4(get_mem_va(WORLD_SIM),

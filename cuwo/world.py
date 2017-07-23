@@ -180,7 +180,9 @@ class StaticEntity:
 
 
 class Region:
-    def __init__(self, owner):
+    def __init__(self, world, pos, owner):
+        self.pos = pos
+        self.world = world
         self.owner = owner
         self.chunks = set()
         tgen.add_region(owner)
@@ -196,6 +198,8 @@ class Region:
             tgen.remove_region(self.owner)
             self.owner.destroy()
             self.owner = None
+            del self.world.regions[self.pos]
+            self.world = None
         elif data is not self.owner:
             print('destroy:', data.x, data.y)
             data.destroy()
@@ -265,7 +269,7 @@ class Chunk:
             self.region = self.world.regions[region]
         else:
             print('new region:', region)
-            self.region = Region(self.data)
+            self.region = Region(self.world, region, self.data)
             self.world.regions[region] = self.region
         self.region.add(self.data)
 
@@ -390,7 +394,6 @@ class World:
             if not entity.is_tgen:
                 continue
             entity.mask = constants.FULL_MASK
-            # print(entity.pos)
 
     def stop(self):
         self.gen_queue.put(None)

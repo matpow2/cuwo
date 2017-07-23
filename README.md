@@ -140,3 +140,9 @@ DRayX - encrypt.py and protocol RE
 MAT4DOR - cub model details
 
 Xaymar - RE and character details
+
+Endimmion - for his generous Pledgie donation
+
+BLACKROCK - for help on passive packet
+
+9th - help with RE

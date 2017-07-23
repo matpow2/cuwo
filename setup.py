@@ -57,6 +57,7 @@ from cuwo.download import download_dependencies
 # filter_flags('ARCHFLAGS')
 
 macros = []
+undef_macros = []
 compile_args = []
 link_args = []
 ext_modules = []
@@ -79,6 +80,8 @@ if os.name == 'nt':
     # compile_args.append('/std:c++11')
     compile_args.append('/std:c++11')
     compile_args.append('-Zi')
+    compile_args.append('/Od')
+    undef_macros.append('NDEBUG')
     link_args.append('-debug')
 else:
     compile_args.append('-std=c++11')
@@ -99,18 +102,19 @@ tgen_sources = [
     './terraingen/tgen2/external/pe-parse/parser-library/buffer.cpp',
     './terraingen/tgen2/external/pe-parse/parser-library/parse.cpp'
 ]
+
+ext_args = dict(language='c++', include_dirs=includes,
+                extra_compile_args=compile_args,
+                extra_link_args=link_args,
+                define_macros=macros, undef_macros=undef_macros)
+
 tgen_module = Extension('cuwo.tgen', ['./cuwo/tgen.pyx'] + tgen_sources,
-                        language='c++', include_dirs=includes,
-                        extra_compile_args=compile_args,
-                        define_macros=macros)
+                        **ext_args)
 ext_modules.append(tgen_module)
 
 for name in names:
     ext_modules.append(Extension(name, ['./%s.pyx' % name.replace('.', '/')],
-                                 language='c++', include_dirs=includes,
-                                 extra_compile_args=compile_args,
-                                 extra_link_args=link_args,
-                                 define_macros=macros))
+                                 **ext_args))
 
 # class build_ext(_build_ext.build_ext):
 #     def build_extensions(self):

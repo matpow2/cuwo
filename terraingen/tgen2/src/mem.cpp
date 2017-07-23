@@ -341,9 +341,17 @@ void * heap_alloc(uint32_t size)
     return ret;
 }
 
-void heap_dealloc(void * p)
+void heap_dealloc(void * mem)
 {
-    dlfree(p);
+    if (mem == NULL)
+        return;
+    mspace msp = (mspace)current_heap->ms;
+    mchunkptr p = mem2chunk(mem);
+    mspace fm = (mspace)get_mstate_for(p);
+    if (fm != msp) {
+        std::cout << "Memory dealloc not for current heap\n";
+    }
+    mspace_free((mspace)current_heap->ms, mem);
 }
 
 
