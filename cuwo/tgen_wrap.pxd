@@ -30,6 +30,7 @@ ctypedef int64_t qvec3[3];
 ctypedef int32_t ivec3[3];
 
 cdef class WrapItemUpgrade:
+    cdef void alloc(self)
     cdef ItemUpgrade * data
     cdef void * storage
 cdef struct ItemUpgrade:
@@ -40,6 +41,7 @@ cdef struct ItemUpgrade:
     int32_t level
 
 cdef class WrapItemData:
+    cdef void alloc(self)
     cdef ItemData * data
     cdef void * storage
 cdef struct ItemData:
@@ -58,6 +60,7 @@ cdef struct ItemData:
     uint32_t upgrade_count
 
 cdef class WrapAppearanceData:
+    cdef void alloc(self)
     cdef AppearanceData * data
     cdef void * storage
 cdef struct AppearanceData:
@@ -101,6 +104,7 @@ cdef struct AppearanceData:
     vec3 wing_offset
 
 cdef class WrapEntityData:
+    cdef void alloc(self)
     cdef EntityData * data
     cdef void * storage
 cdef struct EntityData:
@@ -173,6 +177,7 @@ cdef struct EntityData:
     int8_t name[16]
 
 cdef class WrapItemWithHeader:
+    cdef void alloc(self)
     cdef ItemWithHeader * data
     cdef void * storage
 cdef struct ItemWithHeader:
@@ -180,6 +185,7 @@ cdef struct ItemWithHeader:
     ItemData data
 
 cdef class WrapItemWithHeaderList:
+    cdef void alloc(self)
     cdef ItemWithHeaderList * data
     cdef void * storage
 cdef struct ItemWithHeaderList:
@@ -188,6 +194,7 @@ cdef struct ItemWithHeaderList:
     uint32_t vec_capacity
 
 cdef class WrapItemWithHeaderLists:
+    cdef void alloc(self)
     cdef ItemWithHeaderLists * data
     cdef void * storage
 cdef struct ItemWithHeaderLists:
@@ -196,6 +203,7 @@ cdef struct ItemWithHeaderLists:
     uint32_t vec_capacity
 
 cdef class WrapStaticEntityHeader:
+    cdef void alloc(self)
     cdef StaticEntityHeader * data
     cdef void * storage
 cdef struct StaticEntityHeader:
@@ -212,6 +220,7 @@ cdef struct StaticEntityHeader:
     uint64_t user_id
 
 cdef class WrapStaticEntity:
+    cdef void alloc(self)
     cdef StaticEntity * data
     cdef void * storage
 cdef struct StaticEntity:
@@ -227,6 +236,7 @@ cdef struct StaticEntity:
     uint32_t something7
 
 cdef class WrapItemWithExtra:
+    cdef void alloc(self)
     cdef ItemWithExtra * data
     cdef void * storage
 cdef struct ItemWithExtra:
@@ -237,6 +247,7 @@ cdef struct ItemWithExtra:
     uint32_t something_added2
 
 cdef class WrapSpawn:
+    cdef void alloc(self)
     cdef Spawn * data
     cdef void * storage
 cdef struct Spawn:
@@ -299,6 +310,7 @@ cdef struct Spawn:
     int8_t pad56[7]
 
 cdef class WrapCriticalSection:
+    cdef void alloc(self)
     cdef CriticalSection * data
     cdef void * storage
 cdef struct CriticalSection:
@@ -310,6 +322,7 @@ cdef struct CriticalSection:
     uint32_t SpinCount
 
 cdef class WrapColor:
+    cdef void alloc(self)
     cdef Color * data
     cdef void * storage
 cdef struct Color:
@@ -319,6 +332,7 @@ cdef struct Color:
     uint8_t a
 
 cdef class WrapField:
+    cdef void alloc(self)
     cdef Field * data
     cdef void * storage
 cdef struct Field:
@@ -332,6 +346,7 @@ cdef struct Field:
     uint32_t size
 
 cdef class WrapChunkItemData:
+    cdef void alloc(self)
     cdef ChunkItemData * data
     cdef void * storage
 cdef struct ChunkItemData:
@@ -346,6 +361,7 @@ cdef struct ChunkItemData:
     uint32_t something6
 
 cdef class WrapZone:
+    cdef void alloc(self)
     cdef Zone * data
     cdef void * storage
 cdef struct Zone:
@@ -400,6 +416,7 @@ cdef struct Zone:
     CriticalSection crit_sec
 
 cdef class WrapSomethingCreature:
+    cdef void alloc(self)
     cdef SomethingCreature * data
     cdef void * storage
 cdef struct SomethingCreature:
@@ -474,6 +491,7 @@ cdef struct SomethingCreature:
     uint32_t dword88C
 
 cdef class WrapCreature:
+    cdef void alloc(self)
     cdef Creature * data
     cdef void * storage
 cdef struct Creature:

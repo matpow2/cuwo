@@ -342,6 +342,8 @@ void * heap_alloc(uint32_t size)
     return ret;
 }
 
+extern Heap main_heap;
+
 void heap_dealloc(void * mem)
 {
     if (mem == NULL)
@@ -350,10 +352,12 @@ void heap_dealloc(void * mem)
     mchunkptr p = mem2chunk(mem);
     mspace fm = (mspace)get_mstate_for(p);
     if (fm != msp) {
-        std::cout << "Memory dealloc not for current heap\n";
-#ifdef _WIN32
-        __debugbreak();
-#endif
+        if (fm == (mspace)main_heap.ms) {
+            std::cout << "Memory dealloc on main heap\n";
+    #ifdef _WIN32
+            __debugbreak();
+    #endif
+        }
     }
     mspace_free((mspace)current_heap->ms, mem);
 }

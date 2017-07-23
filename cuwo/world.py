@@ -194,14 +194,12 @@ class Region:
         tgen.remove_zone(data)
         self.chunks.remove(data)
         if not self.chunks:
-            print('destroy owner:', data.x, data.y)
             tgen.remove_region(self.owner)
             self.owner.destroy()
             self.owner = None
             del self.world.regions[self.pos]
             self.world = None
         elif data is not self.owner:
-            print('destroy:', data.x, data.y)
             data.destroy()
 
 def spawn_to_entity(spawn, entity):
@@ -265,15 +263,17 @@ class Chunk:
 
         region = (self.data.x // 64, self.data.y // 64)
         if region in self.world.regions:
-            print('found region:', region)
+            # print('found region:', region)
             self.region = self.world.regions[region]
         else:
-            print('new region:', region)
+            # print('new region:', region)
             self.region = Region(self.world, region, self.data)
             self.world.regions[region] = self.region
         self.region.add(self.data)
 
-        self.items.extend(self.data.items)
+        chunk_items = self.data.items
+        self.items.extend([item.copy() for item in chunk_items])
+        chunk_items.clear()
 
         for entity_id, data in enumerate(self.data.static_entities):
             header = data.header
@@ -282,9 +282,9 @@ class Chunk:
             self.static_entities[entity_id] = new_entity
 
         if self.world.use_entities:
-            print('add zone:', self.data.x, self.data.y)
+            # print('add zone:', self.data.x, self.data.y)
             tgen.add_zone(self.data)
-            print('done')
+            # print('done')
         #     for data in self.data.spawns:
         #         if data.hostile_type == constants.HOSTILE_TYPE:
         #             continue
@@ -409,7 +409,6 @@ class World:
 
     def get_data(self, pos):
         f = asyncio.Future()
-        print('get data:', pos)
         self.gen_queue.put((pos, f), False)
         return f
 
@@ -433,7 +432,5 @@ class World:
             if data is None:
                 break
             pos, f = data
-            print('generate:', pos)
             res = tgen.generate(*pos)
-            print('done')
             self.loop.call_soon_threadsafe(f.set_result, res)

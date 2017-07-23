@@ -47,12 +47,19 @@ cdef class WrapItemUpgrade:
         cdef WrapItemUpgrade c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapItemUpgrade inst = WrapItemUpgrade.__new__(WrapItemUpgrade)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ItemUpgrade))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(ItemUpgrade))
-        self.data = <ItemUpgrade*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ItemUpgrade))
+        self.data = <ItemUpgrade*>self.storage
     @property
     def x(self):
         return <int8_t>(<int8_t>self.data[0].x)
@@ -100,12 +107,19 @@ cdef class WrapItemData:
         cdef WrapItemData c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapItemData inst = WrapItemData.__new__(WrapItemData)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ItemData))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(ItemData))
-        self.data = <ItemData*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ItemData))
+        self.data = <ItemData*>self.storage
     @property
     def type(self):
         return <uint8_t>(<uint8_t>self.data[0].type)
@@ -186,12 +200,19 @@ cdef class WrapAppearanceData:
         cdef WrapAppearanceData c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapAppearanceData inst = WrapAppearanceData.__new__(WrapAppearanceData)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(AppearanceData))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(AppearanceData))
-        self.data = <AppearanceData*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(AppearanceData))
+        self.data = <AppearanceData*>self.storage
     @property
     def not_used_1(self):
         return <uint8_t>(<uint8_t>self.data[0].not_used_1)
@@ -579,12 +600,19 @@ cdef class WrapEntityData:
         cdef WrapEntityData c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapEntityData inst = WrapEntityData.__new__(WrapEntityData)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(EntityData))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(EntityData))
-        self.data = <EntityData*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(EntityData))
+        self.data = <EntityData*>self.storage
     @property
     def pos(self):
         cdef int64_t * ptr = &self.data[0].pos[0]
@@ -994,12 +1022,19 @@ cdef class WrapItemWithHeader:
         cdef WrapItemWithHeader c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapItemWithHeader inst = WrapItemWithHeader.__new__(WrapItemWithHeader)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ItemWithHeader))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(ItemWithHeader))
-        self.data = <ItemWithHeader*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ItemWithHeader))
+        self.data = <ItemWithHeader*>self.storage
     @property
     def header(self):
         return <uint32_t>(<uint32_t>self.data[0].header)
@@ -1032,12 +1067,19 @@ cdef class WrapItemWithHeaderList:
         cdef WrapItemWithHeaderList c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapItemWithHeaderList inst = WrapItemWithHeaderList.__new__(WrapItemWithHeaderList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ItemWithHeaderList))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(ItemWithHeaderList))
-        self.data = <ItemWithHeaderList*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ItemWithHeaderList))
+        self.data = <ItemWithHeaderList*>self.storage
     @property
     def vec(self):
         cdef WrapItemWithHeaderVec ret = WrapItemWithHeaderVec.__new__(WrapItemWithHeaderVec)
@@ -1045,7 +1087,7 @@ cdef class WrapItemWithHeaderList:
         return ret
     @vec.setter
     def vec(self, value):
-        self.data[0].vec_start = value
+        raise NotImplementedError()
     def reset(self):
         memset(self.data, 0, sizeof(self.data[0]))
 cdef class WrapItemWithHeaderLists:
@@ -1063,12 +1105,19 @@ cdef class WrapItemWithHeaderLists:
         cdef WrapItemWithHeaderLists c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapItemWithHeaderLists inst = WrapItemWithHeaderLists.__new__(WrapItemWithHeaderLists)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ItemWithHeaderLists))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(ItemWithHeaderLists))
-        self.data = <ItemWithHeaderLists*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ItemWithHeaderLists))
+        self.data = <ItemWithHeaderLists*>self.storage
     @property
     def vec(self):
         cdef WrapItemWithHeaderListVec ret = WrapItemWithHeaderListVec.__new__(WrapItemWithHeaderListVec)
@@ -1076,7 +1125,7 @@ cdef class WrapItemWithHeaderLists:
         return ret
     @vec.setter
     def vec(self, value):
-        self.data[0].vec_start = value
+        raise NotImplementedError()
     def reset(self):
         memset(self.data, 0, sizeof(self.data[0]))
 cdef class WrapStaticEntityHeader:
@@ -1094,12 +1143,19 @@ cdef class WrapStaticEntityHeader:
         cdef WrapStaticEntityHeader c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapStaticEntityHeader inst = WrapStaticEntityHeader.__new__(WrapStaticEntityHeader)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(StaticEntityHeader))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(StaticEntityHeader))
-        self.data = <StaticEntityHeader*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(StaticEntityHeader))
+        self.data = <StaticEntityHeader*>self.storage
     @property
     def entity_type(self):
         return <uint32_t>(<uint32_t>self.data[0].entity_type)
@@ -1167,12 +1223,19 @@ cdef class WrapStaticEntity:
         cdef WrapStaticEntity c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapStaticEntity inst = WrapStaticEntity.__new__(WrapStaticEntity)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(StaticEntity))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(StaticEntity))
-        self.data = <StaticEntity*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(StaticEntity))
+        self.data = <StaticEntity*>self.storage
     @property
     def header(self):
         cdef WrapStaticEntityHeader ret = WrapStaticEntityHeader.__new__(WrapStaticEntityHeader)
@@ -1259,12 +1322,19 @@ cdef class WrapItemWithExtra:
         cdef WrapItemWithExtra c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapItemWithExtra inst = WrapItemWithExtra.__new__(WrapItemWithExtra)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ItemWithExtra))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(ItemWithExtra))
-        self.data = <ItemWithExtra*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ItemWithExtra))
+        self.data = <ItemWithExtra*>self.storage
     @property
     def lists(self):
         cdef WrapItemWithHeaderLists ret = WrapItemWithHeaderLists.__new__(WrapItemWithHeaderLists)
@@ -1318,12 +1388,19 @@ cdef class WrapSpawn:
         cdef WrapSpawn c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapSpawn inst = WrapSpawn.__new__(WrapSpawn)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(Spawn))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(Spawn))
-        self.data = <Spawn*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(Spawn))
+        self.data = <Spawn*>self.storage
     @property
     def vtable(self):
         return <uint32_t>(<uint32_t>self.data[0].vtable)
@@ -1549,7 +1626,7 @@ cdef class WrapSpawn:
         return ret
     @some_vec.setter
     def some_vec(self, value):
-        self.data[0].some_vec_start = value
+        raise NotImplementedError()
     @property
     def id_vec_1(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
@@ -1557,7 +1634,7 @@ cdef class WrapSpawn:
         return ret
     @id_vec_1.setter
     def id_vec_1(self, value):
-        self.data[0].id_vec_1_start = value
+        raise NotImplementedError()
     @property
     def id_vec_2_end_old(self):
         return <uint32_t>(<uint32_t>self.data[0].id_vec_2_end_old)
@@ -1571,7 +1648,7 @@ cdef class WrapSpawn:
         return ret
     @id_vec_2.setter
     def id_vec_2(self, value):
-        self.data[0].id_vec_2_start = value
+        raise NotImplementedError()
     @property
     def unknown_or_not_used4(self):
         return <uint32_t>(<uint32_t>self.data[0].unknown_or_not_used4)
@@ -1631,12 +1708,19 @@ cdef class WrapCriticalSection:
         cdef WrapCriticalSection c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapCriticalSection inst = WrapCriticalSection.__new__(WrapCriticalSection)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(CriticalSection))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(CriticalSection))
-        self.data = <CriticalSection*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(CriticalSection))
+        self.data = <CriticalSection*>self.storage
     @property
     def DebugInfo(self):
         cdef WrapArray2 ret = WrapArray2.__new__(WrapArray2)
@@ -1692,12 +1776,19 @@ cdef class WrapColor:
         cdef WrapColor c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapColor inst = WrapColor.__new__(WrapColor)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(Color))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(Color))
-        self.data = <Color*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(Color))
+        self.data = <Color*>self.storage
     @property
     def r(self):
         return <uint8_t>(<uint8_t>self.data[0].r)
@@ -1739,12 +1830,19 @@ cdef class WrapField:
         cdef WrapField c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapField inst = WrapField.__new__(WrapField)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(Field))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(Field))
-        self.data = <Field*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(Field))
+        self.data = <Field*>self.storage
     @property
     def vtable(self):
         return <uint32_t>(<uint32_t>self.data[0].vtable)
@@ -1812,12 +1910,19 @@ cdef class WrapChunkItemData:
         cdef WrapChunkItemData c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapChunkItemData inst = WrapChunkItemData.__new__(WrapChunkItemData)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ChunkItemData))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(ChunkItemData))
-        self.data = <ChunkItemData*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ChunkItemData))
+        self.data = <ChunkItemData*>self.storage
     @property
     def item_data(self):
         cdef WrapItemData ret = WrapItemData.__new__(WrapItemData)
@@ -1887,12 +1992,19 @@ cdef class WrapZone:
         cdef WrapZone c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapZone inst = WrapZone.__new__(WrapZone)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(Zone))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(Zone))
-        self.data = <Zone*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(Zone))
+        self.data = <Zone*>self.storage
     @property
     def vtable(self):
         return <int32_t>(<int32_t>self.data[0].vtable)
@@ -1918,7 +2030,7 @@ cdef class WrapZone:
         return ret
     @static_entities.setter
     def static_entities(self, value):
-        self.data[0].static_entities_start = value
+        raise NotImplementedError()
     @property
     def spawns(self):
         cdef WrapSpawnPtrVec ret = WrapSpawnPtrVec.__new__(WrapSpawnPtrVec)
@@ -1926,7 +2038,7 @@ cdef class WrapZone:
         return ret
     @spawns.setter
     def spawns(self, value):
-        self.data[0].spawns_start = value
+        raise NotImplementedError()
     @property
     def some4(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
@@ -1934,7 +2046,7 @@ cdef class WrapZone:
         return ret
     @some4.setter
     def some4(self, value):
-        self.data[0].some4_start = value
+        raise NotImplementedError()
     @property
     def items(self):
         cdef WrapChunkItemDataVec ret = WrapChunkItemDataVec.__new__(WrapChunkItemDataVec)
@@ -1942,7 +2054,7 @@ cdef class WrapZone:
         return ret
     @items.setter
     def items(self, value):
-        self.data[0].items_start = value
+        raise NotImplementedError()
     @property
     def some9(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
@@ -1950,7 +2062,7 @@ cdef class WrapZone:
         return ret
     @some9.setter
     def some9(self, value):
-        self.data[0].some9_start = value
+        raise NotImplementedError()
     @property
     def some8(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
@@ -1958,7 +2070,7 @@ cdef class WrapZone:
         return ret
     @some8.setter
     def some8(self, value):
-        self.data[0].some8_start = value
+        raise NotImplementedError()
     @property
     def some7(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
@@ -1966,7 +2078,7 @@ cdef class WrapZone:
         return ret
     @some7.setter
     def some7(self, value):
-        self.data[0].some7_start = value
+        raise NotImplementedError()
     @property
     def chunk_x(self):
         return <uint32_t>(<uint32_t>self.data[0].chunk_x)
@@ -1986,7 +2098,7 @@ cdef class WrapZone:
         return ret
     @some2_20byte.setter
     def some2_20byte(self, value):
-        self.data[0].some2_20byte_start = value
+        raise NotImplementedError()
     @property
     def word74(self):
         return <uint8_t>(<uint8_t>self.data[0].word74)
@@ -2036,7 +2148,7 @@ cdef class WrapZone:
         return ret
     @some5.setter
     def some5(self, value):
-        self.data[0].some5_start = value
+        raise NotImplementedError()
     @property
     def some6(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
@@ -2044,7 +2156,7 @@ cdef class WrapZone:
         return ret
     @some6.setter
     def some6(self, value):
-        self.data[0].some6_start = value
+        raise NotImplementedError()
     @property
     def start_something_dynamic_entities(self):
         return <uint32_t>(<uint32_t>self.data[0].start_something_dynamic_entities)
@@ -2097,12 +2209,19 @@ cdef class WrapSomethingCreature:
         cdef WrapSomethingCreature c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapSomethingCreature inst = WrapSomethingCreature.__new__(WrapSomethingCreature)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(SomethingCreature))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(SomethingCreature))
-        self.data = <SomethingCreature*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(SomethingCreature))
+        self.data = <SomethingCreature*>self.storage
     @property
     def dword0(self):
         return <uint32_t>(<uint32_t>self.data[0].dword0)
@@ -2510,12 +2629,19 @@ cdef class WrapCreature:
         cdef WrapCreature c = inst
         c.data = self.data
         return inst
+    def copy(self):
+        cdef WrapCreature inst = WrapCreature.__new__(WrapCreature)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(Creature))
+        return inst
     def __init__(self):
-        self.storage = PyMem_Malloc(sizeof(Creature))
-        self.data = <Creature*>self.storage
+        self.alloc()
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(Creature))
+        self.data = <Creature*>self.storage
     @property
     def vtable(self):
         return <uint32_t>(<uint32_t>self.data[0].vtable)
@@ -3272,6 +3398,8 @@ cdef class WrapArray4:
         return ret
 cdef class WrapItemWithHeaderVec:
     def get_data(self): return (self.data[0], self.data[1], self.data[2])
+    def clear(self):
+        self.data[1] = self.data[0]
     def __getitem__(self, uint32_t index):
         cdef char * val = <char*>self.data[0]
         cdef char * end = <char*>self.data[1]
@@ -3287,6 +3415,8 @@ cdef class WrapItemWithHeaderVec:
         return <uint32_t>(end - val) / sizeof(ItemWithHeader)
 cdef class WrapItemWithHeaderListVec:
     def get_data(self): return (self.data[0], self.data[1], self.data[2])
+    def clear(self):
+        self.data[1] = self.data[0]
     def __getitem__(self, uint32_t index):
         cdef char * val = <char*>self.data[0]
         cdef char * end = <char*>self.data[1]
@@ -3302,6 +3432,8 @@ cdef class WrapItemWithHeaderListVec:
         return <uint32_t>(end - val) / sizeof(ItemWithHeaderList)
 cdef class Wrapuint8Vec:
     def get_data(self): return (self.data[0], self.data[1], self.data[2])
+    def clear(self):
+        self.data[1] = self.data[0]
     def __getitem__(self, uint32_t index):
         cdef char * val = <char*>self.data[0]
         cdef char * end = <char*>self.data[1]
@@ -3315,6 +3447,8 @@ cdef class Wrapuint8Vec:
         return <uint32_t>(end - val) / sizeof(uint8_t)
 cdef class WrapStaticEntityVec:
     def get_data(self): return (self.data[0], self.data[1], self.data[2])
+    def clear(self):
+        self.data[1] = self.data[0]
     def __getitem__(self, uint32_t index):
         cdef char * val = <char*>self.data[0]
         cdef char * end = <char*>self.data[1]
@@ -3330,6 +3464,8 @@ cdef class WrapStaticEntityVec:
         return <uint32_t>(end - val) / sizeof(StaticEntity)
 cdef class WrapSpawnPtrVec:
     def get_data(self): return (self.data[0], self.data[1], self.data[2])
+    def clear(self):
+        self.data[1] = self.data[0]
     def __getitem__(self, uint32_t index):
         cdef char * val = <char*>self.data[0]
         cdef char * end = <char*>self.data[1]
@@ -3345,6 +3481,8 @@ cdef class WrapSpawnPtrVec:
         return <uint32_t>(end - val) / sizeof(uint32_t)
 cdef class WrapChunkItemDataVec:
     def get_data(self): return (self.data[0], self.data[1], self.data[2])
+    def clear(self):
+        self.data[1] = self.data[0]
     def __getitem__(self, uint32_t index):
         cdef char * val = <char*>self.data[0]
         cdef char * end = <char*>self.data[1]

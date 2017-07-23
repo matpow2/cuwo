@@ -129,10 +129,18 @@ def main():
         pyx.putln(f'return inst')
         pyx.dedent()
 
+        pyx.putln(f'def copy(self):')
+        pyx.indent()
+        wrap_name = f'Wrap{s_name}'
+        pyx.putln(f'cdef {wrap_name} inst = {wrap_name}.__new__({wrap_name})')
+        pyx.putln(f'inst.alloc()')
+        pyx.putln(f'memcpy(inst.data, self.data, sizeof({s_name}))')
+        pyx.putln(f'return inst')
+        pyx.dedent()
+
         pyx.putln(f'def __init__(self):')
         pyx.indent()
-        pyx.putln(f'self.storage = PyMem_Malloc(sizeof({s_name}))')
-        pyx.putln(f'self.data = <{s_name}*>self.storage')
+        pyx.putln(f'self.alloc()')
         pyx.dedent()
 
         pyx.putln(f'def __dealloc__(self):')
@@ -145,6 +153,14 @@ def main():
 
         pxd.putln(f'cdef class Wrap{s_name}:')
         pxd.indent()
+
+        pxd.putln(f'cdef void alloc(self)')
+        pyx.putln(f'cdef void alloc(self):')
+        pyx.indent()
+        pyx.putln(f'self.storage = PyMem_Malloc(sizeof({s_name}))')
+        pyx.putln(f'self.data = <{s_name}*>self.storage')
+        pyx.dedent()
+        
         pxd.putln(f'cdef {s_name} * data')
         pxd.putln(f'cdef void * storage')
         pxd.dedent()
@@ -229,7 +245,12 @@ def main():
                 pyx.putln(f'ret.data = &{value}')
                 pyx.putln(f'return ret')
 
-                setter.putln(f'{value} = value')
+                setter.putln(f'raise NotImplementedError()')
+                # setter.dedent()
+                # setter.putln(f'@{prop_name}.deleter')
+                # setter.indent()
+                # setter.putln(f'{}')
+                # setter.putln(f'{value} = value')
             elif attr.typ in VEC_TYPES and not attr.ptr:
                 typt, typ = VEC_TYPES[attr.typ]
                 pyx.putln(f'cdef {typt} * ptr = &{value}[0]')
@@ -382,6 +403,11 @@ def main():
         pyx.putln('def get_data(self): return (self.data[0], '
                                               'self.data[1], '
                                               'self.data[2])')
+
+        pyx.putln('def clear(self):')
+        pyx.indent()
+        pyx.putln(f'self.data[1] = self.data[0]')
+        pyx.dedent()
 
         pyx.putln(f'def __getitem__(self, uint32_t index):')
         pyx.indent()
