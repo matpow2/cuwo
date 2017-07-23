@@ -26,7 +26,7 @@
 
 // structs
 
-std::stringstream * current_stream = NULL;
+static thread_local std::stringstream * current_stream = NULL;
 
 // import: public: __thiscall std::basic_istream<char,struct std::char_traits
 // import: <char> >::basic_istream<char,struct std::char_traits<char> >
@@ -58,7 +58,7 @@ void basic_streambuf_char__Init_empty_imp(uint32_t self)
     // std::cout << "basic_streambuf_char__Init_empty" << std::endl;
 }
 
-static bool last_was_cfg = false;
+static thread_local bool last_was_cfg = false;
 
 // import: public: void __thiscall std::basic_ios
 // import: <char,struct std::char_traits<char> >::setstate(int,bool)

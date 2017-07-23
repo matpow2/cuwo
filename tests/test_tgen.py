@@ -18,11 +18,13 @@
 import unittest
 
 import sys
+import os
 sys.path.append('.')
 from cuwo import tgen
 from cuwo.bytes import ByteReader
 from cuwo.static import StaticEntityHeader
 import zlib
+import subprocess
 
 
 class TerrainGeneratorTests(unittest.TestCase):
@@ -43,6 +45,8 @@ class TerrainGeneratorTests(unittest.TestCase):
             source.append(entity)
 
         chunk = tgen.generate(32803, 32803)
+        # chunk = tgen.generate(32803, 32803)
+        # tgen.dump_mem('dump.bin')
 
         self.assertEqual(len(chunk.static_entities), len(source))
 
@@ -57,6 +61,29 @@ class TerrainGeneratorTests(unittest.TestCase):
             self.assertEqual(header1.time_offset, header2.time_offset)
             self.assertEqual(header1.something8, header2.something8)
             self.assertEqual(header1.user_id, header2.user_id)
+
+
+        for index, entity in enumerate(chunk.items):
+            print(entity)
+
+        events = [
+            ('generate', (1007, 4974)),
+            ('generate', (1007, 4973)),
+            ('generate', (1007, 4972)),
+            ('generate', (1007, 4971)),
+            ('destroy', (1007, 4973)),
+            ('generate', (1007, 4970)),
+            ('destroy', (1007, 4972)),
+            ('generate', (1007, 4969))
+        ]
+
+        chunks = {}
+
+        for (event, chunk) in events:
+            if event == 'generate':
+                chunks[chunk] = tgen.generate(*chunk)
+            elif event == 'destroy':
+                chunks[chunk].destroy()
 
 if __name__ == '__main__':
     unittest.main()

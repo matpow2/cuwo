@@ -302,7 +302,7 @@ class AntiCheatConnection(ConnectionScript):
             self.hit_counter += 1
 
         # how far away did this hit hit from where the target actually is
-        hitdistance = (packet.pos - event.target.pos).magnitude_squared()
+        hitdistance = (packet.pos - event.target.pos).squared_length
         if hitdistance > self.max_hit_distance:
             self.hit_distance_strikes += 1
             if self.hit_distance_strikes > self.max_hit_distance_strikes:

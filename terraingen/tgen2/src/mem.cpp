@@ -198,7 +198,7 @@ void run_with_stack(void (*f)())
     GetThreadContext(thread, &ctx);
 
     const DWORD64 stack_size = 1024 * 1024 * 2;
-    static void * stack = alloc_mem(stack_size);
+    void * stack = alloc_mem(stack_size);
     ctx.Rsp = (DWORD64)stack + stack_size -
               ((DWORD64)tib->StackBase - (DWORD64)ctx.Rsp);
     tib->StackBase = (PVOID)((DWORD64)stack + stack_size);
@@ -207,6 +207,7 @@ void run_with_stack(void (*f)())
 
     ResumeThread(thread);
     WaitForSingleObject(thread, INFINITE);
+    free_mem(stack, stack_size);
 }
 
 #else
@@ -246,49 +247,23 @@ void run_with_stack(void (*f)())
 
 #endif
 
-unsigned char * heap;
-uint32_t heap_offset;
-
 extern "C" {
     #define HAVE_MORECORE 1
     #define HAVE_MMAP 0
+    #define FOOTERS 1
     #define USE_DL_PREFIX
+    #define MSPACES 1
     #define MORECORE heap_morecore
     void * heap_morecore(int size);
     #include "dlmalloc.c"
 
     void * heap_morecore(int size)
     {
-        if (heap == NULL)
-            heap = (unsigned char*)alloc_mem(HEAP_SIZE);
-        void * ret = (void*)(heap + heap_offset);
-        heap_offset += size;
-
-        if (heap_offset >= HEAP_SIZE) {
-            std::cout << "Heap too small: " << heap_offset << " "
-                << HEAP_SIZE << std::endl;
-            exit(0);
-        }
-        return ret;
+        std::cout << "Out of tgen memory!" << std::endl;
+        assert(false);
+		return NULL;
     }
 }
-
-void save_heap(SavedHeap * data)
-{
-    data->heap = new char[heap_offset];
-    data->heap_size = heap_offset;
-    memcpy(data->heap, heap, heap_offset);
-    data->state = new malloc_state;
-    memcpy(data->state, gm, sizeof(malloc_state));
-}
-
-void restore_heap(const SavedHeap * data)
-{
-    memcpy(heap, data->heap, data->heap_size);
-    heap_offset = data->heap_size;
-    memcpy(gm, data->state, sizeof(malloc_state));
-}
-
 
 // extern "C" {
 //     #define HAVE_MMAP 1
@@ -325,13 +300,44 @@ void restore_heap(const SavedHeap * data)
 //     }
 // }
 
-void * manager_data = NULL;
+void create_heap(Heap * heap, uint32_t size)
+{
+    heap->first_alloc = NULL;
+    heap->size = size;
+    heap->saved = NULL;
+    heap->buffer = (unsigned char*)alloc_mem(size);
+    heap->ms = (void*)create_mspace_with_base(heap->buffer, size, 0);
+}
+
+void save_heap(Heap * heap)
+{
+    if (heap->saved == NULL)
+        heap->saved = (unsigned char*)alloc_mem(heap->size);
+    memcpy(heap->saved, heap->buffer, heap->size);
+}
+
+void restore_heap(Heap * heap)
+{
+    memcpy(heap->buffer, heap->saved, heap->size);
+}
+
+void destroy_heap(Heap * heap)
+{
+    free_mem(heap->buffer, heap->size);
+}
+
+thread_local Heap * current_heap = NULL;
+
+void set_heap(Heap * heap)
+{
+    current_heap = heap;
+}
 
 void * heap_alloc(uint32_t size)
 {
-    void * ret = dlmalloc(size);
-    if (manager_data == 0)
-        manager_data = ret;
+    char * ret = (char*)mspace_malloc((mspace)current_heap->ms, size);
+    if (current_heap->first_alloc == NULL)
+        current_heap->first_alloc = ret;
     return ret;
 }
 

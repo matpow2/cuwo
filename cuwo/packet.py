@@ -21,8 +21,11 @@
 # definitions in your own work, it would be nice with a little notice of
 # where you got them from (i.e. cuwo) :-)
 
-from cuwo.entity import (EntityData, ItemData, read_masked_data,
-                         write_masked_data, get_masked_size)
+from cuwo.tgen_wrap import (WrapEntityData as EntityData,
+                            WrapItemData as ItemData,
+                            read_masked_data, write_masked_data,
+                            get_masked_size)
+
 from cuwo import strings
 from cuwo.loader import Loader
 from cuwo.bytes import ByteReader, ByteWriter, OutOfData

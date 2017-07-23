@@ -17,7 +17,7 @@
     along with cuwo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-static int hold_rand;
+static thread_local int hold_rand;
 
 void cross_srand(unsigned int seed)
 {

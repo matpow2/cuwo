@@ -25,7 +25,7 @@ import asyncio
 from cuwo.script import ServerScript, ConnectionScript, command, admin
 from cuwo.common import format_time
 from cuwo import packet as packets
-from cuwo.vector import Vector3
+from cuwo.vector import vec3
 from cuwo import constants
 from cuwo import entity as entitydata
 
@@ -207,7 +207,7 @@ class CTFServer(ServerScript):
                 for entity in entities:
                     particle = packets.ParticleData()
                     particle.pos = entity.pos
-                    particle.accel = Vector3(0.0, 0.0, 8)
+                    particle.accel = vec3(0.0, 0.0, 8)
                     particle.color = make_int_color(250, 40, 99, 255)
                     particle.scale = 0.5
                     particle.count = 2

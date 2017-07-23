@@ -116,10 +116,11 @@ def validate_chunk_pos(x, y):
 
 
 def get_chunk(vec):
-    pos = vec.xy // constants.CHUNK_SCALE
-    if not validate_chunk_pos(pos.x, pos.y):
+    x = vec.x // constants.CHUNK_SCALE
+    y = vec.y // constants.CHUNK_SCALE
+    if not validate_chunk_pos(x, y):
         raise ValueError('invalid position')
-    return pos
+    return (x, y)
 
 
 def get_sector(vec):

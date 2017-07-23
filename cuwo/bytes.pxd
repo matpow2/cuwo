@@ -18,6 +18,7 @@
 
 cimport cython
 from libc.stdint cimport int64_t, uint64_t
+from libc.string cimport memcpy
 
 
 cdef extern from "bytes_c.cpp":
@@ -78,6 +79,11 @@ cdef class ByteReader:
 
     @cython.final
     cpdef str read_ascii(self, unsigned int size)
+
+    cdef inline bint read_c(self, void * data, unsigned int size) except False:
+        cdef char * pos = self.check_available(size)
+        memcpy(data, pos, size)
+        return True
 
     @cython.final
     cpdef inline bytes read(self, unsigned int size=?)
@@ -185,6 +191,10 @@ cdef class ByteWriter:
     @cython.final
     cpdef inline size_t tell(self):
         return get_write_pos(self.stream)
+
+    cdef inline bint write_c(self, void * data, size_t size):
+        write(self.stream, <char*>data, size)
+        return True
 
     @cython.final
     cpdef inline bint write(self, bytes data):

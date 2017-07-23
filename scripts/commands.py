@@ -23,7 +23,7 @@ from cuwo.script import ServerScript, command, admin, alias
 from cuwo.common import get_chunk
 from cuwo import constants
 from cuwo import static
-from cuwo.vector import Vector3
+from cuwo.vector import vec3, qvec3
 import platform
 
 MAX_STUN_TIME = 1000 * 60  # 60 seconds in milliseconds
@@ -258,7 +258,7 @@ def create_teleport_packet(pos, chunk_pos, user_id):
     packet.chunk_y = chunk_pos[1]
     packet.entity_id = 0
     header.set_type('Bench')
-    header.size = Vector3(0, 0, 0)
+    header.size = vec3(0, 0, 0)
     header.closed = True
     header.orientation = static.ORIENT_SOUTH
     header.pos = pos
@@ -279,7 +279,7 @@ def teleport(script, a, b=None):
         player = script.get_player(a)
         pos = player.entity.pos
     else:
-        pos = Vector3(int(a), int(b), 0) * constants.CHUNK_SCALE
+        pos = qvec3(int(a), int(b), 0) * constants.CHUNK_SCALE
         pos.z = script.world.get_height(pos.xy) or entity.pos.z
 
     update_packet = script.server.update_packet

@@ -21,6 +21,7 @@ Static entity implementation
 
 from cuwo.loader import Loader
 from cuwo import strings
+from cuwo.tgen_wrap import WrapStaticEntityHeader
 
 
 ORIENT_SOUTH = 0
@@ -42,24 +43,7 @@ OPEN_ENTITIES = {
 DYNAMIC_ENTITIES = SIT_ENTITIES | OPEN_ENTITIES
 
 
-class StaticEntityHeader(Loader):
-    def read(self, reader):
-        # memory header starts here (size 72)
-        self.entity_type = reader.read_uint32()
-        reader.skip(4)  # 64bit struct padding
-        self.pos = reader.read_qvec3()
-        self.orientation = reader.read_uint32()
-        self.size = reader.read_vec3()
-        self.closed = reader.read_uint8() == 1
-        reader.skip(3)
-        # time offset to use for e.g. opening doors
-        # seems to be in ms, for windows/doors goes from 0-1000
-        self.time_offset = reader.read_uint32()
-        self.something8 = reader.read_uint32()
-        reader.skip(4)  # 64bit padding
-        # the entity which is using this static entity
-        self.user_id = reader.read_uint64()
-
+class StaticEntityHeader(WrapStaticEntityHeader):
     def is_dynamic(self):
         return self.get_type() in DYNAMIC_ENTITIES
 
@@ -68,19 +52,6 @@ class StaticEntityHeader(Loader):
 
     def set_type(self, name):
         self.entity_type = strings.STATIC_IDS[name]
-
-    def write(self, writer):
-        writer.write_uint32(self.entity_type)
-        writer.pad(4)
-        writer.write_qvec3(self.pos)
-        writer.write_uint32(self.orientation)
-        writer.write_vec3(self.size)
-        writer.write_uint8(int(self.closed))
-        writer.pad(3)
-        writer.write_uint32(self.time_offset)
-        writer.write_uint32(self.something8)
-        writer.pad(4)
-        writer.write_uint64(self.user_id)
 
 
 class StaticEntityPacket(Loader):

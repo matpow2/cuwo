@@ -6,6 +6,9 @@ arg_order = ['rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9']
 arg_order_msvc = ['rcx', 'rdx', 'r8', 'r9']
 arg_order_double = ['xmm0', 'xmm1', 'xmm2', 'xmm3']
 
+preserve_call = ['rbx']
+preserve_call_msvc = ['rdi', 'rsi'] + preserve_call
+
 # volatile x64 msvc: RAX, RCX, RDX, R8-R11
 # non-volatile x64 msvc: RDI, RSI, RBX, RBP, RSP, R12-R15
 
@@ -14,6 +17,11 @@ arg_order_double = ['xmm0', 'xmm1', 'xmm2', 'xmm3']
 # volatile: EAX, ECX, EDX, ST0 - ST7, ES and GS
 # non-volatile: EBX, EBP, ESP, EDI, ESI, CS and DS
 # save on non-msvc: EDI, ESI
+
+# all x64 registers are cut to their 32bit parts when going from
+# 64bit -> 32bit, so need to preserve all non-volatiles
+# msvc: rdi, rsi, rbx
+# non-msvc: rbx
 
 arg_map = {}
 arg_map_msvc = {}
@@ -234,7 +242,8 @@ def add_func(name, patch, table, callconv, func_prot):
         state.output_c += f'    {c_ret} ret_val = ({c_ret}){call};\n'
     
     if name != '_setjmp3':
-        state.output_c += f'#ifndef NDEBUG\n'
+        # state.output_c += f'#ifndef NDEBUG\n'
+        state.output_c += f'#ifdef VERBOSE_WRAP\n'
 
         print_args = [f' << " " << v{i} ' for i in range(len(args))]
         print_args = ''.join(print_args)
@@ -289,42 +298,49 @@ def do_lines(lines):
 def do_callers():
     if state.is_msvc:
         cur_arg_order = arg_order_msvc
+        save_regs = preserve_call_msvc
     else:
         cur_arg_order = arg_order
+        save_regs = preserve_call
 
     imports = []
     setup_callers = '#define SETUP_CALLERS()'
     for callconv in ('thiscall', 'cdecl', 'stdcall'):
-        for i in range(4):
+        for i in range(5):
             asm = x86_call_base
             asm += f'start:\n'
             asm += f'use64\n'
             asm += f'mov rax, {cur_arg_order[0]}\n'
 
-            save_regs = set()
+            spill_order = ['r10', 'r11']
             def get_reg(reg):
-                reg = cur_arg_order[reg]
-                if not state.is_msvc:
-                    if reg in ('rdi', 'rsi'):
-                        save_regs.add(reg)
-                if len(reg) == 2:
+                is_spill = False
+                try:
+                    reg = cur_arg_order[reg]
+                except IndexError:
+                    return ('r10d', True)
+                if len(reg) == 2 or is_spill:
                     reg += 'd'
                 else:
                     reg = 'e' + reg[1:]
-                return reg
+                return (reg, False)
 
             arg_asm = ''
             pop_args = 0
             thiscall_prolog = None
             if callconv == 'thiscall':
                 arg_off = 1
+            spilled_args = max(0, (i + 1) - len(cur_arg_order))
             for arg in range(i):
-                mov_reg = get_reg(arg+1)
+                mov_reg, is_spill = get_reg(arg+1)
                 if arg == 0 and callconv == 'thiscall':
                     if mov_reg != 'ecx':
                         thiscall_prolog = f'mov ecx, {mov_reg}\n'
                 else:
                     arg_pos = (i - 1 - arg_off) - (arg - arg_off)
+                    if is_spill:
+                        spill_off = (arg + 1) - len(cur_arg_order)
+                        arg_asm += f'mov r10, [rsp+{(spill_off+1)*8}]\n'
                     arg_asm += f'mov dword [rsp-{(arg_pos+1)*4}], {mov_reg}\n'
                     pop_args += 1
 
@@ -355,6 +371,9 @@ def do_callers():
             asm += f'ret\n'
 
             # if callconv == 'thiscall' and state.is_msvc and state.is_x64 and i == 3:
+            #     print(asm)
+            #     input()
+            # if spilled_args > 0:
             #     print(asm)
             #     input()
             asm = get_asm(asm)

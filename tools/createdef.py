@@ -19,7 +19,6 @@ import sys
 sys.path.append('..')
 import re
 import collections
-from cuwo import tgen
 
 
 def comment_remover(text):
@@ -40,7 +39,8 @@ class FormattedOutput:
     def __init__(self, description):
         self.data = ''
         self.indentation = 0
-        self.putln(license_header % description)
+        if description is not None:
+            self.putln(license_header % description)
 
     def putln(self, value=''):
         if not value.strip():
@@ -62,6 +62,10 @@ class FormattedOutput:
     def write_inverse_dict(self, name, original):
         self.putln('%s = {v: k for k, v in %s.items()}' % (name, original))
         self.putln()
+
+    def putcode(self, c):
+        for line in c.data.splitlines():
+            self.putln(line)
 
     def write_dict(self, name, value):
         self.putln('%s = {' % name)
@@ -85,9 +89,14 @@ class FormattedOutput:
 TYPE_DEF = {
     '__int64': 'int64',
     'uint64_t': 'uint64',
+    'uint32_t': 'uint32',
+    'int32_t': 'int32',
+    'int8_t': 'int8',
+    'uint8_t': 'uint8',
     '_DWORD': 'uint32',
     'int': 'int32',
     'signed int': 'int32',
+    'unsigned int': 'uint32',
     'signed short': 'int16',
     '_BYTE': 'uint8',
     '_WORD': 'uint16',
@@ -101,8 +110,8 @@ TYPE_DEF = {
 TYPE_SIZE = {
     'uint8': 1,
     'int8': 1,
+    'int16': 2,
     'uint16': 2,
-    'in16': 2,
     'int64': 8,
     'uint64': 8,
     'uint32': 4,
@@ -123,9 +132,9 @@ DEFAULTS = {
     'uint32': 0,
     'int32': 0,
     'float': 0.0,
-    'vec3': 'Vector3()',
-    'qvec3': 'Vector3()',
-    'ivec3': 'Vector3()'
+    'vec3': 'vec3()',
+    'qvec3': 'qvec3()',
+    'ivec3': 'ivec3()'
 }
 
 PYTHON_OBJECTS = {
@@ -165,16 +174,19 @@ class Struct(object):
 
 
 class Attribute(object):
-    def __init__(self, name, typ, dim=None, default=None):
+    def __init__(self, name, typ, dim=None, default=None, ptr=False):
         self.name = name
         self.typ = typ
         self.dim = dim
         self.default = default
+        self.ptr = ptr
 
     def get(self):
         return (self.name, self.typ, self.dim, self.is_local())
 
     def get_size(self):
+        if self.ptr:
+            return 4
         if self.is_local():
             size = struct_dict[self.typ].get_size()
         else:
@@ -208,6 +220,7 @@ def parse_header(data):
             continue
         if struct is not None:
             if not line.endswith(';'):
+                print(line)
                 raise NotImplementedError()
             line = line[:-1]
             if '=' in line:
@@ -217,6 +230,10 @@ def parse_header(data):
             else:
                 default = None
             typ, name = line.rsplit(' ', 1)
+            ptr = False
+            if typ.endswith('*'):
+                typ = typ[:-1].strip()
+                ptr = True
             typ = TYPE_DEF.get(typ, typ)
             if name.endswith(']'):
                 start_dim = name.find('[')
@@ -226,7 +243,7 @@ def parse_header(data):
                 dim = None
             if 'gap' in name or 'pad' in name:
                 name = 'pad'
-            struct.attrs.append(Attribute(name, typ, dim, default))
+            struct.attrs.append(Attribute(name, typ, dim, default, ptr))
     return struct_dict
 
 
@@ -272,7 +289,7 @@ def main():
     out.putln('cimport cython')
     out.putln('from libc.stdint cimport int64_t, uint64_t')
     out.putln('from cuwo.bytes cimport ByteReader, ByteWriter')
-    out.putln('from cuwo.vector import Vector3')
+    out.putln('from cuwo.vector import Vector3, qvec3, vec3, ivec3')
     out.putln('from cuwo import strings')
     out.putln()
     out.putln()
@@ -680,6 +697,7 @@ def main():
     out.write_inverse_dict('MODEL_IDS', 'MODEL_NAMES')
 
     print('Writing defs from tgen')
+    from cuwo import tgen
     tgen.initialize(1234, '../data/')
     print('Heap base:', tgen.dump_mem('mem.dat'))
     out.write_dict('ITEM_NAMES', tgen.get_item_names())

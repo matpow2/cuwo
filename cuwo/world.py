@@ -19,14 +19,15 @@
 World manager
 """
 
-from cuwo import entity as entitydata
+from cuwo.tgen_wrap import WrapEntityData
 from cuwo import static
 from cuwo.common import get_item_hp, get_max_xp, get_chunk
 from cuwo.types import IDPool
 from cuwo import constants
 from cuwo import strings
-from cuwo.vector import Vector3
+from cuwo.vector import vec3
 from cuwo import tgen
+from cuwo.static import StaticEntityHeader
 
 import os
 from queue import Queue
@@ -34,17 +35,14 @@ import asyncio
 import math
 
 
-class Entity(entitydata.EntityData):
-    def __init__(self, world, entity_id=None):
-        super().__init__()
+class Entity(WrapEntityData):
+    mask = 0
 
-        if entity_id is None:
-            entity_id = world.entity_ids.pop()
-            self.static_id = False
-        else:
-            self.static_id = True
+    def init(self, world, creature, entity_id, static_id, is_tgen=False):
+        self.is_tgen = is_tgen
+        self.creature = creature
         self.entity_id = entity_id
-
+        self.static_id = static_id
         world.entities[entity_id] = self
         self.world = world
 
@@ -94,7 +92,7 @@ class Entity(entitydata.EntityData):
         x = math.cos(yaw) * math.cos(pitch)
         y = math.sin(yaw) * math.cos(pitch)
         z = math.sin(pitch)
-        return Vector3(x, y, z)
+        return vec3(x, y, z)
 
     def get_max_hp(self):
         hp = self.get_base_hp()
@@ -141,6 +139,7 @@ class StaticEntity:
     open_time = None
 
     def __init__(self, entity_id, header, chunk):
+        header = header.cast(StaticEntityHeader)
         self.header = header
         self.world = chunk.world
 
@@ -180,6 +179,65 @@ class StaticEntity:
         self.header.time_offset = int(self.get_time_offset() * 1e3)
 
 
+class Region:
+    def __init__(self, owner):
+        self.owner = owner
+        self.chunks = set()
+        tgen.add_region(owner)
+
+    def add(self, data):
+        self.chunks.add(data)
+
+    def remove(self, data):
+        tgen.remove_zone(data)
+        self.chunks.remove(data)
+        if not self.chunks:
+            print('destroy owner:', data.x, data.y)
+            tgen.remove_region(self.owner)
+            self.owner.destroy()
+            self.owner = None
+        elif data is not self.owner:
+            print('destroy:', data.x, data.y)
+            data.destroy()
+
+def spawn_to_entity(spawn, entity):
+    entity.reset()
+    entity.pos = spawn.pos
+    entity.spawn_pos = spawn.pos
+    entity.hostile_type = spawn.hostile_type
+    entity.entity_type = spawn.entity_type
+    entity.class_type = spawn.class_type
+    entity.specialization = spawn.specialization
+    entity.level = spawn.level
+
+    if spawn.flags_bit_3:
+        entity.flags |= 1 << 3
+    else:
+        entity.flags &= ~(1 << 3)
+
+    entity.body_yaw = spawn.yaw
+    entity.power_base = spawn.power_base
+    entity.not_used19 = spawn.not_used19
+    entity.not_used20 = spawn.not_used20
+
+    entity.appearance = spawn.appearance
+    entity.equipment = spawn.equipment
+    entity.max_hp_multiplier = spawn.max_hp_multiplier
+    entity.shoot_speed = spawn.shoot_speed
+    entity.damage_multiplier = spawn.damage_multiplier
+    entity.armor_multiplier = spawn.armor_multiplier
+    entity.resi_multiplier = spawn.resi_multiplier
+    entity.unknown_or_not_used4
+
+    entity.name = spawn.name
+
+    if spawn.appearance.flags & 0x200:
+        entity.appearance.scale *= 2.0
+
+    off_z = entity.appearance.scale.z * 0.5 + 0.1
+    entity.pos.z += off_z * constants.BLOCK_SCALE
+
+
 class Chunk:
     data = None
 
@@ -201,8 +259,17 @@ class Chunk:
     def on_chunk(self, f):
         self.data = f.result()
 
+        region = (self.data.x // 64, self.data.y // 64)
+        if region in self.world.regions:
+            print('found region:', region)
+            self.region = self.world.regions[region]
+        else:
+            print('new region:', region)
+            self.region = Region(self.data)
+            self.world.regions[region] = self.region
+        self.region.add(self.data)
+
         self.items.extend(self.data.items)
-        self.data.items = []
 
         for entity_id, data in enumerate(self.data.static_entities):
             header = data.header
@@ -211,13 +278,16 @@ class Chunk:
             self.static_entities[entity_id] = new_entity
 
         if self.world.use_entities:
-            for data in self.data.dynamic_entities:
-                if data.hostile_type == constants.HOSTILE_TYPE:
-                    continue
-                entity = self.world.create_entity(data.entity_id)
-                data.set_entity(entity)
-                entity.reset()
-                self.entities.append(entity)
+            print('add zone:', self.data.x, self.data.y)
+            tgen.add_zone(self.data)
+            print('done')
+        #     for data in self.data.spawns:
+        #         if data.hostile_type == constants.HOSTILE_TYPE:
+        #             continue
+        #         entity = self.world.create_entity(data.entity_id)
+        #         data.set_entity(entity)
+        #         entity.reset()
+        #         self.entities.append(entity)
 
         self.update()
 
@@ -245,7 +315,11 @@ class Chunk:
         for entity in self.entities:
             entity.destroy()
         self.entities = []
+        self.region.remove(self.data)
+        self.items = None
+        self.region = None
         self.data = None
+        self.static_entities = None
         del self.world.chunks[self.pos]
 
 class World:
@@ -253,6 +327,7 @@ class World:
     chunk_class = Chunk
     static_entity_class = StaticEntity
     entity_class = Entity
+    tgen_init = False
 
     def __init__(self, loop, seed, use_tgen=True, use_entities=True):
         if use_tgen:
@@ -267,6 +342,7 @@ class World:
         self.use_tgen = use_tgen
         self.use_entities = use_entities
         self.chunks = {}
+        self.regions = {}
         self.entities = {}
         self.entity_ids = IDPool(1)
 
@@ -277,18 +353,44 @@ class World:
         loop.run_in_executor(None, self.run_gen, seed)
 
     def create_entity(self, entity_id=None):
-        return self.entity_class(self, entity_id)
+        if entity_id is None:
+            entity_id = self.entity_ids.pop()
+            static_id = False
+        else:
+            static_id = True
+        creature = tgen.add_creature(entity_id)
+        ret = creature.entity_data.cast(self.entity_class)
+        ret.init(self, creature, entity_id, static_id)
+        return ret
 
     def update(self, dt):
-        self.dt = dt
-        return
-        # XXX
-        if not self.use_entities:
+        if not self.tgen_init:
             return
-        for entity in self.entities.values():
-            if entity.hostile_type != constants.HOSTILE_TYPE:
+        self.dt = dt
+        tgen.step(int(dt * 1000.0))
+        creatures = tgen.get_creatures()
+        for entity_id, creature in creatures.items():
+            if entity_id in self.entities:
                 continue
-            entity.update()
+            ret = creature.entity_data.cast(self.entity_class)
+            ret.init(self, creature, entity_id, True, True)
+
+        deleted = []
+        for entity_id, entity in self.entities.items():
+            if entity_id in creatures:
+                continue
+            if not entity.is_tgen:
+                continue
+            deleted.append(entity)
+
+        for entity in deleted:
+            entity.destroy()
+
+        for entity in self.entities.values():
+            if not entity.is_tgen:
+                continue
+            entity.mask = constants.FULL_MASK
+            # print(entity.pos)
 
     def stop(self):
         self.gen_queue.put(None)
@@ -304,6 +406,7 @@ class World:
 
     def get_data(self, pos):
         f = asyncio.Future()
+        print('get data:', pos)
         self.gen_queue.put((pos, f), False)
         return f
 
@@ -321,10 +424,13 @@ class World:
 
     def run_gen(self, seed):
         tgen.initialize(seed, self.data_path)
+        self.tgen_init = True
         while True:
             data = self.gen_queue.get()
             if data is None:
                 break
             pos, f = data
+            print('generate:', pos)
             res = tgen.generate(*pos)
+            print('done')
             self.loop.call_soon_threadsafe(f.set_result, res)

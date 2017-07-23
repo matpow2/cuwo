@@ -39,12 +39,41 @@ inline uint32_t call_x86_cdecl_0(void * p)
     return ret;
 }
 
+inline uint32_t call_x86_thiscall_1(void * p, uint32_t ecx)
+{
+    uint32_t (TGEN_THISCALL *fp)(uint32_t) =
+        (uint32_t (TGEN_THISCALL *)(uint32_t))p;
+    uint32_t ret = fp(ecx);
+    return ret;
+}
+
+inline uint32_t call_x86_thiscall_2(void * p, uint32_t ecx,
+                                    uint32_t arg1)
+{
+    uint32_t (TGEN_THISCALL *fp)(uint32_t, uint32_t, uint32_t) =
+        (uint32_t (TGEN_THISCALL *)(uint32_t, uint32_t, uint32_t))p;
+    uint32_t ret = fp(ecx, 0, arg1);
+    return ret;
+}
+
 inline uint32_t call_x86_thiscall_3(void * p, uint32_t ecx,
                                     uint32_t arg1, uint32_t arg2)
 {
     uint32_t (TGEN_THISCALL *fp)(uint32_t, uint32_t, uint32_t, uint32_t) =
         (uint32_t (TGEN_THISCALL *)(uint32_t, uint32_t, uint32_t, uint32_t))p;
     uint32_t ret = fp(ecx, 0, arg1, arg2);
+    return ret;
+}
+
+inline uint32_t call_x86_thiscall_4(void * p, uint32_t ecx,
+                                    uint32_t arg1, uint32_t arg2,
+                                    uint32_t arg3)
+{
+    uint32_t (TGEN_THISCALL *fp)(uint32_t, uint32_t, uint32_t, uint32_t,
+                                 uint32_t) =
+        (uint32_t (TGEN_THISCALL *)(uint32_t, uint32_t, uint32_t, uint32_t,
+                                    uint32_t))p;
+    uint32_t ret = fp(ecx, 0, arg1, arg2, arg3);
     return ret;
 }
 #endif

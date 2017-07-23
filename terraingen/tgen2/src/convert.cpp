@@ -11,6 +11,7 @@
 #include "call.h"
 #include <vector>
 #include <string.h>
+#include "tgen.h"
 
 using namespace peparse;
 
@@ -346,6 +347,10 @@ static void do_patches()
 
 static void init_static()
 {
+#ifndef NDEBUG
+    std::cout << "init static\n";
+#endif
+
     unsigned int i = 0;
     for (VA p = STATIC_START; p < STATIC_END; p += 4, ++i) {
 #ifndef NDEBUG
@@ -358,9 +363,31 @@ static void init_static()
         void * fp = (void*)get_mem(dw);
         call_x86_cdecl_0(fp);
     }
+
+#ifndef NDEBUG
+    std::cout << "init static done\n";
+#endif
 }
 
 extern const char * translate_path(char * v);
+
+extern Heap main_heap;
+extern Heap sim_heap;
+
+static void do_heap_init(Heap * heap)
+{
+    set_heap(heap);
+
+#ifndef NDEBUG
+    std::cout << "do entry point\n";
+#endif
+
+    call_x86_cdecl_0(get_entry_point());
+
+#ifndef NDEBUG
+    std::cout << "done\n";
+#endif
+}
 
 void real_main()
 {
@@ -381,24 +408,16 @@ void real_main()
 
     do_patches();
 
-#ifndef NDEBUG
-    std::cout << "init static\n";
-#endif
-
+    create_heap(&main_heap, MAIN_HEAP_SIZE);
+    set_heap(&main_heap);
     init_static();
 
-#ifndef NDEBUG
-    std::cout << "do entry point\n";
-#endif
+    do_heap_init(&main_heap);
+    save_heap(&main_heap);
 
-    call_x86_cdecl_0(get_entry_point());
-
-#ifndef NDEBUG
-    std::cout << "done\n";
-#endif
+    create_heap(&sim_heap, SIM_HEAP_SIZE);
+    do_heap_init(&sim_heap);
 }
-
-extern SavedHeap saved_heap;
 
 void tgen_init()
 {
@@ -410,7 +429,6 @@ void tgen_init()
 #endif
     run_with_stack(real_main);
     initialized = true;
-    save_heap(&saved_heap);
 }
 
 int main(int argc, char * argv[])
@@ -421,7 +439,15 @@ int main(int argc, char * argv[])
     std::cout << "init" << '\n';
     tgen_init();
     std::cout << "generate" << '\n';
-    void * tgen_generate_chunk(uint32_t x, uint32_t y);
-    void * chunk = tgen_generate_chunk(32803, 32803);
+    Heap * h = tgen_generate_chunk(32802, 32803);
+    char * r = tgen_get_region(tgen_get_manager(), 32803 / 64, 32803 / 64);
+    Zone * z = tgen_get_zone(r, 32803, 32803);
     std::cout << "done" << '\n';
+
+    // sim_add_region(r, 32803 / 64, 32803 / 64);
+    // sim_add_zone(z, 32803, 32803);
+
+    while (1) {
+        sim_step(20);
+    }
 }

@@ -17,6 +17,7 @@
 
 import sys
 import os
+import numpy
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
@@ -56,22 +57,28 @@ from cuwo.download import download_dependencies
 
 macros = []
 compile_args = []
+link_args = []
 ext_modules = []
 
 names = [
     'cuwo.bytes',
-    'cuwo.entity'
+    'cuwo.entity',
+    'cuwo.tgen_wrap'
 ]
 
 includes = ['./cuwo',
             './terraingen/tgen2/src',
-            './terraingen/tgen2/external']
+            './terraingen/tgen2/external',
+            numpy.get_include()]
 
 
 if os.name == 'nt':
     macros += [('_CRT_SECURE_NO_WARNINGS', None),
                ('WIN32', 1)]
+    # compile_args.append('/std:c++11')
     compile_args.append('/std:c++11')
+    compile_args.append('-Zi')
+    link_args.append('-debug')
 else:
     compile_args.append('-std=c++11')
     compile_args.append('-fpermissive')
@@ -101,6 +108,7 @@ for name in names:
     ext_modules.append(Extension(name, ['./%s.pyx' % name.replace('.', '/')],
                                  language='c++', include_dirs=includes,
                                  extra_compile_args=compile_args,
+                                 extra_link_args=link_args,
                                  define_macros=macros))
 
 # class build_ext(_build_ext.build_ext):

@@ -29,22 +29,48 @@ from cuwo.strings import ENTITY_NAMES
 from cuwo.constants import BLOCK_SCALE
 from cuwo.vector import Vector3
 
-from libc.stdint cimport uintptr_t, uint32_t, uint8_t, uint64_t, int64_t, int32_t
+from libc.stdint cimport (uintptr_t, uint32_t, uint8_t, uint64_t, int64_t,
+                          int32_t)
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
 from libcpp.string cimport string
 
+from cuwo.tgen_wrap cimport (Zone, WrapZone, Color, Field, Creature,
+                             WrapCreature)
+
 cdef extern from "tgen.h" nogil:
+    struct Heap:
+        void * first_alloc
+
+    struct CZone "Zone":
+        pass
+
+    struct CCreature "Creature":
+        pass
+
     void tgen_init()
     void tgen_set_path(const char * dir)
     void tgen_set_seed(uint32_t seed)
-    void * tgen_generate_chunk(uint32_t, uint32_t)
+    Heap * tgen_generate_chunk(uint32_t, uint32_t)
+    void tgen_destroy_chunk(Heap * v)
+    void tgen_simulate()
     void tgen_dump_mem(const char * filename)
     void * tgen_get_heap_base()
     # uint32_t tgen_generate_debug_chunk(const char *, uint32_t, uint32_t)
     void * tgen_get_manager()
     void tgen_read_str(void * addr, string&)
     void tgen_read_wstr(void * addr, string&)
+
+    void sim_add_zone(CZone * z, uint32_t x, uint32_t y)
+    void sim_remove_zone(uint32_t x, uint32_t y)
+    void sim_add_region(char * r, uint32_t x, uint32_t y)
+    void sim_remove_region(uint32_t x, uint32_t y)
+    void sim_step(uint32_t dt)
+    void sim_remove_creature(CCreature * c)
+    CCreature * sim_add_creature(uint64_t id)
+
+cdef extern from "tgen.h":
+    void sim_get_creatures(void (*f)(CCreature*))
 
 from libcpp.vector cimport vector
 
@@ -126,7 +152,7 @@ def initialize(seed, path):
 def generate(x, y):
     if not validate_chunk_pos(x, y):
         return None
-    return Chunk(x, y)
+    return ZoneData(x, y)
 
 
 # def generate_debug(filename, x, y):
@@ -250,39 +276,39 @@ def get_ability_names():
                        get_single_key_item)
 
 
-cdef int get_block_type(ChunkEntry * block) nogil:
+cdef int get_block_type(Color * block) nogil:
     return block.a & 0x1F
 
-cdef bint get_block_breakable(ChunkEntry * block) nogil:
+cdef bint get_block_breakable(Color * block) nogil:
     return (block.a & 0x20) != 0
 
-cdef tuple get_block_tuple(ChunkEntry * block):
+cdef tuple get_block_tuple(Color * block):
     return (block.r, block.g, block.b)
 
 
-cdef class XYProxy:
-    cdef ChunkXY * data
+# cdef class XYProxy:
+#     cdef ChunkXY * data
 
-    property a:
-        def __get__(self):
-            return self.data.a
+#     property a:
+#         def __get__(self):
+#             return self.data.a
 
-    property b:
-        def __get__(self):
-            return self.data.b
+#     property b:
+#         def __get__(self):
+#             return self.data.b
 
-    def __len__(self):
-        return self.data.size
+#     def __len__(self):
+#         return self.data.size
 
-    def __getitem__(self, int index):
-        cdef ChunkEntry * data = &self.data.items[index]
-        return get_block_tuple(data)
+#     def __getitem__(self, int index):
+#         cdef ChunkEntry * data = &self.data.items[index]
+#         return get_block_tuple(data)
 
-    cpdef int get_type(self, int index):
-        return get_block_type(&self.data.items[index])
+#     cpdef int get_type(self, int index):
+#         return get_block_type(&self.data.items[index])
 
-    cpdef bint get_breakable(self, int index):
-        return get_block_breakable(&self.data.items[index])
+#     cpdef bint get_breakable(self, int index):
+#         return get_block_breakable(&self.data.items[index])
 
 
 cdef struct Vertex:
@@ -299,11 +325,11 @@ cdef class RenderBuffer:
     cdef vector[Quad] data
     cdef float off_x, off_y
 
-    def __init__(self, Chunk proxy, float off_x, float off_y):
+    def __init__(self, ZoneData zone, float off_x, float off_y):
         self.off_x = off_x
         self.off_y = off_y
         with nogil:
-            self.fill(proxy)
+            self.fill(zone)
 
     def get_data(self):
         cdef char * v = <char*>(&self.data[0])
@@ -313,27 +339,27 @@ cdef class RenderBuffer:
         cdef uintptr_t v = <uintptr_t>(&self.data[0])
         return (v, self.data.size())
 
-    cdef void fill(self, Chunk proxy) nogil:
+    cdef void fill(self, ZoneData proxy) nogil:
         cdef int x, y, i, n, z
-        cdef ChunkXY * xy
-        cdef ChunkEntry * block
+        cdef Field * xy
+        cdef Color * block
         for i in range(256*256):
             x = i % 256
             y = i / 256
-            xy = &proxy.data.items[i]
+            xy = &(<Field*>proxy.data[0].fields)[i]
             for z in range(min(xy.b, 0), <int>(xy.a + xy.size)):
                 if proxy.get_neighbor_solid_c(x, y, z):
                     continue
                 if z < xy.a:
-                    self.add_block(proxy, x, y, z, &xy.items[0])
+                    self.add_block(proxy, x, y, z, &(<Color*>xy.data)[0])
                     continue
-                block = &xy.items[z - xy.a]
+                block = &(<Color*>xy.data)[z - xy.a]
                 if get_block_type(block) == EMPTY_TYPE:
                     continue
                 self.add_block(proxy, x, y, z, block)
 
-    cdef void add_block(self, Chunk proxy, int x, int y, int z,
-                        ChunkEntry * block) nogil:
+    cdef void add_block(self, ZoneData proxy, int x, int y, int z,
+                        Color * block) nogil:
         cdef Quad q
 
         q.v1.r = q.v2.r = q.v3.r = q.v4.r = block.r
@@ -419,293 +445,249 @@ cdef class RenderBuffer:
             self.data.push_back(q)
 
 
-cdef struct ChunkEntry:
-    unsigned char r, g, b, a
 
-cdef struct ChunkXY:
-    # cube::Field
+# cdef class ItemWithHeaderList:
+#     cdef public:
+#         list items
 
-    int a, b  # b is not actually used
-    unsigned int size
-    ChunkEntry * items
+#     def __cinit__(self, char * addr):
+#         cdef char * vec_start = <char*>read_dword(addr)
+#         cdef char * vec_end = <char*>read_dword(addr+4)
+#         cdef uint32_t vec_capacity = read_dword(addr+8)
 
-cdef struct ChunkData:
-    ChunkXY items[256*256]
-
-
-cdef class ItemWithHeaderList:
-    cdef public:
-        list items
-
-    def __cinit__(self, char * addr):
-        cdef char * vec_start = <char*>read_dword(addr)
-        cdef char * vec_end = <char*>read_dword(addr+4)
-        cdef uint32_t vec_capacity = read_dword(addr+8)
-
-        cdef ByteReader reader = create_reader(vec_start,
-                                               vec_end - vec_start)
-        self.items = []
-        cdef uint32_t header
-        cdef object item
-        for _ in range((vec_end - vec_start) // 4):
-            header = reader.read_uint32()
-            item = ItemData()
-            item.read(reader)
-            self.items.append((header, item))
+#         cdef ByteReader reader = create_reader(vec_start,
+#                                                vec_end - vec_start)
+#         self.items = []
+#         cdef uint32_t header
+#         cdef object item
+#         for _ in range((vec_end - vec_start) // 4):
+#             header = reader.read_uint32()
+#             item = ItemData()
+#             item.read(reader)
+#             self.items.append((header, item))
 
 
-cdef list read_item_with_header_lists(char * start, char * end):
-    cdef list items = []
-    cdef char * vec_item
-    for _ in range((end - start) // 4):
-        vec_item = <char*>read_dword(start)
-        items.append(ItemWithHeaderList(vec_item))
-        start += 4
-    return items
+# cdef list read_item_with_header_lists(char * start, char * end):
+#     cdef list items = []
+#     cdef char * vec_item
+#     for _ in range((end - start) // 4):
+#         vec_item = <char*>read_dword(start)
+#         items.append(ItemWithHeaderList(vec_item))
+#         start += 4
+#     return items
 
 
-cdef class StaticEntity:
-    cdef public:
-        object header
-        list items
-        object item
+# cdef class StaticEntity:
+#     cdef public:
+#         object header
+#         list items
+#         object item
 
-    def __cinit__(self, ByteReader reader):
-        self.header = StaticEntityHeader()
-        self.header.read(reader)
-        cdef uint32_t vec_start = reader.read_uint32()
-        cdef uint32_t vec_end = reader.read_uint32()
-        cdef uint32_t vec_capacity = reader.read_uint32()
-        cdef uint32_t something1 = reader.read_uint32()
-        self.item = ItemData()
-        self.item.read(reader)
-        cdef uint32_t something2 = reader.read_uint32()
-        cdef uint32_t something3 = reader.read_uint32()
-        cdef uint32_t something4 = reader.read_uint32()
-        cdef uint32_t something5 = reader.read_uint32()
-        cdef uint32_t something6 = reader.read_uint32()
-        cdef uint32_t something7 = reader.read_uint32()
+#     def __cinit__(self, ByteReader reader):
+#         self.header = StaticEntityHeader()
+#         self.header.read(reader)
+#         cdef uint32_t vec_start = reader.read_uint32()
+#         cdef uint32_t vec_end = reader.read_uint32()
+#         cdef uint32_t vec_capacity = reader.read_uint32()
+#         cdef uint32_t something1 = reader.read_uint32()
+#         self.item = ItemData()
+#         self.item.read(reader)
+#         cdef uint32_t something2 = reader.read_uint32()
+#         cdef uint32_t something3 = reader.read_uint32()
+#         cdef uint32_t something4 = reader.read_uint32()
+#         cdef uint32_t something5 = reader.read_uint32()
+#         cdef uint32_t something6 = reader.read_uint32()
+#         cdef uint32_t something7 = reader.read_uint32()
 
-        ## disabled for now
-        # self.items = read_item_with_header_lists(vec_start, vec_end)
-
-
-cdef class DynamicEntity:
-    # cube::Spawn
-
-    cdef public:
-        object pos
-        uint32_t hostile_type
-        uint32_t class_type
-        uint32_t specialization
-        uint32_t entity_type
-        int32_t level
-        uint64_t entity_id
-        uint32_t flags_bit_3
-        float yaw
-        uint32_t power_base
-        uint32_t not_used19
-        object not_used20
-        object appearance
-        list equipment
-        float max_hp_multiplier
-        float shoot_speed
-        float damage_multiplier
-        float armor_multiplier
-        float resi_multiplier
-        uint32_t unknown_or_not_used4
-        str name
-
-    def __cinit__(self, ByteReader reader):
-        reader.seek(16)
-        self.pos = reader.read_qvec3()
-        self.hostile_type = reader.read_uint8()
-        reader.skip(3)
-        self.entity_type = reader.read_uint32()
-        self.class_type = reader.read_uint8()
-        self.specialization = reader.read_uint8()
-        reader.skip(2)
-        self.level = reader.read_uint32()
-        reader.skip(4*4)
-        self.entity_id = reader.read_uint64()
-        self.flags_bit_3 = reader.read_uint8()
-        reader.skip(3)
-        self.yaw = reader.read_float()
-        self.power_base = reader.read_uint8()
-        reader.skip(3)
-        self.not_used19 = reader.read_uint8()
-        reader.skip(3)
-        self.not_used20 = reader.read_ivec3()
-        reader.skip(4*2)
-        self.appearance = AppearanceData()
-        self.appearance.read(reader)
-
-        self.equipment = []
-
-        cdef object item
-        for _ in range(13):
-            item = ItemData()
-            item.read(reader)
-            self.equipment.append(item)
-
-        reader.skip(304) # ItemWithExtra
-
-        reader.skip(11 * 4)
-        self.unknown_or_not_used4 = reader.read_uint32()
-        self.name = reader.read_ascii(16)
-        reader.skip(4*3 + 1 + 7)
-
-    def set_entity(self, object entity):
-        entity.pos = self.pos
-        entity.spawn_pos = self.pos.copy()
-        entity.hostile_type = self.hostile_type
-        entity.entity_type = self.entity_type
-        entity.class_type = self.class_type
-        entity.specialization = self.specialization
-        entity.level = self.level
-
-        if self.flags_bit_3:
-            entity.flags |= 1 << 3
-        else:
-            entity.flags &= ~(1 << 3)
-
-        entity.body_yaw = self.yaw
-        entity.power_base = self.power_base
-        entity.not_used19 = self.not_used19
-        entity.not_used20 = self.not_used20
-
-        entity.appearance = self.appearance
-        entity.equipment = self.equipment
-        entity.max_hp_multiplier = self.max_hp_multiplier
-        entity.shoot_speed = self.shoot_speed
-        entity.damage_multiplier = self.damage_multiplier
-        entity.armor_multiplier = self.armor_multiplier
-        entity.resi_multiplier = self.resi_multiplier
-        entity.unknown_or_not_used4
-
-        entity.name = self.name
-
-        if self.appearance.flags & 0x200:
-            entity.appearance.scale *= 2.0
-
-        cdef float off_z = entity.appearance.scale.z * 0.5 + 0.1
-        entity.pos.z += off_z * BLOCK_SCALE
-
-        # some default values
-        entity.consumable = ItemData()
-        entity.velocity = Vector3()
-        entity.accel = Vector3()
-        entity.extra_vel = Vector3()
-        entity.ray_hit = Vector3()
-        entity.start_chunk = Vector3()
-        entity.skills = [0] * 11
-
-    def get_type(self):
-        return ENTITY_NAMES[self.entity_type]
+#         ## disabled for now
+#         # self.items = read_item_with_header_lists(vec_start, vec_end)
 
 
-cdef class Chunk:
+# cdef class DynamicEntity:
+#     # cube::Spawn
+
+#     cdef public:
+#         object pos
+#         uint32_t hostile_type
+#         uint32_t class_type
+#         uint32_t specialization
+#         uint32_t entity_type
+#         int32_t level
+#         uint64_t entity_id
+#         uint32_t flags_bit_3
+#         float yaw
+#         uint32_t power_base
+#         uint32_t not_used19
+#         object not_used20
+#         object appearance
+#         list equipment
+#         float max_hp_multiplier
+#         float shoot_speed
+#         float damage_multiplier
+#         float armor_multiplier
+#         float resi_multiplier
+#         uint32_t unknown_or_not_used4
+#         str name
+
+#     def __cinit__(self, ByteReader reader):
+#         reader.seek(16)
+#         self.pos = reader.read_qvec3()
+#         self.hostile_type = reader.read_uint8()
+#         reader.skip(3)
+#         self.entity_type = reader.read_uint32()
+#         self.class_type = reader.read_uint8()
+#         self.specialization = reader.read_uint8()
+#         reader.skip(2)
+#         self.level = reader.read_uint32()
+#         reader.skip(4*4)
+#         self.entity_id = reader.read_uint64()
+#         self.flags_bit_3 = reader.read_uint8()
+#         reader.skip(3)
+#         self.yaw = reader.read_float()
+#         self.power_base = reader.read_uint8()
+#         reader.skip(3)
+#         self.not_used19 = reader.read_uint8()
+#         reader.skip(3)
+#         self.not_used20 = reader.read_ivec3()
+#         reader.skip(4*2)
+#         self.appearance = AppearanceData()
+#         self.appearance.read(reader)
+
+#         self.equipment = []
+
+#         cdef object item
+#         for _ in range(13):
+#             item = ItemData()
+#             item.read(reader)
+#             self.equipment.append(item)
+
+#         reader.skip(304) # ItemWithExtra
+
+#         reader.skip(11 * 4)
+#         self.unknown_or_not_used4 = reader.read_uint32()
+#         self.name = reader.read_ascii(16)
+#         reader.skip(4*3 + 1 + 7)
+
+#     def set_entity(self, object entity):
+#         entity.pos = self.pos
+#         entity.spawn_pos = self.pos.copy()
+#         entity.hostile_type = self.hostile_type
+#         entity.entity_type = self.entity_type
+#         entity.class_type = self.class_type
+#         entity.specialization = self.specialization
+#         entity.level = self.level
+
+#         if self.flags_bit_3:
+#             entity.flags |= 1 << 3
+#         else:
+#             entity.flags &= ~(1 << 3)
+
+#         entity.body_yaw = self.yaw
+#         entity.power_base = self.power_base
+#         entity.not_used19 = self.not_used19
+#         entity.not_used20 = self.not_used20
+
+#         entity.appearance = self.appearance
+#         entity.equipment = self.equipment
+#         entity.max_hp_multiplier = self.max_hp_multiplier
+#         entity.shoot_speed = self.shoot_speed
+#         entity.damage_multiplier = self.damage_multiplier
+#         entity.armor_multiplier = self.armor_multiplier
+#         entity.resi_multiplier = self.resi_multiplier
+#         entity.unknown_or_not_used4
+
+#         entity.name = self.name
+
+#         if self.appearance.flags & 0x200:
+#             entity.appearance.scale *= 2.0
+
+#         cdef float off_z = entity.appearance.scale.z * 0.5 + 0.1
+#         entity.pos.z += off_z * BLOCK_SCALE
+
+#         # some default values
+#         entity.consumable = ItemData()
+#         entity.velocity = Vector3()
+#         entity.accel = Vector3()
+#         entity.extra_vel = Vector3()
+#         entity.ray_hit = Vector3()
+#         entity.start_chunk = Vector3()
+#         entity.skills = [0] * 11
+
+#     def get_type(self):
+#         return ENTITY_NAMES[self.entity_type]
+
+cdef char * get_region(void * manager, uint32_t reg_x, uint32_t reg_y) nogil:
+    cdef char * p = <char*>manager + 188
+    cdef uint32_t v = (<uint32_t*>p)[reg_y + reg_x * 1024]
+    return <char*>v
+
+cdef Zone * get_zone(void * manager, uint32_t zone_x, uint32_t zone_y) nogil:
+    cdef uint32_t reg_x = zone_x / 64
+    cdef uint32_t reg_y = zone_y / 64
+    cdef char * reg = get_region(manager, reg_x, reg_y)
+    cdef char * p = <char*>reg + 65560
+    zone_x %= 64
+    zone_y %= 64
+    cdef uint32_t v = (<uint32_t*>p)[zone_y + zone_x * 64]
+    return <Zone*>v
+
+cdef class ZoneData(WrapZone):
     # chunk::Zone
 
-    cdef ChunkData data
+    cdef Heap * heap
+    cdef char * region
+
     cdef public:
-        list items
-        list static_entities
-        list dynamic_entities
         uint32_t x, y
 
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
-        cdef char * addr
         with nogil:
-            addr = <char*>tgen_generate_chunk(self.x, self.y)
-            self.read_chunk(addr)
+            self.heap = tgen_generate_chunk(self.x, self.y)
+            self.data = get_zone(tgen_get_manager(), self.x, self.y)
+            self.region = get_region(tgen_get_manager(),
+                                     self.x / 64, self.y / 64)
 
-        cdef ByteReader reader = create_reader(NULL, 0)
-        cdef uint32_t start, end
+        if self.data == NULL:
+            print('Invalid zone')
+        if self.region == NULL:
+            print('Invalid region')
 
-        # read dynamic entities
-        self.dynamic_entities = []
-        start = read_dword(addr + 24)
-        end = read_dword(addr + 28)
+    def get_region(self):
+        return <uint32_t>self.region
 
-        cdef DynamicEntity dynamic
-        cdef uint32_t new_addr
-        cdef uint32_t i
-        for i in range(0, end - start, 4):
-            new_addr = read_dword(<char*>start + i)
-            reader.init(<char*>new_addr, 4336)
-            dynamic = DynamicEntity.__new__(DynamicEntity, reader)
-            self.dynamic_entities.append(dynamic)
+    cdef _destroy(self):
+        if self.heap == NULL:
+            return
+        tgen_destroy_chunk(self.heap)
+        self.heap = NULL
+        self.data = NULL
+        self.region = NULL
 
-        # read static entities
-        self.static_entities = []
-        start = read_dword(addr + 12)
-        end = read_dword(addr + 16)
+    def destroy(self):
+        self._destroy()
 
-        reader.init(<char*>start, end - start)
-
-        cdef StaticEntity static
-        while reader.get_left() > 0:
-            static = StaticEntity.__new__(StaticEntity, reader)
-            self.static_entities.append(static)
-
-        # read chunk items
-        self.items = []
-
-        start = read_dword(addr + 48)
-        end = read_dword(addr + 52)
-
-        reader.init(<char*>start, end - start)
-        while reader.get_left() > 0:
-            item = ChunkItemData()
-            item.read(reader)
-            self.items.append(item)
-
-    cdef void read_chunk(self, char * addr) nogil:
-        cdef char * entry = <char*>read_dword(addr + 168)
-
-        cdef uint32_t data_size
-        cdef char * chunk_data
-        cdef char * out_data
-        cdef ChunkXY * c
-
-        for i in range(256*256):
-            c = &self.data.items[i]
-            # cdef uint32_t vtable = mem.read_dword(entry);
-            # cdef float something = to_ss(mem.read_dword(entry+4));
-            # cdef float something2 = to_ss(mem.read_dword(entry+8));
-            # cdef float something3 = to_ss(mem.read_dword(entry+12));
-            c.a = read_dword(entry+16)
-            c.b = read_dword(entry+20)
-            chunk_data = <char*>read_dword(entry+24)
-            data_size = read_dword(entry+28) # * 4, size
-            out_data = <char*>malloc(data_size*4)
-            memcpy(out_data, chunk_data, data_size*4)
-
-            # write it out
-            c.size = data_size
-            c.items = <ChunkEntry*>out_data
-            entry += 32
+    def __dealloc__(self):
+        self._destroy()
 
     cdef bint get_solid_c(self, int x, int y, int z) nogil:
         if x < 0 or x >= 256 or y < 0 or y >= 256:
             return False
-        cdef ChunkXY * data = self.get_xy(x, y)
+        cdef Field * data = self.get_xy(x, y)
         if z < data.a:
             return True
         z -= data.a
         if z >= <int>data.size:
             return False
-        return get_block_type(&data.items[z]) != EMPTY_TYPE
+        return get_block_type(&(<Color*>data.data)[z]) != EMPTY_TYPE
 
     def get_solid(self, x, y, z):
         return self.get_solid_c(x, y, z)
 
-    cdef ChunkXY * get_xy(self, int x, int y) nogil:
-        return &self.data.items[x + y * 256]
+    cdef Field * get_xy(self, int x, int y) nogil:
+        return &(<Field*>self.data.fields)[x + y * 256]
 
     cdef bint get_neighbor_solid_c(self, int x, int y, int z) nogil:
         return (self.get_solid_c(x - 1, y, z) and
@@ -722,19 +704,19 @@ cdef class Chunk:
         cdef dict blocks = {}
 
         cdef int x, y, i, n, z
-        cdef ChunkXY * xy
-        cdef ChunkEntry * block
+        cdef Field * xy
+        cdef Color * block
         for i in range(256*256):
             x = i % 256
             y = i / 256
-            xy = &self.data.items[i]
+            xy = &(<Field*>self.data.fields)[x + y * 256]
             for z in range(xy.b, <int>(xy.a + xy.size)):
                 if self.get_neighbor_solid_c(x, y, z):
                     continue
                 if z < xy.a:
-                    blocks[(x, y, z)] = get_block_tuple(&xy.items[0])
+                    blocks[(x, y, z)] = get_block_tuple(&(<Color*>xy.data)[0])
                     continue
-                block = &xy.items[z - xy.a]
+                block = &(<Color*>xy.data)[z - xy.a]
                 if get_block_type(block) == EMPTY_TYPE:
                     continue
                 blocks[(x, y, z)] = get_block_tuple(block)
@@ -744,14 +726,43 @@ cdef class Chunk:
         return RenderBuffer(self, off_x, off_y)
 
     def get_height(self, x, y):
-        cdef ChunkXY * data = self.get_xy(x, y)
+        cdef Field * data = self.get_xy(x, y)
         return (<int64_t>(data.a) + <int64_t>(data.size))
 
-    def __getitem__(self, index):
-        cdef XYProxy proxy = XYProxy()
-        proxy.data = &self.data.items[index]
-        return proxy
+def add_region(ZoneData zone):
+    sim_add_region(zone.region, zone.x / 64, zone.y / 64)
 
-    def __dealloc__(self):
-        for i in range(256*256):
-            free(self.data.items[i].items)
+def remove_region(ZoneData zone):
+    sim_remove_region(zone.x / 64, zone.y / 64)
+
+def add_zone(ZoneData zone):
+    sim_add_zone(<CZone*>zone.data, zone.x, zone.y)
+
+def remove_zone(ZoneData zone):
+    sim_remove_zone(zone.x, zone.y)
+
+def step(uint32_t dt):
+    sim_step(dt)
+
+def remove_creature(WrapCreature creature):
+    sim_remove_creature(<CCreature*>creature.data)
+    # bound to mess up some people, let's free on __dealloc__ in the future
+    creature.data = NULL
+
+def add_creature(uint64_t id):
+    cdef CCreature * c = sim_add_creature(id)
+    cdef WrapCreature wrap = WrapCreature.__new__(WrapCreature)
+    wrap.data = <Creature*>c
+    return wrap
+
+cdef dict creature_map = {}
+
+cdef void get_creature_map(CCreature * c):
+    cdef WrapCreature wrap = WrapCreature.__new__(WrapCreature)
+    wrap.data = <Creature*>c
+    creature_map[wrap.data[0].entity_id] = wrap
+
+def get_creatures():
+    creature_map.clear()
+    sim_get_creatures(get_creature_map)
+    return creature_map

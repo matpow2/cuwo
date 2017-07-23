@@ -264,4 +264,25 @@ double _libm_sse2_pow_precise_imp(double v, double v2)
     return pow(v, v2);
 }
 
+// import: _libm_sse2_exp_precise
+// vectorcall
+double _libm_sse2_exp_precise(double v)
+{
+    return exp(v);
+}
+
+// import: _libm_sse2_acos_precise
+// vectorcall
+double _libm_sse2_acos_precise(double v)
+{
+    return acos(v);
+}
+
+// import: _libm_sse2_asin_precise
+// vectorcall
+double _libm_sse2_asin_precise(double v)
+{
+    return asin(v);
+}
+
 #endif // TERRAINGEN_BASE_H

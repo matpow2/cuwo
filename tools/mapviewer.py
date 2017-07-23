@@ -18,7 +18,7 @@
 import sys
 sys.path.append('.')
 from cuwo import tgen
-from cuwo import euclid
+from cuwo.vector import Vector3, Quaternion
 import sdl2
 import sdl2.ext
 from OpenGL.GL import *
@@ -133,18 +133,16 @@ class Camera(object):
     z_rot = 244
 
     def __init__(self):
-        self.pos = euclid.Vector3(40.31, 158.36, 173.21)
+        self.pos = Vector3((40.31, 158.36, 173.21))
 
     def on_mouse(self, dx, dy):
         self.z_rot -= dx
         self.x_rot -= dy
 
     def get_rot(self):
-        rot = euclid.Quaternion()
-        rot.rotate_axis(math.radians(self.z_rot),
-                        euclid.Vector3(0.0, 0.0, 1.0))
-        rot.rotate_axis(math.radians(self.x_rot),
-                        euclid.Vector3(1.0, 0.0, 0.0))
+        rot = Quaternion()
+        rot *= Quaternion.from_z_rotation(math.radians(self.z_rot))
+        rot *= Quaternion.from_x_rotation(math.radians(self.x_rot))
         return rot
 
     def on_key(self, key, value):
@@ -161,7 +159,7 @@ class Camera(object):
         setattr(self, keys[key], value)
 
     def update(self, dt):
-        move = euclid.Vector3()
+        move = Vector3()
         if self.up:
             move.y = 1.0
         elif self.down:
@@ -179,8 +177,8 @@ class Camera(object):
 
     def set(self):
         rot = self.get_rot()
-        look_vec = rot * euclid.Vector3(0.0, 1.0, 0.0)
-        up_vec = rot * euclid.Vector3(0.0, 0.0, 1.0)
+        look_vec = rot * Vector3((0.0, 1.0, 0.0))
+        up_vec = rot * Vector3((0.0, 0.0, 1.0))
         look_vec += self.pos
         gluLookAt(self.pos.x, self.pos.y, self.pos.z,
                   look_vec.x, look_vec.y, look_vec.z,
@@ -459,7 +457,7 @@ class MapViewer(object):
         self.camera.update(dt)
 
     def set_lighting(self):
-        v1 = euclid.Vector3(0.3, -0.7, -0.6).normalized()
+        v1 = Vector3((0.3, -0.7, -0.6)).normalized
         light1_position = GLfloat_4(v1.x, v1.y, v1.z, 0.0)
         diffuse = 0.6
         light_diffuse = GLfloat_4(diffuse, diffuse, diffuse, 1.0)
@@ -470,7 +468,7 @@ class MapViewer(object):
         glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse)
         glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient)
         glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular)
-        v2 = euclid.Vector3(-0.3, 0.7, -0.6).normalized()
+        v2 = Vector3((-0.3, 0.7, -0.6)).normalized
         light2_position = GLfloat_4(v2.x, v2.y, v2.z, 0.0)
         glLightfv(GL_LIGHT1, GL_POSITION, light2_position)
         glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse)

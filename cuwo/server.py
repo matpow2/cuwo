@@ -26,7 +26,7 @@ from cuwo import entity as entitydata
 from cuwo import static
 from cuwo.loop import LoopingCall
 from cuwo import world
-from cuwo.vector import Vector3
+from cuwo.vector import vec3
 import faulthandler
 
 import os
@@ -66,7 +66,7 @@ class Entity(world.Entity):
         packet.stun_duration = stun_duration
         packet.something8 = 0
         packet.pos = self.pos
-        packet.hit_dir = Vector3()
+        packet.hit_dir = vec3()
         packet.skill_hit = 0
         packet.show_light = 0
         self.world.server.update_packet.player_hits.append(packet)

@@ -19,11 +19,10 @@
 High-level byte read/writing and pack/unpacking from files and data
 """
 
-from cuwo.vector import Vector3
 cimport cython
 from libc.limits cimport UINT_MAX
 from cuwo.common import filter_bytes
-from cuwo.vector import Vector3
+from cuwo.vector import vec3, qvec3, ivec3
 
 
 cdef extern from "bytes_c.cpp":
@@ -89,19 +88,19 @@ cdef class ByteReader:
         cdef double x = self.read_float()
         cdef double y = self.read_float()
         cdef double z = self.read_float()
-        return Vector3(x, y, z)
+        return vec3(x, y, z)
 
     cpdef object read_ivec3(self):
         cdef int x = self.read_int32()
         cdef int y = self.read_int32()
         cdef int z = self.read_int32()
-        return Vector3(x, y, z)
+        return ivec3(x, y, z)
 
     cpdef object read_qvec3(self):
         cdef int64_t x = self.read_int64()
         cdef int64_t y = self.read_int64()
         cdef int64_t z = self.read_int64()
-        return Vector3(x, y, z)
+        return qvec3(x, y, z)
 
     cpdef str read_ascii(self, unsigned int size):
         return filter_bytes(self.read_string(size))
