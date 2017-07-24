@@ -87,7 +87,7 @@ class ConsoleServer(ServerScript):
             return
         self.interface = ScriptInterface('Console', self.server, 'admin',
                                          'console')
-        self.task = asyncio.Task(self.run())
+        self.task = self.loop.create_task(self.run())
 
     @asyncio.coroutine
     def run(self):

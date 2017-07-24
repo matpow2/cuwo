@@ -515,7 +515,8 @@ class CubeWorldServer:
 
         # start listening
         self.loop.create_task(self.create_server(self.build_protocol,
-                                                 port=base.port))
+                                                 port=base.port,
+                                                 family=socket.AF_INET))
 
     def build_protocol(self):
         return CubeWorldConnection(self)
@@ -759,6 +760,8 @@ class CubeWorldServer:
 
     def create_datagram_endpoint(self, *arg, port=0, **kw):
         host = self.get_interface()
+        if host is None:
+            host = '0.0.0.0'
         addr = (host, port)
         return self.loop.create_datagram_endpoint(*arg, local_addr=addr, **kw)
 

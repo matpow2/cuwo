@@ -101,7 +101,7 @@ class MasterClient(MasterProtocol):
 
     def connection_made(self, transport):
         self.transport = transport
-        self.task = asyncio.Task(self.send_loop())
+        self.task = asyncio.get_event_loop().create_task(self.send_loop())
 
     @asyncio.coroutine
     def send_loop(self):
@@ -132,7 +132,7 @@ class MasterRelay(ServerScript):
     connection_class = None
 
     def on_load(self):
-        asyncio.Task(self.start())
+        self.loop.create_task(self.start())
 
     def on_unload(self):
         self.protocol.task.cancel()

@@ -114,8 +114,8 @@ class CTFServer(ServerScript):
 
     def on_load(self):
         self.config = self.server.config.ctf
-        self.round_task = asyncio.Task(self.run())
-        self.particle_task = asyncio.Task(self.run_particles())
+        self.round_task = self.loop.create_task(self.run())
+        self.particle_task = self.loop.create_task(self.run_particles())
         self.flags = []
         self.bases = []
 
