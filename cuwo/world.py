@@ -304,9 +304,6 @@ class Chunk:
 
     def destroy(self):
         self.gen_f.cancel()
-        for entity in self.entities:
-            entity.destroy()
-        self.entities = []
         if self.region is not None:
             self.region.remove(self.data)
         self.items = None
@@ -393,7 +390,8 @@ class World:
         for entity in deleted:
             entity.destroy()
 
-        return tgen.get_out_packets()
+        out_packets = tgen.get_out_packets()
+        return out_packets
 
     def stop(self):
         self.gen_queue.put(None)
