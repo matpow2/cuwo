@@ -42,8 +42,8 @@ max_connections_per_ip = 5
 # Connection timeout time in seconds
 connection_timeout = 10.0
 
-# Network interface to bind to. Defaults to all interfaces.
-network_interface = None
+# Network interface to bind to. Defaults to all IPv4 interfaces.
+network_interface = '0.0.0.0'
 
 # Server port. Do not change this unless you have a modified client!
 port = 12345

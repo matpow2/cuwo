@@ -760,8 +760,6 @@ class CubeWorldServer:
 
     def create_datagram_endpoint(self, *arg, port=0, **kw):
         host = self.get_interface()
-        if host is None:
-            host = '0.0.0.0'
         addr = (host, port)
         return self.loop.create_datagram_endpoint(*arg, local_addr=addr, **kw)
 
