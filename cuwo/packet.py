@@ -23,6 +23,7 @@
 
 from cuwo.tgen_wrap import (WrapEntityData as EntityData,
                             WrapItemData as ItemData,
+                            WrapPassivePacket,
                             WrapSoundAction,
                             WrapShootPacket,
                             WrapPickupAction as PickupAction,
@@ -543,7 +544,11 @@ class OldHitPacket(Packet):
         writer.pad(1)
 
 
-class PassivePacket(Packet):
+class PassivePacket(WrapPassivePacket):
+    packet_id = None
+
+
+class OldPassivePacket(Packet):
     def read(self, reader):
         self.entity_id = reader.read_uint64()
         self.target_id = reader.read_uint64()
