@@ -22,10 +22,36 @@ CYTHON_TYPES = {
 }
 
 VEC_TYPES = {
-    'vec3': ('float', 'np.float32_t'),
-    'ivec3': ('int32_t', 'np.int32_t'),
-    'qvec3': ('int64_t', 'np.int64_t')
+    'vec3': ('float', 'dtype_float32'),
+    'ivec3': ('int32_t', 'dtype_int32'),
+    'qvec3': ('int64_t', 'dtype_int64')
 }
+
+PYX_DEFS = '''
+cimport numpy as np
+import numpy as np
+from cython cimport view
+from libc.string cimport memset, memcpy, memcmp
+from cuwo.vector import Vector3
+from cuwo.common import filter_bytes
+from cuwo import strings
+from cuwo.bytes cimport ByteReader, ByteWriter
+from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
+from cpython.ref cimport PyTypeObject, Py_INCREF
+
+cdef extern from "numpy/arrayobject.h":
+    object PyArray_NewFromDescr(PyTypeObject * subtype, np.dtype descr,
+                                int nd, np.npy_intp* dims,
+                                np.npy_intp* strides, void* data, int flags,
+                                object obj)
+
+cdef np.dtype dtype_float32 = np.dtype(np.float32) 
+cdef np.dtype dtype_int32 = np.dtype(np.int32)
+cdef np.dtype dtype_int64 = np.dtype(np.int64)
+cdef np.npy_intp vec3_dim = 3
+
+np.import_array()
+'''
 
 DEFS = '''
 from libc.stdint cimport (uintptr_t, uint32_t, uint8_t, uint64_t, int64_t,
@@ -53,17 +79,9 @@ def get_new(klass):
 def main():
     pxd = FormattedOutput('tgen wrap')
     pyx = FormattedOutput('tgen wrap')
-    pyx.putln('cimport numpy as np')
-    pyx.putln('import numpy as np')
-    pyx.putln('from cython cimport view')
-    pyx.putln('from libc.string cimport memset, memcpy, memcmp')
-    pyx.putln('from cuwo.vector import Vector3')
-    pyx.putln('from cuwo.common import filter_bytes')
-    pyx.putln('from cuwo import strings')
-    pyx.putln('from cuwo.bytes cimport ByteReader, ByteWriter')
-    pyx.putln('from cpython.mem cimport PyMem_Malloc, '
-              'PyMem_Realloc, PyMem_Free')
-    # pyx.putln('from cuwo.tgen cimport tgen_alloc_mem, tgen_free_mem')
+
+    pyx.putln(PYX_DEFS)
+
     pyx.putln()
     pyx.putln()
     tgendef = FormattedOutput(None)
@@ -256,12 +274,16 @@ def main():
             elif attr.typ in VEC_TYPES and not attr.ptr:
                 typt, typ = VEC_TYPES[attr.typ]
                 pyx.putln(f'cdef {typt} * ptr = &{value}[0]')
-                pyx.putln(f'return np.asarray(<{typt}[:3]>ptr).view(Vector3)')
+                pyx.putln(f'Py_INCREF({typ})')
+                pyx.putln(f'cdef np.ndarray arr = '
+                          f'PyArray_NewFromDescr(<PyTypeObject *>Vector3, '
+                          f'{typ}, 1, '
+                          f'&vec3_dim, NULL, <void*>ptr, np.NPY_DEFAULT, '
+                          f'<object>NULL);')
+                pyx.putln(f'np.set_array_base(arr, self)')
+                pyx.putln('return arr')
 
                 setter.putln(f'{value} = value')
-                # setter.putln(f'cdef {typt}[:] v = <{typt}[:3]>value')
-                # for i in range(3):
-                    # setter.putln(f'{value}[{i}] = v[{i}]')
             elif not attr.is_local() and not attr.ptr:
                 ret_type = CYTHON_TYPES.get(attr.typ, attr.typ)
                 ret_type_p = ret_type

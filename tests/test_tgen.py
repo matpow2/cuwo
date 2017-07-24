@@ -45,8 +45,6 @@ class TerrainGeneratorTests(unittest.TestCase):
             source.append(entity)
 
         chunk = tgen.generate(32803, 32803)
-        # chunk = tgen.generate(32803, 32803)
-        # tgen.dump_mem('dump.bin')
 
         self.assertEqual(len(chunk.static_entities), len(source))
 
@@ -61,10 +59,6 @@ class TerrainGeneratorTests(unittest.TestCase):
             self.assertEqual(header1.time_offset, header2.time_offset)
             self.assertEqual(header1.something8, header2.something8)
             self.assertEqual(header1.user_id, header2.user_id)
-
-
-        for index, entity in enumerate(chunk.items):
-            print(entity)
 
         events = [
             ('generate', (1007, 4974)),
