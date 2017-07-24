@@ -32,6 +32,7 @@ ctypedef int32_t ivec3[3];
 cdef class WrapItemUpgrade:
     cdef void alloc(self)
     cdef ItemUpgrade * data
+    cdef object parent
     cdef void * storage
 cdef struct ItemUpgrade:
     int8_t x
@@ -43,6 +44,7 @@ cdef struct ItemUpgrade:
 cdef class WrapItemData:
     cdef void alloc(self)
     cdef ItemData * data
+    cdef object parent
     cdef void * storage
 cdef struct ItemData:
     uint8_t type
@@ -62,6 +64,7 @@ cdef struct ItemData:
 cdef class WrapAppearanceData:
     cdef void alloc(self)
     cdef AppearanceData * data
+    cdef object parent
     cdef void * storage
 cdef struct AppearanceData:
     uint8_t not_used_1
@@ -106,6 +109,7 @@ cdef struct AppearanceData:
 cdef class WrapEntityData:
     cdef void alloc(self)
     cdef EntityData * data
+    cdef object parent
     cdef void * storage
 cdef struct EntityData:
     qvec3 pos
@@ -179,6 +183,7 @@ cdef struct EntityData:
 cdef class WrapItemWithHeader:
     cdef void alloc(self)
     cdef ItemWithHeader * data
+    cdef object parent
     cdef void * storage
 cdef struct ItemWithHeader:
     uint32_t header
@@ -187,6 +192,7 @@ cdef struct ItemWithHeader:
 cdef class WrapItemWithHeaderList:
     cdef void alloc(self)
     cdef ItemWithHeaderList * data
+    cdef object parent
     cdef void * storage
 cdef struct ItemWithHeaderList:
     uint32_t vec_start
@@ -196,6 +202,7 @@ cdef struct ItemWithHeaderList:
 cdef class WrapItemWithHeaderLists:
     cdef void alloc(self)
     cdef ItemWithHeaderLists * data
+    cdef object parent
     cdef void * storage
 cdef struct ItemWithHeaderLists:
     uint32_t vec_start
@@ -205,6 +212,7 @@ cdef struct ItemWithHeaderLists:
 cdef class WrapStaticEntityHeader:
     cdef void alloc(self)
     cdef StaticEntityHeader * data
+    cdef object parent
     cdef void * storage
 cdef struct StaticEntityHeader:
     uint32_t entity_type
@@ -222,6 +230,7 @@ cdef struct StaticEntityHeader:
 cdef class WrapStaticEntity:
     cdef void alloc(self)
     cdef StaticEntity * data
+    cdef object parent
     cdef void * storage
 cdef struct StaticEntity:
     StaticEntityHeader header
@@ -238,6 +247,7 @@ cdef struct StaticEntity:
 cdef class WrapItemWithExtra:
     cdef void alloc(self)
     cdef ItemWithExtra * data
+    cdef object parent
     cdef void * storage
 cdef struct ItemWithExtra:
     ItemWithHeaderLists lists
@@ -249,6 +259,7 @@ cdef struct ItemWithExtra:
 cdef class WrapSpawn:
     cdef void alloc(self)
     cdef Spawn * data
+    cdef object parent
     cdef void * storage
 cdef struct Spawn:
     uint32_t vtable
@@ -312,6 +323,7 @@ cdef struct Spawn:
 cdef class WrapCriticalSection:
     cdef void alloc(self)
     cdef CriticalSection * data
+    cdef object parent
     cdef void * storage
 cdef struct CriticalSection:
     uint32_t DebugInfo
@@ -324,6 +336,7 @@ cdef struct CriticalSection:
 cdef class WrapColor:
     cdef void alloc(self)
     cdef Color * data
+    cdef object parent
     cdef void * storage
 cdef struct Color:
     uint8_t r
@@ -334,6 +347,7 @@ cdef struct Color:
 cdef class WrapField:
     cdef void alloc(self)
     cdef Field * data
+    cdef object parent
     cdef void * storage
 cdef struct Field:
     uint32_t vtable
@@ -348,6 +362,7 @@ cdef struct Field:
 cdef class WrapChunkItemData:
     cdef void alloc(self)
     cdef ChunkItemData * data
+    cdef object parent
     cdef void * storage
 cdef struct ChunkItemData:
     ItemData item_data
@@ -363,6 +378,7 @@ cdef struct ChunkItemData:
 cdef class WrapZone:
     cdef void alloc(self)
     cdef Zone * data
+    cdef object parent
     cdef void * storage
 cdef struct Zone:
     int32_t vtable
@@ -418,6 +434,7 @@ cdef struct Zone:
 cdef class WrapSomethingCreature:
     cdef void alloc(self)
     cdef SomethingCreature * data
+    cdef object parent
     cdef void * storage
 cdef struct SomethingCreature:
     uint32_t dword0
@@ -493,6 +510,7 @@ cdef struct SomethingCreature:
 cdef class WrapCreature:
     cdef void alloc(self)
     cdef Creature * data
+    cdef object parent
     cdef void * storage
 cdef struct Creature:
     uint32_t vtable
@@ -618,6 +636,7 @@ cdef struct Creature:
 cdef class WrapHitPacket:
     cdef void alloc(self)
     cdef HitPacket * data
+    cdef object parent
     cdef void * storage
 cdef struct HitPacket:
     uint64_t entity_id
@@ -637,6 +656,7 @@ cdef struct HitPacket:
 cdef class WrapParticleData:
     cdef void alloc(self)
     cdef ParticleData * data
+    cdef object parent
     cdef void * storage
 cdef struct ParticleData:
     qvec3 pos
@@ -651,6 +671,7 @@ cdef struct ParticleData:
 cdef class WrapSoundAction:
     cdef void alloc(self)
     cdef SoundAction * data
+    cdef object parent
     cdef void * storage
 cdef struct SoundAction:
     vec3 pos
@@ -661,6 +682,7 @@ cdef struct SoundAction:
 cdef class WrapBlockAction:
     cdef void alloc(self)
     cdef BlockAction * data
+    cdef object parent
     cdef void * storage
 cdef struct BlockAction:
     ivec3 block_pos
@@ -673,6 +695,7 @@ cdef struct BlockAction:
 cdef class WrapShootPacket:
     cdef void alloc(self)
     cdef ShootPacket * data
+    cdef object parent
     cdef void * storage
 cdef struct ShootPacket:
     uint64_t entity_id
@@ -701,6 +724,7 @@ cdef struct ShootPacket:
 cdef class WrapPickupAction:
     cdef void alloc(self)
     cdef PickupAction * data
+    cdef object parent
     cdef void * storage
 cdef struct PickupAction:
     uint64_t entity_id
@@ -709,6 +733,7 @@ cdef struct PickupAction:
 cdef class WrapKillAction:
     cdef void alloc(self)
     cdef KillAction * data
+    cdef object parent
     cdef void * storage
 cdef struct KillAction:
     uint64_t entity_id
@@ -719,6 +744,7 @@ cdef struct KillAction:
 cdef class WrapDamageAction:
     cdef void alloc(self)
     cdef DamageAction * data
+    cdef object parent
     cdef void * storage
 cdef struct DamageAction:
     uint64_t target_id
@@ -729,6 +755,7 @@ cdef struct DamageAction:
 cdef class WrapPassivePacket:
     cdef void alloc(self)
     cdef PassivePacket * data
+    cdef object parent
     cdef void * storage
 cdef struct PassivePacket:
     uint64_t entity_id
@@ -743,6 +770,7 @@ cdef struct PassivePacket:
 cdef class WrapMissionData:
     cdef void alloc(self)
     cdef MissionData * data
+    cdef object parent
     cdef void * storage
 cdef struct MissionData:
     int32_t section_x
@@ -765,6 +793,7 @@ cdef struct MissionData:
 cdef class WrapHitPacketList:
     cdef void alloc(self)
     cdef HitPacketList * data
+    cdef object parent
     cdef void * storage
 cdef struct HitPacketList:
     uint32_t next
@@ -774,6 +803,7 @@ cdef struct HitPacketList:
 cdef class WrapParticleDataList:
     cdef void alloc(self)
     cdef ParticleDataList * data
+    cdef object parent
     cdef void * storage
 cdef struct ParticleDataList:
     uint32_t next
@@ -783,6 +813,7 @@ cdef struct ParticleDataList:
 cdef class WrapSoundActionList:
     cdef void alloc(self)
     cdef SoundActionList * data
+    cdef object parent
     cdef void * storage
 cdef struct SoundActionList:
     uint32_t next
@@ -792,6 +823,7 @@ cdef struct SoundActionList:
 cdef class WrapBlockActionList:
     cdef void alloc(self)
     cdef BlockActionList * data
+    cdef object parent
     cdef void * storage
 cdef struct BlockActionList:
     uint32_t next
@@ -801,6 +833,7 @@ cdef struct BlockActionList:
 cdef class WrapShootPacketList:
     cdef void alloc(self)
     cdef ShootPacketList * data
+    cdef object parent
     cdef void * storage
 cdef struct ShootPacketList:
     uint32_t next
@@ -810,6 +843,7 @@ cdef struct ShootPacketList:
 cdef class WrapChunkItemList:
     cdef void alloc(self)
     cdef ChunkItemList * data
+    cdef object parent
     cdef void * storage
 cdef struct ChunkItemList:
     uint32_t next
@@ -819,6 +853,7 @@ cdef struct ChunkItemList:
 cdef class WrapChunkItemsList:
     cdef void alloc(self)
     cdef ChunkItemsList * data
+    cdef object parent
     cdef void * storage
 cdef struct ChunkItemsList:
     uint32_t next
@@ -830,6 +865,7 @@ cdef struct ChunkItemsList:
 cdef class WrapStaticEntityList:
     cdef void alloc(self)
     cdef StaticEntityList * data
+    cdef object parent
     cdef void * storage
 cdef struct StaticEntityList:
     uint32_t next
@@ -839,6 +875,7 @@ cdef struct StaticEntityList:
 cdef class WrapItems8List_2:
     cdef void alloc(self)
     cdef Items8List_2 * data
+    cdef object parent
     cdef void * storage
 cdef struct Items8List_2:
     uint32_t next
@@ -848,6 +885,7 @@ cdef struct Items8List_2:
 cdef class WrapItems8List_1:
     cdef void alloc(self)
     cdef Items8List_1 * data
+    cdef object parent
     cdef void * storage
 cdef struct Items8List_1:
     uint32_t next
@@ -858,6 +896,7 @@ cdef struct Items8List_1:
 cdef class WrapPickupActionList:
     cdef void alloc(self)
     cdef PickupActionList * data
+    cdef object parent
     cdef void * storage
 cdef struct PickupActionList:
     uint32_t next
@@ -867,6 +906,7 @@ cdef struct PickupActionList:
 cdef class WrapKillActionList:
     cdef void alloc(self)
     cdef KillActionList * data
+    cdef object parent
     cdef void * storage
 cdef struct KillActionList:
     uint32_t next
@@ -876,6 +916,7 @@ cdef struct KillActionList:
 cdef class WrapDamageActionList:
     cdef void alloc(self)
     cdef DamageActionList * data
+    cdef object parent
     cdef void * storage
 cdef struct DamageActionList:
     uint32_t next
@@ -885,6 +926,7 @@ cdef struct DamageActionList:
 cdef class WrapPassivePacketList:
     cdef void alloc(self)
     cdef PassivePacketList * data
+    cdef object parent
     cdef void * storage
 cdef struct PassivePacketList:
     uint32_t next
@@ -894,6 +936,7 @@ cdef struct PassivePacketList:
 cdef class WrapMissionDataList:
     cdef void alloc(self)
     cdef MissionDataList * data
+    cdef object parent
     cdef void * storage
 cdef struct MissionDataList:
     uint32_t next
@@ -903,6 +946,7 @@ cdef struct MissionDataList:
 cdef class WrapPacketQueue:
     cdef void alloc(self)
     cdef PacketQueue * data
+    cdef object parent
     cdef void * storage
 cdef struct PacketQueue:
     uint32_t player_hits
@@ -934,53 +978,79 @@ cdef struct PacketQueue:
 
 cdef class WrapArray0:
     cdef ItemUpgrade * array
+    cdef object parent
 cdef class WrapArray1:
     cdef ItemData * array
+    cdef object parent
 cdef class WrapArray2:
     cdef int8_t * array
+    cdef object parent
 cdef class WrapArray3:
     cdef Color * array
+    cdef object parent
 cdef class WrapArray4:
     cdef Field * array
+    cdef object parent
 cdef class WrapArray5:
     cdef HitPacketList * array
+    cdef object parent
 cdef class WrapArray6:
     cdef ParticleDataList * array
+    cdef object parent
 cdef class WrapArray7:
     cdef SoundActionList * array
+    cdef object parent
 cdef class WrapArray8:
     cdef BlockActionList * array
+    cdef object parent
 cdef class WrapArray9:
     cdef ShootPacketList * array
+    cdef object parent
 cdef class WrapArray10:
     cdef ChunkItemList * array
+    cdef object parent
 cdef class WrapArray11:
     cdef ChunkItemsList * array
+    cdef object parent
 cdef class WrapArray12:
     cdef StaticEntityList * array
+    cdef object parent
 cdef class WrapArray13:
     cdef Items8List_2 * array
+    cdef object parent
 cdef class WrapArray14:
     cdef Items8List_1 * array
+    cdef object parent
 cdef class WrapArray15:
     cdef PickupActionList * array
+    cdef object parent
 cdef class WrapArray16:
     cdef KillActionList * array
+    cdef object parent
 cdef class WrapArray17:
     cdef DamageActionList * array
+    cdef object parent
 cdef class WrapArray18:
     cdef PassivePacketList * array
+    cdef object parent
 cdef class WrapArray19:
     cdef MissionDataList * array
+    cdef object parent
 cdef class WrapItemWithHeaderVec:
     cdef uint32_t * data
+    cdef object parent
 cdef class WrapItemWithHeaderListVec:
     cdef uint32_t * data
+    cdef object parent
 cdef class Wrapuint8Vec:
     cdef uint32_t * data
+    cdef object parent
 cdef class WrapStaticEntityVec:
     cdef uint32_t * data
+    cdef object parent
 cdef class WrapSpawnPtrVec:
     cdef uint32_t * data
+    cdef object parent
 cdef class WrapChunkItemDataVec:
     cdef uint32_t * data
+    cdef object parent

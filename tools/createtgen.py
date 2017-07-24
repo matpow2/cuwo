@@ -162,6 +162,7 @@ def main():
         pyx.dedent()
 
         pxd.putln(f'cdef {s_name} * data')
+        pxd.putln(f'cdef object parent')
         pxd.putln(f'cdef void * storage')
         pxd.dedent()
 
@@ -243,6 +244,7 @@ def main():
                 vec_gens[vec_type] = wrap_name
                 pyx.putln(f'cdef {wrap_name} ret = {get_new(wrap_name)}')
                 pyx.putln(f'ret.data = &{value}')
+                pyx.putln(f'ret.parent = self')
                 pyx.putln(f'return ret')
 
                 setter.putln(f'raise NotImplementedError()')
@@ -291,6 +293,7 @@ def main():
                     array_gens[k] = wrap_name
                 pyx.putln(f'cdef {wrap_name} ret = {get_new(wrap_name)}')
                 pyx.putln(f'ret.array = {value}')
+                pyx.putln(f'ret.parent = self')
                 pyx.putln(f'return ret')
                 # if attr.ptr:
                 #     setter.putln(f'cdef {wrap_name} v = value')
@@ -301,6 +304,7 @@ def main():
                 wrap_name = f'Wrap{attr.typ}'
                 pyx.putln(f'cdef {wrap_name} ret = {get_new(wrap_name)}')
                 pyx.putln(f'ret.data = &{value}')
+                pyx.putln(f'ret.parent = self')
                 pyx.putln(f'return ret')
                 setter.putln(f'cdef {wrap_name} v = value')
                 setter.putln(f'{value} = v.data[0]')
@@ -368,6 +372,7 @@ def main():
         pxd.putln(f'cdef class {name}:')
         pxd.indent()
         pxd.putln(f'cdef {c_typ} * array')
+        pxd.putln(f'cdef object parent')
         pxd.dedent()
 
         pyx.putln(f'def __getitem__(self, uint32_t index):')
@@ -403,6 +408,7 @@ def main():
         pxd.putln(f'cdef class {name}:')
         pxd.indent()
         pxd.putln(f'cdef uint32_t * data')
+        pxd.putln(f'cdef object parent')
         pxd.dedent()
 
         pyx.putln('def get_data(self): return (self.data[0], '

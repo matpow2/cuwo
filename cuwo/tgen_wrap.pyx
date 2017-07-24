@@ -172,6 +172,7 @@ cdef class WrapItemData:
     def items(self):
         cdef WrapArray0 ret = WrapArray0.__new__(WrapArray0)
         ret.array = &self.data[0].items[0]
+        ret.parent = self
         return ret
     @items.setter
     def items(self, value):
@@ -711,6 +712,7 @@ cdef class WrapEntityData:
     def appearance(self):
         cdef WrapAppearanceData ret = WrapAppearanceData.__new__(WrapAppearanceData)
         ret.data = &self.data[0].appearance
+        ret.parent = self
         return ret
     @appearance.setter
     def appearance(self, value):
@@ -958,6 +960,7 @@ cdef class WrapEntityData:
     def consumable(self):
         cdef WrapItemData ret = WrapItemData.__new__(WrapItemData)
         ret.data = &self.data[0].consumable
+        ret.parent = self
         return ret
     @consumable.setter
     def consumable(self, value):
@@ -967,6 +970,7 @@ cdef class WrapEntityData:
     def equipment(self):
         cdef WrapArray1 ret = WrapArray1.__new__(WrapArray1)
         ret.array = &self.data[0].equipment[0]
+        ret.parent = self
         return ret
     @equipment.setter
     def equipment(self, value):
@@ -1045,6 +1049,7 @@ cdef class WrapItemWithHeader:
     def data(self):
         cdef WrapItemData ret = WrapItemData.__new__(WrapItemData)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -1084,6 +1089,7 @@ cdef class WrapItemWithHeaderList:
     def vec(self):
         cdef WrapItemWithHeaderVec ret = WrapItemWithHeaderVec.__new__(WrapItemWithHeaderVec)
         ret.data = &self.data[0].vec_start
+        ret.parent = self
         return ret
     @vec.setter
     def vec(self, value):
@@ -1122,6 +1128,7 @@ cdef class WrapItemWithHeaderLists:
     def vec(self):
         cdef WrapItemWithHeaderListVec ret = WrapItemWithHeaderListVec.__new__(WrapItemWithHeaderListVec)
         ret.data = &self.data[0].vec_start
+        ret.parent = self
         return ret
     @vec.setter
     def vec(self, value):
@@ -1240,6 +1247,7 @@ cdef class WrapStaticEntity:
     def header(self):
         cdef WrapStaticEntityHeader ret = WrapStaticEntityHeader.__new__(WrapStaticEntityHeader)
         ret.data = &self.data[0].header
+        ret.parent = self
         return ret
     @header.setter
     def header(self, value):
@@ -1249,6 +1257,7 @@ cdef class WrapStaticEntity:
     def item_with_header_lists(self):
         cdef WrapItemWithHeaderLists ret = WrapItemWithHeaderLists.__new__(WrapItemWithHeaderLists)
         ret.data = &self.data[0].item_with_header_lists
+        ret.parent = self
         return ret
     @item_with_header_lists.setter
     def item_with_header_lists(self, value):
@@ -1264,6 +1273,7 @@ cdef class WrapStaticEntity:
     def item(self):
         cdef WrapItemData ret = WrapItemData.__new__(WrapItemData)
         ret.data = &self.data[0].item
+        ret.parent = self
         return ret
     @item.setter
     def item(self, value):
@@ -1339,6 +1349,7 @@ cdef class WrapItemWithExtra:
     def lists(self):
         cdef WrapItemWithHeaderLists ret = WrapItemWithHeaderLists.__new__(WrapItemWithHeaderLists)
         ret.data = &self.data[0].lists
+        ret.parent = self
         return ret
     @lists.setter
     def lists(self, value):
@@ -1354,6 +1365,7 @@ cdef class WrapItemWithExtra:
     def item(self):
         cdef WrapItemData ret = WrapItemData.__new__(WrapItemData)
         ret.data = &self.data[0].item
+        ret.parent = self
         return ret
     @item.setter
     def item(self, value):
@@ -1561,6 +1573,7 @@ cdef class WrapSpawn:
     def appearance(self):
         cdef WrapAppearanceData ret = WrapAppearanceData.__new__(WrapAppearanceData)
         ret.data = &self.data[0].appearance
+        ret.parent = self
         return ret
     @appearance.setter
     def appearance(self, value):
@@ -1570,6 +1583,7 @@ cdef class WrapSpawn:
     def items(self):
         cdef WrapArray1 ret = WrapArray1.__new__(WrapArray1)
         ret.array = &self.data[0].items[0]
+        ret.parent = self
         return ret
     @items.setter
     def items(self, value):
@@ -1608,6 +1622,7 @@ cdef class WrapSpawn:
     def extra_item(self):
         cdef WrapItemWithExtra ret = WrapItemWithExtra.__new__(WrapItemWithExtra)
         ret.data = &self.data[0].extra_item
+        ret.parent = self
         return ret
     @extra_item.setter
     def extra_item(self, value):
@@ -1623,6 +1638,7 @@ cdef class WrapSpawn:
     def some_vec(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
         ret.data = &self.data[0].some_vec_start
+        ret.parent = self
         return ret
     @some_vec.setter
     def some_vec(self, value):
@@ -1631,6 +1647,7 @@ cdef class WrapSpawn:
     def id_vec_1(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
         ret.data = &self.data[0].id_vec_1_start
+        ret.parent = self
         return ret
     @id_vec_1.setter
     def id_vec_1(self, value):
@@ -1645,6 +1662,7 @@ cdef class WrapSpawn:
     def id_vec_2(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
         ret.data = &self.data[0].id_vec_2_start
+        ret.parent = self
         return ret
     @id_vec_2.setter
     def id_vec_2(self, value):
@@ -1727,6 +1745,7 @@ cdef class WrapCriticalSection:
             return None
         cdef WrapArray2 ret = WrapArray2.__new__(WrapArray2)
         ret.array = &(<int8_t*>self.data[0].DebugInfo)[0]
+        ret.parent = self
         return ret
     @DebugInfo.setter
     def DebugInfo(self, value):
@@ -1887,6 +1906,7 @@ cdef class WrapField:
             return None
         cdef WrapArray3 ret = WrapArray3.__new__(WrapArray3)
         ret.array = &(<Color*>self.data[0].data)[0]
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -1931,6 +1951,7 @@ cdef class WrapChunkItemData:
     def item_data(self):
         cdef WrapItemData ret = WrapItemData.__new__(WrapItemData)
         ret.data = &self.data[0].item_data
+        ret.parent = self
         return ret
     @item_data.setter
     def item_data(self, value):
@@ -2031,6 +2052,7 @@ cdef class WrapZone:
     def static_entities(self):
         cdef WrapStaticEntityVec ret = WrapStaticEntityVec.__new__(WrapStaticEntityVec)
         ret.data = &self.data[0].static_entities_start
+        ret.parent = self
         return ret
     @static_entities.setter
     def static_entities(self, value):
@@ -2039,6 +2061,7 @@ cdef class WrapZone:
     def spawns(self):
         cdef WrapSpawnPtrVec ret = WrapSpawnPtrVec.__new__(WrapSpawnPtrVec)
         ret.data = &self.data[0].spawns_start
+        ret.parent = self
         return ret
     @spawns.setter
     def spawns(self, value):
@@ -2047,6 +2070,7 @@ cdef class WrapZone:
     def some4(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
         ret.data = &self.data[0].some4_start
+        ret.parent = self
         return ret
     @some4.setter
     def some4(self, value):
@@ -2055,6 +2079,7 @@ cdef class WrapZone:
     def items(self):
         cdef WrapChunkItemDataVec ret = WrapChunkItemDataVec.__new__(WrapChunkItemDataVec)
         ret.data = &self.data[0].items_start
+        ret.parent = self
         return ret
     @items.setter
     def items(self, value):
@@ -2063,6 +2088,7 @@ cdef class WrapZone:
     def some9(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
         ret.data = &self.data[0].some9_start
+        ret.parent = self
         return ret
     @some9.setter
     def some9(self, value):
@@ -2071,6 +2097,7 @@ cdef class WrapZone:
     def some8(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
         ret.data = &self.data[0].some8_start
+        ret.parent = self
         return ret
     @some8.setter
     def some8(self, value):
@@ -2079,6 +2106,7 @@ cdef class WrapZone:
     def some7(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
         ret.data = &self.data[0].some7_start
+        ret.parent = self
         return ret
     @some7.setter
     def some7(self, value):
@@ -2099,6 +2127,7 @@ cdef class WrapZone:
     def some2_20byte(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
         ret.data = &self.data[0].some2_20byte_start
+        ret.parent = self
         return ret
     @some2_20byte.setter
     def some2_20byte(self, value):
@@ -2149,6 +2178,7 @@ cdef class WrapZone:
     def some5(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
         ret.data = &self.data[0].some5_start
+        ret.parent = self
         return ret
     @some5.setter
     def some5(self, value):
@@ -2157,6 +2187,7 @@ cdef class WrapZone:
     def some6(self):
         cdef Wrapuint8Vec ret = Wrapuint8Vec.__new__(Wrapuint8Vec)
         ret.data = &self.data[0].some6_start
+        ret.parent = self
         return ret
     @some6.setter
     def some6(self, value):
@@ -2179,6 +2210,7 @@ cdef class WrapZone:
             return None
         cdef WrapArray4 ret = WrapArray4.__new__(WrapArray4)
         ret.array = &(<Field*>self.data[0].fields)[0]
+        ret.parent = self
         return ret
     @fields.setter
     def fields(self, value):
@@ -2193,6 +2225,7 @@ cdef class WrapZone:
     def crit_sec(self):
         cdef WrapCriticalSection ret = WrapCriticalSection.__new__(WrapCriticalSection)
         ret.data = &self.data[0].crit_sec
+        ret.parent = self
         return ret
     @crit_sec.setter
     def crit_sec(self, value):
@@ -2670,6 +2703,7 @@ cdef class WrapCreature:
     def entity_data(self):
         cdef WrapEntityData ret = WrapEntityData.__new__(WrapEntityData)
         ret.data = &self.data[0].entity_data
+        ret.parent = self
         return ret
     @entity_data.setter
     def entity_data(self, value):
@@ -2817,6 +2851,7 @@ cdef class WrapCreature:
     def item_with_extra(self):
         cdef WrapItemWithExtra ret = WrapItemWithExtra.__new__(WrapItemWithExtra)
         ret.data = &self.data[0].item_with_extra
+        ret.parent = self
         return ret
     @item_with_extra.setter
     def item_with_extra(self, value):
@@ -3252,6 +3287,7 @@ cdef class WrapCreature:
     def som_c(self):
         cdef WrapSomethingCreature ret = WrapSomethingCreature.__new__(WrapSomethingCreature)
         ret.data = &self.data[0].som_c
+        ret.parent = self
         return ret
     @som_c.setter
     def som_c(self, value):
@@ -3857,6 +3893,7 @@ cdef class WrapPickupAction:
     def item_data(self):
         cdef WrapItemData ret = WrapItemData.__new__(WrapItemData)
         ret.data = &self.data[0].item_data
+        ret.parent = self
         return ret
     @item_data.setter
     def item_data(self, value):
@@ -4186,6 +4223,7 @@ cdef class WrapHitPacketList:
             return None
         cdef WrapArray5 ret = WrapArray5.__new__(WrapArray5)
         ret.array = &(<HitPacketList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4196,6 +4234,7 @@ cdef class WrapHitPacketList:
             return None
         cdef WrapArray5 ret = WrapArray5.__new__(WrapArray5)
         ret.array = &(<HitPacketList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4204,6 +4243,7 @@ cdef class WrapHitPacketList:
     def data(self):
         cdef WrapHitPacket ret = WrapHitPacket.__new__(WrapHitPacket)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4245,6 +4285,7 @@ cdef class WrapParticleDataList:
             return None
         cdef WrapArray6 ret = WrapArray6.__new__(WrapArray6)
         ret.array = &(<ParticleDataList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4255,6 +4296,7 @@ cdef class WrapParticleDataList:
             return None
         cdef WrapArray6 ret = WrapArray6.__new__(WrapArray6)
         ret.array = &(<ParticleDataList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4263,6 +4305,7 @@ cdef class WrapParticleDataList:
     def data(self):
         cdef WrapParticleData ret = WrapParticleData.__new__(WrapParticleData)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4304,6 +4347,7 @@ cdef class WrapSoundActionList:
             return None
         cdef WrapArray7 ret = WrapArray7.__new__(WrapArray7)
         ret.array = &(<SoundActionList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4314,6 +4358,7 @@ cdef class WrapSoundActionList:
             return None
         cdef WrapArray7 ret = WrapArray7.__new__(WrapArray7)
         ret.array = &(<SoundActionList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4322,6 +4367,7 @@ cdef class WrapSoundActionList:
     def data(self):
         cdef WrapSoundAction ret = WrapSoundAction.__new__(WrapSoundAction)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4363,6 +4409,7 @@ cdef class WrapBlockActionList:
             return None
         cdef WrapArray8 ret = WrapArray8.__new__(WrapArray8)
         ret.array = &(<BlockActionList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4373,6 +4420,7 @@ cdef class WrapBlockActionList:
             return None
         cdef WrapArray8 ret = WrapArray8.__new__(WrapArray8)
         ret.array = &(<BlockActionList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4381,6 +4429,7 @@ cdef class WrapBlockActionList:
     def data(self):
         cdef WrapBlockAction ret = WrapBlockAction.__new__(WrapBlockAction)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4422,6 +4471,7 @@ cdef class WrapShootPacketList:
             return None
         cdef WrapArray9 ret = WrapArray9.__new__(WrapArray9)
         ret.array = &(<ShootPacketList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4432,6 +4482,7 @@ cdef class WrapShootPacketList:
             return None
         cdef WrapArray9 ret = WrapArray9.__new__(WrapArray9)
         ret.array = &(<ShootPacketList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4440,6 +4491,7 @@ cdef class WrapShootPacketList:
     def data(self):
         cdef WrapShootPacket ret = WrapShootPacket.__new__(WrapShootPacket)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4481,6 +4533,7 @@ cdef class WrapChunkItemList:
             return None
         cdef WrapArray10 ret = WrapArray10.__new__(WrapArray10)
         ret.array = &(<ChunkItemList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4491,6 +4544,7 @@ cdef class WrapChunkItemList:
             return None
         cdef WrapArray10 ret = WrapArray10.__new__(WrapArray10)
         ret.array = &(<ChunkItemList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4499,6 +4553,7 @@ cdef class WrapChunkItemList:
     def data(self):
         cdef WrapChunkItemData ret = WrapChunkItemData.__new__(WrapChunkItemData)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4540,6 +4595,7 @@ cdef class WrapChunkItemsList:
             return None
         cdef WrapArray11 ret = WrapArray11.__new__(WrapArray11)
         ret.array = &(<ChunkItemsList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4550,6 +4606,7 @@ cdef class WrapChunkItemsList:
             return None
         cdef WrapArray11 ret = WrapArray11.__new__(WrapArray11)
         ret.array = &(<ChunkItemsList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4570,6 +4627,7 @@ cdef class WrapChunkItemsList:
     def data(self):
         cdef WrapChunkItemList ret = WrapChunkItemList.__new__(WrapChunkItemList)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4611,6 +4669,7 @@ cdef class WrapStaticEntityList:
             return None
         cdef WrapArray12 ret = WrapArray12.__new__(WrapArray12)
         ret.array = &(<StaticEntityList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4621,6 +4680,7 @@ cdef class WrapStaticEntityList:
             return None
         cdef WrapArray12 ret = WrapArray12.__new__(WrapArray12)
         ret.array = &(<StaticEntityList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4629,6 +4689,7 @@ cdef class WrapStaticEntityList:
     def data(self):
         cdef WrapStaticEntityHeader ret = WrapStaticEntityHeader.__new__(WrapStaticEntityHeader)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4670,6 +4731,7 @@ cdef class WrapItems8List_2:
             return None
         cdef WrapArray13 ret = WrapArray13.__new__(WrapArray13)
         ret.array = &(<Items8List_2*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4680,6 +4742,7 @@ cdef class WrapItems8List_2:
             return None
         cdef WrapArray13 ret = WrapArray13.__new__(WrapArray13)
         ret.array = &(<Items8List_2*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4726,6 +4789,7 @@ cdef class WrapItems8List_1:
             return None
         cdef WrapArray14 ret = WrapArray14.__new__(WrapArray14)
         ret.array = &(<Items8List_1*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4736,6 +4800,7 @@ cdef class WrapItems8List_1:
             return None
         cdef WrapArray14 ret = WrapArray14.__new__(WrapArray14)
         ret.array = &(<Items8List_1*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4750,6 +4815,7 @@ cdef class WrapItems8List_1:
     def data(self):
         cdef WrapItems8List_2 ret = WrapItems8List_2.__new__(WrapItems8List_2)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4791,6 +4857,7 @@ cdef class WrapPickupActionList:
             return None
         cdef WrapArray15 ret = WrapArray15.__new__(WrapArray15)
         ret.array = &(<PickupActionList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4801,6 +4868,7 @@ cdef class WrapPickupActionList:
             return None
         cdef WrapArray15 ret = WrapArray15.__new__(WrapArray15)
         ret.array = &(<PickupActionList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4809,6 +4877,7 @@ cdef class WrapPickupActionList:
     def data(self):
         cdef WrapPickupAction ret = WrapPickupAction.__new__(WrapPickupAction)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4850,6 +4919,7 @@ cdef class WrapKillActionList:
             return None
         cdef WrapArray16 ret = WrapArray16.__new__(WrapArray16)
         ret.array = &(<KillActionList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4860,6 +4930,7 @@ cdef class WrapKillActionList:
             return None
         cdef WrapArray16 ret = WrapArray16.__new__(WrapArray16)
         ret.array = &(<KillActionList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4868,6 +4939,7 @@ cdef class WrapKillActionList:
     def data(self):
         cdef WrapKillAction ret = WrapKillAction.__new__(WrapKillAction)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4909,6 +4981,7 @@ cdef class WrapDamageActionList:
             return None
         cdef WrapArray17 ret = WrapArray17.__new__(WrapArray17)
         ret.array = &(<DamageActionList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4919,6 +4992,7 @@ cdef class WrapDamageActionList:
             return None
         cdef WrapArray17 ret = WrapArray17.__new__(WrapArray17)
         ret.array = &(<DamageActionList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4927,6 +5001,7 @@ cdef class WrapDamageActionList:
     def data(self):
         cdef WrapDamageAction ret = WrapDamageAction.__new__(WrapDamageAction)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -4968,6 +5043,7 @@ cdef class WrapPassivePacketList:
             return None
         cdef WrapArray18 ret = WrapArray18.__new__(WrapArray18)
         ret.array = &(<PassivePacketList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -4978,6 +5054,7 @@ cdef class WrapPassivePacketList:
             return None
         cdef WrapArray18 ret = WrapArray18.__new__(WrapArray18)
         ret.array = &(<PassivePacketList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -4986,6 +5063,7 @@ cdef class WrapPassivePacketList:
     def data(self):
         cdef WrapPassivePacket ret = WrapPassivePacket.__new__(WrapPassivePacket)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -5027,6 +5105,7 @@ cdef class WrapMissionDataList:
             return None
         cdef WrapArray19 ret = WrapArray19.__new__(WrapArray19)
         ret.array = &(<MissionDataList*>self.data[0].next)[0]
+        ret.parent = self
         return ret
     @next.setter
     def next(self, value):
@@ -5037,6 +5116,7 @@ cdef class WrapMissionDataList:
             return None
         cdef WrapArray19 ret = WrapArray19.__new__(WrapArray19)
         ret.array = &(<MissionDataList*>self.data[0].prev)[0]
+        ret.parent = self
         return ret
     @prev.setter
     def prev(self, value):
@@ -5045,6 +5125,7 @@ cdef class WrapMissionDataList:
     def data(self):
         cdef WrapMissionData ret = WrapMissionData.__new__(WrapMissionData)
         ret.data = &self.data[0].data
+        ret.parent = self
         return ret
     @data.setter
     def data(self, value):
@@ -5086,6 +5167,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray5 ret = WrapArray5.__new__(WrapArray5)
         ret.array = &(<HitPacketList*>self.data[0].player_hits)[0]
+        ret.parent = self
         return ret
     @player_hits.setter
     def player_hits(self, value):
@@ -5102,6 +5184,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray7 ret = WrapArray7.__new__(WrapArray7)
         ret.array = &(<SoundActionList*>self.data[0].sound_actions)[0]
+        ret.parent = self
         return ret
     @sound_actions.setter
     def sound_actions(self, value):
@@ -5118,6 +5201,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray6 ret = WrapArray6.__new__(WrapArray6)
         ret.array = &(<ParticleDataList*>self.data[0].particles)[0]
+        ret.parent = self
         return ret
     @particles.setter
     def particles(self, value):
@@ -5134,6 +5218,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray8 ret = WrapArray8.__new__(WrapArray8)
         ret.array = &(<BlockActionList*>self.data[0].block_actions)[0]
+        ret.parent = self
         return ret
     @block_actions.setter
     def block_actions(self, value):
@@ -5150,6 +5235,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray9 ret = WrapArray9.__new__(WrapArray9)
         ret.array = &(<ShootPacketList*>self.data[0].shoot_packets)[0]
+        ret.parent = self
         return ret
     @shoot_packets.setter
     def shoot_packets(self, value):
@@ -5166,6 +5252,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray11 ret = WrapArray11.__new__(WrapArray11)
         ret.array = &(<ChunkItemsList*>self.data[0].chunk_items)[0]
+        ret.parent = self
         return ret
     @chunk_items.setter
     def chunk_items(self, value):
@@ -5182,6 +5269,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray12 ret = WrapArray12.__new__(WrapArray12)
         ret.array = &(<StaticEntityList*>self.data[0].static_entities)[0]
+        ret.parent = self
         return ret
     @static_entities.setter
     def static_entities(self, value):
@@ -5198,6 +5286,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray14 ret = WrapArray14.__new__(WrapArray14)
         ret.array = &(<Items8List_1*>self.data[0].items_8)[0]
+        ret.parent = self
         return ret
     @items_8.setter
     def items_8(self, value):
@@ -5214,6 +5303,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray15 ret = WrapArray15.__new__(WrapArray15)
         ret.array = &(<PickupActionList*>self.data[0].pickup_actions)[0]
+        ret.parent = self
         return ret
     @pickup_actions.setter
     def pickup_actions(self, value):
@@ -5230,6 +5320,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray16 ret = WrapArray16.__new__(WrapArray16)
         ret.array = &(<KillActionList*>self.data[0].kill_actions)[0]
+        ret.parent = self
         return ret
     @kill_actions.setter
     def kill_actions(self, value):
@@ -5246,6 +5337,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray17 ret = WrapArray17.__new__(WrapArray17)
         ret.array = &(<DamageActionList*>self.data[0].damage_actions)[0]
+        ret.parent = self
         return ret
     @damage_actions.setter
     def damage_actions(self, value):
@@ -5262,6 +5354,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray18 ret = WrapArray18.__new__(WrapArray18)
         ret.array = &(<PassivePacketList*>self.data[0].passive_packets)[0]
+        ret.parent = self
         return ret
     @passive_packets.setter
     def passive_packets(self, value):
@@ -5278,6 +5371,7 @@ cdef class WrapPacketQueue:
             return None
         cdef WrapArray19 ret = WrapArray19.__new__(WrapArray19)
         ret.array = &(<MissionDataList*>self.data[0].missions)[0]
+        ret.parent = self
         return ret
     @missions.setter
     def missions(self, value):

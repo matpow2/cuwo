@@ -7,6 +7,7 @@ C++. It currently has the best protocol coverage among all the server projects
 out there, and has features like
 
 * Cross-platform support (Linux, Windows, Mac OS X, FreeBSD, what have you)
+* NPCs and mobs, just as in the regular server
 * File/console logging
 * MOTD message
 * Scripting (see the minimal welcome.py example)
@@ -22,6 +23,8 @@ out there, and has features like
 * Master server on http://cuwo.org
 * Support for 40+ players
 * ... and much more!
+
+Note that cuwo only supports x86 and x86-64, so it will not work on ARM.
 
 Running
 =======
@@ -39,14 +42,15 @@ Alternatively, you can also
 Source
 ------
 
-Make sure you have Python >= 3.3 and `cython` installed on your machine, along
-with native compilers.
+Make sure you have Python >= 3.6, native compilers, and the following
+dependencies installed:
 
-On Python versions below 3.4, you will need `asyncio` installed.
+* `cython`
+* `pyrr`
 
-If you want IRC bot support, you will also need the `irc3` package
+If you want IRC bot support, you will also need the `irc3` package.
 
-These packages can be installed with `pip install cython irc3 asyncio`
+These packages can be installed with `pip install cython pyrr irc3`
 
 To build cuwo, run `python setup.py build_ext --inplace`.
 
@@ -67,11 +71,10 @@ In terms of the protocol and features, the following has been implemented:
 * Time management
 * Terrain generator
 * Interactive objects (doors, beds)
+* Preliminary support for Mobs and NPCs
 
 A lot is still to be implemented gameplay-wise. Most importantly, NPCs and mobs
-have not been implemented yet. The terrain generator is completely working now,
-but work still needs to be put into creating intelligent AI and proper
-behaviour.
+have only recently been implemented, so expect some issues related to these.
 
 Other features include
 * MITM proxy (for reverse-engineering)
