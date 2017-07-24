@@ -788,7 +788,7 @@ def set_in_packets(list hits, list passives):
         sim_add_in_hit(<CHitPacket*>hit.data)
     cdef WrapPassivePacket passive
     for passive in passives:
-        sim_add_in_passive(<CPassivePacket*>hit.data)
+        sim_add_in_passive(<CPassivePacket*>passive.data)
 
 def get_out_packets():
     cdef CPacketQueue * q = sim_get_out_packets()
