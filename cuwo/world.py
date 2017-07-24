@@ -358,6 +358,10 @@ class World:
         if not self.use_tgen:
             return
 
+        # tgen incoming packets
+        self.hits = []
+        self.passives = []
+
         self.gen_queue = Queue()
         loop.run_in_executor(None, self.run_gen, seed)
 
@@ -372,12 +376,23 @@ class World:
         ret.init(self, creature, entity_id, static_id)
         return ret
 
+    def add_hit(self, packet):
+        self.hits.append(packet)
+
+    def add_passive(self, packet):
+        self.passives.append(packet)
+
     def update(self, dt):
         if not self.tgen_init:
             return None
         self.dt = dt
-        # maybe provide 'passives' as input packet in the future?
-        # vanilla uses passives + playerhits
+        tgen.set_in_packets(self.hits, self.passives)
+        # for hit in self.hits:
+        #     print(self.entities[hit.target_id].hostile_type)
+        #     print(hit.entity_id, hit.target_id, hit.hit_type,
+        #           hit.damage)
+        self.hits = []
+        self.passives = []
         tgen.step(int(dt * 1000.0))
         creatures = tgen.get_creatures()
         for entity_id, creature in creatures.items():
@@ -430,6 +445,7 @@ class World:
 
     def run_gen(self, seed):
         tgen.initialize(seed, self.data_path)
+        # tgen.set_breakpoint(0x4CEB33)
         self.tgen_init = True
         while True:
             data = self.gen_queue.get()

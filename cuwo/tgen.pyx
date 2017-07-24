@@ -36,8 +36,9 @@ from libc.string cimport memcpy
 from libcpp.string cimport string
 
 from cuwo.tgen_wrap cimport (Zone, WrapZone, Color, Field, Creature,
-                             PacketQueue,
-                             WrapCreature, WrapPacketQueue)
+                             PacketQueue, HitPacket, PassivePacket,
+                             WrapCreature, WrapPacketQueue,
+                             WrapPassivePacket, WrapHitPacket)
 
 cdef extern from "tgen.h" nogil:
     struct Heap:
@@ -50,6 +51,12 @@ cdef extern from "tgen.h" nogil:
         pass
 
     struct CPacketQueue "PacketQueue":
+        pass
+
+    struct CHitPacket "HitPacket":
+        pass
+
+    struct CPassivePacket "PassivePacket":
         pass
 
     void tgen_init()
@@ -73,7 +80,9 @@ cdef extern from "tgen.h" nogil:
     void sim_remove_creature(CCreature * c)
     CCreature * sim_add_creature(uint64_t id)
     CPacketQueue * sim_get_out_packets()
-    CPacketQueue * sim_get_in_packets()
+    void sim_add_in_hit(CHitPacket * packet)
+    void sim_add_in_passive(CPassivePacket * packet)
+    void tgen_set_breakpoint(uint32_t addr)
 
 cdef extern from "tgen.h":
     void sim_get_creatures(void (*f)(CCreature*))
@@ -773,17 +782,19 @@ def get_creatures():
     sim_get_creatures(get_creature_map)
     return creature_map
 
-def set_in_packets():
-    pass
-
-def get_in_packets():
-    cdef CPacketQueue * q = sim_get_in_packets()
-    cdef WrapPacketQueue wrap = WrapPacketQueue.__new__(WrapPacketQueue)
-    wrap.data = <PacketQueue*>q
-    return wrap
+def set_in_packets(list hits, list passives):
+    cdef WrapHitPacket hit
+    for hit in hits:
+        sim_add_in_hit(<CHitPacket*>hit.data)
+    cdef WrapPassivePacket passive
+    for passive in passives:
+        sim_add_in_passive(<CPassivePacket*>hit.data)
 
 def get_out_packets():
     cdef CPacketQueue * q = sim_get_out_packets()
     cdef WrapPacketQueue wrap = WrapPacketQueue.__new__(WrapPacketQueue)
     wrap.data = <PacketQueue*>q
     return wrap
+
+def set_breakpoint(value):
+    tgen_set_breakpoint(value)

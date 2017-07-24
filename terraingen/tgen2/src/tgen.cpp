@@ -236,24 +236,36 @@ void sim_get_creatures(void (*f)(Creature*))
 
 static uint32_t step_dt;
 static PacketQueue * in_queue;
+static bool in_queue_init = false;
 static PacketQueue * out_queue;
+
+static void sim_init_in_queue()
+{
+    set_heap(&sim_heap);
+    call_x86_thiscall_1(get_mem_va(INIT_PACKET_QUEUE), (uint32_t)in_queue);
+}
 
 static void sim_step_call()
 {
+    // *(uint8_t*)get_mem_va(0x4CF01B) = 0xCC;
+    // *(uint8_t*)get_mem_va(0x4CEEF2) = 0xCC;
+
     set_heap(&sim_heap);
 
-    static bool reset_queues = false;
-    if (reset_queues) {
-        call_x86_thiscall_1(get_mem_va(0x4239F0), (uint32_t)in_queue);
+    if (!in_queue_init)
+        sim_init_in_queue();
+    in_queue_init = false;
+
+    static bool reset_out_queue = false;
+    if (reset_out_queue)
         call_x86_thiscall_1(get_mem_va(0x4239F0), (uint32_t)out_queue);
-    }
-    reset_queues = true;
+    reset_out_queue = true;
 
     call_x86_thiscall_1(get_mem_va(INIT_PACKET_QUEUE), (uint32_t)out_queue);
-    call_x86_thiscall_1(get_mem_va(INIT_PACKET_QUEUE), (uint32_t)in_queue);
     call_x86_thiscall_4(get_mem_va(WORLD_SIM),
                         (uint32_t)sim_heap.first_alloc,
                         step_dt, (uint32_t)out_queue, (uint32_t)in_queue);
+    call_x86_thiscall_1(get_mem_va(0x4239F0), (uint32_t)in_queue);
     // walk_map((char*)sim_heap.first_alloc + 4, show_creatures);
 }
 
@@ -262,6 +274,46 @@ PacketQueue * sim_get_in_packets()
     if (in_queue == NULL)
         in_queue = (PacketQueue*)alloc_mem(sizeof(PacketQueue));
     return in_queue;
+}
+
+static PacketQueue * sim_prepare_in_packets()
+{
+    PacketQueue * q = sim_get_in_packets();
+    if (!in_queue_init) {
+        run_with_stack(sim_init_in_queue);
+        in_queue_init = true;
+    }
+    return q;
+}
+
+void sim_add_in_hit(HitPacket * p)
+{
+    PacketQueue * q = sim_prepare_in_packets();
+    set_heap(&sim_heap);
+    HitPacketList * l =
+        (HitPacketList*)heap_alloc(sizeof(HitPacketList));
+
+    HitPacketList * head = (HitPacketList*)q->player_hits;
+    l->next = (uint32_t)head->next;
+    l->prev = 0;
+    l->data = *p;
+    head->next = (uint32_t)l;
+    q->player_hits_size++;
+}
+
+void sim_add_in_passive(PassivePacket * p)
+{
+    PacketQueue * q = sim_prepare_in_packets();
+    set_heap(&sim_heap);
+    PassivePacketList * l =
+        (PassivePacketList*)heap_alloc(sizeof(PassivePacketList));
+
+    PassivePacketList * head = (PassivePacketList*)q->passive_packets;
+    l->next = (uint32_t)head->next;
+    l->prev = 0;
+    l->data = *p;
+    head->next = (uint32_t)l;
+    q->passive_packets_size++;
 }
 
 PacketQueue * sim_get_out_packets()
@@ -303,6 +355,11 @@ void tgen_set_path(const char * dir)
 void tgen_set_seed(uint32_t seed)
 {
     global_seed = seed;
+}
+
+void tgen_set_breakpoint(uint32_t addr)
+{
+    *(uint8_t*)get_mem_va(addr) = 0xCC;
 }
 
 #ifdef _WIN32

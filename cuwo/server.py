@@ -354,6 +354,9 @@ class CubeWorldConnection(asyncio.Protocol):
             return
 
         self.server.update_packet.player_hits.append(packet)
+        if target.is_tgen:
+            self.world.add_hit(packet)
+            return
         if target.hp <= 0:
             return
         target.hp -= packet.damage
@@ -585,6 +588,8 @@ class CubeWorldServer:
                     continue
                 chunk.destroy()
 
+        for passive in self.update_packet.passive_actions:
+            self.world.add_passive(passive)
         out_packets = self.world.update(self.update_loop.dt)
         self.handle_tgen_packets(out_packets)
 

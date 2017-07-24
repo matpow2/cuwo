@@ -19,6 +19,7 @@ void tgen_set_path(const char * dir);
 void * tgen_get_manager();
 void tgen_read_str(void * addr, std::string & str);
 void tgen_read_wstr(void * addr, std::string & str);
+void tgen_set_breakpoint(uint32_t addr);
 
 // sim
 bool sim_add_region(char * reg, uint32_t x, uint32_t y);
@@ -29,6 +30,8 @@ void sim_step(uint32_t dt);
 void sim_remove_creature(Creature * c);
 Creature * sim_add_creature(uint64_t id);
 void sim_get_creatures(void (*f)(Creature*));
+void sim_add_in_hit(HitPacket * p);
+void sim_add_in_passive(PassivePacket * p);
 PacketQueue * sim_get_in_packets();
 PacketQueue * sim_get_out_packets();
 
