@@ -251,6 +251,7 @@ class Chunk:
         self.pos = pos
         self.items = []
         self.static_entities = {}
+        self.region = None
 
         # XXX for now, dynamic entities belong to a single chunk.
         self.entities = []
@@ -322,7 +323,8 @@ class Chunk:
         for entity in self.entities:
             entity.destroy()
         self.entities = []
-        self.region.remove(self.data)
+        if self.region is not None:
+            self.region.remove(self.data)
         self.items = None
         self.region = None
         self.data = None
