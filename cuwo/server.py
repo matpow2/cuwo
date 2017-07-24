@@ -19,7 +19,7 @@ from cuwo import packet as packets
 from cuwo.types import MultikeyDict, AttributeSet
 from cuwo import constants
 from cuwo.common import (get_clock_string, parse_clock, parse_command,
-                         get_chunk, filter_string)
+                         get_chunk, filter_string, iterate_packet_list)
 from cuwo.script import ScriptManager
 from cuwo.config import ConfigObject
 from cuwo import entity as entitydata
@@ -532,16 +532,8 @@ class CubeWorldServer:
         self.world.get_chunk(get_chunk(pos)).add_item(item)
 
     def add_packet_list(self, items, l, size):
-        rem = size
-        item = l[0]
-        head = item.get_addr()
-        while True:
-            next_item = item.next[0]
-            if next_item.get_addr() == head:
-                break
-            items.append(next_item.data)
-            item = next_item
-            rem -= 1
+        for item in iterate_packet_list(l):
+            items.append(item.data)
 
     def handle_tgen_packets(self, packets):
         if packets is None:

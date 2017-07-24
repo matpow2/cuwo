@@ -4719,14 +4719,15 @@ cdef class WrapChunkItemsList:
         self.data[0].chunk_y = value
     @property
     def data(self):
-        cdef WrapChunkItemList ret = WrapChunkItemList.__new__(WrapChunkItemList)
-        ret.data = &self.data[0].data
+        if self.data[0].data == 0:
+            return None
+        cdef WrapArray10 ret = WrapArray10.__new__(WrapArray10)
+        ret.array = &(<ChunkItemList*>self.data[0].data)[0]
         ret.parent = self
         return ret
     @data.setter
     def data(self, value):
-        cdef WrapChunkItemList v = value
-        self.data[0].data = v.data[0]
+        raise NotImplementedError()
     def reset(self):
         memset(self.data, 0, sizeof(self.data[0]))
 cdef class WrapStaticEntityList:

@@ -759,15 +759,15 @@ struct ChunkItemList // size 336
 };
 static_assert(sizeof(ChunkItemList) == 336,
               "Invalid size for ChunkItemList");
-struct ChunkItemsList // size 352
+struct ChunkItemsList // size 20
 {
     uint32_t next;
     uint32_t prev;
     int32_t chunk_x;
     int32_t chunk_y;
-    ChunkItemList data;
+    uint32_t data;
 };
-static_assert(sizeof(ChunkItemsList) == 352,
+static_assert(sizeof(ChunkItemsList) == 20,
               "Invalid size for ChunkItemsList");
 struct StaticEntityList // size 80
 {

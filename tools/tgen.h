@@ -605,7 +605,7 @@ struct ChunkItemsList
   ChunkItemsList * prev;
   int32_t chunk_x;
   int32_t chunk_y;
-  ChunkItemList data;
+  ChunkItemList * data;
 };
 
 struct StaticEntityList

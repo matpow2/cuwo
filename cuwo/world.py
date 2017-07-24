@@ -21,7 +21,8 @@ World manager
 
 from cuwo.tgen_wrap import WrapEntityData, get_mask
 from cuwo import static
-from cuwo.common import get_item_hp, get_max_xp, get_chunk
+from cuwo.common import (get_item_hp, get_max_xp, get_chunk,
+                         iterate_packet_list)
 from cuwo.types import IDPool
 from cuwo import constants
 from cuwo import strings
@@ -391,6 +392,14 @@ class World:
             entity.destroy()
 
         out_packets = tgen.get_out_packets()
+        for chunk_items in iterate_packet_list(out_packets.chunk_items):
+            chunk_pos = (chunk_items.chunk_x, chunk_items.chunk_y)
+            chunk = self.chunks.get(chunk_pos, None)
+            if chunk is None:
+                continue
+            for item_data in iterate_packet_list(chunk_items.data):
+                chunk.add_item(item_data.data.copy())
+
         return out_packets
 
     def stop(self):

@@ -860,7 +860,7 @@ cdef struct ChunkItemsList:
     uint32_t prev
     int32_t chunk_x
     int32_t chunk_y
-    ChunkItemList data
+    uint32_t data
 
 cdef class WrapStaticEntityList:
     cdef void alloc(self)

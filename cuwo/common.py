@@ -226,3 +226,13 @@ def get_item_name(item):
 
     itemname = ' '.join(name)
     return itemname
+
+def iterate_packet_list(l):
+    l = l[0]
+    head = l.get_addr()
+    while True:
+        next_item = l.next[0]
+        if next_item.get_addr() == head:
+            break
+        yield next_item
+        l = next_item
