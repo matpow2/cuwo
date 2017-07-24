@@ -36,7 +36,8 @@ from libc.string cimport memcpy
 from libcpp.string cimport string
 
 from cuwo.tgen_wrap cimport (Zone, WrapZone, Color, Field, Creature,
-                             WrapCreature)
+                             PacketQueue,
+                             WrapCreature, WrapPacketQueue)
 
 cdef extern from "tgen.h" nogil:
     struct Heap:
@@ -46,6 +47,9 @@ cdef extern from "tgen.h" nogil:
         pass
 
     struct CCreature "Creature":
+        pass
+
+    struct CPacketQueue "PacketQueue":
         pass
 
     void tgen_init()
@@ -68,6 +72,8 @@ cdef extern from "tgen.h" nogil:
     void sim_step(uint32_t dt)
     void sim_remove_creature(CCreature * c)
     CCreature * sim_add_creature(uint64_t id)
+    CPacketQueue * sim_get_out_packets()
+    CPacketQueue * sim_get_in_packets()
 
 cdef extern from "tgen.h":
     void sim_get_creatures(void (*f)(CCreature*))
@@ -766,3 +772,18 @@ def get_creatures():
     creature_map.clear()
     sim_get_creatures(get_creature_map)
     return creature_map
+
+def set_in_packets():
+    pass
+
+def get_in_packets():
+    cdef CPacketQueue * q = sim_get_in_packets()
+    cdef WrapPacketQueue wrap = WrapPacketQueue.__new__(WrapPacketQueue)
+    wrap.data = <PacketQueue*>q
+    return wrap
+
+def get_out_packets():
+    cdef CPacketQueue * q = sim_get_out_packets()
+    cdef WrapPacketQueue wrap = WrapPacketQueue.__new__(WrapPacketQueue)
+    wrap.data = <PacketQueue*>q
+    return wrap

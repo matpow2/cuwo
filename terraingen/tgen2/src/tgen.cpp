@@ -235,32 +235,47 @@ void sim_get_creatures(void (*f)(Creature*))
 }
 
 static uint32_t step_dt;
+static PacketQueue * in_queue;
+static PacketQueue * out_queue;
 
 static void sim_step_call()
 {
     set_heap(&sim_heap);
-    static void * pq1 = alloc_mem(104);
-    static void * pq2 = alloc_mem(104);
 
-    static bool print = false;
-    if (!print) {
-        std::cout << "pq: " << (uint32_t)pq1 << " " << (uint32_t)pq2 << '\n';
-        print = true;
+    static bool reset_queues = false;
+    if (reset_queues) {
+        call_x86_thiscall_1(get_mem_va(0x4239F0), (uint32_t)in_queue);
+        call_x86_thiscall_1(get_mem_va(0x4239F0), (uint32_t)out_queue);
     }
+    reset_queues = true;
 
-    call_x86_thiscall_1(get_mem_va(INIT_PACKET_QUEUE), (uint32_t)pq1);
-    call_x86_thiscall_1(get_mem_va(INIT_PACKET_QUEUE), (uint32_t)pq2);
+    call_x86_thiscall_1(get_mem_va(INIT_PACKET_QUEUE), (uint32_t)out_queue);
+    call_x86_thiscall_1(get_mem_va(INIT_PACKET_QUEUE), (uint32_t)in_queue);
     call_x86_thiscall_4(get_mem_va(WORLD_SIM),
                         (uint32_t)sim_heap.first_alloc,
-                        step_dt, (uint32_t)pq1, (uint32_t)pq2);
-    call_x86_thiscall_1(get_mem_va(0x4239F0), (uint32_t)pq1);
-    call_x86_thiscall_1(get_mem_va(0x4239F0), (uint32_t)pq2);
-
+                        step_dt, (uint32_t)out_queue, (uint32_t)in_queue);
     // walk_map((char*)sim_heap.first_alloc + 4, show_creatures);
+}
+
+PacketQueue * sim_get_in_packets()
+{
+    if (in_queue == NULL)
+        in_queue = (PacketQueue*)alloc_mem(sizeof(PacketQueue));
+    return in_queue;
+}
+
+PacketQueue * sim_get_out_packets()
+{
+    if (out_queue == NULL)
+        out_queue = (PacketQueue*)alloc_mem(sizeof(PacketQueue));
+    return out_queue;
 }
 
 void sim_step(uint32_t dt)
 {
+    sim_get_in_packets();
+    sim_get_out_packets();
+
     step_dt = dt;
     run_with_stack(sim_step_call);
 }

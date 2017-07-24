@@ -574,3 +574,294 @@ struct Creature // size 7776
 };
 static_assert(sizeof(Creature) == 7776,
               "Invalid size for Creature");
+struct HitPacket // size 72
+{
+    uint64_t entity_id;
+    uint64_t target_id;
+    float damage;
+    uint8_t critical;
+    int8_t pad4[3];
+    uint32_t stun_duration;
+    uint32_t something8;
+    qvec3 pos;
+    vec3 hit_dir;
+    uint8_t skill_hit;
+    uint8_t hit_type;
+    uint8_t show_light;
+    int8_t pad12[1];
+};
+static_assert(sizeof(HitPacket) == 72,
+              "Invalid size for HitPacket");
+struct ParticleData // size 72
+{
+    qvec3 pos;
+    vec3 accel;
+    float color[4];
+    float scale;
+    uint32_t count;
+    uint32_t particle_type;
+    float spreading;
+    uint32_t something18;
+};
+static_assert(sizeof(ParticleData) == 72,
+              "Invalid size for ParticleData");
+struct SoundAction // size 24
+{
+    vec3 pos;
+    uint32_t sound_index;
+    float pitch;
+    float volume;
+};
+static_assert(sizeof(SoundAction) == 24,
+              "Invalid size for SoundAction");
+struct BlockAction // size 20
+{
+    ivec3 block_pos;
+    uint8_t color_red;
+    uint8_t color_green;
+    uint8_t color_blue;
+    uint8_t block_type;
+    uint32_t something8;
+};
+static_assert(sizeof(BlockAction) == 20,
+              "Invalid size for BlockAction");
+struct ShootPacket // size 112
+{
+    uint64_t entity_id;
+    int32_t chunk_x;
+    int32_t chunk_y;
+    uint32_t something5;
+    int8_t pad4[4];
+    qvec3 pos;
+    uint32_t something13;
+    uint32_t something14;
+    uint32_t something15;
+    vec3 velocity;
+    float legacy_damage;
+    float something20;
+    float scale;
+    float mana;
+    uint32_t particles;
+    uint8_t skill;
+    int8_t pad16[3];
+    uint32_t projectile;
+    uint8_t something26;
+    int8_t pad19[3];
+    uint32_t something27;
+    uint32_t something28;
+};
+static_assert(sizeof(ShootPacket) == 112,
+              "Invalid size for ShootPacket");
+struct PickupAction // size 288
+{
+    uint64_t entity_id;
+    ItemData item_data;
+};
+static_assert(sizeof(PickupAction) == 288,
+              "Invalid size for PickupAction");
+struct KillAction // size 24
+{
+    uint64_t entity_id;
+    uint64_t target_id;
+    int8_t pad2[4];
+    int32_t xp_gained;
+};
+static_assert(sizeof(KillAction) == 24,
+              "Invalid size for KillAction");
+struct DamageAction // size 24
+{
+    uint64_t target_id;
+    uint64_t entity_id;
+    float damage;
+    int8_t skip[4];
+};
+static_assert(sizeof(DamageAction) == 24,
+              "Invalid size for DamageAction");
+struct PassivePacket // size 40
+{
+    uint64_t entity_id;
+    uint64_t target_id;
+    uint8_t passive_type;
+    int8_t pad3[3];
+    float modifier;
+    uint32_t duration;
+    int8_t pad6[4];
+    uint64_t target_id2;
+};
+static_assert(sizeof(PassivePacket) == 40,
+              "Invalid size for PassivePacket");
+struct MissionData // size 56
+{
+    int32_t section_x;
+    int32_t section_y;
+    uint32_t something1;
+    uint32_t something2;
+    uint32_t something3;
+    uint32_t mission_id;
+    uint32_t something5;
+    uint32_t monster_id;
+    uint32_t quest_level;
+    uint8_t something8;
+    uint8_t state;
+    int8_t pad11[2];
+    float something10;
+    float something11;
+    uint32_t chunk_x;
+    uint32_t chunk_y;
+};
+static_assert(sizeof(MissionData) == 56,
+              "Invalid size for MissionData");
+struct HitPacketList // size 80
+{
+    uint32_t next;
+    uint32_t prev;
+    HitPacket data;
+};
+static_assert(sizeof(HitPacketList) == 80,
+              "Invalid size for HitPacketList");
+struct ParticleDataList // size 80
+{
+    uint32_t next;
+    uint32_t prev;
+    ParticleData data;
+};
+static_assert(sizeof(ParticleDataList) == 80,
+              "Invalid size for ParticleDataList");
+struct SoundActionList // size 32
+{
+    uint32_t next;
+    uint32_t prev;
+    SoundAction data;
+};
+static_assert(sizeof(SoundActionList) == 32,
+              "Invalid size for SoundActionList");
+struct BlockActionList // size 28
+{
+    uint32_t next;
+    uint32_t prev;
+    BlockAction data;
+};
+static_assert(sizeof(BlockActionList) == 28,
+              "Invalid size for BlockActionList");
+struct ShootPacketList // size 120
+{
+    uint32_t next;
+    uint32_t prev;
+    ShootPacket data;
+};
+static_assert(sizeof(ShootPacketList) == 120,
+              "Invalid size for ShootPacketList");
+struct ChunkItemList // size 336
+{
+    uint32_t next;
+    uint32_t prev;
+    ChunkItemData data;
+};
+static_assert(sizeof(ChunkItemList) == 336,
+              "Invalid size for ChunkItemList");
+struct ChunkItemsList // size 352
+{
+    uint32_t next;
+    uint32_t prev;
+    int32_t chunk_x;
+    int32_t chunk_y;
+    ChunkItemList data;
+};
+static_assert(sizeof(ChunkItemsList) == 352,
+              "Invalid size for ChunkItemsList");
+struct StaticEntityList // size 80
+{
+    uint32_t next;
+    uint32_t prev;
+    StaticEntityHeader data;
+};
+static_assert(sizeof(StaticEntityList) == 80,
+              "Invalid size for StaticEntityList");
+struct Items8List_2 // size 24
+{
+    uint32_t next;
+    uint32_t prev;
+    uint8_t data[16];
+};
+static_assert(sizeof(Items8List_2) == 24,
+              "Invalid size for Items8List_2");
+struct Items8List_1 // size 40
+{
+    uint32_t next;
+    uint32_t prev;
+    uint64_t something;
+    Items8List_2 data;
+};
+static_assert(sizeof(Items8List_1) == 40,
+              "Invalid size for Items8List_1");
+struct PickupActionList // size 296
+{
+    uint32_t next;
+    uint32_t prev;
+    PickupAction data;
+};
+static_assert(sizeof(PickupActionList) == 296,
+              "Invalid size for PickupActionList");
+struct KillActionList // size 32
+{
+    uint32_t next;
+    uint32_t prev;
+    KillAction data;
+};
+static_assert(sizeof(KillActionList) == 32,
+              "Invalid size for KillActionList");
+struct DamageActionList // size 32
+{
+    uint32_t next;
+    uint32_t prev;
+    DamageAction data;
+};
+static_assert(sizeof(DamageActionList) == 32,
+              "Invalid size for DamageActionList");
+struct PassivePacketList // size 48
+{
+    uint32_t next;
+    uint32_t prev;
+    PassivePacket data;
+};
+static_assert(sizeof(PassivePacketList) == 48,
+              "Invalid size for PassivePacketList");
+struct MissionDataList // size 64
+{
+    uint32_t next;
+    uint32_t prev;
+    MissionData data;
+};
+static_assert(sizeof(MissionDataList) == 64,
+              "Invalid size for MissionDataList");
+struct PacketQueue // size 104
+{
+    uint32_t player_hits;
+    uint32_t player_hits_size;
+    uint32_t sound_actions;
+    uint32_t sound_actions_size;
+    uint32_t particles;
+    uint32_t particles_size;
+    uint32_t block_actions;
+    uint32_t block_actions_size;
+    uint32_t shoot_packets;
+    uint32_t shoot_packets_size;
+    uint32_t chunk_items;
+    uint32_t chunk_items_size;
+    uint32_t static_entities;
+    uint32_t static_entities_size;
+    uint32_t items_8;
+    uint32_t items_8_size;
+    uint32_t pickup_actions;
+    uint32_t pickup_actions_size;
+    uint32_t kill_actions;
+    uint32_t kill_actions_size;
+    uint32_t damage_actions;
+    uint32_t damage_actions_size;
+    uint32_t passive_packets;
+    uint32_t passive_packets_size;
+    uint32_t missions;
+    uint32_t missions_size;
+};
+static_assert(sizeof(PacketQueue) == 104,
+              "Invalid size for PacketQueue");

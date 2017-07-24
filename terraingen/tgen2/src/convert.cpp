@@ -444,8 +444,8 @@ int main(int argc, char * argv[])
     Zone * z = tgen_get_zone(r, 32803, 32803);
     std::cout << "done" << '\n';
 
-    // sim_add_region(r, 32803 / 64, 32803 / 64);
-    // sim_add_zone(z, 32803, 32803);
+    sim_add_region(r, 32803 / 64, 32803 / 64);
+    sim_add_zone(z, 32803, 32803);
 
     while (1) {
         sim_step(20);

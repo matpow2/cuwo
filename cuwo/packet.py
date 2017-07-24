@@ -23,6 +23,11 @@
 
 from cuwo.tgen_wrap import (WrapEntityData as EntityData,
                             WrapItemData as ItemData,
+                            WrapSoundAction,
+                            WrapShootPacket,
+                            WrapPickupAction as PickupAction,
+                            WrapChunkItemData as ChunkItemData,
+                            WrapHitPacket,
                             read_masked_data, write_masked_data,
                             get_masked_size)
 
@@ -163,7 +168,7 @@ class Unknown3(Packet):
         writer.write(self.data)
 
 
-class BlockAction(Loader):
+class OldBlockAction(Loader):
     def read(self, reader):
         self.block_pos = reader.read_ivec3()
         self.color_red = reader.read_uint8()
@@ -182,7 +187,7 @@ class BlockAction(Loader):
         writer.write_uint32(self.something8)
 
 
-class ParticleData(Loader):
+class OldParticleData(Loader):
     def read(self, reader):
         self.pos = reader.read_qvec3()
         self.accel = reader.read_vec3()
@@ -211,7 +216,15 @@ class ParticleData(Loader):
         writer.write_uint32(self.something18)
 
 
-class SoundAction(Loader):
+class SoundAction(WrapSoundAction):
+    def get_name(self):
+        return strings.SOUND_NAMES[self.sound_index]
+
+    def set_name(self, name):
+        self.sound_index = strings.SOUND_IDS[name]
+
+
+class OldSoundAction(Loader):
     def read(self, reader):
         self.pos = reader.read_vec3() * float(BLOCK_SCALE)
         self.sound_index = reader.read_uint32()
@@ -231,7 +244,7 @@ class SoundAction(Loader):
         writer.write_float(self.volume)
 
 
-class PickupAction(Loader):
+class OldPickupAction(Loader):
     def read(self, reader):
         self.entity_id = reader.read_uint64()  # player who picked up
         self.item_data = ItemData()
@@ -242,7 +255,7 @@ class PickupAction(Loader):
         self.item_data.write(writer)
 
 
-class KillAction(Loader):
+class OldKillAction(Loader):
     def read(self, reader):
         self.entity_id = reader.read_uint64()  # killer
         self.target_id = reader.read_uint64()  # killed
@@ -260,7 +273,7 @@ class KillAction(Loader):
         writer.write_int32(self.xp_gained)
 
 
-class DamageAction(Loader):
+class OldDamageAction(Loader):
     def read(self, reader):
         self.target_id = reader.read_uint64()
         self.entity_id = reader.read_uint64()
@@ -275,7 +288,7 @@ class DamageAction(Loader):
         writer.pad(4)
 
 
-class ChunkItemData(Loader):
+class OldChunkItemData(Loader):
     def read(self, reader):
         self.item_data = ItemData()
         self.item_data.read(reader)
@@ -494,7 +507,11 @@ HIT_MISS = 3
 HIT_ABSORB = 5
 
 
-class HitPacket(Packet):
+class HitPacket(WrapHitPacket):
+    packet_id = None
+
+
+class OldHitPacket(Packet):
     def read(self, reader):
         self.entity_id = reader.read_uint64()
         self.target_id = reader.read_uint64()
@@ -550,7 +567,11 @@ class PassivePacket(Packet):
         writer.write_uint64(self.target_id2)
 
 
-class ShootPacket(Packet):
+class ShootPacket(WrapShootPacket):
+    packet_id = None
+
+
+class OldShootPacket(Packet):
     def read(self, reader):
         self.entity_id = reader.read_uint64()
         self.chunk_x = reader.read_int32()

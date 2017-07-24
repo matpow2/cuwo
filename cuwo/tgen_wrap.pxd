@@ -615,6 +615,323 @@ cdef struct Creature:
     int8_t char1D5C[256]
     uint32_t dword1E5C
 
+cdef class WrapHitPacket:
+    cdef void alloc(self)
+    cdef HitPacket * data
+    cdef void * storage
+cdef struct HitPacket:
+    uint64_t entity_id
+    uint64_t target_id
+    float damage
+    uint8_t critical
+    int8_t pad4[3]
+    uint32_t stun_duration
+    uint32_t something8
+    qvec3 pos
+    vec3 hit_dir
+    uint8_t skill_hit
+    uint8_t hit_type
+    uint8_t show_light
+    int8_t pad12[1]
+
+cdef class WrapParticleData:
+    cdef void alloc(self)
+    cdef ParticleData * data
+    cdef void * storage
+cdef struct ParticleData:
+    qvec3 pos
+    vec3 accel
+    float color[4]
+    float scale
+    uint32_t count
+    uint32_t particle_type
+    float spreading
+    uint32_t something18
+
+cdef class WrapSoundAction:
+    cdef void alloc(self)
+    cdef SoundAction * data
+    cdef void * storage
+cdef struct SoundAction:
+    vec3 pos
+    uint32_t sound_index
+    float pitch
+    float volume
+
+cdef class WrapBlockAction:
+    cdef void alloc(self)
+    cdef BlockAction * data
+    cdef void * storage
+cdef struct BlockAction:
+    ivec3 block_pos
+    uint8_t color_red
+    uint8_t color_green
+    uint8_t color_blue
+    uint8_t block_type
+    uint32_t something8
+
+cdef class WrapShootPacket:
+    cdef void alloc(self)
+    cdef ShootPacket * data
+    cdef void * storage
+cdef struct ShootPacket:
+    uint64_t entity_id
+    int32_t chunk_x
+    int32_t chunk_y
+    uint32_t something5
+    int8_t pad4[4]
+    qvec3 pos
+    uint32_t something13
+    uint32_t something14
+    uint32_t something15
+    vec3 velocity
+    float legacy_damage
+    float something20
+    float scale
+    float mana
+    uint32_t particles
+    uint8_t skill
+    int8_t pad16[3]
+    uint32_t projectile
+    uint8_t something26
+    int8_t pad19[3]
+    uint32_t something27
+    uint32_t something28
+
+cdef class WrapPickupAction:
+    cdef void alloc(self)
+    cdef PickupAction * data
+    cdef void * storage
+cdef struct PickupAction:
+    uint64_t entity_id
+    ItemData item_data
+
+cdef class WrapKillAction:
+    cdef void alloc(self)
+    cdef KillAction * data
+    cdef void * storage
+cdef struct KillAction:
+    uint64_t entity_id
+    uint64_t target_id
+    int8_t pad2[4]
+    int32_t xp_gained
+
+cdef class WrapDamageAction:
+    cdef void alloc(self)
+    cdef DamageAction * data
+    cdef void * storage
+cdef struct DamageAction:
+    uint64_t target_id
+    uint64_t entity_id
+    float damage
+    int8_t skip[4]
+
+cdef class WrapPassivePacket:
+    cdef void alloc(self)
+    cdef PassivePacket * data
+    cdef void * storage
+cdef struct PassivePacket:
+    uint64_t entity_id
+    uint64_t target_id
+    uint8_t passive_type
+    int8_t pad3[3]
+    float modifier
+    uint32_t duration
+    int8_t pad6[4]
+    uint64_t target_id2
+
+cdef class WrapMissionData:
+    cdef void alloc(self)
+    cdef MissionData * data
+    cdef void * storage
+cdef struct MissionData:
+    int32_t section_x
+    int32_t section_y
+    uint32_t something1
+    uint32_t something2
+    uint32_t something3
+    uint32_t mission_id
+    uint32_t something5
+    uint32_t monster_id
+    uint32_t quest_level
+    uint8_t something8
+    uint8_t state
+    int8_t pad11[2]
+    float something10
+    float something11
+    uint32_t chunk_x
+    uint32_t chunk_y
+
+cdef class WrapHitPacketList:
+    cdef void alloc(self)
+    cdef HitPacketList * data
+    cdef void * storage
+cdef struct HitPacketList:
+    uint32_t next
+    uint32_t prev
+    HitPacket data
+
+cdef class WrapParticleDataList:
+    cdef void alloc(self)
+    cdef ParticleDataList * data
+    cdef void * storage
+cdef struct ParticleDataList:
+    uint32_t next
+    uint32_t prev
+    ParticleData data
+
+cdef class WrapSoundActionList:
+    cdef void alloc(self)
+    cdef SoundActionList * data
+    cdef void * storage
+cdef struct SoundActionList:
+    uint32_t next
+    uint32_t prev
+    SoundAction data
+
+cdef class WrapBlockActionList:
+    cdef void alloc(self)
+    cdef BlockActionList * data
+    cdef void * storage
+cdef struct BlockActionList:
+    uint32_t next
+    uint32_t prev
+    BlockAction data
+
+cdef class WrapShootPacketList:
+    cdef void alloc(self)
+    cdef ShootPacketList * data
+    cdef void * storage
+cdef struct ShootPacketList:
+    uint32_t next
+    uint32_t prev
+    ShootPacket data
+
+cdef class WrapChunkItemList:
+    cdef void alloc(self)
+    cdef ChunkItemList * data
+    cdef void * storage
+cdef struct ChunkItemList:
+    uint32_t next
+    uint32_t prev
+    ChunkItemData data
+
+cdef class WrapChunkItemsList:
+    cdef void alloc(self)
+    cdef ChunkItemsList * data
+    cdef void * storage
+cdef struct ChunkItemsList:
+    uint32_t next
+    uint32_t prev
+    int32_t chunk_x
+    int32_t chunk_y
+    ChunkItemList data
+
+cdef class WrapStaticEntityList:
+    cdef void alloc(self)
+    cdef StaticEntityList * data
+    cdef void * storage
+cdef struct StaticEntityList:
+    uint32_t next
+    uint32_t prev
+    StaticEntityHeader data
+
+cdef class WrapItems8List_2:
+    cdef void alloc(self)
+    cdef Items8List_2 * data
+    cdef void * storage
+cdef struct Items8List_2:
+    uint32_t next
+    uint32_t prev
+    uint8_t data[16]
+
+cdef class WrapItems8List_1:
+    cdef void alloc(self)
+    cdef Items8List_1 * data
+    cdef void * storage
+cdef struct Items8List_1:
+    uint32_t next
+    uint32_t prev
+    uint64_t something
+    Items8List_2 data
+
+cdef class WrapPickupActionList:
+    cdef void alloc(self)
+    cdef PickupActionList * data
+    cdef void * storage
+cdef struct PickupActionList:
+    uint32_t next
+    uint32_t prev
+    PickupAction data
+
+cdef class WrapKillActionList:
+    cdef void alloc(self)
+    cdef KillActionList * data
+    cdef void * storage
+cdef struct KillActionList:
+    uint32_t next
+    uint32_t prev
+    KillAction data
+
+cdef class WrapDamageActionList:
+    cdef void alloc(self)
+    cdef DamageActionList * data
+    cdef void * storage
+cdef struct DamageActionList:
+    uint32_t next
+    uint32_t prev
+    DamageAction data
+
+cdef class WrapPassivePacketList:
+    cdef void alloc(self)
+    cdef PassivePacketList * data
+    cdef void * storage
+cdef struct PassivePacketList:
+    uint32_t next
+    uint32_t prev
+    PassivePacket data
+
+cdef class WrapMissionDataList:
+    cdef void alloc(self)
+    cdef MissionDataList * data
+    cdef void * storage
+cdef struct MissionDataList:
+    uint32_t next
+    uint32_t prev
+    MissionData data
+
+cdef class WrapPacketQueue:
+    cdef void alloc(self)
+    cdef PacketQueue * data
+    cdef void * storage
+cdef struct PacketQueue:
+    uint32_t player_hits
+    uint32_t player_hits_size
+    uint32_t sound_actions
+    uint32_t sound_actions_size
+    uint32_t particles
+    uint32_t particles_size
+    uint32_t block_actions
+    uint32_t block_actions_size
+    uint32_t shoot_packets
+    uint32_t shoot_packets_size
+    uint32_t chunk_items
+    uint32_t chunk_items_size
+    uint32_t static_entities
+    uint32_t static_entities_size
+    uint32_t items_8
+    uint32_t items_8_size
+    uint32_t pickup_actions
+    uint32_t pickup_actions_size
+    uint32_t kill_actions
+    uint32_t kill_actions_size
+    uint32_t damage_actions
+    uint32_t damage_actions_size
+    uint32_t passive_packets
+    uint32_t passive_packets_size
+    uint32_t missions
+    uint32_t missions_size
+
 cdef class WrapArray0:
     cdef ItemUpgrade * array
 cdef class WrapArray1:
@@ -625,6 +942,36 @@ cdef class WrapArray3:
     cdef Color * array
 cdef class WrapArray4:
     cdef Field * array
+cdef class WrapArray5:
+    cdef HitPacketList * array
+cdef class WrapArray6:
+    cdef ParticleDataList * array
+cdef class WrapArray7:
+    cdef SoundActionList * array
+cdef class WrapArray8:
+    cdef BlockActionList * array
+cdef class WrapArray9:
+    cdef ShootPacketList * array
+cdef class WrapArray10:
+    cdef ChunkItemList * array
+cdef class WrapArray11:
+    cdef ChunkItemsList * array
+cdef class WrapArray12:
+    cdef StaticEntityList * array
+cdef class WrapArray13:
+    cdef Items8List_2 * array
+cdef class WrapArray14:
+    cdef Items8List_1 * array
+cdef class WrapArray15:
+    cdef PickupActionList * array
+cdef class WrapArray16:
+    cdef KillActionList * array
+cdef class WrapArray17:
+    cdef DamageActionList * array
+cdef class WrapArray18:
+    cdef PassivePacketList * array
+cdef class WrapArray19:
+    cdef MissionDataList * array
 cdef class WrapItemWithHeaderVec:
     cdef uint32_t * data
 cdef class WrapItemWithHeaderListVec:

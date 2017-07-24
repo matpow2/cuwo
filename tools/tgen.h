@@ -412,3 +412,285 @@ struct Creature
   char char1D5C[256];
   _DWORD dword1E5C;
 };
+
+struct HitPacket
+{
+  uint64_t entity_id;
+  uint64_t target_id;
+  float damage;
+  uint8_t critical;
+  char pad[3];
+  uint32_t stun_duration;
+  uint32_t something8; // padding maybe?
+  qvec3 pos;
+  vec3 hit_dir;
+  uint8_t skill_hit; // used skill
+  uint8_t hit_type;
+  uint8_t show_light;
+  char pad[1];
+};
+
+struct ParticleData
+{
+  qvec3 pos;
+  vec3 accel;
+  float color[4];
+  float scale;
+  uint32_t count;
+  uint32_t particle_type;
+  float spreading;
+  uint32_t something18;
+};
+
+struct SoundAction
+{
+  vec3 pos; // in block coordinates
+  uint32_t sound_index;
+  float pitch;
+  float volume;
+};
+
+struct BlockAction
+{
+  ivec3 block_pos;
+  uint8_t color_red;
+  uint8_t color_green;
+  uint8_t color_blue;
+  // v  0 = Invisible, 1 = Solid, 2 = Water, 3 = Flat water, ...
+  uint8_t block_type;
+  uint32_t something8;
+};
+
+struct ShootPacket
+{
+  uint64_t entity_id;
+  int32_t chunk_x;
+  int32_t chunk_y;
+  uint32_t something5;
+  char pad[4];
+  qvec3 pos;
+  uint32_t something13;
+  uint32_t something14;
+  uint32_t something15;
+  vec3 velocity;
+  // rand() something, probably damage multiplier
+  // these are not confirmed
+  float legacy_damage; // from ext
+  // ext: 2-4 depending on mana for boomerangs, otherwise 0.5
+  float something20;
+  float scale; // from ext
+  // old: used stamina? amount of stun?
+  float mana; // from ext
+  uint32_t particles; // from ext, for crossbow m2
+  uint8_t skill; // skill? is 2 for rmb shoot
+  char pad[3];
+  // from ext: projectile
+  // 0: arrow, 1: boomerang, 2: magic, 3: ?, 4: rock
+  uint32_t projectile;
+  uint8_t something26;
+  char pad[3];
+  uint32_t something27;
+  uint32_t something28;
+};
+
+struct PickupAction
+{
+  uint64_t entity_id; // player who picked up
+  ItemData item_data;
+};
+
+struct KillAction
+{
+  uint64_t entity_id; // killer
+  uint64_t target_id; // killed
+  // is this actually padding? copied as part of MOVQ, but may just be
+  // optimization. not used in client, it seems.
+  // could also be related to DamageAction, seems to use same list
+  // copy implementation
+  char pad[4];
+  int32_t xp_gained;
+};
+
+struct DamageAction
+{
+  uint64_t target_id;
+  uint64_t entity_id;
+  float damage;
+  char skip[4];
+};
+
+struct PassivePacket
+{
+  uint64_t entity_id;
+  uint64_t target_id;
+  uint8_t passive_type;
+  char pad[3];
+  // below not confirmed
+  float modifier;
+  uint32_t duration;
+  char pad[4];
+  // equal to source for poison, otherwise 0
+  uint64_t target_id2;
+};
+
+struct MissionData
+{
+  int32_t section_x; // divide by 8.0
+  int32_t section_y; // divide by 8.0
+  uint32_t something1; // padding?
+  uint32_t something2; // also padding???
+  // --
+  uint32_t something3;
+  uint32_t mission_id;
+  uint32_t something5;
+  uint32_t monster_id;
+  uint32_t quest_level;
+  uint8_t something8;
+  // 0: ready, 1: progressing, 2: finished
+  uint8_t state;
+  char pad[2];
+  float something10;
+  float something11;
+  uint32_t chunk_x;
+  uint32_t chunk_y;
+};
+
+// lists
+
+struct HitPacketList
+{
+  HitPacketList * next;
+  HitPacketList * prev;
+  HitPacket data;
+};
+
+struct ParticleDataList
+{
+  ParticleDataList * next;
+  ParticleDataList * prev;
+  ParticleData data;
+};
+
+struct SoundActionList
+{
+  SoundActionList * next;
+  SoundActionList * prev;
+  SoundAction data;
+};
+
+struct BlockActionList
+{
+  BlockActionList * next;
+  BlockActionList * prev;
+  BlockAction data;
+};
+
+struct ShootPacketList
+{
+  ShootPacketList * next;
+  ShootPacketList * prev;
+  ShootPacket data;
+};
+
+struct ChunkItemList
+{
+  ChunkItemList * next;
+  ChunkItemList * prev;
+  ChunkItemData data;
+};
+
+struct ChunkItemsList
+{
+  ChunkItemsList * next;
+  ChunkItemsList * prev;
+  int32_t chunk_x;
+  int32_t chunk_y;
+  ChunkItemList data;
+};
+
+struct StaticEntityList
+{
+  StaticEntityList * next;
+  StaticEntityList * prev;
+  StaticEntityHeader data;
+};
+
+struct Items8List_2
+{
+  Items8List_2 * next;
+  Items8List_2 * prev;
+  uint8_t data[16];
+};
+
+struct Items8List_1
+{
+  Items8List_1 * next;
+  Items8List_1 * prev;
+  uint64_t something;
+  Items8List_2 data;
+};
+
+struct PickupActionList
+{
+  PickupActionList * next;
+  PickupActionList * prev;
+  PickupAction data;
+};
+
+struct KillActionList
+{
+  KillActionList * next;
+  KillActionList * prev;
+  KillAction data;
+};
+
+struct DamageActionList
+{
+  DamageActionList * next;
+  DamageActionList * prev;
+  DamageAction data;
+};
+
+struct PassivePacketList
+{
+  PassivePacketList * next;
+  PassivePacketList * prev;
+  PassivePacket data;
+};
+
+struct MissionDataList
+{
+  MissionDataList * next;
+  MissionDataList * prev;
+  MissionData data;
+};
+
+struct PacketQueue
+{
+  HitPacketList * player_hits;
+  uint32_t player_hits_size;
+  SoundActionList * sound_actions;
+  uint32_t sound_actions_size;
+  ParticleDataList * particles;
+  uint32_t particles_size;
+  BlockActionList * block_actions;
+  uint32_t block_actions_size;
+  ShootPacketList * shoot_packets;
+  uint32_t shoot_packets_size;
+  ChunkItemsList * chunk_items;
+  uint32_t chunk_items_size;
+  StaticEntityList * static_entities;
+  uint32_t static_entities_size;
+  Items8List_1 * items_8;
+  uint32_t items_8_size;
+  PickupActionList * pickup_actions;
+  uint32_t pickup_actions_size;
+  KillActionList * kill_actions;
+  uint32_t kill_actions_size;
+  DamageActionList * damage_actions;
+  uint32_t damage_actions_size;
+  PassivePacketList * passive_packets;
+  uint32_t passive_packets_size;
+  MissionDataList * missions;
+  uint32_t missions_size;
+};

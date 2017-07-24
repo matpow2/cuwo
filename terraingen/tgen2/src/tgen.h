@@ -29,6 +29,8 @@ void sim_step(uint32_t dt);
 void sim_remove_creature(Creature * c);
 Creature * sim_add_creature(uint64_t id);
 void sim_get_creatures(void (*f)(Creature*));
+PacketQueue * sim_get_in_packets();
+PacketQueue * sim_get_out_packets();
 
 inline uint32_t * tgen_get_region_ptr(void * manager,
                                       uint32_t reg_x, uint32_t reg_y)

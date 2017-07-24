@@ -160,7 +160,7 @@ def main():
         pyx.putln(f'self.storage = PyMem_Malloc(sizeof({s_name}))')
         pyx.putln(f'self.data = <{s_name}*>self.storage')
         pyx.dedent()
-        
+
         pxd.putln(f'cdef {s_name} * data')
         pxd.putln(f'cdef void * storage')
         pxd.dedent()
@@ -273,6 +273,11 @@ def main():
                 else:
                     setter.putln(f'raise NotImplementedError()')
             elif attr.ptr or attr.dim is not None:
+                if attr.ptr:
+                    pyx.putln(f'if {value} == 0:')
+                    pyx.indent()
+                    pyx.putln('return None')
+                    pyx.dedent()
                 if attr.ptr:
                     value = f'(<{attr_typ}*>{value})'
                 print(attr.ptr, attr.dim, attr.typ, name)

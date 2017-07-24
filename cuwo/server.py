@@ -529,6 +529,42 @@ class CubeWorldServer:
         item.item_data = item_data
         self.world.get_chunk(get_chunk(pos)).add_item(item)
 
+    def add_packet_list(self, items, l, size):
+        rem = size
+        item = l[0]
+        head = item.get_addr()
+        while True:
+            next_item = item.next[0]
+            if next_item.get_addr() == head:
+                break
+            items.append(next_item.data)
+            item = next_item
+            rem -= 1
+
+    def handle_tgen_packets(self, packets):
+        if packets is None:
+            return
+
+        p = self.update_packet
+        self.add_packet_list(p.player_hits, packets.player_hits,
+                             packets.player_hits_size)
+        self.add_packet_list(p.sound_actions, packets.sound_actions,
+                             packets.sound_actions_size)
+        self.add_packet_list(p.particles, packets.particles,
+                             packets.particles_size)
+        self.add_packet_list(p.block_actions, packets.block_actions,
+                             packets.block_actions_size)
+        self.add_packet_list(p.shoot_actions, packets.shoot_packets,
+                             packets.shoot_packets_size)
+        self.add_packet_list(p.kill_actions, packets.kill_actions,
+                             packets.kill_actions_size)
+        self.add_packet_list(p.damage_actions, packets.damage_actions,
+                             packets.damage_actions_size)
+        self.add_packet_list(p.passive_actions, packets.passive_packets,
+                             packets.passive_packets_size)
+        self.add_packet_list(p.missions, packets.missions,
+                             packets.missions_size)
+
     def update(self):
         self.scripts.call('update')
 
@@ -550,7 +586,9 @@ class CubeWorldServer:
                     continue
                 chunk.destroy()
 
-        self.world.update(self.update_loop.dt)
+        out_packets = self.world.update(self.update_loop.dt)
+        self.handle_tgen_packets(out_packets)
+
         for entity_id, entity in self.world.entities.items():
             entity_packet.set_entity(entity, entity_id, entity.mask)
             entity.mask = 0

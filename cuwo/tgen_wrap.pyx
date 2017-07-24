@@ -1723,6 +1723,8 @@ cdef class WrapCriticalSection:
         self.data = <CriticalSection*>self.storage
     @property
     def DebugInfo(self):
+        if self.data[0].DebugInfo == 0:
+            return None
         cdef WrapArray2 ret = WrapArray2.__new__(WrapArray2)
         ret.array = &(<int8_t*>self.data[0].DebugInfo)[0]
         return ret
@@ -1881,6 +1883,8 @@ cdef class WrapField:
         self.data[0].b = value
     @property
     def data(self):
+        if self.data[0].data == 0:
+            return None
         cdef WrapArray3 ret = WrapArray3.__new__(WrapArray3)
         ret.array = &(<Color*>self.data[0].data)[0]
         return ret
@@ -2171,6 +2175,8 @@ cdef class WrapZone:
         self.data[0].dwordA4 = value
     @property
     def fields(self):
+        if self.data[0].fields == 0:
+            return None
         cdef WrapArray4 ret = WrapArray4.__new__(WrapArray4)
         ret.array = &(<Field*>self.data[0].fields)[0]
         return ret
@@ -3367,6 +3373,1923 @@ cdef class WrapCreature:
         self.data[0].dword1E5C = value
     def reset(self):
         memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapHitPacket:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(HitPacket))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(HitPacket))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapHitPacket c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapHitPacket inst = WrapHitPacket.__new__(WrapHitPacket)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(HitPacket))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(HitPacket))
+        self.data = <HitPacket*>self.storage
+    @property
+    def entity_id(self):
+        return <uint64_t>(<uint64_t>self.data[0].entity_id)
+    @entity_id.setter
+    def entity_id(self, value):
+        self.data[0].entity_id = value
+    @property
+    def target_id(self):
+        return <uint64_t>(<uint64_t>self.data[0].target_id)
+    @target_id.setter
+    def target_id(self, value):
+        self.data[0].target_id = value
+    @property
+    def damage(self):
+        return <float>(<float>self.data[0].damage)
+    @damage.setter
+    def damage(self, value):
+        self.data[0].damage = value
+    @property
+    def critical(self):
+        return <uint8_t>(<uint8_t>self.data[0].critical)
+    @critical.setter
+    def critical(self, value):
+        self.data[0].critical = value
+    @property
+    def stun_duration(self):
+        return <uint32_t>(<uint32_t>self.data[0].stun_duration)
+    @stun_duration.setter
+    def stun_duration(self, value):
+        self.data[0].stun_duration = value
+    @property
+    def something8(self):
+        return <uint32_t>(<uint32_t>self.data[0].something8)
+    @something8.setter
+    def something8(self, value):
+        self.data[0].something8 = value
+    @property
+    def pos(self):
+        cdef int64_t * ptr = &self.data[0].pos[0]
+        return np.asarray(<int64_t[:3]>ptr).view(Vector3)
+    @pos.setter
+    def pos(self, value):
+        self.data[0].pos = value
+    @property
+    def hit_dir(self):
+        cdef float * ptr = &self.data[0].hit_dir[0]
+        return np.asarray(<float[:3]>ptr).view(Vector3)
+    @hit_dir.setter
+    def hit_dir(self, value):
+        self.data[0].hit_dir = value
+    @property
+    def skill_hit(self):
+        return <uint8_t>(<uint8_t>self.data[0].skill_hit)
+    @skill_hit.setter
+    def skill_hit(self, value):
+        self.data[0].skill_hit = value
+    @property
+    def hit_type(self):
+        return <uint8_t>(<uint8_t>self.data[0].hit_type)
+    @hit_type.setter
+    def hit_type(self, value):
+        self.data[0].hit_type = value
+    @property
+    def show_light(self):
+        return <uint8_t>(<uint8_t>self.data[0].show_light)
+    @show_light.setter
+    def show_light(self, value):
+        self.data[0].show_light = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapParticleData:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(ParticleData))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(ParticleData))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapParticleData c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapParticleData inst = WrapParticleData.__new__(WrapParticleData)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ParticleData))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ParticleData))
+        self.data = <ParticleData*>self.storage
+    @property
+    def pos(self):
+        cdef int64_t * ptr = &self.data[0].pos[0]
+        return np.asarray(<int64_t[:3]>ptr).view(Vector3)
+    @pos.setter
+    def pos(self, value):
+        self.data[0].pos = value
+    @property
+    def accel(self):
+        cdef float * ptr = &self.data[0].accel[0]
+        return np.asarray(<float[:3]>ptr).view(Vector3)
+    @accel.setter
+    def accel(self, value):
+        self.data[0].accel = value
+    @property
+    def color(self):
+        return <float[:4]>(<float*>self.data[0].color)
+    @color.setter
+    def color(self, value):
+        raise NotImplementedError()
+    @property
+    def scale(self):
+        return <float>(<float>self.data[0].scale)
+    @scale.setter
+    def scale(self, value):
+        self.data[0].scale = value
+    @property
+    def count(self):
+        return <uint32_t>(<uint32_t>self.data[0].count)
+    @count.setter
+    def count(self, value):
+        self.data[0].count = value
+    @property
+    def particle_type(self):
+        return <uint32_t>(<uint32_t>self.data[0].particle_type)
+    @particle_type.setter
+    def particle_type(self, value):
+        self.data[0].particle_type = value
+    @property
+    def spreading(self):
+        return <float>(<float>self.data[0].spreading)
+    @spreading.setter
+    def spreading(self, value):
+        self.data[0].spreading = value
+    @property
+    def something18(self):
+        return <uint32_t>(<uint32_t>self.data[0].something18)
+    @something18.setter
+    def something18(self, value):
+        self.data[0].something18 = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapSoundAction:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(SoundAction))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(SoundAction))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapSoundAction c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapSoundAction inst = WrapSoundAction.__new__(WrapSoundAction)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(SoundAction))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(SoundAction))
+        self.data = <SoundAction*>self.storage
+    @property
+    def pos(self):
+        cdef float * ptr = &self.data[0].pos[0]
+        return np.asarray(<float[:3]>ptr).view(Vector3)
+    @pos.setter
+    def pos(self, value):
+        self.data[0].pos = value
+    @property
+    def sound_index(self):
+        return <uint32_t>(<uint32_t>self.data[0].sound_index)
+    @sound_index.setter
+    def sound_index(self, value):
+        self.data[0].sound_index = value
+    @property
+    def pitch(self):
+        return <float>(<float>self.data[0].pitch)
+    @pitch.setter
+    def pitch(self, value):
+        self.data[0].pitch = value
+    @property
+    def volume(self):
+        return <float>(<float>self.data[0].volume)
+    @volume.setter
+    def volume(self, value):
+        self.data[0].volume = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapBlockAction:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(BlockAction))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(BlockAction))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapBlockAction c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapBlockAction inst = WrapBlockAction.__new__(WrapBlockAction)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(BlockAction))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(BlockAction))
+        self.data = <BlockAction*>self.storage
+    @property
+    def block_pos(self):
+        cdef int32_t * ptr = &self.data[0].block_pos[0]
+        return np.asarray(<int32_t[:3]>ptr).view(Vector3)
+    @block_pos.setter
+    def block_pos(self, value):
+        self.data[0].block_pos = value
+    @property
+    def color_red(self):
+        return <uint8_t>(<uint8_t>self.data[0].color_red)
+    @color_red.setter
+    def color_red(self, value):
+        self.data[0].color_red = value
+    @property
+    def color_green(self):
+        return <uint8_t>(<uint8_t>self.data[0].color_green)
+    @color_green.setter
+    def color_green(self, value):
+        self.data[0].color_green = value
+    @property
+    def color_blue(self):
+        return <uint8_t>(<uint8_t>self.data[0].color_blue)
+    @color_blue.setter
+    def color_blue(self, value):
+        self.data[0].color_blue = value
+    @property
+    def block_type(self):
+        return <uint8_t>(<uint8_t>self.data[0].block_type)
+    @block_type.setter
+    def block_type(self, value):
+        self.data[0].block_type = value
+    @property
+    def something8(self):
+        return <uint32_t>(<uint32_t>self.data[0].something8)
+    @something8.setter
+    def something8(self, value):
+        self.data[0].something8 = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapShootPacket:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(ShootPacket))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(ShootPacket))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapShootPacket c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapShootPacket inst = WrapShootPacket.__new__(WrapShootPacket)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ShootPacket))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ShootPacket))
+        self.data = <ShootPacket*>self.storage
+    @property
+    def entity_id(self):
+        return <uint64_t>(<uint64_t>self.data[0].entity_id)
+    @entity_id.setter
+    def entity_id(self, value):
+        self.data[0].entity_id = value
+    @property
+    def chunk_x(self):
+        return <int32_t>(<int32_t>self.data[0].chunk_x)
+    @chunk_x.setter
+    def chunk_x(self, value):
+        self.data[0].chunk_x = value
+    @property
+    def chunk_y(self):
+        return <int32_t>(<int32_t>self.data[0].chunk_y)
+    @chunk_y.setter
+    def chunk_y(self, value):
+        self.data[0].chunk_y = value
+    @property
+    def something5(self):
+        return <uint32_t>(<uint32_t>self.data[0].something5)
+    @something5.setter
+    def something5(self, value):
+        self.data[0].something5 = value
+    @property
+    def pos(self):
+        cdef int64_t * ptr = &self.data[0].pos[0]
+        return np.asarray(<int64_t[:3]>ptr).view(Vector3)
+    @pos.setter
+    def pos(self, value):
+        self.data[0].pos = value
+    @property
+    def something13(self):
+        return <uint32_t>(<uint32_t>self.data[0].something13)
+    @something13.setter
+    def something13(self, value):
+        self.data[0].something13 = value
+    @property
+    def something14(self):
+        return <uint32_t>(<uint32_t>self.data[0].something14)
+    @something14.setter
+    def something14(self, value):
+        self.data[0].something14 = value
+    @property
+    def something15(self):
+        return <uint32_t>(<uint32_t>self.data[0].something15)
+    @something15.setter
+    def something15(self, value):
+        self.data[0].something15 = value
+    @property
+    def velocity(self):
+        cdef float * ptr = &self.data[0].velocity[0]
+        return np.asarray(<float[:3]>ptr).view(Vector3)
+    @velocity.setter
+    def velocity(self, value):
+        self.data[0].velocity = value
+    @property
+    def legacy_damage(self):
+        return <float>(<float>self.data[0].legacy_damage)
+    @legacy_damage.setter
+    def legacy_damage(self, value):
+        self.data[0].legacy_damage = value
+    @property
+    def something20(self):
+        return <float>(<float>self.data[0].something20)
+    @something20.setter
+    def something20(self, value):
+        self.data[0].something20 = value
+    @property
+    def scale(self):
+        return <float>(<float>self.data[0].scale)
+    @scale.setter
+    def scale(self, value):
+        self.data[0].scale = value
+    @property
+    def mana(self):
+        return <float>(<float>self.data[0].mana)
+    @mana.setter
+    def mana(self, value):
+        self.data[0].mana = value
+    @property
+    def particles(self):
+        return <uint32_t>(<uint32_t>self.data[0].particles)
+    @particles.setter
+    def particles(self, value):
+        self.data[0].particles = value
+    @property
+    def skill(self):
+        return <uint8_t>(<uint8_t>self.data[0].skill)
+    @skill.setter
+    def skill(self, value):
+        self.data[0].skill = value
+    @property
+    def projectile(self):
+        return <uint32_t>(<uint32_t>self.data[0].projectile)
+    @projectile.setter
+    def projectile(self, value):
+        self.data[0].projectile = value
+    @property
+    def something26(self):
+        return <uint8_t>(<uint8_t>self.data[0].something26)
+    @something26.setter
+    def something26(self, value):
+        self.data[0].something26 = value
+    @property
+    def something27(self):
+        return <uint32_t>(<uint32_t>self.data[0].something27)
+    @something27.setter
+    def something27(self, value):
+        self.data[0].something27 = value
+    @property
+    def something28(self):
+        return <uint32_t>(<uint32_t>self.data[0].something28)
+    @something28.setter
+    def something28(self, value):
+        self.data[0].something28 = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapPickupAction:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(PickupAction))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(PickupAction))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapPickupAction c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapPickupAction inst = WrapPickupAction.__new__(WrapPickupAction)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(PickupAction))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(PickupAction))
+        self.data = <PickupAction*>self.storage
+    @property
+    def entity_id(self):
+        return <uint64_t>(<uint64_t>self.data[0].entity_id)
+    @entity_id.setter
+    def entity_id(self, value):
+        self.data[0].entity_id = value
+    @property
+    def item_data(self):
+        cdef WrapItemData ret = WrapItemData.__new__(WrapItemData)
+        ret.data = &self.data[0].item_data
+        return ret
+    @item_data.setter
+    def item_data(self, value):
+        cdef WrapItemData v = value
+        self.data[0].item_data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapKillAction:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(KillAction))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(KillAction))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapKillAction c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapKillAction inst = WrapKillAction.__new__(WrapKillAction)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(KillAction))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(KillAction))
+        self.data = <KillAction*>self.storage
+    @property
+    def entity_id(self):
+        return <uint64_t>(<uint64_t>self.data[0].entity_id)
+    @entity_id.setter
+    def entity_id(self, value):
+        self.data[0].entity_id = value
+    @property
+    def target_id(self):
+        return <uint64_t>(<uint64_t>self.data[0].target_id)
+    @target_id.setter
+    def target_id(self, value):
+        self.data[0].target_id = value
+    @property
+    def xp_gained(self):
+        return <int32_t>(<int32_t>self.data[0].xp_gained)
+    @xp_gained.setter
+    def xp_gained(self, value):
+        self.data[0].xp_gained = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapDamageAction:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(DamageAction))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(DamageAction))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapDamageAction c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapDamageAction inst = WrapDamageAction.__new__(WrapDamageAction)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(DamageAction))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(DamageAction))
+        self.data = <DamageAction*>self.storage
+    @property
+    def target_id(self):
+        return <uint64_t>(<uint64_t>self.data[0].target_id)
+    @target_id.setter
+    def target_id(self, value):
+        self.data[0].target_id = value
+    @property
+    def entity_id(self):
+        return <uint64_t>(<uint64_t>self.data[0].entity_id)
+    @entity_id.setter
+    def entity_id(self, value):
+        self.data[0].entity_id = value
+    @property
+    def damage(self):
+        return <float>(<float>self.data[0].damage)
+    @damage.setter
+    def damage(self, value):
+        self.data[0].damage = value
+    @property
+    def skip(self):
+        return <int8_t[:4]>(<int8_t*>self.data[0].skip)
+    @skip.setter
+    def skip(self, value):
+        raise NotImplementedError()
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapPassivePacket:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(PassivePacket))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(PassivePacket))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapPassivePacket c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapPassivePacket inst = WrapPassivePacket.__new__(WrapPassivePacket)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(PassivePacket))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(PassivePacket))
+        self.data = <PassivePacket*>self.storage
+    @property
+    def entity_id(self):
+        return <uint64_t>(<uint64_t>self.data[0].entity_id)
+    @entity_id.setter
+    def entity_id(self, value):
+        self.data[0].entity_id = value
+    @property
+    def target_id(self):
+        return <uint64_t>(<uint64_t>self.data[0].target_id)
+    @target_id.setter
+    def target_id(self, value):
+        self.data[0].target_id = value
+    @property
+    def passive_type(self):
+        return <uint8_t>(<uint8_t>self.data[0].passive_type)
+    @passive_type.setter
+    def passive_type(self, value):
+        self.data[0].passive_type = value
+    @property
+    def modifier(self):
+        return <float>(<float>self.data[0].modifier)
+    @modifier.setter
+    def modifier(self, value):
+        self.data[0].modifier = value
+    @property
+    def duration(self):
+        return <uint32_t>(<uint32_t>self.data[0].duration)
+    @duration.setter
+    def duration(self, value):
+        self.data[0].duration = value
+    @property
+    def target_id2(self):
+        return <uint64_t>(<uint64_t>self.data[0].target_id2)
+    @target_id2.setter
+    def target_id2(self, value):
+        self.data[0].target_id2 = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapMissionData:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(MissionData))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(MissionData))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapMissionData c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapMissionData inst = WrapMissionData.__new__(WrapMissionData)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(MissionData))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(MissionData))
+        self.data = <MissionData*>self.storage
+    @property
+    def section_x(self):
+        return <int32_t>(<int32_t>self.data[0].section_x)
+    @section_x.setter
+    def section_x(self, value):
+        self.data[0].section_x = value
+    @property
+    def section_y(self):
+        return <int32_t>(<int32_t>self.data[0].section_y)
+    @section_y.setter
+    def section_y(self, value):
+        self.data[0].section_y = value
+    @property
+    def something1(self):
+        return <uint32_t>(<uint32_t>self.data[0].something1)
+    @something1.setter
+    def something1(self, value):
+        self.data[0].something1 = value
+    @property
+    def something2(self):
+        return <uint32_t>(<uint32_t>self.data[0].something2)
+    @something2.setter
+    def something2(self, value):
+        self.data[0].something2 = value
+    @property
+    def something3(self):
+        return <uint32_t>(<uint32_t>self.data[0].something3)
+    @something3.setter
+    def something3(self, value):
+        self.data[0].something3 = value
+    @property
+    def mission_id(self):
+        return <uint32_t>(<uint32_t>self.data[0].mission_id)
+    @mission_id.setter
+    def mission_id(self, value):
+        self.data[0].mission_id = value
+    @property
+    def something5(self):
+        return <uint32_t>(<uint32_t>self.data[0].something5)
+    @something5.setter
+    def something5(self, value):
+        self.data[0].something5 = value
+    @property
+    def monster_id(self):
+        return <uint32_t>(<uint32_t>self.data[0].monster_id)
+    @monster_id.setter
+    def monster_id(self, value):
+        self.data[0].monster_id = value
+    @property
+    def quest_level(self):
+        return <uint32_t>(<uint32_t>self.data[0].quest_level)
+    @quest_level.setter
+    def quest_level(self, value):
+        self.data[0].quest_level = value
+    @property
+    def something8(self):
+        return <uint8_t>(<uint8_t>self.data[0].something8)
+    @something8.setter
+    def something8(self, value):
+        self.data[0].something8 = value
+    @property
+    def state(self):
+        return <uint8_t>(<uint8_t>self.data[0].state)
+    @state.setter
+    def state(self, value):
+        self.data[0].state = value
+    @property
+    def something10(self):
+        return <float>(<float>self.data[0].something10)
+    @something10.setter
+    def something10(self, value):
+        self.data[0].something10 = value
+    @property
+    def something11(self):
+        return <float>(<float>self.data[0].something11)
+    @something11.setter
+    def something11(self, value):
+        self.data[0].something11 = value
+    @property
+    def chunk_x(self):
+        return <uint32_t>(<uint32_t>self.data[0].chunk_x)
+    @chunk_x.setter
+    def chunk_x(self, value):
+        self.data[0].chunk_x = value
+    @property
+    def chunk_y(self):
+        return <uint32_t>(<uint32_t>self.data[0].chunk_y)
+    @chunk_y.setter
+    def chunk_y(self, value):
+        self.data[0].chunk_y = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapHitPacketList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(HitPacketList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(HitPacketList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapHitPacketList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapHitPacketList inst = WrapHitPacketList.__new__(WrapHitPacketList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(HitPacketList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(HitPacketList))
+        self.data = <HitPacketList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray5 ret = WrapArray5.__new__(WrapArray5)
+        ret.array = &(<HitPacketList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray5 ret = WrapArray5.__new__(WrapArray5)
+        ret.array = &(<HitPacketList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapHitPacket ret = WrapHitPacket.__new__(WrapHitPacket)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapHitPacket v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapParticleDataList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(ParticleDataList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(ParticleDataList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapParticleDataList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapParticleDataList inst = WrapParticleDataList.__new__(WrapParticleDataList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ParticleDataList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ParticleDataList))
+        self.data = <ParticleDataList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray6 ret = WrapArray6.__new__(WrapArray6)
+        ret.array = &(<ParticleDataList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray6 ret = WrapArray6.__new__(WrapArray6)
+        ret.array = &(<ParticleDataList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapParticleData ret = WrapParticleData.__new__(WrapParticleData)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapParticleData v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapSoundActionList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(SoundActionList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(SoundActionList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapSoundActionList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapSoundActionList inst = WrapSoundActionList.__new__(WrapSoundActionList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(SoundActionList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(SoundActionList))
+        self.data = <SoundActionList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray7 ret = WrapArray7.__new__(WrapArray7)
+        ret.array = &(<SoundActionList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray7 ret = WrapArray7.__new__(WrapArray7)
+        ret.array = &(<SoundActionList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapSoundAction ret = WrapSoundAction.__new__(WrapSoundAction)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapSoundAction v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapBlockActionList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(BlockActionList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(BlockActionList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapBlockActionList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapBlockActionList inst = WrapBlockActionList.__new__(WrapBlockActionList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(BlockActionList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(BlockActionList))
+        self.data = <BlockActionList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray8 ret = WrapArray8.__new__(WrapArray8)
+        ret.array = &(<BlockActionList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray8 ret = WrapArray8.__new__(WrapArray8)
+        ret.array = &(<BlockActionList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapBlockAction ret = WrapBlockAction.__new__(WrapBlockAction)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapBlockAction v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapShootPacketList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(ShootPacketList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(ShootPacketList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapShootPacketList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapShootPacketList inst = WrapShootPacketList.__new__(WrapShootPacketList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ShootPacketList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ShootPacketList))
+        self.data = <ShootPacketList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray9 ret = WrapArray9.__new__(WrapArray9)
+        ret.array = &(<ShootPacketList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray9 ret = WrapArray9.__new__(WrapArray9)
+        ret.array = &(<ShootPacketList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapShootPacket ret = WrapShootPacket.__new__(WrapShootPacket)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapShootPacket v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapChunkItemList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(ChunkItemList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(ChunkItemList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapChunkItemList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapChunkItemList inst = WrapChunkItemList.__new__(WrapChunkItemList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ChunkItemList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ChunkItemList))
+        self.data = <ChunkItemList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray10 ret = WrapArray10.__new__(WrapArray10)
+        ret.array = &(<ChunkItemList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray10 ret = WrapArray10.__new__(WrapArray10)
+        ret.array = &(<ChunkItemList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapChunkItemData ret = WrapChunkItemData.__new__(WrapChunkItemData)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapChunkItemData v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapChunkItemsList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(ChunkItemsList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(ChunkItemsList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapChunkItemsList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapChunkItemsList inst = WrapChunkItemsList.__new__(WrapChunkItemsList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(ChunkItemsList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(ChunkItemsList))
+        self.data = <ChunkItemsList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray11 ret = WrapArray11.__new__(WrapArray11)
+        ret.array = &(<ChunkItemsList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray11 ret = WrapArray11.__new__(WrapArray11)
+        ret.array = &(<ChunkItemsList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def chunk_x(self):
+        return <int32_t>(<int32_t>self.data[0].chunk_x)
+    @chunk_x.setter
+    def chunk_x(self, value):
+        self.data[0].chunk_x = value
+    @property
+    def chunk_y(self):
+        return <int32_t>(<int32_t>self.data[0].chunk_y)
+    @chunk_y.setter
+    def chunk_y(self, value):
+        self.data[0].chunk_y = value
+    @property
+    def data(self):
+        cdef WrapChunkItemList ret = WrapChunkItemList.__new__(WrapChunkItemList)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapChunkItemList v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapStaticEntityList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(StaticEntityList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(StaticEntityList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapStaticEntityList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapStaticEntityList inst = WrapStaticEntityList.__new__(WrapStaticEntityList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(StaticEntityList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(StaticEntityList))
+        self.data = <StaticEntityList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray12 ret = WrapArray12.__new__(WrapArray12)
+        ret.array = &(<StaticEntityList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray12 ret = WrapArray12.__new__(WrapArray12)
+        ret.array = &(<StaticEntityList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapStaticEntityHeader ret = WrapStaticEntityHeader.__new__(WrapStaticEntityHeader)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapStaticEntityHeader v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapItems8List_2:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(Items8List_2))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(Items8List_2))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapItems8List_2 c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapItems8List_2 inst = WrapItems8List_2.__new__(WrapItems8List_2)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(Items8List_2))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(Items8List_2))
+        self.data = <Items8List_2*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray13 ret = WrapArray13.__new__(WrapArray13)
+        ret.array = &(<Items8List_2*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray13 ret = WrapArray13.__new__(WrapArray13)
+        ret.array = &(<Items8List_2*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        return <uint8_t[:16]>(<uint8_t*>self.data[0].data)
+    @data.setter
+    def data(self, value):
+        raise NotImplementedError()
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapItems8List_1:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(Items8List_1))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(Items8List_1))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapItems8List_1 c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapItems8List_1 inst = WrapItems8List_1.__new__(WrapItems8List_1)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(Items8List_1))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(Items8List_1))
+        self.data = <Items8List_1*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray14 ret = WrapArray14.__new__(WrapArray14)
+        ret.array = &(<Items8List_1*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray14 ret = WrapArray14.__new__(WrapArray14)
+        ret.array = &(<Items8List_1*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def something(self):
+        return <uint64_t>(<uint64_t>self.data[0].something)
+    @something.setter
+    def something(self, value):
+        self.data[0].something = value
+    @property
+    def data(self):
+        cdef WrapItems8List_2 ret = WrapItems8List_2.__new__(WrapItems8List_2)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapItems8List_2 v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapPickupActionList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(PickupActionList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(PickupActionList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapPickupActionList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapPickupActionList inst = WrapPickupActionList.__new__(WrapPickupActionList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(PickupActionList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(PickupActionList))
+        self.data = <PickupActionList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray15 ret = WrapArray15.__new__(WrapArray15)
+        ret.array = &(<PickupActionList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray15 ret = WrapArray15.__new__(WrapArray15)
+        ret.array = &(<PickupActionList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapPickupAction ret = WrapPickupAction.__new__(WrapPickupAction)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapPickupAction v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapKillActionList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(KillActionList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(KillActionList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapKillActionList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapKillActionList inst = WrapKillActionList.__new__(WrapKillActionList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(KillActionList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(KillActionList))
+        self.data = <KillActionList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray16 ret = WrapArray16.__new__(WrapArray16)
+        ret.array = &(<KillActionList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray16 ret = WrapArray16.__new__(WrapArray16)
+        ret.array = &(<KillActionList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapKillAction ret = WrapKillAction.__new__(WrapKillAction)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapKillAction v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapDamageActionList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(DamageActionList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(DamageActionList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapDamageActionList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapDamageActionList inst = WrapDamageActionList.__new__(WrapDamageActionList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(DamageActionList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(DamageActionList))
+        self.data = <DamageActionList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray17 ret = WrapArray17.__new__(WrapArray17)
+        ret.array = &(<DamageActionList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray17 ret = WrapArray17.__new__(WrapArray17)
+        ret.array = &(<DamageActionList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapDamageAction ret = WrapDamageAction.__new__(WrapDamageAction)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapDamageAction v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapPassivePacketList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(PassivePacketList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(PassivePacketList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapPassivePacketList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapPassivePacketList inst = WrapPassivePacketList.__new__(WrapPassivePacketList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(PassivePacketList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(PassivePacketList))
+        self.data = <PassivePacketList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray18 ret = WrapArray18.__new__(WrapArray18)
+        ret.array = &(<PassivePacketList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray18 ret = WrapArray18.__new__(WrapArray18)
+        ret.array = &(<PassivePacketList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapPassivePacket ret = WrapPassivePacket.__new__(WrapPassivePacket)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapPassivePacket v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapMissionDataList:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(MissionDataList))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(MissionDataList))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapMissionDataList c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapMissionDataList inst = WrapMissionDataList.__new__(WrapMissionDataList)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(MissionDataList))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(MissionDataList))
+        self.data = <MissionDataList*>self.storage
+    @property
+    def next(self):
+        if self.data[0].next == 0:
+            return None
+        cdef WrapArray19 ret = WrapArray19.__new__(WrapArray19)
+        ret.array = &(<MissionDataList*>self.data[0].next)[0]
+        return ret
+    @next.setter
+    def next(self, value):
+        raise NotImplementedError()
+    @property
+    def prev(self):
+        if self.data[0].prev == 0:
+            return None
+        cdef WrapArray19 ret = WrapArray19.__new__(WrapArray19)
+        ret.array = &(<MissionDataList*>self.data[0].prev)[0]
+        return ret
+    @prev.setter
+    def prev(self, value):
+        raise NotImplementedError()
+    @property
+    def data(self):
+        cdef WrapMissionData ret = WrapMissionData.__new__(WrapMissionData)
+        ret.data = &self.data[0].data
+        return ret
+    @data.setter
+    def data(self, value):
+        cdef WrapMissionData v = value
+        self.data[0].data = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+cdef class WrapPacketQueue:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(PacketQueue))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(PacketQueue))
+    def cast(self, object klass):
+        cdef object inst = klass.__new__(klass)
+        cdef WrapPacketQueue c = inst
+        c.data = self.data
+        return inst
+    def copy(self):
+        cdef WrapPacketQueue inst = WrapPacketQueue.__new__(WrapPacketQueue)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(PacketQueue))
+        return inst
+    def __init__(self):
+        self.alloc()
+    def __dealloc__(self):
+        if self.storage != NULL:
+            PyMem_Free(self.storage)
+    cdef void alloc(self):
+        self.storage = PyMem_Malloc(sizeof(PacketQueue))
+        self.data = <PacketQueue*>self.storage
+    @property
+    def player_hits(self):
+        if self.data[0].player_hits == 0:
+            return None
+        cdef WrapArray5 ret = WrapArray5.__new__(WrapArray5)
+        ret.array = &(<HitPacketList*>self.data[0].player_hits)[0]
+        return ret
+    @player_hits.setter
+    def player_hits(self, value):
+        raise NotImplementedError()
+    @property
+    def player_hits_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].player_hits_size)
+    @player_hits_size.setter
+    def player_hits_size(self, value):
+        self.data[0].player_hits_size = value
+    @property
+    def sound_actions(self):
+        if self.data[0].sound_actions == 0:
+            return None
+        cdef WrapArray7 ret = WrapArray7.__new__(WrapArray7)
+        ret.array = &(<SoundActionList*>self.data[0].sound_actions)[0]
+        return ret
+    @sound_actions.setter
+    def sound_actions(self, value):
+        raise NotImplementedError()
+    @property
+    def sound_actions_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].sound_actions_size)
+    @sound_actions_size.setter
+    def sound_actions_size(self, value):
+        self.data[0].sound_actions_size = value
+    @property
+    def particles(self):
+        if self.data[0].particles == 0:
+            return None
+        cdef WrapArray6 ret = WrapArray6.__new__(WrapArray6)
+        ret.array = &(<ParticleDataList*>self.data[0].particles)[0]
+        return ret
+    @particles.setter
+    def particles(self, value):
+        raise NotImplementedError()
+    @property
+    def particles_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].particles_size)
+    @particles_size.setter
+    def particles_size(self, value):
+        self.data[0].particles_size = value
+    @property
+    def block_actions(self):
+        if self.data[0].block_actions == 0:
+            return None
+        cdef WrapArray8 ret = WrapArray8.__new__(WrapArray8)
+        ret.array = &(<BlockActionList*>self.data[0].block_actions)[0]
+        return ret
+    @block_actions.setter
+    def block_actions(self, value):
+        raise NotImplementedError()
+    @property
+    def block_actions_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].block_actions_size)
+    @block_actions_size.setter
+    def block_actions_size(self, value):
+        self.data[0].block_actions_size = value
+    @property
+    def shoot_packets(self):
+        if self.data[0].shoot_packets == 0:
+            return None
+        cdef WrapArray9 ret = WrapArray9.__new__(WrapArray9)
+        ret.array = &(<ShootPacketList*>self.data[0].shoot_packets)[0]
+        return ret
+    @shoot_packets.setter
+    def shoot_packets(self, value):
+        raise NotImplementedError()
+    @property
+    def shoot_packets_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].shoot_packets_size)
+    @shoot_packets_size.setter
+    def shoot_packets_size(self, value):
+        self.data[0].shoot_packets_size = value
+    @property
+    def chunk_items(self):
+        if self.data[0].chunk_items == 0:
+            return None
+        cdef WrapArray11 ret = WrapArray11.__new__(WrapArray11)
+        ret.array = &(<ChunkItemsList*>self.data[0].chunk_items)[0]
+        return ret
+    @chunk_items.setter
+    def chunk_items(self, value):
+        raise NotImplementedError()
+    @property
+    def chunk_items_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].chunk_items_size)
+    @chunk_items_size.setter
+    def chunk_items_size(self, value):
+        self.data[0].chunk_items_size = value
+    @property
+    def static_entities(self):
+        if self.data[0].static_entities == 0:
+            return None
+        cdef WrapArray12 ret = WrapArray12.__new__(WrapArray12)
+        ret.array = &(<StaticEntityList*>self.data[0].static_entities)[0]
+        return ret
+    @static_entities.setter
+    def static_entities(self, value):
+        raise NotImplementedError()
+    @property
+    def static_entities_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].static_entities_size)
+    @static_entities_size.setter
+    def static_entities_size(self, value):
+        self.data[0].static_entities_size = value
+    @property
+    def items_8(self):
+        if self.data[0].items_8 == 0:
+            return None
+        cdef WrapArray14 ret = WrapArray14.__new__(WrapArray14)
+        ret.array = &(<Items8List_1*>self.data[0].items_8)[0]
+        return ret
+    @items_8.setter
+    def items_8(self, value):
+        raise NotImplementedError()
+    @property
+    def items_8_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].items_8_size)
+    @items_8_size.setter
+    def items_8_size(self, value):
+        self.data[0].items_8_size = value
+    @property
+    def pickup_actions(self):
+        if self.data[0].pickup_actions == 0:
+            return None
+        cdef WrapArray15 ret = WrapArray15.__new__(WrapArray15)
+        ret.array = &(<PickupActionList*>self.data[0].pickup_actions)[0]
+        return ret
+    @pickup_actions.setter
+    def pickup_actions(self, value):
+        raise NotImplementedError()
+    @property
+    def pickup_actions_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].pickup_actions_size)
+    @pickup_actions_size.setter
+    def pickup_actions_size(self, value):
+        self.data[0].pickup_actions_size = value
+    @property
+    def kill_actions(self):
+        if self.data[0].kill_actions == 0:
+            return None
+        cdef WrapArray16 ret = WrapArray16.__new__(WrapArray16)
+        ret.array = &(<KillActionList*>self.data[0].kill_actions)[0]
+        return ret
+    @kill_actions.setter
+    def kill_actions(self, value):
+        raise NotImplementedError()
+    @property
+    def kill_actions_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].kill_actions_size)
+    @kill_actions_size.setter
+    def kill_actions_size(self, value):
+        self.data[0].kill_actions_size = value
+    @property
+    def damage_actions(self):
+        if self.data[0].damage_actions == 0:
+            return None
+        cdef WrapArray17 ret = WrapArray17.__new__(WrapArray17)
+        ret.array = &(<DamageActionList*>self.data[0].damage_actions)[0]
+        return ret
+    @damage_actions.setter
+    def damage_actions(self, value):
+        raise NotImplementedError()
+    @property
+    def damage_actions_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].damage_actions_size)
+    @damage_actions_size.setter
+    def damage_actions_size(self, value):
+        self.data[0].damage_actions_size = value
+    @property
+    def passive_packets(self):
+        if self.data[0].passive_packets == 0:
+            return None
+        cdef WrapArray18 ret = WrapArray18.__new__(WrapArray18)
+        ret.array = &(<PassivePacketList*>self.data[0].passive_packets)[0]
+        return ret
+    @passive_packets.setter
+    def passive_packets(self, value):
+        raise NotImplementedError()
+    @property
+    def passive_packets_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].passive_packets_size)
+    @passive_packets_size.setter
+    def passive_packets_size(self, value):
+        self.data[0].passive_packets_size = value
+    @property
+    def missions(self):
+        if self.data[0].missions == 0:
+            return None
+        cdef WrapArray19 ret = WrapArray19.__new__(WrapArray19)
+        ret.array = &(<MissionDataList*>self.data[0].missions)[0]
+        return ret
+    @missions.setter
+    def missions(self, value):
+        raise NotImplementedError()
+    @property
+    def missions_size(self):
+        return <uint32_t>(<uint32_t>self.data[0].missions_size)
+    @missions_size.setter
+    def missions_size(self, value):
+        self.data[0].missions_size = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
 cdef class WrapArray0:
     def __getitem__(self, uint32_t index):
         if index >= 32: raise IndexError()
@@ -3394,6 +5317,81 @@ cdef class WrapArray3:
 cdef class WrapArray4:
     def __getitem__(self, uint32_t index):
         cdef WrapField ret = WrapField()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray5:
+    def __getitem__(self, uint32_t index):
+        cdef WrapHitPacketList ret = WrapHitPacketList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray6:
+    def __getitem__(self, uint32_t index):
+        cdef WrapParticleDataList ret = WrapParticleDataList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray7:
+    def __getitem__(self, uint32_t index):
+        cdef WrapSoundActionList ret = WrapSoundActionList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray8:
+    def __getitem__(self, uint32_t index):
+        cdef WrapBlockActionList ret = WrapBlockActionList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray9:
+    def __getitem__(self, uint32_t index):
+        cdef WrapShootPacketList ret = WrapShootPacketList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray10:
+    def __getitem__(self, uint32_t index):
+        cdef WrapChunkItemList ret = WrapChunkItemList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray11:
+    def __getitem__(self, uint32_t index):
+        cdef WrapChunkItemsList ret = WrapChunkItemsList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray12:
+    def __getitem__(self, uint32_t index):
+        cdef WrapStaticEntityList ret = WrapStaticEntityList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray13:
+    def __getitem__(self, uint32_t index):
+        cdef WrapItems8List_2 ret = WrapItems8List_2()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray14:
+    def __getitem__(self, uint32_t index):
+        cdef WrapItems8List_1 ret = WrapItems8List_1()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray15:
+    def __getitem__(self, uint32_t index):
+        cdef WrapPickupActionList ret = WrapPickupActionList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray16:
+    def __getitem__(self, uint32_t index):
+        cdef WrapKillActionList ret = WrapKillActionList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray17:
+    def __getitem__(self, uint32_t index):
+        cdef WrapDamageActionList ret = WrapDamageActionList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray18:
+    def __getitem__(self, uint32_t index):
+        cdef WrapPassivePacketList ret = WrapPassivePacketList()
+        ret.data = &self.array[index]
+        return ret
+cdef class WrapArray19:
+    def __getitem__(self, uint32_t index):
+        cdef WrapMissionDataList ret = WrapMissionDataList()
         ret.data = &self.array[index]
         return ret
 cdef class WrapItemWithHeaderVec:

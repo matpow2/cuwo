@@ -369,7 +369,7 @@ class World:
 
     def update(self, dt):
         if not self.tgen_init:
-            return
+            return None
         self.dt = dt
         tgen.step(int(dt * 1000.0))
         creatures = tgen.get_creatures()
@@ -394,6 +394,8 @@ class World:
             if not entity.is_tgen:
                 continue
             entity.mask = constants.FULL_MASK
+
+        return tgen.get_out_packets()
 
     def stop(self):
         self.gen_queue.put(None)
