@@ -791,6 +791,7 @@ def main():
         try:
             import uvloop
             asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+            print('(using uvloop)')
         except ImportError:
             pass
         loop = asyncio.get_event_loop()
