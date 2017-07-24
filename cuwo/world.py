@@ -56,14 +56,6 @@ class Entity(WrapEntityData):
 
     def update(self):
         return
-        # XXX only works on a server
-        target = next(iter(self.world.server.players.values())).entity
-        target = target.pos
-        d = (target - self.pos).normalized()
-        vel = d * constants.BLOCK_SCALE
-        print('update:', target, d, vel)
-        self.set_velocity(vel)
-        self.set_position(self.pos + vel * self.world.dt)
 
     def reset(self):
         self.set_hp()
@@ -259,9 +251,6 @@ class Chunk:
         self.static_entities = {}
         self.region = None
 
-        # XXX for now, dynamic entities belong to a single chunk.
-        self.entities = []
-
         if not world.use_tgen:
             return
 
@@ -273,10 +262,8 @@ class Chunk:
 
         region = (self.data.x // 64, self.data.y // 64)
         if region in self.world.regions:
-            # print('found region:', region)
             self.region = self.world.regions[region]
         else:
-            # print('new region:', region)
             self.region = Region(self.world, region, self.data)
             self.world.regions[region] = self.region
         self.region.add(self.data)
@@ -292,16 +279,7 @@ class Chunk:
             self.static_entities[entity_id] = new_entity
 
         if self.world.use_entities:
-            # print('add zone:', self.data.x, self.data.y)
             tgen.add_zone(self.data)
-            # print('done')
-        #     for data in self.data.spawns:
-        #         if data.hostile_type == constants.HOSTILE_TYPE:
-        #             continue
-        #         entity = self.world.create_entity(data.entity_id)
-        #         data.set_entity(entity)
-        #         entity.reset()
-        #         self.entities.append(entity)
 
         self.update()
 
