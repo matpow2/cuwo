@@ -247,9 +247,6 @@ static void sim_init_in_queue()
 
 static void sim_step_call()
 {
-    // *(uint8_t*)get_mem_va(0x4CF01B) = 0xCC;
-    // *(uint8_t*)get_mem_va(0x4CEEF2) = 0xCC;
-
     set_heap(&sim_heap);
 
     if (!in_queue_init)
@@ -271,8 +268,9 @@ static void sim_step_call()
 
 PacketQueue * sim_get_in_packets()
 {
-    if (in_queue == NULL)
+    if (in_queue == NULL) {
         in_queue = (PacketQueue*)alloc_mem(sizeof(PacketQueue));
+    }
     return in_queue;
 }
 
@@ -295,7 +293,7 @@ void sim_add_in_hit(HitPacket * p)
 
     HitPacketList * head = (HitPacketList*)q->player_hits;
     l->next = (uint32_t)head->next;
-    l->prev = 0;
+    l->prev = (uint32_t)head;
     l->data = *p;
     head->next = (uint32_t)l;
     q->player_hits_size++;
@@ -357,10 +355,40 @@ void tgen_set_seed(uint32_t seed)
     global_seed = seed;
 }
 
+#ifdef _WIN32
+#include "hwbrk/hwbrk.cpp"
+
+static thread_local bool breakpoint_set = false;
+static uint32_t break_addr;
+
+static thread_local HANDLE bp;
+
+void tgen_set_thread_breakpoint()
+{
+    if (breakpoint_set || break_addr == 0)
+        return;
+    breakpoint_set = true;
+    std::cout << "Set breakpoint: " << break_addr << '\n';
+    bp = SetHardwareBreakpoint(HWBRK_TYPE_CODE, HWBRK_SIZE_4,
+                               (void*)break_addr);
+}
+
 void tgen_set_breakpoint(uint32_t addr)
 {
-    *(uint8_t*)get_mem_va(addr) = 0xCC;
+    break_addr = (uint32_t)get_mem_va(addr);
 }
+
+#else
+
+void tgen_set_thread_breakpoint()
+{
+}
+
+void tgen_set_breakpoint(uint32_t addr)
+{
+}
+
+#endif
 
 #ifdef _WIN32
 #include <windows.h>

@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <iostream>
 #include "mem.h"
+#include "tgen.h"
 #include "config.h"
 #include <stdio.h>
 
@@ -140,6 +141,7 @@ static void (*wrap_f)();
 
 DWORD CALLBACK thread_wrap(LPVOID)
 {
+    tgen_set_thread_breakpoint();
     wrap_f();
 	return 0;
 }
@@ -216,6 +218,7 @@ static void (*wrap_f)();
 
 static void * thread_start(void *arg)
 {
+    tgen_set_thread_breakpoint();
     wrap_f();
 }
 
@@ -243,6 +246,7 @@ void run_with_stack(void (*f)())
 
 void run_with_stack(void (*f)())
 {
+    tgen_set_thread_breakpoint();
     f();
 }
 

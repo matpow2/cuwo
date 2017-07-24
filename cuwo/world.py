@@ -146,7 +146,13 @@ class StaticEntity:
         self.header = header
         self.world = chunk.world
 
-        name = header.get_type()
+        try:
+            name = header.get_type()
+        except KeyError:
+            print('Unknown static entity encountered, please report this '
+                  'to the developers: ', self.world.seed, chunk.x, chunk.y,
+                  header.pos)
+            name = None
 
         if name in static.SIT_ENTITIES:
             self.interact = self.interact_sit
@@ -354,6 +360,7 @@ class World:
         self.regions = {}
         self.entities = {}
         self.entity_ids = IDPool(1)
+        self.seed = seed
 
         if not self.use_tgen:
             return
@@ -387,10 +394,6 @@ class World:
             return None
         self.dt = dt
         tgen.set_in_packets(self.hits, self.passives)
-        # for hit in self.hits:
-        #     print(self.entities[hit.target_id].hostile_type)
-        #     print(hit.entity_id, hit.target_id, hit.hit_type,
-        #           hit.damage)
         self.hits = []
         self.passives = []
         tgen.step(int(dt * 1000.0))
@@ -445,7 +448,6 @@ class World:
 
     def run_gen(self, seed):
         tgen.initialize(seed, self.data_path)
-        # tgen.set_breakpoint(0x4CEB33)
         self.tgen_init = True
         while True:
             data = self.gen_queue.get()

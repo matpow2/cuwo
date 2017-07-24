@@ -340,7 +340,12 @@ def do_callers():
                     arg_pos = (i - 1 - arg_off) - (arg - arg_off)
                     if is_spill:
                         spill_off = (arg + 1) - len(cur_arg_order)
-                        arg_asm += f'mov r10, [rsp+{(spill_off+1)*8}]\n'
+                        spill_off += len(save_regs)
+                        if state.is_msvc:
+                            # safe area
+                            spill_off += 4
+                        spill_off += 1 # return address
+                        arg_asm += f'mov r10, [rsp+{spill_off*8}]\n'
                     arg_asm += f'mov dword [rsp-{(arg_pos+1)*4}], {mov_reg}\n'
                     pop_args += 1
 
@@ -376,13 +381,13 @@ def do_callers():
             # if spilled_args > 0:
             #     print(asm)
             #     input()
+            name = f'call_x86_{callconv}_{i}'
             asm = get_asm(asm)
             asm = encode_c(asm)
             c_args = ['void*'] + ['uint32_t'] * i
             c_args = ', '.join(c_args)
 
 
-            name = f'call_x86_{callconv}_{i}'
             state.output_c += f'uint32_t (*{name})({c_args});\n'
             state.output_h += f'extern uint32_t (*{name})({c_args});\n'
             state.output_c += f'unsigned char {name}_asm[] = {asm}\n\n'

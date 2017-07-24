@@ -16,11 +16,11 @@ echo 'fi' >> run_pyenv.sh
 # create update.sh
 echo '#!/usr/bin/env bash' > update.sh
 echo 'cd "$(dirname "$0")"' >> update.sh
-echo 'source run_pyenv.sh' >> update.sh
+echo '. ./run_pyenv.sh' >> update.sh
 echo 'git pull' >> update.sh
 echo 'python setup.py build_ext --inplace' >> update.sh
 
-source run_pyenv.sh
+. ./run_pyenv.sh
 
 pyenv update
 pyenv install 3.6.1 --skip-existing
