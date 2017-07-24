@@ -514,8 +514,8 @@ class CubeWorldServer:
         self.set_clock('12:00')
 
         # start listening
-        asyncio.Task(self.create_server(self.build_protocol,
-                                        port=base.port))
+        self.loop.create_task(self.create_server(self.build_protocol,
+                                                 port=base.port))
 
     def build_protocol(self):
         return CubeWorldConnection(self)

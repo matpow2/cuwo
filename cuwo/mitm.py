@@ -133,7 +133,7 @@ class FrontendProtocol(asyncio.Protocol):
         print('On connection')
         co = self.loop.create_connection(lambda: BackendProtocol(self),
                                          '127.0.0.1', 12346)
-        asyncio.Task(co)
+        self.loop.create_task(co)
 
     def connection_lost(self, reason):
         self.disconnected = True
@@ -169,7 +169,7 @@ def main():
 
     loop.add_signal_handler(signal.SIGINT, loop.stop)
     co = loop.create_server(lambda: FrontendProtocol(loop), '127.0.0.1', 12345)
-    asyncio.Task(co)
+    loop.create_task(co)
     print('cuwo (mitm) running on port 12345')
 
     loop.run_forever()
