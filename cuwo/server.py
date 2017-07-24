@@ -257,7 +257,6 @@ class CubeWorldConnection(asyncio.Protocol):
             self.entity.connection = self
 
         mask = packet.update_entity(self.entity)
-        self.entity.mask |= mask
         if not self.has_joined and getattr(self.entity, 'name', None):
             self.on_join()
             return
@@ -590,8 +589,8 @@ class CubeWorldServer:
         self.handle_tgen_packets(out_packets)
 
         for entity_id, entity in self.world.entities.items():
-            entity_packet.set_entity(entity, entity_id, entity.mask)
-            entity.mask = 0
+            entity_packet.set_entity(entity, entity_id, entity.get_mask())
+            entity.reset_mask()
             self.broadcast_packet(entity_packet)
         self.broadcast_packet(update_finished_packet)
 

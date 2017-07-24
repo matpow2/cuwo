@@ -56,7 +56,7 @@ def main():
     pyx.putln('cimport numpy as np')
     pyx.putln('import numpy as np')
     pyx.putln('from cython cimport view')
-    pyx.putln('from libc.string cimport memset, memcpy')
+    pyx.putln('from libc.string cimport memset, memcpy, memcmp')
     pyx.putln('from cuwo.vector import Vector3')
     pyx.putln('from cuwo.common import filter_bytes')
     pyx.putln('from cuwo import strings')
@@ -556,6 +556,31 @@ def main():
             size -= attr_size
             offset += 1
         pyx.dedent()
+    pyx.dedent()
+
+    # get mask bits
+    pyx.putln('cpdef uint64_t get_mask(WrapEntityData old_ent, '
+                                      'WrapEntityData new_ent):')
+    pyx.indent()
+    pyx.putln('cdef uint64_t mask = 0')
+    for bit_index, v in enumerate(mask_data):
+        offset, size = v
+
+        while size > 0:
+            attr = entity_struct.attrs[offset]
+            name, typ, dim, spec = attr.get()
+            attr_size = attr.get_size()
+
+            old_val = f'old_ent.data[0].{name}'
+            new_val = f'new_ent.data[0].{name}'
+            cond = f'memcmp(&{old_val}, &{new_val}, sizeof({old_val})) != 0'
+            pyx.putln(f'mask |= <uint64_t>({cond}) << {bit_index}')
+
+            size -= attr_size
+            offset += 1
+        if size != 0:
+            raise NotImplementedError()
+    pyx.putln('return mask')
     pyx.dedent()
 
     with open(DEST_PXD, 'wb') as fp:

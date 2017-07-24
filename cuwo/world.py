@@ -19,7 +19,7 @@
 World manager
 """
 
-from cuwo.tgen_wrap import WrapEntityData
+from cuwo.tgen_wrap import WrapEntityData, get_mask
 from cuwo import static
 from cuwo.common import get_item_hp, get_max_xp, get_chunk
 from cuwo.types import IDPool
@@ -36,7 +36,7 @@ import math
 
 
 class Entity(WrapEntityData):
-    mask = 0
+    ref_entity = None
 
     def init(self, world, creature, entity_id, static_id, is_tgen=False):
         self.is_tgen = is_tgen
@@ -45,6 +45,14 @@ class Entity(WrapEntityData):
         self.static_id = static_id
         world.entities[entity_id] = self
         self.world = world
+
+    def get_mask(self):
+        if self.ref_entity is None:
+            return constants.FULL_MASK
+        return get_mask(self.ref_entity, self)
+
+    def reset_mask(self):
+        self.ref_entity = self.copy()
 
     def update(self):
         return
@@ -59,19 +67,15 @@ class Entity(WrapEntityData):
 
     def reset(self):
         self.set_hp()
-        self.mask = constants.FULL_MASK
 
     def set_hp(self, value=None):
         self.hp = value or self.get_max_hp()
-        self.mask |= entitydata.HP_FLAG
 
     def set_position(self, pos):
         self.pos = pos
-        self.mask |= entitydata.POS_FLAG
 
     def set_velocity(self, vel):
         self.velocity = vel
-        self.mask |= entitydata.VEL_FLAG
 
     def get_type(self):
         return strings.ENTITY_NAMES[self.entity_type]
@@ -81,7 +85,6 @@ class Entity(WrapEntityData):
             self.entity_type = 0xFFFFFFFF
         else:
             self.entity_type = strings.ENTITY_IDS[name]
-        self.mask |= entitydata.TYPE_FLAG
 
     def get_ray_hit(self):
         return self.pos + self.ray_hit * constants.BLOCK_SCALE
@@ -371,6 +374,8 @@ class World:
         if not self.tgen_init:
             return None
         self.dt = dt
+        # maybe provide 'passives' as input packet in the future?
+        # vanilla uses passives + playerhits
         tgen.step(int(dt * 1000.0))
         creatures = tgen.get_creatures()
         for entity_id, creature in creatures.items():
@@ -389,11 +394,6 @@ class World:
 
         for entity in deleted:
             entity.destroy()
-
-        for entity in self.entities.values():
-            if not entity.is_tgen:
-                continue
-            entity.mask = constants.FULL_MASK
 
         return tgen.get_out_packets()
 
