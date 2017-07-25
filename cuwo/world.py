@@ -143,7 +143,7 @@ class StaticEntity:
             name = header.get_type()
         except KeyError:
             print('Unknown static entity encountered, please report this '
-                  'to the developers: ', self.world.seed, chunk.x, chunk.y,
+                  'to the developers: ', self.world.seed, chunk.pos,
                   header.pos)
             name = None
 
