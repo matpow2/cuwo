@@ -19,7 +19,7 @@ import sys
 sys.path.append('..')
 from cx_Freeze import setup, Executable
 
-build_options = {'packages': ['encodings', 'irc3', 'cuwo', 'asyncio'],
+build_options = {'packages': ['encodings', 'irc3', 'cuwo', 'asyncio', 'numpy'],
                  'excludes': ['config'],
                  'includes': ['json', 'platform']}
 
