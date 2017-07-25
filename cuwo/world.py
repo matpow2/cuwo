@@ -38,6 +38,7 @@ import math
 
 class Entity(WrapEntityData):
     ref_entity = None
+    old_hostile_type = None
 
     def init(self, world, creature, entity_id, static_id, is_tgen=False):
         self.is_tgen = is_tgen
@@ -125,11 +126,18 @@ class Entity(WrapEntityData):
 
         return health
 
-    def destroy(self):
+    def unlink(self):
         del self.world.entities[self.entity_id]
         if not self.static_id:
             self.world.entity_ids.put_back(self.entity_id)
+        self.world = None
+        self.creature = None
 
+    def destroy(self):
+        if self.is_tgen:
+            raise NotImplementedError('cannot remove tgen entities')
+        tgen.remove_creature(self.creature)
+        self.unlink()
 
 class StaticEntity:
     open_time = None
@@ -372,7 +380,22 @@ class World:
         tgen.set_in_packets(self.hits, self.passives)
         self.hits = []
         self.passives = []
+
+        # we need to save and restore the hostile type so tgen does not
+        # deallocate our entities
+        for entity in self.entities.values():
+            if entity.is_tgen:
+                continue
+            entity.old_hostile_type = entity.hostile_type
+            entity.hostile_type = constants.FRIENDLY_PLAYER_TYPE
+
         tgen.step(int(dt * 1000.0))
+
+        for entity in self.entities.values():
+            if entity.is_tgen:
+                continue
+            entity.hostile_type = entity.old_hostile_type
+
         creatures = tgen.get_creatures()
         for entity_id, creature in creatures.items():
             if entity_id in self.entities:
@@ -389,7 +412,7 @@ class World:
             deleted.append(entity)
 
         for entity in deleted:
-            entity.destroy()
+            entity.unlink()
 
         out_packets = tgen.get_out_packets()
         for chunk_items in iterate_packet_list(out_packets.chunk_items):

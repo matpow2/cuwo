@@ -23,6 +23,10 @@
 
 from cuwo.tgen_wrap import (WrapEntityData as EntityData,
                             WrapItemData as ItemData,
+                            WrapBlockAction as BlockAction,
+                            WrapParticleData as ParticleData,
+                            WrapKillAction as KillAction,
+                            WrapDamageAction as DamageAction,
                             WrapPassivePacket,
                             WrapSoundAction,
                             WrapShootPacket,
