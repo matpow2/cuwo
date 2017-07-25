@@ -73,6 +73,13 @@ cdef class WrapItemUpgrade:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ItemUpgrade * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ItemUpgrade))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ItemUpgrade))
         self.data = <ItemUpgrade*>self.storage
@@ -133,6 +140,13 @@ cdef class WrapItemData:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ItemData * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ItemData))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ItemData))
         self.data = <ItemData*>self.storage
@@ -227,6 +241,13 @@ cdef class WrapAppearanceData:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef AppearanceData * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(AppearanceData))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(AppearanceData))
         self.data = <AppearanceData*>self.storage
@@ -648,6 +669,13 @@ cdef class WrapEntityData:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef EntityData * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(EntityData))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(EntityData))
         self.data = <EntityData*>self.storage
@@ -1059,7 +1087,14 @@ cdef class WrapEntityData:
     def name(self, value):
         cdef str v = value
         cdef bytes vv = v.encode('ascii', 'ignore')[:16]
-        self.data[0].name = vv
+        cdef const char * c = vv
+        cdef size_t size = len(vv)
+        cdef int i
+        for i in range(16):
+            if i >= size:
+                self.data[0].name[i] = 0
+            else:
+                self.data[0].name[i] = c[i]
     def reset(self):
         memset(self.data, 0, sizeof(self.data[0]))
         self.data[0].hostile_type = 3
@@ -1097,6 +1132,13 @@ cdef class WrapItemWithHeader:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ItemWithHeader * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ItemWithHeader))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ItemWithHeader))
         self.data = <ItemWithHeader*>self.storage
@@ -1143,6 +1185,13 @@ cdef class WrapItemWithHeaderList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ItemWithHeaderList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ItemWithHeaderList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ItemWithHeaderList))
         self.data = <ItemWithHeaderList*>self.storage
@@ -1182,6 +1231,13 @@ cdef class WrapItemWithHeaderLists:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ItemWithHeaderLists * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ItemWithHeaderLists))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ItemWithHeaderLists))
         self.data = <ItemWithHeaderLists*>self.storage
@@ -1221,6 +1277,13 @@ cdef class WrapStaticEntityHeader:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef StaticEntityHeader * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(StaticEntityHeader))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(StaticEntityHeader))
         self.data = <StaticEntityHeader*>self.storage
@@ -1307,6 +1370,13 @@ cdef class WrapStaticEntity:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef StaticEntity * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(StaticEntity))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(StaticEntity))
         self.data = <StaticEntity*>self.storage
@@ -1409,6 +1479,13 @@ cdef class WrapItemWithExtra:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ItemWithExtra * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ItemWithExtra))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ItemWithExtra))
         self.data = <ItemWithExtra*>self.storage
@@ -1477,6 +1554,13 @@ cdef class WrapSpawn:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef Spawn * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(Spawn))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(Spawn))
         self.data = <Spawn*>self.storage
@@ -1751,7 +1835,14 @@ cdef class WrapSpawn:
     def name(self, value):
         cdef str v = value
         cdef bytes vv = v.encode('ascii', 'ignore')[:16]
-        self.data[0].name = vv
+        cdef const char * c = vv
+        cdef size_t size = len(vv)
+        cdef int i
+        for i in range(16):
+            if i >= size:
+                self.data[0].name[i] = 0
+            else:
+                self.data[0].name[i] = c[i]
     @property
     def something30(self):
         return <uint32_t>(<uint32_t>self.data[0].something30)
@@ -1803,6 +1894,13 @@ cdef class WrapCriticalSection:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef CriticalSection * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(CriticalSection))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(CriticalSection))
         self.data = <CriticalSection*>self.storage
@@ -1874,6 +1972,13 @@ cdef class WrapColor:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef Color * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(Color))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(Color))
         self.data = <Color*>self.storage
@@ -1928,6 +2033,13 @@ cdef class WrapField:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef Field * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(Field))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(Field))
         self.data = <Field*>self.storage
@@ -2011,6 +2123,13 @@ cdef class WrapChunkItemData:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ChunkItemData * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ChunkItemData))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ChunkItemData))
         self.data = <ChunkItemData*>self.storage
@@ -2097,6 +2216,13 @@ cdef class WrapZone:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef Zone * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(Zone))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(Zone))
         self.data = <Zone*>self.storage
@@ -2328,6 +2454,13 @@ cdef class WrapSomethingCreature:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef SomethingCreature * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(SomethingCreature))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(SomethingCreature))
         self.data = <SomethingCreature*>self.storage
@@ -2748,6 +2881,13 @@ cdef class WrapCreature:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef Creature * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(Creature))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(Creature))
         self.data = <Creature*>self.storage
@@ -3504,6 +3644,13 @@ cdef class WrapHitPacket:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef HitPacket * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(HitPacket))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(HitPacket))
         self.data = <HitPacket*>self.storage
@@ -3608,6 +3755,13 @@ cdef class WrapParticleData:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ParticleData * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ParticleData))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ParticleData))
         self.data = <ParticleData*>self.storage
@@ -3694,6 +3848,13 @@ cdef class WrapSoundAction:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef SoundAction * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(SoundAction))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(SoundAction))
         self.data = <SoundAction*>self.storage
@@ -3752,6 +3913,13 @@ cdef class WrapBlockAction:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef BlockAction * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(BlockAction))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(BlockAction))
         self.data = <BlockAction*>self.storage
@@ -3822,6 +3990,13 @@ cdef class WrapShootPacket:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ShootPacket * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ShootPacket))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ShootPacket))
         self.data = <ShootPacket*>self.storage
@@ -3974,6 +4149,13 @@ cdef class WrapPickupAction:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef PickupAction * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(PickupAction))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(PickupAction))
         self.data = <PickupAction*>self.storage
@@ -4020,6 +4202,13 @@ cdef class WrapKillAction:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef KillAction * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(KillAction))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(KillAction))
         self.data = <KillAction*>self.storage
@@ -4068,6 +4257,13 @@ cdef class WrapDamageAction:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef DamageAction * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(DamageAction))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(DamageAction))
         self.data = <DamageAction*>self.storage
@@ -4122,6 +4318,13 @@ cdef class WrapPassivePacket:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef PassivePacket * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(PassivePacket))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(PassivePacket))
         self.data = <PassivePacket*>self.storage
@@ -4188,6 +4391,13 @@ cdef class WrapMissionData:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef MissionData * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(MissionData))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(MissionData))
         self.data = <MissionData*>self.storage
@@ -4308,6 +4518,13 @@ cdef class WrapHitPacketList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef HitPacketList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(HitPacketList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(HitPacketList))
         self.data = <HitPacketList*>self.storage
@@ -4370,6 +4587,13 @@ cdef class WrapParticleDataList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ParticleDataList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ParticleDataList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ParticleDataList))
         self.data = <ParticleDataList*>self.storage
@@ -4432,6 +4656,13 @@ cdef class WrapSoundActionList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef SoundActionList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(SoundActionList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(SoundActionList))
         self.data = <SoundActionList*>self.storage
@@ -4494,6 +4725,13 @@ cdef class WrapBlockActionList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef BlockActionList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(BlockActionList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(BlockActionList))
         self.data = <BlockActionList*>self.storage
@@ -4556,6 +4794,13 @@ cdef class WrapShootPacketList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ShootPacketList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ShootPacketList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ShootPacketList))
         self.data = <ShootPacketList*>self.storage
@@ -4618,6 +4863,13 @@ cdef class WrapChunkItemList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ChunkItemList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ChunkItemList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ChunkItemList))
         self.data = <ChunkItemList*>self.storage
@@ -4680,6 +4932,13 @@ cdef class WrapChunkItemsList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef ChunkItemsList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(ChunkItemsList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(ChunkItemsList))
         self.data = <ChunkItemsList*>self.storage
@@ -4755,6 +5014,13 @@ cdef class WrapStaticEntityList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef StaticEntityList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(StaticEntityList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(StaticEntityList))
         self.data = <StaticEntityList*>self.storage
@@ -4817,6 +5083,13 @@ cdef class WrapItems8List_2:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef Items8List_2 * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(Items8List_2))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(Items8List_2))
         self.data = <Items8List_2*>self.storage
@@ -4875,6 +5148,13 @@ cdef class WrapItems8List_1:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef Items8List_1 * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(Items8List_1))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(Items8List_1))
         self.data = <Items8List_1*>self.storage
@@ -4943,6 +5223,13 @@ cdef class WrapPickupActionList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef PickupActionList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(PickupActionList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(PickupActionList))
         self.data = <PickupActionList*>self.storage
@@ -5005,6 +5292,13 @@ cdef class WrapKillActionList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef KillActionList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(KillActionList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(KillActionList))
         self.data = <KillActionList*>self.storage
@@ -5067,6 +5361,13 @@ cdef class WrapDamageActionList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef DamageActionList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(DamageActionList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(DamageActionList))
         self.data = <DamageActionList*>self.storage
@@ -5129,6 +5430,13 @@ cdef class WrapPassivePacketList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef PassivePacketList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(PassivePacketList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(PassivePacketList))
         self.data = <PassivePacketList*>self.storage
@@ -5191,6 +5499,13 @@ cdef class WrapMissionDataList:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef MissionDataList * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(MissionDataList))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(MissionDataList))
         self.data = <MissionDataList*>self.storage
@@ -5253,6 +5568,13 @@ cdef class WrapPacketQueue:
     def __dealloc__(self):
         if self.storage != NULL:
             PyMem_Free(self.storage)
+    def realloc(self):
+        if self.storage != NULL:
+            return
+        cdef PacketQueue * old_data = self.data
+        self.alloc()
+        memcpy(self.data, old_data, sizeof(PacketQueue))
+        self.parent = None
     cdef void alloc(self):
         self.storage = PyMem_Malloc(sizeof(PacketQueue))
         self.data = <PacketQueue*>self.storage

@@ -136,6 +136,7 @@ class Entity(WrapEntityData):
     def destroy(self):
         if self.is_tgen:
             raise NotImplementedError('cannot remove tgen entities')
+        self.realloc()
         tgen.remove_creature(self.creature)
         self.unlink()
 
