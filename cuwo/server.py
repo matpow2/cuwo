@@ -496,6 +496,9 @@ class CubeWorldServer:
         # world
         self.world = World(self, self.loop, base.seed, base.use_tgen,
                            base.use_entities)
+        if base.world_debug_file is not None:
+            debug_fp = open(base.world_debug_file, 'wb')
+            self.world.set_debug(debug_fp)
 
         # server-related
         self.git_rev = base.get('git_rev', None)

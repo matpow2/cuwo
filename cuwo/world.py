@@ -29,6 +29,7 @@ from cuwo import strings
 from cuwo.vector import vec3
 from cuwo import tgen
 from cuwo.static import StaticEntityHeader
+from cuwo.bytes import ByteWriter
 
 import os
 from queue import Queue
@@ -328,6 +329,7 @@ class World:
     static_entity_class = StaticEntity
     entity_class = Entity
     tgen_init = False
+    debug_fp = None
 
     def __init__(self, loop, seed, use_tgen=True, use_entities=True):
         if use_tgen:
@@ -356,6 +358,20 @@ class World:
 
         self.gen_queue = Queue()
         loop.run_in_executor(None, self.run_gen, seed)
+
+    def write_debug(self):
+        if self.debug_fp is None:
+            return
+        writer = ByteWriter()
+        writer.write_uint32(len(self.entities))
+        for entity in self.entities.values():
+            writer.write_uint8(int(entity.is_tgen))
+            entity.write(writer)
+
+        self.debug_fp.write(writer.get())
+
+    def set_debug(self, fp):
+        self.debug_fp = fp
 
     def create_entity(self, entity_id=None):
         if entity_id is None:
@@ -390,6 +406,7 @@ class World:
             entity.old_hostile_type = entity.hostile_type
             entity.hostile_type = constants.FRIENDLY_PLAYER_TYPE
 
+        self.write_debug()
         tgen.step(int(dt * 1000.0))
 
         for entity in self.entities.values():

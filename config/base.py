@@ -33,6 +33,9 @@ rotate_daily = True
 console_log_format = '%(message)s'
 file_log_format = '[%(asctime)s] %(message)s'
 
+# World debug
+world_debug_file = None
+
 # Profile file. Set to something other than None to enable.
 profile_file = None
 
