@@ -696,14 +696,38 @@ def main():
     out.write_dict('MODEL_NAMES', models)
     out.write_inverse_dict('MODEL_IDS', 'MODEL_NAMES')
 
+    # merge static models, static names
     print('Writing defs from tgen')
     from cuwo import tgen
     tgen.initialize(1234, '../data/')
+    static_names = tgen.get_static_names()
+    import staticmodels
+    for k, v in staticmodels.STATIC_MODELS.items():
+        if k in static_names:
+            continue
+        if v is None:
+            print(k)
+            continue
+        model = models[v]
+        cap = True
+        new_name = ''
+        for c in model:
+            if c == '-':
+                cap = True
+                continue
+            if cap:
+                c = c.upper()
+                cap = False
+            new_name += c
+        print(k, models[v])
+        static_names[k] = new_name
+
     print('Heap base:', tgen.dump_mem('mem.dat'))
     out.write_dict('ITEM_NAMES', tgen.get_item_names())
     out.write_inverse_dict('ITEM_IDS', 'ITEM_NAMES')
-    out.write_dict('STATIC_NAMES', tgen.get_static_names())
+    out.write_dict('STATIC_NAMES', static_names)
     out.write_inverse_dict('STATIC_IDS', 'STATIC_NAMES')
+    out.write_dict('STATIC_MODELS', staticmodels.STATIC_MODELS)
     out.write_dict('ENTITY_NAMES', tgen.get_entity_names())
     out.write_inverse_dict('ENTITY_IDS', 'ENTITY_NAMES')
     out.write_dict('LOCATION_NAMES', tgen.get_location_names())

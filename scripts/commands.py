@@ -271,16 +271,21 @@ def create_teleport_packet(pos, chunk_pos, user_id):
 @command
 @admin
 @alias('t')
-def teleport(script, a, b=None):
+def teleport(script, a, b=None, c=None):
     """Teleport to a chunk or player."""
     entity = script.connection.entity
 
     if b is None:
+        # teleport to player
         player = script.get_player(a)
         pos = player.entity.pos
-    else:
+    elif c is None:
+        # teleport to chunk
         pos = qvec3(int(a), int(b), 0) * constants.CHUNK_SCALE
         pos.z = script.world.get_height(pos.xy) or entity.pos.z
+    else:
+        # teleport to position
+        pos = qvec3(int(a), int(b), int(c))
 
     update_packet = script.server.update_packet
     chunk = script.connection.chunk

@@ -169,9 +169,6 @@ def main():
         pyx.dedent()
         pyx.dedent()
 
-        pxd.putln(f'cdef class Wrap{s_name}:')
-        pxd.indent()
-
         pyx.putln('def realloc(self):')
         pyx.indent()
         pyx.putln('if self.storage != NULL:')
@@ -184,17 +181,12 @@ def main():
         pyx.putln(f'self.parent = None')
         pyx.dedent()
 
-        pxd.putln(f'cdef void alloc(self)')
         pyx.putln(f'cdef void alloc(self):')
         pyx.indent()
         pyx.putln(f'self.storage = PyMem_Malloc(sizeof({s_name}))')
         pyx.putln(f'self.data = <{s_name}*>self.storage')
         pyx.dedent()
 
-        pxd.putln(f'cdef {s_name} * data')
-        pxd.putln(f'cdef object parent')
-        pxd.putln(f'cdef void * storage')
-        pxd.dedent()
 
         pxd.putln(f'cdef struct {s_name}:')
         pxd.indent()
@@ -203,6 +195,9 @@ def main():
         reset_f.putln(f'def reset(self):')
         reset_f.indent()
         reset_f.putln(f'memset(self.data, 0, sizeof(self.data[0]))')
+
+        python_obj = FormattedOutput(None)
+        python_obj_reset = FormattedOutput(None)
 
         done_attr = set()
 
@@ -361,6 +356,20 @@ def main():
 
             pyx.putcode(setter)
 
+        # end of struct
+        pxd.dedent()
+        pxd.putln('')
+
+        # write cdef class
+        pxd.putln(f'cdef class Wrap{s_name}:')
+        pxd.indent()
+        pxd.putln(f'cdef void alloc(self)')
+        pxd.putln(f'cdef {s_name} * data')
+        pxd.putln(f'cdef object parent')
+        pxd.putln(f'cdef void * storage')
+        pxd.putcode(python_obj)
+        pxd.dedent()
+
         pyx.putcode(reset_f)
 
         if s_name == 'EntityData':
@@ -400,10 +409,6 @@ def main():
                     pyx.dedent()
 
         pyx.dedent()
-        # end of struct
-
-        pxd.dedent()
-        pxd.putln('')
 
         tgendef.dedent()
         tgendef.putln('};')
