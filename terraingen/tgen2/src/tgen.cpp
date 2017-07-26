@@ -132,22 +132,57 @@ uint32_t get_min(uint32_t ptr)
 typedef void (*map_func)(char * addr);
 
 
+struct nodeptr
+{
+    uint32_t left;
+    uint32_t parent;
+    uint32_t right;
+    char color;
+    char is_nil;
+    char pad[2];
+
+    void * get_value()
+    {
+        return (void*)((char*)this + sizeof(nodeptr));
+    }
+
+    nodeptr * get_left()
+    {
+        return (nodeptr*)left;
+    }
+
+    nodeptr * get_right()
+    {
+        return (nodeptr*)right;
+    }
+
+    nodeptr * get_parent()
+    {
+        return (nodeptr*)parent;
+    }
+};
+
+
 void walk_map(char * addr, map_func func)
 {
-    uint32_t ptr = get_left(*(uint32_t*)addr);
-    uint32_t test_ptr;
-    while (!is_nil(ptr)) {
-        func((char*)(ptr + 16));
-        if (!is_nil(get_right(ptr))) {
-            ptr = get_min(get_right(ptr));
-        } else {
-            while (true) {
-                test_ptr = get_parent(ptr);
-                if (is_nil(test_ptr) || ptr != get_right(test_ptr))
+    uint32_t head_addr = *(uint32_t*)addr;
+    nodeptr * head = (nodeptr*)head_addr;
+    nodeptr * ptr = head->get_left();
+    nodeptr * i;
+    while (ptr != head && !ptr->is_nil) {
+        func((char*)ptr->get_value());
+        nodeptr * right = ptr->get_right();
+        if (right->is_nil) {
+            for (i = ptr->get_parent(); !i->is_nil; i = i->get_parent()) {
+                if (ptr != i->get_right())
                     break;
-                ptr = test_ptr;
+                ptr = i;
             }
-            ptr = test_ptr;
+            ptr = i;
+        } else {
+            ptr = right;
+            for (i = right->get_left(); !i->is_nil; i = i->get_left())
+                ptr = i;
         }
     }
 }

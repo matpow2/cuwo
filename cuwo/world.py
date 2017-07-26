@@ -394,6 +394,8 @@ class World:
 
         for entity in self.entities.values():
             if entity.is_tgen:
+                if entity.hostile_type == 0:
+                    raise NotImplementedError()
                 continue
             entity.hostile_type = entity.old_hostile_type
 

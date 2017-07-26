@@ -431,6 +431,11 @@ void tgen_init()
     initialized = true;
 }
 
+static void dummy(Creature * addr)
+{
+    std::cout << "creature: " << (uint32_t)addr << '\n';
+}
+
 int main(int argc, char * argv[])
 {
     std::cout << "set seed" << '\n';
@@ -440,14 +445,22 @@ int main(int argc, char * argv[])
     tgen_init();
     std::cout << "generate" << '\n';
     Heap * h = tgen_generate_chunk(32802, 32803);
-    char * r = tgen_get_region(tgen_get_manager(), 32803 / 64, 32803 / 64);
-    Zone * z = tgen_get_zone(r, 32803, 32803);
+    char * r = tgen_get_region(tgen_get_manager(), 32802 / 64, 32803 / 64);
+    Zone * z = tgen_get_zone(r, 32802, 32803);
     std::cout << "done" << '\n';
 
-    sim_add_region(r, 32803 / 64, 32803 / 64);
-    sim_add_zone(z, 32803, 32803);
+    sim_add_region(r, 32802 / 64, 32803 / 64);
+    sim_add_zone(z, 32802, 32803);
+
+    Creature * c = sim_add_creature(0);
+    EntityData * e = &c->entity_data;
+    e->hostile_type = 0;
+    e->pos[0] = 32802ULL * 0x1000000ULL;
+    e->pos[1] = 32803ULL * 0x1000000ULL;
+    e->pos[2] = 0;
 
     while (1) {
         sim_step(20);
+        sim_get_creatures(dummy);
     }
 }
