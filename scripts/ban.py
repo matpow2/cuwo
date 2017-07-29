@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev 2013-2014.
+# Copyright (c) Mathias Kaerlev 2013-2017.
 #
 # This file is part of cuwo.
 #
@@ -38,6 +38,7 @@ class BanServer(ServerScript):
     def ban(self, ip, reason):
         self.ban_entries[ip] = reason
         self.save_bans()
+        banned_players = []
         for connection in self.server.connections.copy():
             if connection.address[0] != ip:
                 continue
@@ -45,11 +46,13 @@ class BanServer(ServerScript):
             if name is not None:
                 connection.send_chat(SELF_BANNED.format(reason=reason))
             connection.disconnect()
+            banned_players.append(connection)
             if name is None:
                 continue
             message = PLAYER_BANNED.format(name=name, reason=reason)
             print(message)
             self.server.send_chat(message)
+        return banned_players
 
     def unban(self, ip):
         try:
@@ -76,8 +79,16 @@ def get_class():
 def ban(script, name, *reason):
     """Bans a player."""
     player = script.get_player(name)
+    banip(script, player.address[0], *reason)
+
+
+@command
+@admin
+def banip(script, ip, *reason):
+    """Bans a player by IP."""
     reason = ' '.join(reason) or DEFAULT_REASON
-    script.parent.ban(player.address[0], reason)
+    banned = script.parent.ban(ip, reason)
+    return f'{len(banned)} players banned'
 
 
 @command
