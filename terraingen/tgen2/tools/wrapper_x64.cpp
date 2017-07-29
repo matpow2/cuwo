@@ -1585,6 +1585,13 @@ unsigned char call_x86_stdcall_4_asm[] = {
 0x0, 0x0, 0x83, 0x4, 0x24, 0x5, 0xcb, 0x5b, 0x5d, 0xc3
 };
 
+uint32_t (*_run_with_stack)(void*, void*, void (*f)());
+unsigned char _run_with_stack_asm[] = {
+0x55, 0x48, 0x89, 0xe5, 0x48, 0x83, 0xe7, 0xf0, 0x48, 0x81, 0xef,
+0x80, 0x0, 0x0, 0x0, 0x48, 0x89, 0xfc, 0xff, 0xd2, 0x48, 0x89, 0xec,
+0x5d
+};
+
 #define SETUP_CALLERS()\
 {\
 Import & imp = imports["call_x86_thiscall_0"];\
@@ -1660,6 +1667,11 @@ call_x86_stdcall_3 = (uint32_t (*)(void*, uint32_t, uint32_t, uint32_t))f;\
 Import & imp = imports["call_x86_stdcall_4"];\
 void * f = load_x86(imp.asm_data, imp.asm_size);\
 call_x86_stdcall_4 = (uint32_t (*)(void*, uint32_t, uint32_t, uint32_t, uint32_t))f;\
+}\
+{\
+Import & imp = imports["_run_with_stack"];\
+void * f = load_x86(imp.asm_data, imp.asm_size);\
+_run_with_stack = (uint32_t (*)(void*, void*, void (*f)()))f;\
 }
 
 std::unordered_map<std::string, Import> imports(
@@ -1739,7 +1751,8 @@ std::unordered_map<std::string, Import> imports(
 {"call_x86_stdcall_1", Import{&call_x86_stdcall_1_asm[0], sizeof call_x86_stdcall_1_asm, NULL}},
 {"call_x86_stdcall_2", Import{&call_x86_stdcall_2_asm[0], sizeof call_x86_stdcall_2_asm, NULL}},
 {"call_x86_stdcall_3", Import{&call_x86_stdcall_3_asm[0], sizeof call_x86_stdcall_3_asm, NULL}},
-{"call_x86_stdcall_4", Import{&call_x86_stdcall_4_asm[0], sizeof call_x86_stdcall_4_asm, NULL}}
+{"call_x86_stdcall_4", Import{&call_x86_stdcall_4_asm[0], sizeof call_x86_stdcall_4_asm, NULL}},
+{"_run_with_stack", Import{&_run_with_stack_asm[0], sizeof _run_with_stack_asm, NULL}}
 }
 );std::vector<Patch> patches(
 {

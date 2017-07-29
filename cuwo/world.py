@@ -527,7 +527,6 @@ class World:
                 break
             pos, f = data
             res = tgen.generate(*pos)
-
             def set_result():
                 if f.cancelled():
                     return

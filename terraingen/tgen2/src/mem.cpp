@@ -2,6 +2,7 @@
 #include <iostream>
 #include "mem.h"
 #include "tgen.h"
+#include "call.h"
 #include "config.h"
 #include <stdio.h>
 
@@ -9,7 +10,6 @@
 #include <windows.h>
 #else
 #include <sys/mman.h>
-#include <pthread.h>
 #endif
 
 #ifdef _WIN64
@@ -135,88 +135,29 @@ void unwrite_protect_memory(void * ptr, size_t size, bool exec)
 
 #ifdef IS_X64
 
-#ifdef _WIN32
+static thread_local void * stack;
+static const uint32_t stack_size = 1024 * 1024 * 2;
 
-static void (*wrap_f)();
-
-DWORD CALLBACK thread_wrap(LPVOID)
+struct StackAllocator
 {
-    tgen_set_thread_breakpoint();
-    wrap_f();
-	return 0;
-}
+    static void alloc()
+    {
+        if (stack == NULL)
+            stack = alloc_mem(stack_size);
+    }
 
-typedef LONG NTSTATUS;
-typedef DWORD KPRIORITY;
-typedef WORD UWORD;
-
-typedef struct _CLIENT_ID
-{
-    PVOID UniqueProcess;
-    PVOID UniqueThread;
-} CLIENT_ID, *PCLIENT_ID;
-
-typedef struct _THREAD_BASIC_INFORMATION
-{
-    NTSTATUS                ExitStatus;
-    PVOID                   TebBaseAddress;
-    CLIENT_ID               ClientId;
-    KAFFINITY               AffinityMask;
-    KPRIORITY               Priority;
-    KPRIORITY               BasePriority;
-} THREAD_BASIC_INFORMATION, *PTHREAD_BASIC_INFORMATION;
-
-enum THREADINFOCLASS
-{
-    ThreadBasicInformation,
+    ~StackAllocator()
+    {
+        if (stack != NULL)
+            free_mem(stack, stack_size);
+    }
 };
 
-typedef NTSTATUS WINAPI NtQueryInformationThread_t(
-    HANDLE ThreadHandle, THREADINFOCLASS ThreadInformationClass,
-    PVOID ThreadInformation, ULONG ThreadInformationLength,
-    PULONG ReturnLength);
+static thread_local StackAllocator stack_alloc;
 
-void run_with_stack(void (*f)())
-{
-    wrap_f = f;
+static thread_local void (*wrap_f)();
 
-    HMODULE dll = LoadLibraryW(L"ntdll.dll");
-    auto NtQueryInformationThread =
-        (NtQueryInformationThread_t*)
-        GetProcAddress(dll, "NtQueryInformationThread");
-
-
-    DWORD thread_id;
-    HANDLE thread = CreateThread(0, ThreadBasicInformation, &thread_wrap, 0,
-                                 CREATE_SUSPENDED, &thread_id);
-
-    THREAD_BASIC_INFORMATION bi;
-    NtQueryInformationThread(thread, (THREADINFOCLASS)0, &bi,
-                             sizeof bi, 0);
-    NT_TIB * tib = (NT_TIB*)bi.TebBaseAddress;
-
-    CONTEXT ctx = {};
-    ctx.ContextFlags = CONTEXT_ALL;
-    GetThreadContext(thread, &ctx);
-
-    const DWORD64 stack_size = 1024 * 1024 * 2;
-    void * stack = alloc_mem(stack_size);
-    ctx.Rsp = (DWORD64)stack + stack_size -
-              ((DWORD64)tib->StackBase - (DWORD64)ctx.Rsp);
-    tib->StackBase = (PVOID)((DWORD64)stack + stack_size);
-    tib->StackLimit = (PVOID)((DWORD64)stack);
-    SetThreadContext(thread, &ctx);
-
-    ResumeThread(thread);
-    WaitForSingleObject(thread, INFINITE);
-    free_mem(stack, stack_size);
-}
-
-#else
-
-static void (*wrap_f)();
-
-static void * thread_start(void *arg)
+static void run_callback()
 {
     tgen_set_thread_breakpoint();
     wrap_f();
@@ -225,22 +166,11 @@ static void * thread_start(void *arg)
 void run_with_stack(void (*f)())
 {
     wrap_f = f;
-
-    pthread_t thr;
-    pthread_attr_t attr;
-    pthread_attr_t *attrp = &attr;
-
-    pthread_attr_init(&attr);
-    int stack_size = 1024 * 1024 * 2;
-    void * sp = alloc_mem(stack_size);
-    pthread_attr_setstack(&attr, sp, stack_size);
-    pthread_create(&thr, attrp, &thread_start, NULL);
-    pthread_attr_destroy(attrp);
-    pthread_join(thr, NULL);
-    free_mem(sp, stack_size);
+    stack_alloc.alloc();
+    void * end = stack;
+    void * base = (char*)end + stack_size;
+    _run_with_stack(base, end, run_callback);
 }
-
-#endif
 
 #else
 

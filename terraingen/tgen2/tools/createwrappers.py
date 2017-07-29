@@ -88,6 +88,67 @@ use32
 
 '''
 
+# set_stack(void * base, void * limit, void (*f)())
+# msvc: 'rcx', 'rdx', 'r8'
+# other: 'rdi', 'rsi', 'rdx'
+
+set_stack_call = '''
+set_stack_call:
+use64
+    push rbp
+    mov rbp, rsp
+
+    ; move to new stack and call
+    and rdi, 0xfffffffffffffff0
+    sub rdi, 128
+    mov rsp, rdi
+    call rdx
+
+    mov rsp, rbp
+    pop rbp
+'''
+
+set_stack_call_msvc = '''
+set_stack_call:
+use64
+    push rbp
+    mov rbp, rsp
+
+    ; load NT_TIB
+    mov r10, [gs:qword 0x30]
+
+    ; save current stack base
+    mov rax, [r10+0x08]
+    push rax
+    mov [r10+0x08], rcx
+
+    ; save current stack limit
+    mov rax, [r10+0x010]
+    push rax
+    mov [r10+0x010], rdx
+
+    ; move to new stack and call
+    and rcx, 0xfffffffffffffff0
+    sub rcx, 32
+    mov rsp, rcx
+    call r8
+
+    ; load NT_TIB
+    mov r10, [gs:qword 0x030]
+
+    ; restore stack limit
+    pop rax
+    mov [r10+0x010], rax
+
+    ; restore stack base
+    pop rax
+    mov [r10+0x08], rax
+
+    mov rsp, rbp
+    pop rbp
+    ret
+'''
+
 class state:
     is_msvc = False
     output_c = ''
@@ -304,7 +365,28 @@ def do_callers():
         save_regs = preserve_call
 
     imports = []
+
     setup_callers = '#define SETUP_CALLERS()'
+
+    def do_caller(name, c_args, asm):
+        nonlocal setup_callers
+        asm = get_asm(asm)
+        asm = encode_c(asm)
+        c_args = ', '.join(c_args)
+
+        state.output_c += f'uint32_t (*{name})({c_args});\n'
+        state.output_h += f'extern uint32_t (*{name})({c_args});\n'
+        state.output_c += f'unsigned char {name}_asm[] = {asm}\n\n'
+        imports.append(f'{{"{name}", '
+                       f'Import{{&{name}_asm[0], sizeof {name}_asm, '
+                       f'NULL}}}}')
+        setup_callers += '\\\n{\\\n'
+        setup_callers += f'Import & imp = imports["{name}"];\\\n'
+        setup_callers += (f'void * f = load_x86(imp.asm_data, '
+                          f'imp.asm_size);\\\n')
+        setup_callers += (f'{name} = (uint32_t (*)({c_args}))f;\\\n')
+        setup_callers += '}'
+
     for callconv in ('thiscall', 'cdecl', 'stdcall'):
         for i in range(5):
             asm = x86_call_base
@@ -382,24 +464,18 @@ def do_callers():
             #     print(asm)
             #     input()
             name = f'call_x86_{callconv}_{i}'
-            asm = get_asm(asm)
-            asm = encode_c(asm)
             c_args = ['void*'] + ['uint32_t'] * i
-            c_args = ', '.join(c_args)
 
+            do_caller(name, c_args, asm)
 
-            state.output_c += f'uint32_t (*{name})({c_args});\n'
-            state.output_h += f'extern uint32_t (*{name})({c_args});\n'
-            state.output_c += f'unsigned char {name}_asm[] = {asm}\n\n'
-            imports.append(f'{{"{name}", '
-                           f'Import{{&{name}_asm[0], sizeof {name}_asm, '
-                           f'NULL}}}}')
-            setup_callers += '\\\n{\\\n'
-            setup_callers += f'Import & imp = imports["{name}"];\\\n'
-            setup_callers += (f'void * f = load_x86(imp.asm_data, '
-                              f'imp.asm_size);\\\n')
-            setup_callers += (f'{name} = (uint32_t (*)({c_args}))f;\\\n')
-            setup_callers += '}'
+    if state.is_x64:
+        if state.is_msvc:
+            stack_call = set_stack_call_msvc
+        else:
+            stack_call = set_stack_call
+
+        do_caller('_run_with_stack', ['void*', 'void*', 'void (*f)()'],
+                  stack_call)
 
     state.output_c += setup_callers + '\n\n'
     return imports
