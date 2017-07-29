@@ -26,6 +26,7 @@ from .constants import (LOG_LEVEL_VERBOSE, LOG_LEVEL_DEFAULT, CUWO_ANTICHEAT,
                         LEGAL_RECIPE_ITEMS, LEGAL_ITEMS, LEGAL_CLASSES,
                         LEGAL_ITEMSLOTS, TWOHANDED_WEAPONS, CLASS_WEAPONS,
                         CLASS_ARMOR, ARMOR_IDS, ABILITIES, APPEARANCES)
+from cuwo import tgen_wrap as entitydata
 
 import re
 import math
@@ -49,7 +50,7 @@ class AntiCheatConnection(ConnectionScript):
         self.attack_count = 0
 
         self.time_since_update = 0
-        self.last_entity_update = 0
+        self.last_entity_update = None
         self.last_update_mode = 0
 
         self.max_health = 0
@@ -70,7 +71,6 @@ class AntiCheatConnection(ConnectionScript):
 
         self.cooldown_strikes = 0
         self.ability_cooldown = {}
-        self.last_entity_update = self.loop.time()
 
         self.last_hit_time = 0
         self.last_hit_strikes = 0
@@ -232,6 +232,12 @@ class AntiCheatConnection(ConnectionScript):
 
     def on_entity_update(self, event):
         entity = self.connection.entity
+        if self.last_entity_update is None:
+            self.last_entity_update = self.loop.time()
+            if not self.connection.has_joined:
+                self.remove_cheater('full entity update not sent')
+                return False
+
         self.time_since_update = self.loop.time() - self.last_entity_update
         self.last_entity_update = self.loop.time()
 

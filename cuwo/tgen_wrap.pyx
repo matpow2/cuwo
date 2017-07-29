@@ -63,8 +63,8 @@ cdef class WrapItemUpgrade:
         writer.write_c(self.data, sizeof(ItemUpgrade))
     def cast(self, object klass):
         cdef WrapItemUpgrade c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapItemUpgrade inst = WrapItemUpgrade.__new__(WrapItemUpgrade)
@@ -75,13 +75,13 @@ cdef class WrapItemUpgrade:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ItemUpgrade * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ItemUpgrade))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ItemUpgrade))
             return
         cdef ItemUpgrade * old_data = self.data
@@ -146,8 +146,8 @@ cdef class WrapItemData:
         writer.write_c(self.data, sizeof(ItemData))
     def cast(self, object klass):
         cdef WrapItemData c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapItemData inst = WrapItemData.__new__(WrapItemData)
@@ -158,13 +158,13 @@ cdef class WrapItemData:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ItemData * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ItemData))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ItemData))
             return
         cdef ItemData * old_data = self.data
@@ -228,6 +228,11 @@ cdef class WrapItemData:
         self.data[0].level = value
     @property
     def items(self):
+        if self._items is not None:
+            return self._items
+        self._items = WrapArray0.__new__(WrapArray0)
+        self._items.holder = self.holder
+        self._items._init_ptr(&self.data[0].items[0])
         return self._items
     @items.setter
     def items(self, value):
@@ -243,13 +248,11 @@ cdef class WrapItemData:
         self.data[0].level = 1
     cdef void _init_ptr(self, ItemData * ptr):
         self.data = ptr
-        self._items = WrapArray0.__new__(WrapArray0)
-        self._items.holder = self.holder
-        self._items._init_ptr(&self.data[0].items[0])
     cdef void _set_ptr(self, ItemData * ptr):
         self.data = ptr
-        self._items.holder = self.holder
-        self._items._set_ptr(&self.data[0].items[0])
+        if self._items is not None:
+            self._items.holder = self.holder
+            self._items._set_ptr(&self.data[0].items[0])
     def set_ptr(self, WrapItemData v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -265,8 +268,8 @@ cdef class WrapAppearanceData:
         writer.write_c(self.data, sizeof(AppearanceData))
     def cast(self, object klass):
         cdef WrapAppearanceData c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapAppearanceData inst = WrapAppearanceData.__new__(WrapAppearanceData)
@@ -277,13 +280,13 @@ cdef class WrapAppearanceData:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef AppearanceData * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(AppearanceData))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(AppearanceData))
             return
         cdef AppearanceData * old_data = self.data
@@ -335,6 +338,12 @@ cdef class WrapAppearanceData:
         self.data[0].flags = value
     @property
     def scale(self):
+        if self._scale is not None:
+            return self._scale
+        Py_INCREF(dtype_float32)
+        cdef float * scaleptr = &self.data[0].scale[0]
+        self._scale = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>scaleptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._scale, self.holder)
         return self._scale
     @scale.setter
     def scale(self, value):
@@ -485,36 +494,72 @@ cdef class WrapAppearanceData:
         self.data[0].back_pitch = value
     @property
     def body_offset(self):
+        if self._body_offset is not None:
+            return self._body_offset
+        Py_INCREF(dtype_float32)
+        cdef float * body_offsetptr = &self.data[0].body_offset[0]
+        self._body_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>body_offsetptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._body_offset, self.holder)
         return self._body_offset
     @body_offset.setter
     def body_offset(self, value):
         self.data[0].body_offset = value
     @property
     def head_offset(self):
+        if self._head_offset is not None:
+            return self._head_offset
+        Py_INCREF(dtype_float32)
+        cdef float * head_offsetptr = &self.data[0].head_offset[0]
+        self._head_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>head_offsetptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._head_offset, self.holder)
         return self._head_offset
     @head_offset.setter
     def head_offset(self, value):
         self.data[0].head_offset = value
     @property
     def hand_offset(self):
+        if self._hand_offset is not None:
+            return self._hand_offset
+        Py_INCREF(dtype_float32)
+        cdef float * hand_offsetptr = &self.data[0].hand_offset[0]
+        self._hand_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>hand_offsetptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._hand_offset, self.holder)
         return self._hand_offset
     @hand_offset.setter
     def hand_offset(self, value):
         self.data[0].hand_offset = value
     @property
     def foot_offset(self):
+        if self._foot_offset is not None:
+            return self._foot_offset
+        Py_INCREF(dtype_float32)
+        cdef float * foot_offsetptr = &self.data[0].foot_offset[0]
+        self._foot_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>foot_offsetptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._foot_offset, self.holder)
         return self._foot_offset
     @foot_offset.setter
     def foot_offset(self, value):
         self.data[0].foot_offset = value
     @property
     def tail_offset(self):
+        if self._tail_offset is not None:
+            return self._tail_offset
+        Py_INCREF(dtype_float32)
+        cdef float * tail_offsetptr = &self.data[0].tail_offset[0]
+        self._tail_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>tail_offsetptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._tail_offset, self.holder)
         return self._tail_offset
     @tail_offset.setter
     def tail_offset(self, value):
         self.data[0].tail_offset = value
     @property
     def wing_offset(self):
+        if self._wing_offset is not None:
+            return self._wing_offset
+        Py_INCREF(dtype_float32)
+        cdef float * wing_offsetptr = &self.data[0].wing_offset[0]
+        self._wing_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>wing_offsetptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._wing_offset, self.holder)
         return self._wing_offset
     @wing_offset.setter
     def wing_offset(self, value):
@@ -534,50 +579,29 @@ cdef class WrapAppearanceData:
         self.data[0].wing_model = -1
     cdef void _init_ptr(self, AppearanceData * ptr):
         self.data = ptr
-        Py_INCREF(dtype_float32)
-        cdef float * scaleptr = &self.data[0].scale[0]
-        self._scale = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>scaleptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._scale, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * body_offsetptr = &self.data[0].body_offset[0]
-        self._body_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>body_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._body_offset, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * head_offsetptr = &self.data[0].head_offset[0]
-        self._head_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>head_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._head_offset, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * hand_offsetptr = &self.data[0].hand_offset[0]
-        self._hand_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>hand_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._hand_offset, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * foot_offsetptr = &self.data[0].foot_offset[0]
-        self._foot_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>foot_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._foot_offset, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * tail_offsetptr = &self.data[0].tail_offset[0]
-        self._tail_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>tail_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._tail_offset, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * wing_offsetptr = &self.data[0].wing_offset[0]
-        self._wing_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>wing_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._wing_offset, self.holder)
     cdef void _set_ptr(self, AppearanceData * ptr):
         self.data = ptr
-        np.set_array_base(self._scale, self.holder)
-        self._scale.data = <char*>&self.data[0].scale
-        np.set_array_base(self._body_offset, self.holder)
-        self._body_offset.data = <char*>&self.data[0].body_offset
-        np.set_array_base(self._head_offset, self.holder)
-        self._head_offset.data = <char*>&self.data[0].head_offset
-        np.set_array_base(self._hand_offset, self.holder)
-        self._hand_offset.data = <char*>&self.data[0].hand_offset
-        np.set_array_base(self._foot_offset, self.holder)
-        self._foot_offset.data = <char*>&self.data[0].foot_offset
-        np.set_array_base(self._tail_offset, self.holder)
-        self._tail_offset.data = <char*>&self.data[0].tail_offset
-        np.set_array_base(self._wing_offset, self.holder)
-        self._wing_offset.data = <char*>&self.data[0].wing_offset
+        if self._scale is not None:
+            np.set_array_base(self._scale, self.holder)
+            self._scale.data = <char*>&self.data[0].scale
+        if self._body_offset is not None:
+            np.set_array_base(self._body_offset, self.holder)
+            self._body_offset.data = <char*>&self.data[0].body_offset
+        if self._head_offset is not None:
+            np.set_array_base(self._head_offset, self.holder)
+            self._head_offset.data = <char*>&self.data[0].head_offset
+        if self._hand_offset is not None:
+            np.set_array_base(self._hand_offset, self.holder)
+            self._hand_offset.data = <char*>&self.data[0].hand_offset
+        if self._foot_offset is not None:
+            np.set_array_base(self._foot_offset, self.holder)
+            self._foot_offset.data = <char*>&self.data[0].foot_offset
+        if self._tail_offset is not None:
+            np.set_array_base(self._tail_offset, self.holder)
+            self._tail_offset.data = <char*>&self.data[0].tail_offset
+        if self._wing_offset is not None:
+            np.set_array_base(self._wing_offset, self.holder)
+            self._wing_offset.data = <char*>&self.data[0].wing_offset
     def set_ptr(self, WrapAppearanceData v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -723,8 +747,8 @@ cdef class WrapEntityData:
         writer.write_c(self.data, sizeof(EntityData))
     def cast(self, object klass):
         cdef WrapEntityData c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapEntityData inst = WrapEntityData.__new__(WrapEntityData)
@@ -735,13 +759,13 @@ cdef class WrapEntityData:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef EntityData * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(EntityData))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(EntityData))
             return
         cdef EntityData * old_data = self.data
@@ -757,6 +781,12 @@ cdef class WrapEntityData:
         self._init_ptr(<EntityData*>buf)
     @property
     def pos(self):
+        if self._pos is not None:
+            return self._pos
+        Py_INCREF(dtype_int64)
+        cdef int64_t * posptr = &self.data[0].pos[0]
+        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -781,18 +811,36 @@ cdef class WrapEntityData:
         self.data[0].body_yaw = value
     @property
     def velocity(self):
+        if self._velocity is not None:
+            return self._velocity
+        Py_INCREF(dtype_float32)
+        cdef float * velocityptr = &self.data[0].velocity[0]
+        self._velocity = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>velocityptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._velocity, self.holder)
         return self._velocity
     @velocity.setter
     def velocity(self, value):
         self.data[0].velocity = value
     @property
     def accel(self):
+        if self._accel is not None:
+            return self._accel
+        Py_INCREF(dtype_float32)
+        cdef float * accelptr = &self.data[0].accel[0]
+        self._accel = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>accelptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._accel, self.holder)
         return self._accel
     @accel.setter
     def accel(self, value):
         self.data[0].accel = value
     @property
     def extra_vel(self):
+        if self._extra_vel is not None:
+            return self._extra_vel
+        Py_INCREF(dtype_float32)
+        cdef float * extra_velptr = &self.data[0].extra_vel[0]
+        self._extra_vel = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>extra_velptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._extra_vel, self.holder)
         return self._extra_vel
     @extra_vel.setter
     def extra_vel(self, value):
@@ -847,6 +895,11 @@ cdef class WrapEntityData:
         self.data[0].last_hit_time = value
     @property
     def appearance(self):
+        if self._appearance is not None:
+            return self._appearance
+        self._appearance = WrapAppearanceData.__new__(WrapAppearanceData)
+        self._appearance.holder = self.holder
+        self._appearance._init_ptr(&self.data[0].appearance)
         return self._appearance
     @appearance.setter
     def appearance(self, value):
@@ -950,6 +1003,12 @@ cdef class WrapEntityData:
         self.data[0].not_used_6 = value
     @property
     def ray_hit(self):
+        if self._ray_hit is not None:
+            return self._ray_hit
+        Py_INCREF(dtype_float32)
+        cdef float * ray_hitptr = &self.data[0].ray_hit[0]
+        self._ray_hit = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>ray_hitptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._ray_hit, self.holder)
         return self._ray_hit
     @ray_hit.setter
     def ray_hit(self, value):
@@ -1058,6 +1117,12 @@ cdef class WrapEntityData:
         self.data[0].unknown_or_not_used4 = value
     @property
     def start_chunk(self):
+        if self._start_chunk is not None:
+            return self._start_chunk
+        Py_INCREF(dtype_int32)
+        cdef int32_t * start_chunkptr = &self.data[0].start_chunk[0]
+        self._start_chunk = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int32, 1, &vec3_dim, NULL, <void*>start_chunkptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._start_chunk, self.holder)
         return self._start_chunk
     @start_chunk.setter
     def start_chunk(self, value):
@@ -1070,6 +1135,12 @@ cdef class WrapEntityData:
         self.data[0].super_weird = value
     @property
     def spawn_pos(self):
+        if self._spawn_pos is not None:
+            return self._spawn_pos
+        Py_INCREF(dtype_int64)
+        cdef int64_t * spawn_posptr = &self.data[0].spawn_pos[0]
+        self._spawn_pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>spawn_posptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._spawn_pos, self.holder)
         return self._spawn_pos
     @spawn_pos.setter
     def spawn_pos(self, value):
@@ -1082,12 +1153,23 @@ cdef class WrapEntityData:
         self.data[0].not_used19 = value
     @property
     def not_used20(self):
+        if self._not_used20 is not None:
+            return self._not_used20
+        Py_INCREF(dtype_int32)
+        cdef int32_t * not_used20ptr = &self.data[0].not_used20[0]
+        self._not_used20 = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int32, 1, &vec3_dim, NULL, <void*>not_used20ptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._not_used20, self.holder)
         return self._not_used20
     @not_used20.setter
     def not_used20(self, value):
         self.data[0].not_used20 = value
     @property
     def consumable(self):
+        if self._consumable is not None:
+            return self._consumable
+        self._consumable = WrapItemData.__new__(WrapItemData)
+        self._consumable.holder = self.holder
+        self._consumable._init_ptr(&self.data[0].consumable)
         return self._consumable
     @consumable.setter
     def consumable(self, value):
@@ -1095,12 +1177,20 @@ cdef class WrapEntityData:
         self.data[0].consumable = v.data[0]
     @property
     def equipment(self):
+        if self._equipment is not None:
+            return self._equipment
+        self._equipment = WrapArray1.__new__(WrapArray1)
+        self._equipment.holder = self.holder
+        self._equipment._init_ptr(&self.data[0].equipment[0])
         return self._equipment
     @equipment.setter
     def equipment(self, value):
         raise NotImplementedError()
     @property
     def skills(self):
+        if self._skills is not None:
+            return self._skills
+        self._skills = <uint32_t[:11]>(&self.data[0].skills[0])
         return self._skills
     @skills.setter
     def skills(self, value):
@@ -1144,73 +1234,43 @@ cdef class WrapEntityData:
         self.data[0].not_used20 = (-1, -1, 0)
     cdef void _init_ptr(self, EntityData * ptr):
         self.data = ptr
-        Py_INCREF(dtype_int64)
-        cdef int64_t * posptr = &self.data[0].pos[0]
-        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * velocityptr = &self.data[0].velocity[0]
-        self._velocity = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>velocityptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._velocity, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * accelptr = &self.data[0].accel[0]
-        self._accel = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>accelptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._accel, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * extra_velptr = &self.data[0].extra_vel[0]
-        self._extra_vel = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>extra_velptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._extra_vel, self.holder)
-        self._appearance = WrapAppearanceData.__new__(WrapAppearanceData)
-        self._appearance.holder = self.holder
-        self._appearance._init_ptr(&self.data[0].appearance)
-        Py_INCREF(dtype_float32)
-        cdef float * ray_hitptr = &self.data[0].ray_hit[0]
-        self._ray_hit = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>ray_hitptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._ray_hit, self.holder)
-        Py_INCREF(dtype_int32)
-        cdef int32_t * start_chunkptr = &self.data[0].start_chunk[0]
-        self._start_chunk = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int32, 1, &vec3_dim, NULL, <void*>start_chunkptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._start_chunk, self.holder)
-        Py_INCREF(dtype_int64)
-        cdef int64_t * spawn_posptr = &self.data[0].spawn_pos[0]
-        self._spawn_pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>spawn_posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._spawn_pos, self.holder)
-        Py_INCREF(dtype_int32)
-        cdef int32_t * not_used20ptr = &self.data[0].not_used20[0]
-        self._not_used20 = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int32, 1, &vec3_dim, NULL, <void*>not_used20ptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._not_used20, self.holder)
-        self._consumable = WrapItemData.__new__(WrapItemData)
-        self._consumable.holder = self.holder
-        self._consumable._init_ptr(&self.data[0].consumable)
-        self._equipment = WrapArray1.__new__(WrapArray1)
-        self._equipment.holder = self.holder
-        self._equipment._init_ptr(&self.data[0].equipment[0])
-        self._skills = <uint32_t[:11]>(&self.data[0].skills[0])
     cdef void _set_ptr(self, EntityData * ptr):
         self.data = ptr
-        np.set_array_base(self._pos, self.holder)
-        self._pos.data = <char*>&self.data[0].pos
-        np.set_array_base(self._velocity, self.holder)
-        self._velocity.data = <char*>&self.data[0].velocity
-        np.set_array_base(self._accel, self.holder)
-        self._accel.data = <char*>&self.data[0].accel
-        np.set_array_base(self._extra_vel, self.holder)
-        self._extra_vel.data = <char*>&self.data[0].extra_vel
-        self._appearance.holder = self.holder
-        self._appearance._set_ptr(&self.data[0].appearance)
-        np.set_array_base(self._ray_hit, self.holder)
-        self._ray_hit.data = <char*>&self.data[0].ray_hit
-        np.set_array_base(self._start_chunk, self.holder)
-        self._start_chunk.data = <char*>&self.data[0].start_chunk
-        np.set_array_base(self._spawn_pos, self.holder)
-        self._spawn_pos.data = <char*>&self.data[0].spawn_pos
-        np.set_array_base(self._not_used20, self.holder)
-        self._not_used20.data = <char*>&self.data[0].not_used20
-        self._consumable.holder = self.holder
-        self._consumable._set_ptr(&self.data[0].consumable)
-        self._equipment.holder = self.holder
-        self._equipment._set_ptr(&self.data[0].equipment[0])
-        self._skills.data = <char*>(&self.data[0].skills[0])
+        if self._pos is not None:
+            np.set_array_base(self._pos, self.holder)
+            self._pos.data = <char*>&self.data[0].pos
+        if self._velocity is not None:
+            np.set_array_base(self._velocity, self.holder)
+            self._velocity.data = <char*>&self.data[0].velocity
+        if self._accel is not None:
+            np.set_array_base(self._accel, self.holder)
+            self._accel.data = <char*>&self.data[0].accel
+        if self._extra_vel is not None:
+            np.set_array_base(self._extra_vel, self.holder)
+            self._extra_vel.data = <char*>&self.data[0].extra_vel
+        if self._appearance is not None:
+            self._appearance.holder = self.holder
+            self._appearance._set_ptr(&self.data[0].appearance)
+        if self._ray_hit is not None:
+            np.set_array_base(self._ray_hit, self.holder)
+            self._ray_hit.data = <char*>&self.data[0].ray_hit
+        if self._start_chunk is not None:
+            np.set_array_base(self._start_chunk, self.holder)
+            self._start_chunk.data = <char*>&self.data[0].start_chunk
+        if self._spawn_pos is not None:
+            np.set_array_base(self._spawn_pos, self.holder)
+            self._spawn_pos.data = <char*>&self.data[0].spawn_pos
+        if self._not_used20 is not None:
+            np.set_array_base(self._not_used20, self.holder)
+            self._not_used20.data = <char*>&self.data[0].not_used20
+        if self._consumable is not None:
+            self._consumable.holder = self.holder
+            self._consumable._set_ptr(&self.data[0].consumable)
+        if self._equipment is not None:
+            self._equipment.holder = self.holder
+            self._equipment._set_ptr(&self.data[0].equipment[0])
+        if self._skills is not None:
+            self._skills.data = <char*>(&self.data[0].skills[0])
     def set_ptr(self, WrapEntityData v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -1226,8 +1286,8 @@ cdef class WrapItemWithHeader:
         writer.write_c(self.data, sizeof(ItemWithHeader))
     def cast(self, object klass):
         cdef WrapItemWithHeader c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapItemWithHeader inst = WrapItemWithHeader.__new__(WrapItemWithHeader)
@@ -1238,13 +1298,13 @@ cdef class WrapItemWithHeader:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ItemWithHeader * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ItemWithHeader))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ItemWithHeader))
             return
         cdef ItemWithHeader * old_data = self.data
@@ -1266,6 +1326,11 @@ cdef class WrapItemWithHeader:
         self.data[0].header = value
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapItemData.__new__(WrapItemData)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -1275,13 +1340,11 @@ cdef class WrapItemWithHeader:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, ItemWithHeader * ptr):
         self.data = ptr
-        self._data = WrapItemData.__new__(WrapItemData)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, ItemWithHeader * ptr):
         self.data = ptr
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapItemWithHeader v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -1297,8 +1360,8 @@ cdef class WrapItemWithHeaderList:
         writer.write_c(self.data, sizeof(ItemWithHeaderList))
     def cast(self, object klass):
         cdef WrapItemWithHeaderList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapItemWithHeaderList inst = WrapItemWithHeaderList.__new__(WrapItemWithHeaderList)
@@ -1309,13 +1372,13 @@ cdef class WrapItemWithHeaderList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ItemWithHeaderList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ItemWithHeaderList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ItemWithHeaderList))
             return
         cdef ItemWithHeaderList * old_data = self.data
@@ -1331,6 +1394,11 @@ cdef class WrapItemWithHeaderList:
         self._init_ptr(<ItemWithHeaderList*>buf)
     @property
     def vec(self):
+        if self._vec is not None:
+            return self._vec
+        self._vec = WrapItemWithHeaderVec.__new__(WrapItemWithHeaderVec)
+        self._vec.holder = self.holder
+        self._vec._init_ptr(&self.data[0].vec_start)
         return self._vec
     @vec.setter
     def vec(self, value):
@@ -1339,13 +1407,11 @@ cdef class WrapItemWithHeaderList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, ItemWithHeaderList * ptr):
         self.data = ptr
-        self._vec = WrapItemWithHeaderVec.__new__(WrapItemWithHeaderVec)
-        self._vec.holder = self.holder
-        self._vec._init_ptr(&self.data[0].vec_start)
     cdef void _set_ptr(self, ItemWithHeaderList * ptr):
         self.data = ptr
-        self._vec.holder = self.holder
-        self._vec._set_ptr(&self.data[0].vec_start)
+        if self._vec is not None:
+            self._vec.holder = self.holder
+            self._vec._set_ptr(&self.data[0].vec_start)
     def set_ptr(self, WrapItemWithHeaderList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -1361,8 +1427,8 @@ cdef class WrapItemWithHeaderLists:
         writer.write_c(self.data, sizeof(ItemWithHeaderLists))
     def cast(self, object klass):
         cdef WrapItemWithHeaderLists c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapItemWithHeaderLists inst = WrapItemWithHeaderLists.__new__(WrapItemWithHeaderLists)
@@ -1373,13 +1439,13 @@ cdef class WrapItemWithHeaderLists:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ItemWithHeaderLists * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ItemWithHeaderLists))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ItemWithHeaderLists))
             return
         cdef ItemWithHeaderLists * old_data = self.data
@@ -1395,6 +1461,11 @@ cdef class WrapItemWithHeaderLists:
         self._init_ptr(<ItemWithHeaderLists*>buf)
     @property
     def vec(self):
+        if self._vec is not None:
+            return self._vec
+        self._vec = WrapItemWithHeaderListVec.__new__(WrapItemWithHeaderListVec)
+        self._vec.holder = self.holder
+        self._vec._init_ptr(&self.data[0].vec_start)
         return self._vec
     @vec.setter
     def vec(self, value):
@@ -1403,13 +1474,11 @@ cdef class WrapItemWithHeaderLists:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, ItemWithHeaderLists * ptr):
         self.data = ptr
-        self._vec = WrapItemWithHeaderListVec.__new__(WrapItemWithHeaderListVec)
-        self._vec.holder = self.holder
-        self._vec._init_ptr(&self.data[0].vec_start)
     cdef void _set_ptr(self, ItemWithHeaderLists * ptr):
         self.data = ptr
-        self._vec.holder = self.holder
-        self._vec._set_ptr(&self.data[0].vec_start)
+        if self._vec is not None:
+            self._vec.holder = self.holder
+            self._vec._set_ptr(&self.data[0].vec_start)
     def set_ptr(self, WrapItemWithHeaderLists v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -1425,8 +1494,8 @@ cdef class WrapStaticEntityHeader:
         writer.write_c(self.data, sizeof(StaticEntityHeader))
     def cast(self, object klass):
         cdef WrapStaticEntityHeader c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapStaticEntityHeader inst = WrapStaticEntityHeader.__new__(WrapStaticEntityHeader)
@@ -1437,13 +1506,13 @@ cdef class WrapStaticEntityHeader:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef StaticEntityHeader * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(StaticEntityHeader))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(StaticEntityHeader))
             return
         cdef StaticEntityHeader * old_data = self.data
@@ -1465,6 +1534,12 @@ cdef class WrapStaticEntityHeader:
         self.data[0].entity_type = value
     @property
     def pos(self):
+        if self._pos is not None:
+            return self._pos
+        Py_INCREF(dtype_int64)
+        cdef int64_t * posptr = &self.data[0].pos[0]
+        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -1477,6 +1552,12 @@ cdef class WrapStaticEntityHeader:
         self.data[0].orientation = value
     @property
     def size(self):
+        if self._size is not None:
+            return self._size
+        Py_INCREF(dtype_float32)
+        cdef float * sizeptr = &self.data[0].size[0]
+        self._size = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>sizeptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._size, self.holder)
         return self._size
     @size.setter
     def size(self, value):
@@ -1509,20 +1590,14 @@ cdef class WrapStaticEntityHeader:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, StaticEntityHeader * ptr):
         self.data = ptr
-        Py_INCREF(dtype_int64)
-        cdef int64_t * posptr = &self.data[0].pos[0]
-        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * sizeptr = &self.data[0].size[0]
-        self._size = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>sizeptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._size, self.holder)
     cdef void _set_ptr(self, StaticEntityHeader * ptr):
         self.data = ptr
-        np.set_array_base(self._pos, self.holder)
-        self._pos.data = <char*>&self.data[0].pos
-        np.set_array_base(self._size, self.holder)
-        self._size.data = <char*>&self.data[0].size
+        if self._pos is not None:
+            np.set_array_base(self._pos, self.holder)
+            self._pos.data = <char*>&self.data[0].pos
+        if self._size is not None:
+            np.set_array_base(self._size, self.holder)
+            self._size.data = <char*>&self.data[0].size
     def set_ptr(self, WrapStaticEntityHeader v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -1538,8 +1613,8 @@ cdef class WrapStaticEntity:
         writer.write_c(self.data, sizeof(StaticEntity))
     def cast(self, object klass):
         cdef WrapStaticEntity c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapStaticEntity inst = WrapStaticEntity.__new__(WrapStaticEntity)
@@ -1550,13 +1625,13 @@ cdef class WrapStaticEntity:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef StaticEntity * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(StaticEntity))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(StaticEntity))
             return
         cdef StaticEntity * old_data = self.data
@@ -1572,6 +1647,11 @@ cdef class WrapStaticEntity:
         self._init_ptr(<StaticEntity*>buf)
     @property
     def header(self):
+        if self._header is not None:
+            return self._header
+        self._header = WrapStaticEntityHeader.__new__(WrapStaticEntityHeader)
+        self._header.holder = self.holder
+        self._header._init_ptr(&self.data[0].header)
         return self._header
     @header.setter
     def header(self, value):
@@ -1579,6 +1659,11 @@ cdef class WrapStaticEntity:
         self.data[0].header = v.data[0]
     @property
     def item_with_header_lists(self):
+        if self._item_with_header_lists is not None:
+            return self._item_with_header_lists
+        self._item_with_header_lists = WrapItemWithHeaderLists.__new__(WrapItemWithHeaderLists)
+        self._item_with_header_lists.holder = self.holder
+        self._item_with_header_lists._init_ptr(&self.data[0].item_with_header_lists)
         return self._item_with_header_lists
     @item_with_header_lists.setter
     def item_with_header_lists(self, value):
@@ -1592,6 +1677,11 @@ cdef class WrapStaticEntity:
         self.data[0].something1 = value
     @property
     def item(self):
+        if self._item is not None:
+            return self._item
+        self._item = WrapItemData.__new__(WrapItemData)
+        self._item.holder = self.holder
+        self._item._init_ptr(&self.data[0].item)
         return self._item
     @item.setter
     def item(self, value):
@@ -1637,23 +1727,17 @@ cdef class WrapStaticEntity:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, StaticEntity * ptr):
         self.data = ptr
-        self._header = WrapStaticEntityHeader.__new__(WrapStaticEntityHeader)
-        self._header.holder = self.holder
-        self._header._init_ptr(&self.data[0].header)
-        self._item_with_header_lists = WrapItemWithHeaderLists.__new__(WrapItemWithHeaderLists)
-        self._item_with_header_lists.holder = self.holder
-        self._item_with_header_lists._init_ptr(&self.data[0].item_with_header_lists)
-        self._item = WrapItemData.__new__(WrapItemData)
-        self._item.holder = self.holder
-        self._item._init_ptr(&self.data[0].item)
     cdef void _set_ptr(self, StaticEntity * ptr):
         self.data = ptr
-        self._header.holder = self.holder
-        self._header._set_ptr(&self.data[0].header)
-        self._item_with_header_lists.holder = self.holder
-        self._item_with_header_lists._set_ptr(&self.data[0].item_with_header_lists)
-        self._item.holder = self.holder
-        self._item._set_ptr(&self.data[0].item)
+        if self._header is not None:
+            self._header.holder = self.holder
+            self._header._set_ptr(&self.data[0].header)
+        if self._item_with_header_lists is not None:
+            self._item_with_header_lists.holder = self.holder
+            self._item_with_header_lists._set_ptr(&self.data[0].item_with_header_lists)
+        if self._item is not None:
+            self._item.holder = self.holder
+            self._item._set_ptr(&self.data[0].item)
     def set_ptr(self, WrapStaticEntity v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -1669,8 +1753,8 @@ cdef class WrapItemWithExtra:
         writer.write_c(self.data, sizeof(ItemWithExtra))
     def cast(self, object klass):
         cdef WrapItemWithExtra c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapItemWithExtra inst = WrapItemWithExtra.__new__(WrapItemWithExtra)
@@ -1681,13 +1765,13 @@ cdef class WrapItemWithExtra:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ItemWithExtra * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ItemWithExtra))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ItemWithExtra))
             return
         cdef ItemWithExtra * old_data = self.data
@@ -1703,6 +1787,11 @@ cdef class WrapItemWithExtra:
         self._init_ptr(<ItemWithExtra*>buf)
     @property
     def lists(self):
+        if self._lists is not None:
+            return self._lists
+        self._lists = WrapItemWithHeaderLists.__new__(WrapItemWithHeaderLists)
+        self._lists.holder = self.holder
+        self._lists._init_ptr(&self.data[0].lists)
         return self._lists
     @lists.setter
     def lists(self, value):
@@ -1716,6 +1805,11 @@ cdef class WrapItemWithExtra:
         self.data[0].something1 = value
     @property
     def item(self):
+        if self._item is not None:
+            return self._item
+        self._item = WrapItemData.__new__(WrapItemData)
+        self._item.holder = self.holder
+        self._item._init_ptr(&self.data[0].item)
         return self._item
     @item.setter
     def item(self, value):
@@ -1737,18 +1831,14 @@ cdef class WrapItemWithExtra:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, ItemWithExtra * ptr):
         self.data = ptr
-        self._lists = WrapItemWithHeaderLists.__new__(WrapItemWithHeaderLists)
-        self._lists.holder = self.holder
-        self._lists._init_ptr(&self.data[0].lists)
-        self._item = WrapItemData.__new__(WrapItemData)
-        self._item.holder = self.holder
-        self._item._init_ptr(&self.data[0].item)
     cdef void _set_ptr(self, ItemWithExtra * ptr):
         self.data = ptr
-        self._lists.holder = self.holder
-        self._lists._set_ptr(&self.data[0].lists)
-        self._item.holder = self.holder
-        self._item._set_ptr(&self.data[0].item)
+        if self._lists is not None:
+            self._lists.holder = self.holder
+            self._lists._set_ptr(&self.data[0].lists)
+        if self._item is not None:
+            self._item.holder = self.holder
+            self._item._set_ptr(&self.data[0].item)
     def set_ptr(self, WrapItemWithExtra v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -1764,8 +1854,8 @@ cdef class WrapSpawn:
         writer.write_c(self.data, sizeof(Spawn))
     def cast(self, object klass):
         cdef WrapSpawn c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapSpawn inst = WrapSpawn.__new__(WrapSpawn)
@@ -1776,13 +1866,13 @@ cdef class WrapSpawn:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef Spawn * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(Spawn))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(Spawn))
             return
         cdef Spawn * old_data = self.data
@@ -1810,6 +1900,9 @@ cdef class WrapSpawn:
         self.data[0].something1 = value
     @property
     def something2(self):
+        if self._something2 is not None:
+            return self._something2
+        self._something2 = <int8_t[:4]>(&self.data[0].something2[0])
         return self._something2
     @something2.setter
     def something2(self, value):
@@ -1840,6 +1933,9 @@ cdef class WrapSpawn:
         self.data[0].hostile_type = value
     @property
     def something3(self):
+        if self._something3 is not None:
+            return self._something3
+        self._something3 = <int8_t[:3]>(&self.data[0].something3[0])
         return self._something3
     @something3.setter
     def something3(self, value):
@@ -1954,6 +2050,11 @@ cdef class WrapSpawn:
         self.data[0].something15 = value
     @property
     def appearance(self):
+        if self._appearance is not None:
+            return self._appearance
+        self._appearance = WrapAppearanceData.__new__(WrapAppearanceData)
+        self._appearance.holder = self.holder
+        self._appearance._init_ptr(&self.data[0].appearance)
         return self._appearance
     @appearance.setter
     def appearance(self, value):
@@ -1961,6 +2062,11 @@ cdef class WrapSpawn:
         self.data[0].appearance = v.data[0]
     @property
     def items(self):
+        if self._items is not None:
+            return self._items
+        self._items = WrapArray1.__new__(WrapArray1)
+        self._items.holder = self.holder
+        self._items._init_ptr(&self.data[0].items[0])
         return self._items
     @items.setter
     def items(self, value):
@@ -1997,6 +2103,11 @@ cdef class WrapSpawn:
         self.data[0].resi_multiplier = value
     @property
     def extra_item(self):
+        if self._extra_item is not None:
+            return self._extra_item
+        self._extra_item = WrapItemWithExtra.__new__(WrapItemWithExtra)
+        self._extra_item.holder = self.holder
+        self._extra_item._init_ptr(&self.data[0].extra_item)
         return self._extra_item
     @extra_item.setter
     def extra_item(self, value):
@@ -2010,12 +2121,22 @@ cdef class WrapSpawn:
         self.data[0].some_12b_p = value
     @property
     def some_vec(self):
+        if self._some_vec is not None:
+            return self._some_vec
+        self._some_vec = Wrapuint8Vec.__new__(Wrapuint8Vec)
+        self._some_vec.holder = self.holder
+        self._some_vec._init_ptr(&self.data[0].some_vec_start)
         return self._some_vec
     @some_vec.setter
     def some_vec(self, value):
         raise NotImplementedError()
     @property
     def id_vec_1(self):
+        if self._id_vec_1 is not None:
+            return self._id_vec_1
+        self._id_vec_1 = Wrapuint8Vec.__new__(Wrapuint8Vec)
+        self._id_vec_1.holder = self.holder
+        self._id_vec_1._init_ptr(&self.data[0].id_vec_1_start)
         return self._id_vec_1
     @id_vec_1.setter
     def id_vec_1(self, value):
@@ -2028,6 +2149,11 @@ cdef class WrapSpawn:
         self.data[0].id_vec_2_end_old = value
     @property
     def id_vec_2(self):
+        if self._id_vec_2 is not None:
+            return self._id_vec_2
+        self._id_vec_2 = Wrapuint8Vec.__new__(Wrapuint8Vec)
+        self._id_vec_2.holder = self.holder
+        self._id_vec_2._init_ptr(&self.data[0].id_vec_2_start)
         return self._id_vec_2
     @id_vec_2.setter
     def id_vec_2(self, value):
@@ -2085,42 +2211,30 @@ cdef class WrapSpawn:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, Spawn * ptr):
         self.data = ptr
-        self._something2 = <int8_t[:4]>(&self.data[0].something2[0])
-        self._something3 = <int8_t[:3]>(&self.data[0].something3[0])
-        self._appearance = WrapAppearanceData.__new__(WrapAppearanceData)
-        self._appearance.holder = self.holder
-        self._appearance._init_ptr(&self.data[0].appearance)
-        self._items = WrapArray1.__new__(WrapArray1)
-        self._items.holder = self.holder
-        self._items._init_ptr(&self.data[0].items[0])
-        self._extra_item = WrapItemWithExtra.__new__(WrapItemWithExtra)
-        self._extra_item.holder = self.holder
-        self._extra_item._init_ptr(&self.data[0].extra_item)
-        self._some_vec = Wrapuint8Vec.__new__(Wrapuint8Vec)
-        self._some_vec.holder = self.holder
-        self._some_vec._init_ptr(&self.data[0].some_vec_start)
-        self._id_vec_1 = Wrapuint8Vec.__new__(Wrapuint8Vec)
-        self._id_vec_1.holder = self.holder
-        self._id_vec_1._init_ptr(&self.data[0].id_vec_1_start)
-        self._id_vec_2 = Wrapuint8Vec.__new__(Wrapuint8Vec)
-        self._id_vec_2.holder = self.holder
-        self._id_vec_2._init_ptr(&self.data[0].id_vec_2_start)
     cdef void _set_ptr(self, Spawn * ptr):
         self.data = ptr
-        self._something2.data = <char*>(&self.data[0].something2[0])
-        self._something3.data = <char*>(&self.data[0].something3[0])
-        self._appearance.holder = self.holder
-        self._appearance._set_ptr(&self.data[0].appearance)
-        self._items.holder = self.holder
-        self._items._set_ptr(&self.data[0].items[0])
-        self._extra_item.holder = self.holder
-        self._extra_item._set_ptr(&self.data[0].extra_item)
-        self._some_vec.holder = self.holder
-        self._some_vec._set_ptr(&self.data[0].some_vec_start)
-        self._id_vec_1.holder = self.holder
-        self._id_vec_1._set_ptr(&self.data[0].id_vec_1_start)
-        self._id_vec_2.holder = self.holder
-        self._id_vec_2._set_ptr(&self.data[0].id_vec_2_start)
+        if self._something2 is not None:
+            self._something2.data = <char*>(&self.data[0].something2[0])
+        if self._something3 is not None:
+            self._something3.data = <char*>(&self.data[0].something3[0])
+        if self._appearance is not None:
+            self._appearance.holder = self.holder
+            self._appearance._set_ptr(&self.data[0].appearance)
+        if self._items is not None:
+            self._items.holder = self.holder
+            self._items._set_ptr(&self.data[0].items[0])
+        if self._extra_item is not None:
+            self._extra_item.holder = self.holder
+            self._extra_item._set_ptr(&self.data[0].extra_item)
+        if self._some_vec is not None:
+            self._some_vec.holder = self.holder
+            self._some_vec._set_ptr(&self.data[0].some_vec_start)
+        if self._id_vec_1 is not None:
+            self._id_vec_1.holder = self.holder
+            self._id_vec_1._set_ptr(&self.data[0].id_vec_1_start)
+        if self._id_vec_2 is not None:
+            self._id_vec_2.holder = self.holder
+            self._id_vec_2._set_ptr(&self.data[0].id_vec_2_start)
     def set_ptr(self, WrapSpawn v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -2136,8 +2250,8 @@ cdef class WrapCriticalSection:
         writer.write_c(self.data, sizeof(CriticalSection))
     def cast(self, object klass):
         cdef WrapCriticalSection c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapCriticalSection inst = WrapCriticalSection.__new__(WrapCriticalSection)
@@ -2148,13 +2262,13 @@ cdef class WrapCriticalSection:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef CriticalSection * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(CriticalSection))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(CriticalSection))
             return
         cdef CriticalSection * old_data = self.data
@@ -2172,6 +2286,11 @@ cdef class WrapCriticalSection:
     def DebugInfo(self):
         if self.data[0].DebugInfo == 0:
             return None
+        if self._DebugInfo is not None:
+            return self._DebugInfo
+        self._DebugInfo = WrapArray2.__new__(WrapArray2)
+        self._DebugInfo.holder = self.holder
+        self._DebugInfo._init_ptr(&(<int8_t*>self.data[0].DebugInfo)[0])
         return self._DebugInfo
     @DebugInfo.setter
     def DebugInfo(self, value):
@@ -2210,13 +2329,11 @@ cdef class WrapCriticalSection:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, CriticalSection * ptr):
         self.data = ptr
-        self._DebugInfo = WrapArray2.__new__(WrapArray2)
-        self._DebugInfo.holder = self.holder
-        self._DebugInfo._init_ptr(&(<int8_t*>self.data[0].DebugInfo)[0])
     cdef void _set_ptr(self, CriticalSection * ptr):
         self.data = ptr
-        self._DebugInfo.holder = self.holder
-        self._DebugInfo._set_ptr(&(<int8_t*>self.data[0].DebugInfo)[0])
+        if self._DebugInfo is not None:
+            self._DebugInfo.holder = self.holder
+            self._DebugInfo._set_ptr(&(<int8_t*>self.data[0].DebugInfo)[0])
     def set_ptr(self, WrapCriticalSection v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -2232,8 +2349,8 @@ cdef class WrapColor:
         writer.write_c(self.data, sizeof(Color))
     def cast(self, object klass):
         cdef WrapColor c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapColor inst = WrapColor.__new__(WrapColor)
@@ -2244,13 +2361,13 @@ cdef class WrapColor:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef Color * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(Color))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(Color))
             return
         cdef Color * old_data = self.data
@@ -2309,8 +2426,8 @@ cdef class WrapField:
         writer.write_c(self.data, sizeof(Field))
     def cast(self, object klass):
         cdef WrapField c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapField inst = WrapField.__new__(WrapField)
@@ -2321,13 +2438,13 @@ cdef class WrapField:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef Field * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(Field))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(Field))
             return
         cdef Field * old_data = self.data
@@ -2381,6 +2498,11 @@ cdef class WrapField:
     def data(self):
         if self.data[0].data == 0:
             return None
+        if self._data is not None:
+            return self._data
+        self._data = WrapArray3.__new__(WrapArray3)
+        self._data.holder = self.holder
+        self._data._init_ptr(&(<Color*>self.data[0].data)[0])
         return self._data
     @data.setter
     def data(self, value):
@@ -2395,13 +2517,11 @@ cdef class WrapField:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, Field * ptr):
         self.data = ptr
-        self._data = WrapArray3.__new__(WrapArray3)
-        self._data.holder = self.holder
-        self._data._init_ptr(&(<Color*>self.data[0].data)[0])
     cdef void _set_ptr(self, Field * ptr):
         self.data = ptr
-        self._data.holder = self.holder
-        self._data._set_ptr(&(<Color*>self.data[0].data)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&(<Color*>self.data[0].data)[0])
     def set_ptr(self, WrapField v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -2417,8 +2537,8 @@ cdef class WrapChunkItemData:
         writer.write_c(self.data, sizeof(ChunkItemData))
     def cast(self, object klass):
         cdef WrapChunkItemData c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapChunkItemData inst = WrapChunkItemData.__new__(WrapChunkItemData)
@@ -2429,13 +2549,13 @@ cdef class WrapChunkItemData:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ChunkItemData * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ChunkItemData))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ChunkItemData))
             return
         cdef ChunkItemData * old_data = self.data
@@ -2451,6 +2571,11 @@ cdef class WrapChunkItemData:
         self._init_ptr(<ChunkItemData*>buf)
     @property
     def item_data(self):
+        if self._item_data is not None:
+            return self._item_data
+        self._item_data = WrapItemData.__new__(WrapItemData)
+        self._item_data.holder = self.holder
+        self._item_data._init_ptr(&self.data[0].item_data)
         return self._item_data
     @item_data.setter
     def item_data(self, value):
@@ -2458,6 +2583,12 @@ cdef class WrapChunkItemData:
         self.data[0].item_data = v.data[0]
     @property
     def pos(self):
+        if self._pos is not None:
+            return self._pos
+        Py_INCREF(dtype_int64)
+        cdef int64_t * posptr = &self.data[0].pos[0]
+        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -2502,19 +2633,14 @@ cdef class WrapChunkItemData:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, ChunkItemData * ptr):
         self.data = ptr
-        self._item_data = WrapItemData.__new__(WrapItemData)
-        self._item_data.holder = self.holder
-        self._item_data._init_ptr(&self.data[0].item_data)
-        Py_INCREF(dtype_int64)
-        cdef int64_t * posptr = &self.data[0].pos[0]
-        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
     cdef void _set_ptr(self, ChunkItemData * ptr):
         self.data = ptr
-        self._item_data.holder = self.holder
-        self._item_data._set_ptr(&self.data[0].item_data)
-        np.set_array_base(self._pos, self.holder)
-        self._pos.data = <char*>&self.data[0].pos
+        if self._item_data is not None:
+            self._item_data.holder = self.holder
+            self._item_data._set_ptr(&self.data[0].item_data)
+        if self._pos is not None:
+            np.set_array_base(self._pos, self.holder)
+            self._pos.data = <char*>&self.data[0].pos
     def set_ptr(self, WrapChunkItemData v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -2530,8 +2656,8 @@ cdef class WrapZone:
         writer.write_c(self.data, sizeof(Zone))
     def cast(self, object klass):
         cdef WrapZone c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapZone inst = WrapZone.__new__(WrapZone)
@@ -2542,13 +2668,13 @@ cdef class WrapZone:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef Zone * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(Zone))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(Zone))
             return
         cdef Zone * old_data = self.data
@@ -2582,42 +2708,77 @@ cdef class WrapZone:
         self.data[0].c = value
     @property
     def static_entities(self):
+        if self._static_entities is not None:
+            return self._static_entities
+        self._static_entities = WrapStaticEntityVec.__new__(WrapStaticEntityVec)
+        self._static_entities.holder = self.holder
+        self._static_entities._init_ptr(&self.data[0].static_entities_start)
         return self._static_entities
     @static_entities.setter
     def static_entities(self, value):
         raise NotImplementedError()
     @property
     def spawns(self):
+        if self._spawns is not None:
+            return self._spawns
+        self._spawns = WrapSpawnPtrVec.__new__(WrapSpawnPtrVec)
+        self._spawns.holder = self.holder
+        self._spawns._init_ptr(&self.data[0].spawns_start)
         return self._spawns
     @spawns.setter
     def spawns(self, value):
         raise NotImplementedError()
     @property
     def some4(self):
+        if self._some4 is not None:
+            return self._some4
+        self._some4 = Wrapuint8Vec.__new__(Wrapuint8Vec)
+        self._some4.holder = self.holder
+        self._some4._init_ptr(&self.data[0].some4_start)
         return self._some4
     @some4.setter
     def some4(self, value):
         raise NotImplementedError()
     @property
     def items(self):
+        if self._items is not None:
+            return self._items
+        self._items = WrapChunkItemDataVec.__new__(WrapChunkItemDataVec)
+        self._items.holder = self.holder
+        self._items._init_ptr(&self.data[0].items_start)
         return self._items
     @items.setter
     def items(self, value):
         raise NotImplementedError()
     @property
     def some9(self):
+        if self._some9 is not None:
+            return self._some9
+        self._some9 = Wrapuint8Vec.__new__(Wrapuint8Vec)
+        self._some9.holder = self.holder
+        self._some9._init_ptr(&self.data[0].some9_start)
         return self._some9
     @some9.setter
     def some9(self, value):
         raise NotImplementedError()
     @property
     def some8(self):
+        if self._some8 is not None:
+            return self._some8
+        self._some8 = Wrapuint8Vec.__new__(Wrapuint8Vec)
+        self._some8.holder = self.holder
+        self._some8._init_ptr(&self.data[0].some8_start)
         return self._some8
     @some8.setter
     def some8(self, value):
         raise NotImplementedError()
     @property
     def some7(self):
+        if self._some7 is not None:
+            return self._some7
+        self._some7 = Wrapuint8Vec.__new__(Wrapuint8Vec)
+        self._some7.holder = self.holder
+        self._some7._init_ptr(&self.data[0].some7_start)
         return self._some7
     @some7.setter
     def some7(self, value):
@@ -2636,6 +2797,11 @@ cdef class WrapZone:
         self.data[0].chunk_y = value
     @property
     def some2_20byte(self):
+        if self._some2_20byte is not None:
+            return self._some2_20byte
+        self._some2_20byte = Wrapuint8Vec.__new__(Wrapuint8Vec)
+        self._some2_20byte.holder = self.holder
+        self._some2_20byte._init_ptr(&self.data[0].some2_20byte_start)
         return self._some2_20byte
     @some2_20byte.setter
     def some2_20byte(self, value):
@@ -2684,12 +2850,22 @@ cdef class WrapZone:
         self.data[0].byte84 = value
     @property
     def some5(self):
+        if self._some5 is not None:
+            return self._some5
+        self._some5 = Wrapuint8Vec.__new__(Wrapuint8Vec)
+        self._some5.holder = self.holder
+        self._some5._init_ptr(&self.data[0].some5_start)
         return self._some5
     @some5.setter
     def some5(self, value):
         raise NotImplementedError()
     @property
     def some6(self):
+        if self._some6 is not None:
+            return self._some6
+        self._some6 = Wrapuint8Vec.__new__(Wrapuint8Vec)
+        self._some6.holder = self.holder
+        self._some6._init_ptr(&self.data[0].some6_start)
         return self._some6
     @some6.setter
     def some6(self, value):
@@ -2710,6 +2886,11 @@ cdef class WrapZone:
     def fields(self):
         if self.data[0].fields == 0:
             return None
+        if self._fields is not None:
+            return self._fields
+        self._fields = WrapArray4.__new__(WrapArray4)
+        self._fields.holder = self.holder
+        self._fields._init_ptr(&(<Field*>self.data[0].fields)[0])
         return self._fields
     @fields.setter
     def fields(self, value):
@@ -2722,6 +2903,11 @@ cdef class WrapZone:
         self.data[0].other_chunk_data = value
     @property
     def crit_sec(self):
+        if self._crit_sec is not None:
+            return self._crit_sec
+        self._crit_sec = WrapCriticalSection.__new__(WrapCriticalSection)
+        self._crit_sec.holder = self.holder
+        self._crit_sec._init_ptr(&self.data[0].crit_sec)
         return self._crit_sec
     @crit_sec.setter
     def crit_sec(self, value):
@@ -2731,68 +2917,44 @@ cdef class WrapZone:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, Zone * ptr):
         self.data = ptr
-        self._static_entities = WrapStaticEntityVec.__new__(WrapStaticEntityVec)
-        self._static_entities.holder = self.holder
-        self._static_entities._init_ptr(&self.data[0].static_entities_start)
-        self._spawns = WrapSpawnPtrVec.__new__(WrapSpawnPtrVec)
-        self._spawns.holder = self.holder
-        self._spawns._init_ptr(&self.data[0].spawns_start)
-        self._some4 = Wrapuint8Vec.__new__(Wrapuint8Vec)
-        self._some4.holder = self.holder
-        self._some4._init_ptr(&self.data[0].some4_start)
-        self._items = WrapChunkItemDataVec.__new__(WrapChunkItemDataVec)
-        self._items.holder = self.holder
-        self._items._init_ptr(&self.data[0].items_start)
-        self._some9 = Wrapuint8Vec.__new__(Wrapuint8Vec)
-        self._some9.holder = self.holder
-        self._some9._init_ptr(&self.data[0].some9_start)
-        self._some8 = Wrapuint8Vec.__new__(Wrapuint8Vec)
-        self._some8.holder = self.holder
-        self._some8._init_ptr(&self.data[0].some8_start)
-        self._some7 = Wrapuint8Vec.__new__(Wrapuint8Vec)
-        self._some7.holder = self.holder
-        self._some7._init_ptr(&self.data[0].some7_start)
-        self._some2_20byte = Wrapuint8Vec.__new__(Wrapuint8Vec)
-        self._some2_20byte.holder = self.holder
-        self._some2_20byte._init_ptr(&self.data[0].some2_20byte_start)
-        self._some5 = Wrapuint8Vec.__new__(Wrapuint8Vec)
-        self._some5.holder = self.holder
-        self._some5._init_ptr(&self.data[0].some5_start)
-        self._some6 = Wrapuint8Vec.__new__(Wrapuint8Vec)
-        self._some6.holder = self.holder
-        self._some6._init_ptr(&self.data[0].some6_start)
-        self._fields = WrapArray4.__new__(WrapArray4)
-        self._fields.holder = self.holder
-        self._fields._init_ptr(&(<Field*>self.data[0].fields)[0])
-        self._crit_sec = WrapCriticalSection.__new__(WrapCriticalSection)
-        self._crit_sec.holder = self.holder
-        self._crit_sec._init_ptr(&self.data[0].crit_sec)
     cdef void _set_ptr(self, Zone * ptr):
         self.data = ptr
-        self._static_entities.holder = self.holder
-        self._static_entities._set_ptr(&self.data[0].static_entities_start)
-        self._spawns.holder = self.holder
-        self._spawns._set_ptr(&self.data[0].spawns_start)
-        self._some4.holder = self.holder
-        self._some4._set_ptr(&self.data[0].some4_start)
-        self._items.holder = self.holder
-        self._items._set_ptr(&self.data[0].items_start)
-        self._some9.holder = self.holder
-        self._some9._set_ptr(&self.data[0].some9_start)
-        self._some8.holder = self.holder
-        self._some8._set_ptr(&self.data[0].some8_start)
-        self._some7.holder = self.holder
-        self._some7._set_ptr(&self.data[0].some7_start)
-        self._some2_20byte.holder = self.holder
-        self._some2_20byte._set_ptr(&self.data[0].some2_20byte_start)
-        self._some5.holder = self.holder
-        self._some5._set_ptr(&self.data[0].some5_start)
-        self._some6.holder = self.holder
-        self._some6._set_ptr(&self.data[0].some6_start)
-        self._fields.holder = self.holder
-        self._fields._set_ptr(&(<Field*>self.data[0].fields)[0])
-        self._crit_sec.holder = self.holder
-        self._crit_sec._set_ptr(&self.data[0].crit_sec)
+        if self._static_entities is not None:
+            self._static_entities.holder = self.holder
+            self._static_entities._set_ptr(&self.data[0].static_entities_start)
+        if self._spawns is not None:
+            self._spawns.holder = self.holder
+            self._spawns._set_ptr(&self.data[0].spawns_start)
+        if self._some4 is not None:
+            self._some4.holder = self.holder
+            self._some4._set_ptr(&self.data[0].some4_start)
+        if self._items is not None:
+            self._items.holder = self.holder
+            self._items._set_ptr(&self.data[0].items_start)
+        if self._some9 is not None:
+            self._some9.holder = self.holder
+            self._some9._set_ptr(&self.data[0].some9_start)
+        if self._some8 is not None:
+            self._some8.holder = self.holder
+            self._some8._set_ptr(&self.data[0].some8_start)
+        if self._some7 is not None:
+            self._some7.holder = self.holder
+            self._some7._set_ptr(&self.data[0].some7_start)
+        if self._some2_20byte is not None:
+            self._some2_20byte.holder = self.holder
+            self._some2_20byte._set_ptr(&self.data[0].some2_20byte_start)
+        if self._some5 is not None:
+            self._some5.holder = self.holder
+            self._some5._set_ptr(&self.data[0].some5_start)
+        if self._some6 is not None:
+            self._some6.holder = self.holder
+            self._some6._set_ptr(&self.data[0].some6_start)
+        if self._fields is not None:
+            self._fields.holder = self.holder
+            self._fields._set_ptr(&(<Field*>self.data[0].fields)[0])
+        if self._crit_sec is not None:
+            self._crit_sec.holder = self.holder
+            self._crit_sec._set_ptr(&self.data[0].crit_sec)
     def set_ptr(self, WrapZone v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -2808,8 +2970,8 @@ cdef class WrapSomethingCreature:
         writer.write_c(self.data, sizeof(SomethingCreature))
     def cast(self, object klass):
         cdef WrapSomethingCreature c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapSomethingCreature inst = WrapSomethingCreature.__new__(WrapSomethingCreature)
@@ -2820,13 +2982,13 @@ cdef class WrapSomethingCreature:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef SomethingCreature * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(SomethingCreature))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(SomethingCreature))
             return
         cdef SomethingCreature * old_data = self.data
@@ -3251,8 +3413,8 @@ cdef class WrapCreature:
         writer.write_c(self.data, sizeof(Creature))
     def cast(self, object klass):
         cdef WrapCreature c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapCreature inst = WrapCreature.__new__(WrapCreature)
@@ -3263,13 +3425,13 @@ cdef class WrapCreature:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef Creature * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(Creature))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(Creature))
             return
         cdef Creature * old_data = self.data
@@ -3291,6 +3453,9 @@ cdef class WrapCreature:
         self.data[0].vtable = value
     @property
     def f4(self):
+        if self._f4 is not None:
+            return self._f4
+        self._f4 = <uint8_t[:4]>(&self.data[0].f4[0])
         return self._f4
     @f4.setter
     def f4(self, value):
@@ -3303,6 +3468,11 @@ cdef class WrapCreature:
         self.data[0].entity_id = value
     @property
     def entity_data(self):
+        if self._entity_data is not None:
+            return self._entity_data
+        self._entity_data = WrapEntityData.__new__(WrapEntityData)
+        self._entity_data.holder = self.holder
+        self._entity_data._init_ptr(&self.data[0].entity_data)
         return self._entity_data
     @entity_data.setter
     def entity_data(self, value):
@@ -3370,6 +3540,9 @@ cdef class WrapCreature:
         self.data[0].dword119C = value
     @property
     def f11A0(self):
+        if self._f11A0 is not None:
+            return self._f11A0
+        self._f11A0 = <uint8_t[:12]>(&self.data[0].f11A0[0])
         return self._f11A0
     @f11A0.setter
     def f11A0(self, value):
@@ -3400,6 +3573,9 @@ cdef class WrapCreature:
         self.data[0].dword11B8 = value
     @property
     def f11BC(self):
+        if self._f11BC is not None:
+            return self._f11BC
+        self._f11BC = <uint8_t[:4]>(&self.data[0].f11BC[0])
         return self._f11BC
     @f11BC.setter
     def f11BC(self, value):
@@ -3448,6 +3624,11 @@ cdef class WrapCreature:
         self.data[0].dword11D8 = value
     @property
     def item_with_extra(self):
+        if self._item_with_extra is not None:
+            return self._item_with_extra
+        self._item_with_extra = WrapItemWithExtra.__new__(WrapItemWithExtra)
+        self._item_with_extra.holder = self.holder
+        self._item_with_extra._init_ptr(&self.data[0].item_with_extra)
         return self._item_with_extra
     @item_with_extra.setter
     def item_with_extra(self, value):
@@ -3479,6 +3660,9 @@ cdef class WrapCreature:
         self.data[0].dword1318 = value
     @property
     def f131C(self):
+        if self._f131C is not None:
+            return self._f131C
+        self._f131C = <uint8_t[:52]>(&self.data[0].f131C[0])
         return self._f131C
     @f131C.setter
     def f131C(self, value):
@@ -3521,6 +3705,9 @@ cdef class WrapCreature:
         self.data[0].dword1364 = value
     @property
     def f1368(self):
+        if self._f1368 is not None:
+            return self._f1368
+        self._f1368 = <uint8_t[:12]>(&self.data[0].f1368[0])
         return self._f1368
     @f1368.setter
     def f1368(self, value):
@@ -3545,6 +3732,9 @@ cdef class WrapCreature:
         self.data[0].dword137C = value
     @property
     def f1380(self):
+        if self._f1380 is not None:
+            return self._f1380
+        self._f1380 = <uint8_t[:24]>(&self.data[0].f1380[0])
         return self._f1380
     @f1380.setter
     def f1380(self, value):
@@ -3605,6 +3795,9 @@ cdef class WrapCreature:
         self.data[0].byte13B8 = value
     @property
     def f13B9(self):
+        if self._f13B9 is not None:
+            return self._f13B9
+        self._f13B9 = <uint8_t[:3]>(&self.data[0].f13B9[0])
         return self._f13B9
     @f13B9.setter
     def f13B9(self, value):
@@ -3623,6 +3816,9 @@ cdef class WrapCreature:
         self.data[0].byte13C0 = value
     @property
     def f13C1(self):
+        if self._f13C1 is not None:
+            return self._f13C1
+        self._f13C1 = <uint8_t[:3]>(&self.data[0].f13C1[0])
         return self._f13C1
     @f13C1.setter
     def f13C1(self, value):
@@ -3779,6 +3975,9 @@ cdef class WrapCreature:
         self.data[0].dword1424 = value
     @property
     def f1428(self):
+        if self._f1428 is not None:
+            return self._f1428
+        self._f1428 = <uint8_t[:48]>(&self.data[0].f1428[0])
         return self._f1428
     @f1428.setter
     def f1428(self, value):
@@ -3881,6 +4080,11 @@ cdef class WrapCreature:
         self.data[0].dword1494 = value
     @property
     def som_c(self):
+        if self._som_c is not None:
+            return self._som_c
+        self._som_c = WrapSomethingCreature.__new__(WrapSomethingCreature)
+        self._som_c.holder = self.holder
+        self._som_c._init_ptr(&self.data[0].som_c)
         return self._som_c
     @som_c.setter
     def som_c(self, value):
@@ -3900,6 +4104,9 @@ cdef class WrapCreature:
         self.data[0].float1D2C = value
     @property
     def f1D30(self):
+        if self._f1D30 is not None:
+            return self._f1D30
+        self._f1D30 = <uint8_t[:8]>(&self.data[0].f1D30[0])
         return self._f1D30
     @f1D30.setter
     def f1D30(self, value):
@@ -3912,6 +4119,9 @@ cdef class WrapCreature:
         self.data[0].byte1D38 = value
     @property
     def f1D39(self):
+        if self._f1D39 is not None:
+            return self._f1D39
+        self._f1D39 = <uint8_t[:3]>(&self.data[0].f1D39[0])
         return self._f1D39
     @f1D39.setter
     def f1D39(self, value):
@@ -3942,6 +4152,9 @@ cdef class WrapCreature:
         self.data[0].word1D48 = value
     @property
     def f1D4A(self):
+        if self._f1D4A is not None:
+            return self._f1D4A
+        self._f1D4A = <uint8_t[:2]>(&self.data[0].f1D4A[0])
         return self._f1D4A
     @f1D4A.setter
     def f1D4A(self, value):
@@ -3972,6 +4185,9 @@ cdef class WrapCreature:
         self.data[0].byte1D56 = value
     @property
     def f1D57(self):
+        if self._f1D57 is not None:
+            return self._f1D57
+        self._f1D57 = <uint8_t[:1]>(&self.data[0].f1D57[0])
         return self._f1D57
     @f1D57.setter
     def f1D57(self, value):
@@ -3984,12 +4200,18 @@ cdef class WrapCreature:
         self.data[0].word1D58 = value
     @property
     def f1D5A(self):
+        if self._f1D5A is not None:
+            return self._f1D5A
+        self._f1D5A = <uint8_t[:2]>(&self.data[0].f1D5A[0])
         return self._f1D5A
     @f1D5A.setter
     def f1D5A(self, value):
         raise NotImplementedError()
     @property
     def char1D5C(self):
+        if self._char1D5C is not None:
+            return self._char1D5C
+        self._char1D5C = <int8_t[:256]>(&self.data[0].char1D5C[0])
         return self._char1D5C
     @char1D5C.setter
     def char1D5C(self, value):
@@ -4004,53 +4226,47 @@ cdef class WrapCreature:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, Creature * ptr):
         self.data = ptr
-        self._f4 = <uint8_t[:4]>(&self.data[0].f4[0])
-        self._entity_data = WrapEntityData.__new__(WrapEntityData)
-        self._entity_data.holder = self.holder
-        self._entity_data._init_ptr(&self.data[0].entity_data)
-        self._f11A0 = <uint8_t[:12]>(&self.data[0].f11A0[0])
-        self._f11BC = <uint8_t[:4]>(&self.data[0].f11BC[0])
-        self._item_with_extra = WrapItemWithExtra.__new__(WrapItemWithExtra)
-        self._item_with_extra.holder = self.holder
-        self._item_with_extra._init_ptr(&self.data[0].item_with_extra)
-        self._f131C = <uint8_t[:52]>(&self.data[0].f131C[0])
-        self._f1368 = <uint8_t[:12]>(&self.data[0].f1368[0])
-        self._f1380 = <uint8_t[:24]>(&self.data[0].f1380[0])
-        self._f13B9 = <uint8_t[:3]>(&self.data[0].f13B9[0])
-        self._f13C1 = <uint8_t[:3]>(&self.data[0].f13C1[0])
-        self._f1428 = <uint8_t[:48]>(&self.data[0].f1428[0])
-        self._som_c = WrapSomethingCreature.__new__(WrapSomethingCreature)
-        self._som_c.holder = self.holder
-        self._som_c._init_ptr(&self.data[0].som_c)
-        self._f1D30 = <uint8_t[:8]>(&self.data[0].f1D30[0])
-        self._f1D39 = <uint8_t[:3]>(&self.data[0].f1D39[0])
-        self._f1D4A = <uint8_t[:2]>(&self.data[0].f1D4A[0])
-        self._f1D57 = <uint8_t[:1]>(&self.data[0].f1D57[0])
-        self._f1D5A = <uint8_t[:2]>(&self.data[0].f1D5A[0])
-        self._char1D5C = <int8_t[:256]>(&self.data[0].char1D5C[0])
     cdef void _set_ptr(self, Creature * ptr):
         self.data = ptr
-        self._f4.data = <char*>(&self.data[0].f4[0])
-        self._entity_data.holder = self.holder
-        self._entity_data._set_ptr(&self.data[0].entity_data)
-        self._f11A0.data = <char*>(&self.data[0].f11A0[0])
-        self._f11BC.data = <char*>(&self.data[0].f11BC[0])
-        self._item_with_extra.holder = self.holder
-        self._item_with_extra._set_ptr(&self.data[0].item_with_extra)
-        self._f131C.data = <char*>(&self.data[0].f131C[0])
-        self._f1368.data = <char*>(&self.data[0].f1368[0])
-        self._f1380.data = <char*>(&self.data[0].f1380[0])
-        self._f13B9.data = <char*>(&self.data[0].f13B9[0])
-        self._f13C1.data = <char*>(&self.data[0].f13C1[0])
-        self._f1428.data = <char*>(&self.data[0].f1428[0])
-        self._som_c.holder = self.holder
-        self._som_c._set_ptr(&self.data[0].som_c)
-        self._f1D30.data = <char*>(&self.data[0].f1D30[0])
-        self._f1D39.data = <char*>(&self.data[0].f1D39[0])
-        self._f1D4A.data = <char*>(&self.data[0].f1D4A[0])
-        self._f1D57.data = <char*>(&self.data[0].f1D57[0])
-        self._f1D5A.data = <char*>(&self.data[0].f1D5A[0])
-        self._char1D5C.data = <char*>(&self.data[0].char1D5C[0])
+        if self._f4 is not None:
+            self._f4.data = <char*>(&self.data[0].f4[0])
+        if self._entity_data is not None:
+            self._entity_data.holder = self.holder
+            self._entity_data._set_ptr(&self.data[0].entity_data)
+        if self._f11A0 is not None:
+            self._f11A0.data = <char*>(&self.data[0].f11A0[0])
+        if self._f11BC is not None:
+            self._f11BC.data = <char*>(&self.data[0].f11BC[0])
+        if self._item_with_extra is not None:
+            self._item_with_extra.holder = self.holder
+            self._item_with_extra._set_ptr(&self.data[0].item_with_extra)
+        if self._f131C is not None:
+            self._f131C.data = <char*>(&self.data[0].f131C[0])
+        if self._f1368 is not None:
+            self._f1368.data = <char*>(&self.data[0].f1368[0])
+        if self._f1380 is not None:
+            self._f1380.data = <char*>(&self.data[0].f1380[0])
+        if self._f13B9 is not None:
+            self._f13B9.data = <char*>(&self.data[0].f13B9[0])
+        if self._f13C1 is not None:
+            self._f13C1.data = <char*>(&self.data[0].f13C1[0])
+        if self._f1428 is not None:
+            self._f1428.data = <char*>(&self.data[0].f1428[0])
+        if self._som_c is not None:
+            self._som_c.holder = self.holder
+            self._som_c._set_ptr(&self.data[0].som_c)
+        if self._f1D30 is not None:
+            self._f1D30.data = <char*>(&self.data[0].f1D30[0])
+        if self._f1D39 is not None:
+            self._f1D39.data = <char*>(&self.data[0].f1D39[0])
+        if self._f1D4A is not None:
+            self._f1D4A.data = <char*>(&self.data[0].f1D4A[0])
+        if self._f1D57 is not None:
+            self._f1D57.data = <char*>(&self.data[0].f1D57[0])
+        if self._f1D5A is not None:
+            self._f1D5A.data = <char*>(&self.data[0].f1D5A[0])
+        if self._char1D5C is not None:
+            self._char1D5C.data = <char*>(&self.data[0].char1D5C[0])
     def set_ptr(self, WrapCreature v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -4066,8 +4282,8 @@ cdef class WrapHitPacket:
         writer.write_c(self.data, sizeof(HitPacket))
     def cast(self, object klass):
         cdef WrapHitPacket c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapHitPacket inst = WrapHitPacket.__new__(WrapHitPacket)
@@ -4078,13 +4294,13 @@ cdef class WrapHitPacket:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef HitPacket * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(HitPacket))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(HitPacket))
             return
         cdef HitPacket * old_data = self.data
@@ -4136,12 +4352,24 @@ cdef class WrapHitPacket:
         self.data[0].something8 = value
     @property
     def pos(self):
+        if self._pos is not None:
+            return self._pos
+        Py_INCREF(dtype_int64)
+        cdef int64_t * posptr = &self.data[0].pos[0]
+        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
         self.data[0].pos = value
     @property
     def hit_dir(self):
+        if self._hit_dir is not None:
+            return self._hit_dir
+        Py_INCREF(dtype_float32)
+        cdef float * hit_dirptr = &self.data[0].hit_dir[0]
+        self._hit_dir = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>hit_dirptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._hit_dir, self.holder)
         return self._hit_dir
     @hit_dir.setter
     def hit_dir(self, value):
@@ -4168,20 +4396,14 @@ cdef class WrapHitPacket:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, HitPacket * ptr):
         self.data = ptr
-        Py_INCREF(dtype_int64)
-        cdef int64_t * posptr = &self.data[0].pos[0]
-        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * hit_dirptr = &self.data[0].hit_dir[0]
-        self._hit_dir = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>hit_dirptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._hit_dir, self.holder)
     cdef void _set_ptr(self, HitPacket * ptr):
         self.data = ptr
-        np.set_array_base(self._pos, self.holder)
-        self._pos.data = <char*>&self.data[0].pos
-        np.set_array_base(self._hit_dir, self.holder)
-        self._hit_dir.data = <char*>&self.data[0].hit_dir
+        if self._pos is not None:
+            np.set_array_base(self._pos, self.holder)
+            self._pos.data = <char*>&self.data[0].pos
+        if self._hit_dir is not None:
+            np.set_array_base(self._hit_dir, self.holder)
+            self._hit_dir.data = <char*>&self.data[0].hit_dir
     def set_ptr(self, WrapHitPacket v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -4197,8 +4419,8 @@ cdef class WrapParticleData:
         writer.write_c(self.data, sizeof(ParticleData))
     def cast(self, object klass):
         cdef WrapParticleData c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapParticleData inst = WrapParticleData.__new__(WrapParticleData)
@@ -4209,13 +4431,13 @@ cdef class WrapParticleData:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ParticleData * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ParticleData))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ParticleData))
             return
         cdef ParticleData * old_data = self.data
@@ -4231,18 +4453,33 @@ cdef class WrapParticleData:
         self._init_ptr(<ParticleData*>buf)
     @property
     def pos(self):
+        if self._pos is not None:
+            return self._pos
+        Py_INCREF(dtype_int64)
+        cdef int64_t * posptr = &self.data[0].pos[0]
+        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
         self.data[0].pos = value
     @property
     def accel(self):
+        if self._accel is not None:
+            return self._accel
+        Py_INCREF(dtype_float32)
+        cdef float * accelptr = &self.data[0].accel[0]
+        self._accel = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>accelptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._accel, self.holder)
         return self._accel
     @accel.setter
     def accel(self, value):
         self.data[0].accel = value
     @property
     def color(self):
+        if self._color is not None:
+            return self._color
+        self._color = <float[:4]>(&self.data[0].color[0])
         return self._color
     @color.setter
     def color(self, value):
@@ -4281,22 +4518,16 @@ cdef class WrapParticleData:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, ParticleData * ptr):
         self.data = ptr
-        Py_INCREF(dtype_int64)
-        cdef int64_t * posptr = &self.data[0].pos[0]
-        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * accelptr = &self.data[0].accel[0]
-        self._accel = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>accelptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._accel, self.holder)
-        self._color = <float[:4]>(&self.data[0].color[0])
     cdef void _set_ptr(self, ParticleData * ptr):
         self.data = ptr
-        np.set_array_base(self._pos, self.holder)
-        self._pos.data = <char*>&self.data[0].pos
-        np.set_array_base(self._accel, self.holder)
-        self._accel.data = <char*>&self.data[0].accel
-        self._color.data = <char*>(&self.data[0].color[0])
+        if self._pos is not None:
+            np.set_array_base(self._pos, self.holder)
+            self._pos.data = <char*>&self.data[0].pos
+        if self._accel is not None:
+            np.set_array_base(self._accel, self.holder)
+            self._accel.data = <char*>&self.data[0].accel
+        if self._color is not None:
+            self._color.data = <char*>(&self.data[0].color[0])
     def set_ptr(self, WrapParticleData v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -4312,8 +4543,8 @@ cdef class WrapSoundAction:
         writer.write_c(self.data, sizeof(SoundAction))
     def cast(self, object klass):
         cdef WrapSoundAction c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapSoundAction inst = WrapSoundAction.__new__(WrapSoundAction)
@@ -4324,13 +4555,13 @@ cdef class WrapSoundAction:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef SoundAction * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(SoundAction))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(SoundAction))
             return
         cdef SoundAction * old_data = self.data
@@ -4346,6 +4577,12 @@ cdef class WrapSoundAction:
         self._init_ptr(<SoundAction*>buf)
     @property
     def pos(self):
+        if self._pos is not None:
+            return self._pos
+        Py_INCREF(dtype_float32)
+        cdef float * posptr = &self.data[0].pos[0]
+        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -4372,14 +4609,11 @@ cdef class WrapSoundAction:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, SoundAction * ptr):
         self.data = ptr
-        Py_INCREF(dtype_float32)
-        cdef float * posptr = &self.data[0].pos[0]
-        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
     cdef void _set_ptr(self, SoundAction * ptr):
         self.data = ptr
-        np.set_array_base(self._pos, self.holder)
-        self._pos.data = <char*>&self.data[0].pos
+        if self._pos is not None:
+            np.set_array_base(self._pos, self.holder)
+            self._pos.data = <char*>&self.data[0].pos
     def set_ptr(self, WrapSoundAction v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -4395,8 +4629,8 @@ cdef class WrapBlockAction:
         writer.write_c(self.data, sizeof(BlockAction))
     def cast(self, object klass):
         cdef WrapBlockAction c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapBlockAction inst = WrapBlockAction.__new__(WrapBlockAction)
@@ -4407,13 +4641,13 @@ cdef class WrapBlockAction:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef BlockAction * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(BlockAction))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(BlockAction))
             return
         cdef BlockAction * old_data = self.data
@@ -4429,6 +4663,12 @@ cdef class WrapBlockAction:
         self._init_ptr(<BlockAction*>buf)
     @property
     def block_pos(self):
+        if self._block_pos is not None:
+            return self._block_pos
+        Py_INCREF(dtype_int32)
+        cdef int32_t * block_posptr = &self.data[0].block_pos[0]
+        self._block_pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int32, 1, &vec3_dim, NULL, <void*>block_posptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._block_pos, self.holder)
         return self._block_pos
     @block_pos.setter
     def block_pos(self, value):
@@ -4467,14 +4707,11 @@ cdef class WrapBlockAction:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, BlockAction * ptr):
         self.data = ptr
-        Py_INCREF(dtype_int32)
-        cdef int32_t * block_posptr = &self.data[0].block_pos[0]
-        self._block_pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int32, 1, &vec3_dim, NULL, <void*>block_posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._block_pos, self.holder)
     cdef void _set_ptr(self, BlockAction * ptr):
         self.data = ptr
-        np.set_array_base(self._block_pos, self.holder)
-        self._block_pos.data = <char*>&self.data[0].block_pos
+        if self._block_pos is not None:
+            np.set_array_base(self._block_pos, self.holder)
+            self._block_pos.data = <char*>&self.data[0].block_pos
     def set_ptr(self, WrapBlockAction v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -4490,8 +4727,8 @@ cdef class WrapShootPacket:
         writer.write_c(self.data, sizeof(ShootPacket))
     def cast(self, object klass):
         cdef WrapShootPacket c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapShootPacket inst = WrapShootPacket.__new__(WrapShootPacket)
@@ -4502,13 +4739,13 @@ cdef class WrapShootPacket:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ShootPacket * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ShootPacket))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ShootPacket))
             return
         cdef ShootPacket * old_data = self.data
@@ -4548,6 +4785,12 @@ cdef class WrapShootPacket:
         self.data[0].something5 = value
     @property
     def pos(self):
+        if self._pos is not None:
+            return self._pos
+        Py_INCREF(dtype_int64)
+        cdef int64_t * posptr = &self.data[0].pos[0]
+        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -4572,6 +4815,12 @@ cdef class WrapShootPacket:
         self.data[0].something15 = value
     @property
     def velocity(self):
+        if self._velocity is not None:
+            return self._velocity
+        Py_INCREF(dtype_float32)
+        cdef float * velocityptr = &self.data[0].velocity[0]
+        self._velocity = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>velocityptr, np.NPY_DEFAULT, <object>NULL);
+        np.set_array_base(self._velocity, self.holder)
         return self._velocity
     @velocity.setter
     def velocity(self, value):
@@ -4640,20 +4889,14 @@ cdef class WrapShootPacket:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, ShootPacket * ptr):
         self.data = ptr
-        Py_INCREF(dtype_int64)
-        cdef int64_t * posptr = &self.data[0].pos[0]
-        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
-        Py_INCREF(dtype_float32)
-        cdef float * velocityptr = &self.data[0].velocity[0]
-        self._velocity = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>velocityptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._velocity, self.holder)
     cdef void _set_ptr(self, ShootPacket * ptr):
         self.data = ptr
-        np.set_array_base(self._pos, self.holder)
-        self._pos.data = <char*>&self.data[0].pos
-        np.set_array_base(self._velocity, self.holder)
-        self._velocity.data = <char*>&self.data[0].velocity
+        if self._pos is not None:
+            np.set_array_base(self._pos, self.holder)
+            self._pos.data = <char*>&self.data[0].pos
+        if self._velocity is not None:
+            np.set_array_base(self._velocity, self.holder)
+            self._velocity.data = <char*>&self.data[0].velocity
     def set_ptr(self, WrapShootPacket v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -4669,8 +4912,8 @@ cdef class WrapPickupAction:
         writer.write_c(self.data, sizeof(PickupAction))
     def cast(self, object klass):
         cdef WrapPickupAction c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapPickupAction inst = WrapPickupAction.__new__(WrapPickupAction)
@@ -4681,13 +4924,13 @@ cdef class WrapPickupAction:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef PickupAction * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(PickupAction))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(PickupAction))
             return
         cdef PickupAction * old_data = self.data
@@ -4709,6 +4952,11 @@ cdef class WrapPickupAction:
         self.data[0].entity_id = value
     @property
     def item_data(self):
+        if self._item_data is not None:
+            return self._item_data
+        self._item_data = WrapItemData.__new__(WrapItemData)
+        self._item_data.holder = self.holder
+        self._item_data._init_ptr(&self.data[0].item_data)
         return self._item_data
     @item_data.setter
     def item_data(self, value):
@@ -4718,13 +4966,11 @@ cdef class WrapPickupAction:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, PickupAction * ptr):
         self.data = ptr
-        self._item_data = WrapItemData.__new__(WrapItemData)
-        self._item_data.holder = self.holder
-        self._item_data._init_ptr(&self.data[0].item_data)
     cdef void _set_ptr(self, PickupAction * ptr):
         self.data = ptr
-        self._item_data.holder = self.holder
-        self._item_data._set_ptr(&self.data[0].item_data)
+        if self._item_data is not None:
+            self._item_data.holder = self.holder
+            self._item_data._set_ptr(&self.data[0].item_data)
     def set_ptr(self, WrapPickupAction v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -4740,8 +4986,8 @@ cdef class WrapKillAction:
         writer.write_c(self.data, sizeof(KillAction))
     def cast(self, object klass):
         cdef WrapKillAction c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapKillAction inst = WrapKillAction.__new__(WrapKillAction)
@@ -4752,13 +4998,13 @@ cdef class WrapKillAction:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef KillAction * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(KillAction))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(KillAction))
             return
         cdef KillAction * old_data = self.data
@@ -4811,8 +5057,8 @@ cdef class WrapDamageAction:
         writer.write_c(self.data, sizeof(DamageAction))
     def cast(self, object klass):
         cdef WrapDamageAction c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapDamageAction inst = WrapDamageAction.__new__(WrapDamageAction)
@@ -4823,13 +5069,13 @@ cdef class WrapDamageAction:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef DamageAction * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(DamageAction))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(DamageAction))
             return
         cdef DamageAction * old_data = self.data
@@ -4863,6 +5109,9 @@ cdef class WrapDamageAction:
         self.data[0].damage = value
     @property
     def skip(self):
+        if self._skip is not None:
+            return self._skip
+        self._skip = <int8_t[:4]>(&self.data[0].skip[0])
         return self._skip
     @skip.setter
     def skip(self, value):
@@ -4871,10 +5120,10 @@ cdef class WrapDamageAction:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, DamageAction * ptr):
         self.data = ptr
-        self._skip = <int8_t[:4]>(&self.data[0].skip[0])
     cdef void _set_ptr(self, DamageAction * ptr):
         self.data = ptr
-        self._skip.data = <char*>(&self.data[0].skip[0])
+        if self._skip is not None:
+            self._skip.data = <char*>(&self.data[0].skip[0])
     def set_ptr(self, WrapDamageAction v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -4890,8 +5139,8 @@ cdef class WrapPassivePacket:
         writer.write_c(self.data, sizeof(PassivePacket))
     def cast(self, object klass):
         cdef WrapPassivePacket c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapPassivePacket inst = WrapPassivePacket.__new__(WrapPassivePacket)
@@ -4902,13 +5151,13 @@ cdef class WrapPassivePacket:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef PassivePacket * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(PassivePacket))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(PassivePacket))
             return
         cdef PassivePacket * old_data = self.data
@@ -4979,8 +5228,8 @@ cdef class WrapMissionData:
         writer.write_c(self.data, sizeof(MissionData))
     def cast(self, object klass):
         cdef WrapMissionData c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapMissionData inst = WrapMissionData.__new__(WrapMissionData)
@@ -4991,13 +5240,13 @@ cdef class WrapMissionData:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef MissionData * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(MissionData))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(MissionData))
             return
         cdef MissionData * old_data = self.data
@@ -5122,8 +5371,8 @@ cdef class WrapHitPacketList:
         writer.write_c(self.data, sizeof(HitPacketList))
     def cast(self, object klass):
         cdef WrapHitPacketList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapHitPacketList inst = WrapHitPacketList.__new__(WrapHitPacketList)
@@ -5134,13 +5383,13 @@ cdef class WrapHitPacketList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef HitPacketList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(HitPacketList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(HitPacketList))
             return
         cdef HitPacketList * old_data = self.data
@@ -5158,6 +5407,11 @@ cdef class WrapHitPacketList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray5.__new__(WrapArray5)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<HitPacketList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -5166,12 +5420,22 @@ cdef class WrapHitPacketList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray5.__new__(WrapArray5)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<HitPacketList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapHitPacket.__new__(WrapHitPacket)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -5181,23 +5445,17 @@ cdef class WrapHitPacketList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, HitPacketList * ptr):
         self.data = ptr
-        self._next = WrapArray5.__new__(WrapArray5)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<HitPacketList*>self.data[0].next)[0])
-        self._prev = WrapArray5.__new__(WrapArray5)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<HitPacketList*>self.data[0].prev)[0])
-        self._data = WrapHitPacket.__new__(WrapHitPacket)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, HitPacketList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<HitPacketList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<HitPacketList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<HitPacketList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<HitPacketList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapHitPacketList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -5213,8 +5471,8 @@ cdef class WrapParticleDataList:
         writer.write_c(self.data, sizeof(ParticleDataList))
     def cast(self, object klass):
         cdef WrapParticleDataList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapParticleDataList inst = WrapParticleDataList.__new__(WrapParticleDataList)
@@ -5225,13 +5483,13 @@ cdef class WrapParticleDataList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ParticleDataList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ParticleDataList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ParticleDataList))
             return
         cdef ParticleDataList * old_data = self.data
@@ -5249,6 +5507,11 @@ cdef class WrapParticleDataList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray6.__new__(WrapArray6)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<ParticleDataList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -5257,12 +5520,22 @@ cdef class WrapParticleDataList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray6.__new__(WrapArray6)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<ParticleDataList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapParticleData.__new__(WrapParticleData)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -5272,23 +5545,17 @@ cdef class WrapParticleDataList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, ParticleDataList * ptr):
         self.data = ptr
-        self._next = WrapArray6.__new__(WrapArray6)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<ParticleDataList*>self.data[0].next)[0])
-        self._prev = WrapArray6.__new__(WrapArray6)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<ParticleDataList*>self.data[0].prev)[0])
-        self._data = WrapParticleData.__new__(WrapParticleData)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, ParticleDataList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<ParticleDataList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<ParticleDataList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<ParticleDataList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<ParticleDataList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapParticleDataList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -5304,8 +5571,8 @@ cdef class WrapSoundActionList:
         writer.write_c(self.data, sizeof(SoundActionList))
     def cast(self, object klass):
         cdef WrapSoundActionList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapSoundActionList inst = WrapSoundActionList.__new__(WrapSoundActionList)
@@ -5316,13 +5583,13 @@ cdef class WrapSoundActionList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef SoundActionList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(SoundActionList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(SoundActionList))
             return
         cdef SoundActionList * old_data = self.data
@@ -5340,6 +5607,11 @@ cdef class WrapSoundActionList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray7.__new__(WrapArray7)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<SoundActionList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -5348,12 +5620,22 @@ cdef class WrapSoundActionList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray7.__new__(WrapArray7)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<SoundActionList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapSoundAction.__new__(WrapSoundAction)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -5363,23 +5645,17 @@ cdef class WrapSoundActionList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, SoundActionList * ptr):
         self.data = ptr
-        self._next = WrapArray7.__new__(WrapArray7)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<SoundActionList*>self.data[0].next)[0])
-        self._prev = WrapArray7.__new__(WrapArray7)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<SoundActionList*>self.data[0].prev)[0])
-        self._data = WrapSoundAction.__new__(WrapSoundAction)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, SoundActionList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<SoundActionList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<SoundActionList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<SoundActionList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<SoundActionList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapSoundActionList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -5395,8 +5671,8 @@ cdef class WrapBlockActionList:
         writer.write_c(self.data, sizeof(BlockActionList))
     def cast(self, object klass):
         cdef WrapBlockActionList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapBlockActionList inst = WrapBlockActionList.__new__(WrapBlockActionList)
@@ -5407,13 +5683,13 @@ cdef class WrapBlockActionList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef BlockActionList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(BlockActionList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(BlockActionList))
             return
         cdef BlockActionList * old_data = self.data
@@ -5431,6 +5707,11 @@ cdef class WrapBlockActionList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray8.__new__(WrapArray8)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<BlockActionList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -5439,12 +5720,22 @@ cdef class WrapBlockActionList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray8.__new__(WrapArray8)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<BlockActionList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapBlockAction.__new__(WrapBlockAction)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -5454,23 +5745,17 @@ cdef class WrapBlockActionList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, BlockActionList * ptr):
         self.data = ptr
-        self._next = WrapArray8.__new__(WrapArray8)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<BlockActionList*>self.data[0].next)[0])
-        self._prev = WrapArray8.__new__(WrapArray8)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<BlockActionList*>self.data[0].prev)[0])
-        self._data = WrapBlockAction.__new__(WrapBlockAction)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, BlockActionList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<BlockActionList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<BlockActionList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<BlockActionList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<BlockActionList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapBlockActionList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -5486,8 +5771,8 @@ cdef class WrapShootPacketList:
         writer.write_c(self.data, sizeof(ShootPacketList))
     def cast(self, object klass):
         cdef WrapShootPacketList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapShootPacketList inst = WrapShootPacketList.__new__(WrapShootPacketList)
@@ -5498,13 +5783,13 @@ cdef class WrapShootPacketList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ShootPacketList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ShootPacketList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ShootPacketList))
             return
         cdef ShootPacketList * old_data = self.data
@@ -5522,6 +5807,11 @@ cdef class WrapShootPacketList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray9.__new__(WrapArray9)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<ShootPacketList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -5530,12 +5820,22 @@ cdef class WrapShootPacketList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray9.__new__(WrapArray9)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<ShootPacketList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapShootPacket.__new__(WrapShootPacket)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -5545,23 +5845,17 @@ cdef class WrapShootPacketList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, ShootPacketList * ptr):
         self.data = ptr
-        self._next = WrapArray9.__new__(WrapArray9)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<ShootPacketList*>self.data[0].next)[0])
-        self._prev = WrapArray9.__new__(WrapArray9)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<ShootPacketList*>self.data[0].prev)[0])
-        self._data = WrapShootPacket.__new__(WrapShootPacket)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, ShootPacketList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<ShootPacketList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<ShootPacketList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<ShootPacketList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<ShootPacketList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapShootPacketList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -5577,8 +5871,8 @@ cdef class WrapChunkItemList:
         writer.write_c(self.data, sizeof(ChunkItemList))
     def cast(self, object klass):
         cdef WrapChunkItemList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapChunkItemList inst = WrapChunkItemList.__new__(WrapChunkItemList)
@@ -5589,13 +5883,13 @@ cdef class WrapChunkItemList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ChunkItemList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ChunkItemList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ChunkItemList))
             return
         cdef ChunkItemList * old_data = self.data
@@ -5613,6 +5907,11 @@ cdef class WrapChunkItemList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray10.__new__(WrapArray10)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<ChunkItemList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -5621,12 +5920,22 @@ cdef class WrapChunkItemList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray10.__new__(WrapArray10)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<ChunkItemList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapChunkItemData.__new__(WrapChunkItemData)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -5636,23 +5945,17 @@ cdef class WrapChunkItemList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, ChunkItemList * ptr):
         self.data = ptr
-        self._next = WrapArray10.__new__(WrapArray10)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<ChunkItemList*>self.data[0].next)[0])
-        self._prev = WrapArray10.__new__(WrapArray10)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<ChunkItemList*>self.data[0].prev)[0])
-        self._data = WrapChunkItemData.__new__(WrapChunkItemData)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, ChunkItemList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<ChunkItemList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<ChunkItemList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<ChunkItemList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<ChunkItemList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapChunkItemList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -5668,8 +5971,8 @@ cdef class WrapChunkItemsList:
         writer.write_c(self.data, sizeof(ChunkItemsList))
     def cast(self, object klass):
         cdef WrapChunkItemsList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapChunkItemsList inst = WrapChunkItemsList.__new__(WrapChunkItemsList)
@@ -5680,13 +5983,13 @@ cdef class WrapChunkItemsList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef ChunkItemsList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(ChunkItemsList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(ChunkItemsList))
             return
         cdef ChunkItemsList * old_data = self.data
@@ -5704,6 +6007,11 @@ cdef class WrapChunkItemsList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray11.__new__(WrapArray11)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<ChunkItemsList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -5712,6 +6020,11 @@ cdef class WrapChunkItemsList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray11.__new__(WrapArray11)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<ChunkItemsList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
@@ -5732,6 +6045,11 @@ cdef class WrapChunkItemsList:
     def data(self):
         if self.data[0].data == 0:
             return None
+        if self._data is not None:
+            return self._data
+        self._data = WrapArray10.__new__(WrapArray10)
+        self._data.holder = self.holder
+        self._data._init_ptr(&(<ChunkItemList*>self.data[0].data)[0])
         return self._data
     @data.setter
     def data(self, value):
@@ -5740,23 +6058,17 @@ cdef class WrapChunkItemsList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, ChunkItemsList * ptr):
         self.data = ptr
-        self._next = WrapArray11.__new__(WrapArray11)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<ChunkItemsList*>self.data[0].next)[0])
-        self._prev = WrapArray11.__new__(WrapArray11)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<ChunkItemsList*>self.data[0].prev)[0])
-        self._data = WrapArray10.__new__(WrapArray10)
-        self._data.holder = self.holder
-        self._data._init_ptr(&(<ChunkItemList*>self.data[0].data)[0])
     cdef void _set_ptr(self, ChunkItemsList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<ChunkItemsList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<ChunkItemsList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&(<ChunkItemList*>self.data[0].data)[0])
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<ChunkItemsList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<ChunkItemsList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&(<ChunkItemList*>self.data[0].data)[0])
     def set_ptr(self, WrapChunkItemsList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -5772,8 +6084,8 @@ cdef class WrapStaticEntityList:
         writer.write_c(self.data, sizeof(StaticEntityList))
     def cast(self, object klass):
         cdef WrapStaticEntityList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapStaticEntityList inst = WrapStaticEntityList.__new__(WrapStaticEntityList)
@@ -5784,13 +6096,13 @@ cdef class WrapStaticEntityList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef StaticEntityList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(StaticEntityList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(StaticEntityList))
             return
         cdef StaticEntityList * old_data = self.data
@@ -5808,6 +6120,11 @@ cdef class WrapStaticEntityList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray12.__new__(WrapArray12)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<StaticEntityList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -5816,12 +6133,22 @@ cdef class WrapStaticEntityList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray12.__new__(WrapArray12)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<StaticEntityList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapStaticEntityHeader.__new__(WrapStaticEntityHeader)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -5831,23 +6158,17 @@ cdef class WrapStaticEntityList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, StaticEntityList * ptr):
         self.data = ptr
-        self._next = WrapArray12.__new__(WrapArray12)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<StaticEntityList*>self.data[0].next)[0])
-        self._prev = WrapArray12.__new__(WrapArray12)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<StaticEntityList*>self.data[0].prev)[0])
-        self._data = WrapStaticEntityHeader.__new__(WrapStaticEntityHeader)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, StaticEntityList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<StaticEntityList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<StaticEntityList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<StaticEntityList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<StaticEntityList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapStaticEntityList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -5863,8 +6184,8 @@ cdef class WrapItems8List_2:
         writer.write_c(self.data, sizeof(Items8List_2))
     def cast(self, object klass):
         cdef WrapItems8List_2 c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapItems8List_2 inst = WrapItems8List_2.__new__(WrapItems8List_2)
@@ -5875,13 +6196,13 @@ cdef class WrapItems8List_2:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef Items8List_2 * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(Items8List_2))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(Items8List_2))
             return
         cdef Items8List_2 * old_data = self.data
@@ -5899,6 +6220,11 @@ cdef class WrapItems8List_2:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray13.__new__(WrapArray13)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<Items8List_2*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -5907,12 +6233,20 @@ cdef class WrapItems8List_2:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray13.__new__(WrapArray13)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<Items8List_2*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = <uint8_t[:16]>(&self.data[0].data[0])
         return self._data
     @data.setter
     def data(self, value):
@@ -5921,20 +6255,16 @@ cdef class WrapItems8List_2:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, Items8List_2 * ptr):
         self.data = ptr
-        self._next = WrapArray13.__new__(WrapArray13)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<Items8List_2*>self.data[0].next)[0])
-        self._prev = WrapArray13.__new__(WrapArray13)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<Items8List_2*>self.data[0].prev)[0])
-        self._data = <uint8_t[:16]>(&self.data[0].data[0])
     cdef void _set_ptr(self, Items8List_2 * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<Items8List_2*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<Items8List_2*>self.data[0].prev)[0])
-        self._data.data = <char*>(&self.data[0].data[0])
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<Items8List_2*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<Items8List_2*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.data = <char*>(&self.data[0].data[0])
     def set_ptr(self, WrapItems8List_2 v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -5950,8 +6280,8 @@ cdef class WrapItems8List_1:
         writer.write_c(self.data, sizeof(Items8List_1))
     def cast(self, object klass):
         cdef WrapItems8List_1 c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapItems8List_1 inst = WrapItems8List_1.__new__(WrapItems8List_1)
@@ -5962,13 +6292,13 @@ cdef class WrapItems8List_1:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef Items8List_1 * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(Items8List_1))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(Items8List_1))
             return
         cdef Items8List_1 * old_data = self.data
@@ -5986,6 +6316,11 @@ cdef class WrapItems8List_1:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray14.__new__(WrapArray14)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<Items8List_1*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -5994,6 +6329,11 @@ cdef class WrapItems8List_1:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray14.__new__(WrapArray14)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<Items8List_1*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
@@ -6006,6 +6346,11 @@ cdef class WrapItems8List_1:
         self.data[0].something = value
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapItems8List_2.__new__(WrapItems8List_2)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -6015,23 +6360,17 @@ cdef class WrapItems8List_1:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, Items8List_1 * ptr):
         self.data = ptr
-        self._next = WrapArray14.__new__(WrapArray14)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<Items8List_1*>self.data[0].next)[0])
-        self._prev = WrapArray14.__new__(WrapArray14)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<Items8List_1*>self.data[0].prev)[0])
-        self._data = WrapItems8List_2.__new__(WrapItems8List_2)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, Items8List_1 * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<Items8List_1*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<Items8List_1*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<Items8List_1*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<Items8List_1*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapItems8List_1 v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -6047,8 +6386,8 @@ cdef class WrapPickupActionList:
         writer.write_c(self.data, sizeof(PickupActionList))
     def cast(self, object klass):
         cdef WrapPickupActionList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapPickupActionList inst = WrapPickupActionList.__new__(WrapPickupActionList)
@@ -6059,13 +6398,13 @@ cdef class WrapPickupActionList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef PickupActionList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(PickupActionList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(PickupActionList))
             return
         cdef PickupActionList * old_data = self.data
@@ -6083,6 +6422,11 @@ cdef class WrapPickupActionList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray15.__new__(WrapArray15)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<PickupActionList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -6091,12 +6435,22 @@ cdef class WrapPickupActionList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray15.__new__(WrapArray15)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<PickupActionList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapPickupAction.__new__(WrapPickupAction)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -6106,23 +6460,17 @@ cdef class WrapPickupActionList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, PickupActionList * ptr):
         self.data = ptr
-        self._next = WrapArray15.__new__(WrapArray15)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<PickupActionList*>self.data[0].next)[0])
-        self._prev = WrapArray15.__new__(WrapArray15)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<PickupActionList*>self.data[0].prev)[0])
-        self._data = WrapPickupAction.__new__(WrapPickupAction)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, PickupActionList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<PickupActionList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<PickupActionList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<PickupActionList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<PickupActionList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapPickupActionList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -6138,8 +6486,8 @@ cdef class WrapKillActionList:
         writer.write_c(self.data, sizeof(KillActionList))
     def cast(self, object klass):
         cdef WrapKillActionList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapKillActionList inst = WrapKillActionList.__new__(WrapKillActionList)
@@ -6150,13 +6498,13 @@ cdef class WrapKillActionList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef KillActionList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(KillActionList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(KillActionList))
             return
         cdef KillActionList * old_data = self.data
@@ -6174,6 +6522,11 @@ cdef class WrapKillActionList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray16.__new__(WrapArray16)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<KillActionList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -6182,12 +6535,22 @@ cdef class WrapKillActionList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray16.__new__(WrapArray16)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<KillActionList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapKillAction.__new__(WrapKillAction)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -6197,23 +6560,17 @@ cdef class WrapKillActionList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, KillActionList * ptr):
         self.data = ptr
-        self._next = WrapArray16.__new__(WrapArray16)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<KillActionList*>self.data[0].next)[0])
-        self._prev = WrapArray16.__new__(WrapArray16)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<KillActionList*>self.data[0].prev)[0])
-        self._data = WrapKillAction.__new__(WrapKillAction)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, KillActionList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<KillActionList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<KillActionList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<KillActionList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<KillActionList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapKillActionList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -6229,8 +6586,8 @@ cdef class WrapDamageActionList:
         writer.write_c(self.data, sizeof(DamageActionList))
     def cast(self, object klass):
         cdef WrapDamageActionList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapDamageActionList inst = WrapDamageActionList.__new__(WrapDamageActionList)
@@ -6241,13 +6598,13 @@ cdef class WrapDamageActionList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef DamageActionList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(DamageActionList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(DamageActionList))
             return
         cdef DamageActionList * old_data = self.data
@@ -6265,6 +6622,11 @@ cdef class WrapDamageActionList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray17.__new__(WrapArray17)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<DamageActionList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -6273,12 +6635,22 @@ cdef class WrapDamageActionList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray17.__new__(WrapArray17)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<DamageActionList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapDamageAction.__new__(WrapDamageAction)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -6288,23 +6660,17 @@ cdef class WrapDamageActionList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, DamageActionList * ptr):
         self.data = ptr
-        self._next = WrapArray17.__new__(WrapArray17)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<DamageActionList*>self.data[0].next)[0])
-        self._prev = WrapArray17.__new__(WrapArray17)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<DamageActionList*>self.data[0].prev)[0])
-        self._data = WrapDamageAction.__new__(WrapDamageAction)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, DamageActionList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<DamageActionList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<DamageActionList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<DamageActionList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<DamageActionList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapDamageActionList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -6320,8 +6686,8 @@ cdef class WrapPassivePacketList:
         writer.write_c(self.data, sizeof(PassivePacketList))
     def cast(self, object klass):
         cdef WrapPassivePacketList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapPassivePacketList inst = WrapPassivePacketList.__new__(WrapPassivePacketList)
@@ -6332,13 +6698,13 @@ cdef class WrapPassivePacketList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef PassivePacketList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(PassivePacketList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(PassivePacketList))
             return
         cdef PassivePacketList * old_data = self.data
@@ -6356,6 +6722,11 @@ cdef class WrapPassivePacketList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray18.__new__(WrapArray18)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<PassivePacketList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -6364,12 +6735,22 @@ cdef class WrapPassivePacketList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray18.__new__(WrapArray18)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<PassivePacketList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapPassivePacket.__new__(WrapPassivePacket)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -6379,23 +6760,17 @@ cdef class WrapPassivePacketList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, PassivePacketList * ptr):
         self.data = ptr
-        self._next = WrapArray18.__new__(WrapArray18)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<PassivePacketList*>self.data[0].next)[0])
-        self._prev = WrapArray18.__new__(WrapArray18)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<PassivePacketList*>self.data[0].prev)[0])
-        self._data = WrapPassivePacket.__new__(WrapPassivePacket)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, PassivePacketList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<PassivePacketList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<PassivePacketList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<PassivePacketList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<PassivePacketList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapPassivePacketList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -6411,8 +6786,8 @@ cdef class WrapMissionDataList:
         writer.write_c(self.data, sizeof(MissionDataList))
     def cast(self, object klass):
         cdef WrapMissionDataList c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapMissionDataList inst = WrapMissionDataList.__new__(WrapMissionDataList)
@@ -6423,13 +6798,13 @@ cdef class WrapMissionDataList:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef MissionDataList * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(MissionDataList))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(MissionDataList))
             return
         cdef MissionDataList * old_data = self.data
@@ -6447,6 +6822,11 @@ cdef class WrapMissionDataList:
     def next(self):
         if self.data[0].next == 0:
             return None
+        if self._next is not None:
+            return self._next
+        self._next = WrapArray19.__new__(WrapArray19)
+        self._next.holder = self.holder
+        self._next._init_ptr(&(<MissionDataList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -6455,12 +6835,22 @@ cdef class WrapMissionDataList:
     def prev(self):
         if self.data[0].prev == 0:
             return None
+        if self._prev is not None:
+            return self._prev
+        self._prev = WrapArray19.__new__(WrapArray19)
+        self._prev.holder = self.holder
+        self._prev._init_ptr(&(<MissionDataList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
         raise NotImplementedError()
     @property
     def data(self):
+        if self._data is not None:
+            return self._data
+        self._data = WrapMissionData.__new__(WrapMissionData)
+        self._data.holder = self.holder
+        self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
@@ -6470,23 +6860,17 @@ cdef class WrapMissionDataList:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, MissionDataList * ptr):
         self.data = ptr
-        self._next = WrapArray19.__new__(WrapArray19)
-        self._next.holder = self.holder
-        self._next._init_ptr(&(<MissionDataList*>self.data[0].next)[0])
-        self._prev = WrapArray19.__new__(WrapArray19)
-        self._prev.holder = self.holder
-        self._prev._init_ptr(&(<MissionDataList*>self.data[0].prev)[0])
-        self._data = WrapMissionData.__new__(WrapMissionData)
-        self._data.holder = self.holder
-        self._data._init_ptr(&self.data[0].data)
     cdef void _set_ptr(self, MissionDataList * ptr):
         self.data = ptr
-        self._next.holder = self.holder
-        self._next._set_ptr(&(<MissionDataList*>self.data[0].next)[0])
-        self._prev.holder = self.holder
-        self._prev._set_ptr(&(<MissionDataList*>self.data[0].prev)[0])
-        self._data.holder = self.holder
-        self._data._set_ptr(&self.data[0].data)
+        if self._next is not None:
+            self._next.holder = self.holder
+            self._next._set_ptr(&(<MissionDataList*>self.data[0].next)[0])
+        if self._prev is not None:
+            self._prev.holder = self.holder
+            self._prev._set_ptr(&(<MissionDataList*>self.data[0].prev)[0])
+        if self._data is not None:
+            self._data.holder = self.holder
+            self._data._set_ptr(&self.data[0].data)
     def set_ptr(self, WrapMissionDataList v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -6502,8 +6886,8 @@ cdef class WrapPacketQueue:
         writer.write_c(self.data, sizeof(PacketQueue))
     def cast(self, object klass):
         cdef WrapPacketQueue c = klass.__new__(klass)
-        c._init_ptr(self.data)
         c.holder = self.holder
+        c._init_ptr(self.data)
         return c
     def copy(self):
         cdef WrapPacketQueue inst = WrapPacketQueue.__new__(WrapPacketQueue)
@@ -6514,13 +6898,13 @@ cdef class WrapPacketQueue:
         self.alloc()
 
     def make_standalone_copy(self):
-        if self.holder != None:
+        if self.holder is not None:
             return
         cdef PacketQueue * old_data = self.data
         self.realloc()
         memcpy(self.data, old_data, sizeof(PacketQueue))
     def make_standalone_reset(self):
-        if self.holder != None:
+        if self.holder is not None:
             memset(self.data, 0, sizeof(PacketQueue))
             return
         cdef PacketQueue * old_data = self.data
@@ -6538,6 +6922,11 @@ cdef class WrapPacketQueue:
     def player_hits(self):
         if self.data[0].player_hits == 0:
             return None
+        if self._player_hits is not None:
+            return self._player_hits
+        self._player_hits = WrapArray5.__new__(WrapArray5)
+        self._player_hits.holder = self.holder
+        self._player_hits._init_ptr(&(<HitPacketList*>self.data[0].player_hits)[0])
         return self._player_hits
     @player_hits.setter
     def player_hits(self, value):
@@ -6552,6 +6941,11 @@ cdef class WrapPacketQueue:
     def sound_actions(self):
         if self.data[0].sound_actions == 0:
             return None
+        if self._sound_actions is not None:
+            return self._sound_actions
+        self._sound_actions = WrapArray7.__new__(WrapArray7)
+        self._sound_actions.holder = self.holder
+        self._sound_actions._init_ptr(&(<SoundActionList*>self.data[0].sound_actions)[0])
         return self._sound_actions
     @sound_actions.setter
     def sound_actions(self, value):
@@ -6566,6 +6960,11 @@ cdef class WrapPacketQueue:
     def particles(self):
         if self.data[0].particles == 0:
             return None
+        if self._particles is not None:
+            return self._particles
+        self._particles = WrapArray6.__new__(WrapArray6)
+        self._particles.holder = self.holder
+        self._particles._init_ptr(&(<ParticleDataList*>self.data[0].particles)[0])
         return self._particles
     @particles.setter
     def particles(self, value):
@@ -6580,6 +6979,11 @@ cdef class WrapPacketQueue:
     def block_actions(self):
         if self.data[0].block_actions == 0:
             return None
+        if self._block_actions is not None:
+            return self._block_actions
+        self._block_actions = WrapArray8.__new__(WrapArray8)
+        self._block_actions.holder = self.holder
+        self._block_actions._init_ptr(&(<BlockActionList*>self.data[0].block_actions)[0])
         return self._block_actions
     @block_actions.setter
     def block_actions(self, value):
@@ -6594,6 +6998,11 @@ cdef class WrapPacketQueue:
     def shoot_packets(self):
         if self.data[0].shoot_packets == 0:
             return None
+        if self._shoot_packets is not None:
+            return self._shoot_packets
+        self._shoot_packets = WrapArray9.__new__(WrapArray9)
+        self._shoot_packets.holder = self.holder
+        self._shoot_packets._init_ptr(&(<ShootPacketList*>self.data[0].shoot_packets)[0])
         return self._shoot_packets
     @shoot_packets.setter
     def shoot_packets(self, value):
@@ -6608,6 +7017,11 @@ cdef class WrapPacketQueue:
     def chunk_items(self):
         if self.data[0].chunk_items == 0:
             return None
+        if self._chunk_items is not None:
+            return self._chunk_items
+        self._chunk_items = WrapArray11.__new__(WrapArray11)
+        self._chunk_items.holder = self.holder
+        self._chunk_items._init_ptr(&(<ChunkItemsList*>self.data[0].chunk_items)[0])
         return self._chunk_items
     @chunk_items.setter
     def chunk_items(self, value):
@@ -6622,6 +7036,11 @@ cdef class WrapPacketQueue:
     def static_entities(self):
         if self.data[0].static_entities == 0:
             return None
+        if self._static_entities is not None:
+            return self._static_entities
+        self._static_entities = WrapArray12.__new__(WrapArray12)
+        self._static_entities.holder = self.holder
+        self._static_entities._init_ptr(&(<StaticEntityList*>self.data[0].static_entities)[0])
         return self._static_entities
     @static_entities.setter
     def static_entities(self, value):
@@ -6636,6 +7055,11 @@ cdef class WrapPacketQueue:
     def items_8(self):
         if self.data[0].items_8 == 0:
             return None
+        if self._items_8 is not None:
+            return self._items_8
+        self._items_8 = WrapArray14.__new__(WrapArray14)
+        self._items_8.holder = self.holder
+        self._items_8._init_ptr(&(<Items8List_1*>self.data[0].items_8)[0])
         return self._items_8
     @items_8.setter
     def items_8(self, value):
@@ -6650,6 +7074,11 @@ cdef class WrapPacketQueue:
     def pickup_actions(self):
         if self.data[0].pickup_actions == 0:
             return None
+        if self._pickup_actions is not None:
+            return self._pickup_actions
+        self._pickup_actions = WrapArray15.__new__(WrapArray15)
+        self._pickup_actions.holder = self.holder
+        self._pickup_actions._init_ptr(&(<PickupActionList*>self.data[0].pickup_actions)[0])
         return self._pickup_actions
     @pickup_actions.setter
     def pickup_actions(self, value):
@@ -6664,6 +7093,11 @@ cdef class WrapPacketQueue:
     def kill_actions(self):
         if self.data[0].kill_actions == 0:
             return None
+        if self._kill_actions is not None:
+            return self._kill_actions
+        self._kill_actions = WrapArray16.__new__(WrapArray16)
+        self._kill_actions.holder = self.holder
+        self._kill_actions._init_ptr(&(<KillActionList*>self.data[0].kill_actions)[0])
         return self._kill_actions
     @kill_actions.setter
     def kill_actions(self, value):
@@ -6678,6 +7112,11 @@ cdef class WrapPacketQueue:
     def damage_actions(self):
         if self.data[0].damage_actions == 0:
             return None
+        if self._damage_actions is not None:
+            return self._damage_actions
+        self._damage_actions = WrapArray17.__new__(WrapArray17)
+        self._damage_actions.holder = self.holder
+        self._damage_actions._init_ptr(&(<DamageActionList*>self.data[0].damage_actions)[0])
         return self._damage_actions
     @damage_actions.setter
     def damage_actions(self, value):
@@ -6692,6 +7131,11 @@ cdef class WrapPacketQueue:
     def passive_packets(self):
         if self.data[0].passive_packets == 0:
             return None
+        if self._passive_packets is not None:
+            return self._passive_packets
+        self._passive_packets = WrapArray18.__new__(WrapArray18)
+        self._passive_packets.holder = self.holder
+        self._passive_packets._init_ptr(&(<PassivePacketList*>self.data[0].passive_packets)[0])
         return self._passive_packets
     @passive_packets.setter
     def passive_packets(self, value):
@@ -6706,6 +7150,11 @@ cdef class WrapPacketQueue:
     def missions(self):
         if self.data[0].missions == 0:
             return None
+        if self._missions is not None:
+            return self._missions
+        self._missions = WrapArray19.__new__(WrapArray19)
+        self._missions.holder = self.holder
+        self._missions._init_ptr(&(<MissionDataList*>self.data[0].missions)[0])
         return self._missions
     @missions.setter
     def missions(self, value):
@@ -6720,73 +7169,47 @@ cdef class WrapPacketQueue:
         memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, PacketQueue * ptr):
         self.data = ptr
-        self._player_hits = WrapArray5.__new__(WrapArray5)
-        self._player_hits.holder = self.holder
-        self._player_hits._init_ptr(&(<HitPacketList*>self.data[0].player_hits)[0])
-        self._sound_actions = WrapArray7.__new__(WrapArray7)
-        self._sound_actions.holder = self.holder
-        self._sound_actions._init_ptr(&(<SoundActionList*>self.data[0].sound_actions)[0])
-        self._particles = WrapArray6.__new__(WrapArray6)
-        self._particles.holder = self.holder
-        self._particles._init_ptr(&(<ParticleDataList*>self.data[0].particles)[0])
-        self._block_actions = WrapArray8.__new__(WrapArray8)
-        self._block_actions.holder = self.holder
-        self._block_actions._init_ptr(&(<BlockActionList*>self.data[0].block_actions)[0])
-        self._shoot_packets = WrapArray9.__new__(WrapArray9)
-        self._shoot_packets.holder = self.holder
-        self._shoot_packets._init_ptr(&(<ShootPacketList*>self.data[0].shoot_packets)[0])
-        self._chunk_items = WrapArray11.__new__(WrapArray11)
-        self._chunk_items.holder = self.holder
-        self._chunk_items._init_ptr(&(<ChunkItemsList*>self.data[0].chunk_items)[0])
-        self._static_entities = WrapArray12.__new__(WrapArray12)
-        self._static_entities.holder = self.holder
-        self._static_entities._init_ptr(&(<StaticEntityList*>self.data[0].static_entities)[0])
-        self._items_8 = WrapArray14.__new__(WrapArray14)
-        self._items_8.holder = self.holder
-        self._items_8._init_ptr(&(<Items8List_1*>self.data[0].items_8)[0])
-        self._pickup_actions = WrapArray15.__new__(WrapArray15)
-        self._pickup_actions.holder = self.holder
-        self._pickup_actions._init_ptr(&(<PickupActionList*>self.data[0].pickup_actions)[0])
-        self._kill_actions = WrapArray16.__new__(WrapArray16)
-        self._kill_actions.holder = self.holder
-        self._kill_actions._init_ptr(&(<KillActionList*>self.data[0].kill_actions)[0])
-        self._damage_actions = WrapArray17.__new__(WrapArray17)
-        self._damage_actions.holder = self.holder
-        self._damage_actions._init_ptr(&(<DamageActionList*>self.data[0].damage_actions)[0])
-        self._passive_packets = WrapArray18.__new__(WrapArray18)
-        self._passive_packets.holder = self.holder
-        self._passive_packets._init_ptr(&(<PassivePacketList*>self.data[0].passive_packets)[0])
-        self._missions = WrapArray19.__new__(WrapArray19)
-        self._missions.holder = self.holder
-        self._missions._init_ptr(&(<MissionDataList*>self.data[0].missions)[0])
     cdef void _set_ptr(self, PacketQueue * ptr):
         self.data = ptr
-        self._player_hits.holder = self.holder
-        self._player_hits._set_ptr(&(<HitPacketList*>self.data[0].player_hits)[0])
-        self._sound_actions.holder = self.holder
-        self._sound_actions._set_ptr(&(<SoundActionList*>self.data[0].sound_actions)[0])
-        self._particles.holder = self.holder
-        self._particles._set_ptr(&(<ParticleDataList*>self.data[0].particles)[0])
-        self._block_actions.holder = self.holder
-        self._block_actions._set_ptr(&(<BlockActionList*>self.data[0].block_actions)[0])
-        self._shoot_packets.holder = self.holder
-        self._shoot_packets._set_ptr(&(<ShootPacketList*>self.data[0].shoot_packets)[0])
-        self._chunk_items.holder = self.holder
-        self._chunk_items._set_ptr(&(<ChunkItemsList*>self.data[0].chunk_items)[0])
-        self._static_entities.holder = self.holder
-        self._static_entities._set_ptr(&(<StaticEntityList*>self.data[0].static_entities)[0])
-        self._items_8.holder = self.holder
-        self._items_8._set_ptr(&(<Items8List_1*>self.data[0].items_8)[0])
-        self._pickup_actions.holder = self.holder
-        self._pickup_actions._set_ptr(&(<PickupActionList*>self.data[0].pickup_actions)[0])
-        self._kill_actions.holder = self.holder
-        self._kill_actions._set_ptr(&(<KillActionList*>self.data[0].kill_actions)[0])
-        self._damage_actions.holder = self.holder
-        self._damage_actions._set_ptr(&(<DamageActionList*>self.data[0].damage_actions)[0])
-        self._passive_packets.holder = self.holder
-        self._passive_packets._set_ptr(&(<PassivePacketList*>self.data[0].passive_packets)[0])
-        self._missions.holder = self.holder
-        self._missions._set_ptr(&(<MissionDataList*>self.data[0].missions)[0])
+        if self._player_hits is not None:
+            self._player_hits.holder = self.holder
+            self._player_hits._set_ptr(&(<HitPacketList*>self.data[0].player_hits)[0])
+        if self._sound_actions is not None:
+            self._sound_actions.holder = self.holder
+            self._sound_actions._set_ptr(&(<SoundActionList*>self.data[0].sound_actions)[0])
+        if self._particles is not None:
+            self._particles.holder = self.holder
+            self._particles._set_ptr(&(<ParticleDataList*>self.data[0].particles)[0])
+        if self._block_actions is not None:
+            self._block_actions.holder = self.holder
+            self._block_actions._set_ptr(&(<BlockActionList*>self.data[0].block_actions)[0])
+        if self._shoot_packets is not None:
+            self._shoot_packets.holder = self.holder
+            self._shoot_packets._set_ptr(&(<ShootPacketList*>self.data[0].shoot_packets)[0])
+        if self._chunk_items is not None:
+            self._chunk_items.holder = self.holder
+            self._chunk_items._set_ptr(&(<ChunkItemsList*>self.data[0].chunk_items)[0])
+        if self._static_entities is not None:
+            self._static_entities.holder = self.holder
+            self._static_entities._set_ptr(&(<StaticEntityList*>self.data[0].static_entities)[0])
+        if self._items_8 is not None:
+            self._items_8.holder = self.holder
+            self._items_8._set_ptr(&(<Items8List_1*>self.data[0].items_8)[0])
+        if self._pickup_actions is not None:
+            self._pickup_actions.holder = self.holder
+            self._pickup_actions._set_ptr(&(<PickupActionList*>self.data[0].pickup_actions)[0])
+        if self._kill_actions is not None:
+            self._kill_actions.holder = self.holder
+            self._kill_actions._set_ptr(&(<KillActionList*>self.data[0].kill_actions)[0])
+        if self._damage_actions is not None:
+            self._damage_actions.holder = self.holder
+            self._damage_actions._set_ptr(&(<DamageActionList*>self.data[0].damage_actions)[0])
+        if self._passive_packets is not None:
+            self._passive_packets.holder = self.holder
+            self._passive_packets._set_ptr(&(<PassivePacketList*>self.data[0].passive_packets)[0])
+        if self._missions is not None:
+            self._missions.holder = self.holder
+            self._missions._set_ptr(&(<MissionDataList*>self.data[0].missions)[0])
     def set_ptr(self, WrapPacketQueue v):
         self.holder = v.holder
         self._set_ptr(v.data)

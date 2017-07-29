@@ -270,6 +270,8 @@ class Chunk:
         self.gen_f.add_done_callback(self.on_chunk)
 
     def on_chunk(self, f):
+        if f.cancelled():
+            return
         self.data = f.result()
 
         region = (self.data.x // 64, self.data.y // 64)
@@ -484,6 +486,8 @@ class World:
         return out_packets
 
     def stop(self):
+        with self.gen_queue.mutex:
+            self.gen_queue.queue.clear()
         self.gen_queue.put(None)
 
     def get_chunk(self, pos):
@@ -523,4 +527,10 @@ class World:
                 break
             pos, f = data
             res = tgen.generate(*pos)
-            self.loop.call_soon_threadsafe(f.set_result, res)
+
+            def set_result():
+                if f.cancelled():
+                    return
+                f.set_result(res)
+
+            self.loop.call_soon_threadsafe(set_result)

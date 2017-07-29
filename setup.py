@@ -80,9 +80,9 @@ if os.name == 'nt':
     # compile_args.append('/std:c++11')
     compile_args.append('/std:c++11')
     compile_args.append('-Zi')
-    # compile_args.append('/Od')
-    # undef_macros.append('NDEBUG')
-    # link_args.append('-debug')
+    compile_args.append('/Od')
+    undef_macros.append('NDEBUG')
+    link_args.append('-debug')
 else:
     compile_args.append('-std=c++11')
     compile_args.append('-fpermissive')

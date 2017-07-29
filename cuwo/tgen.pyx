@@ -640,6 +640,8 @@ cdef Zone * get_zone(void * manager, uint32_t zone_x, uint32_t zone_y) nogil:
     cdef uint32_t reg_x = zone_x / 64
     cdef uint32_t reg_y = zone_y / 64
     cdef char * reg = get_region(manager, reg_x, reg_y)
+    if reg == NULL:
+        return NULL
     cdef char * p = <char*>reg + 65560
     zone_x %= 64
     zone_y %= 64

@@ -22,7 +22,7 @@ from cuwo.common import (get_clock_string, parse_clock, parse_command,
                          get_chunk, filter_string, iterate_packet_list)
 from cuwo.script import ScriptManager
 from cuwo.config import ConfigObject
-from cuwo import entity as entitydata
+from cuwo import tgen_wrap as entitydata
 from cuwo import static
 from cuwo.loop import LoopingCall
 from cuwo import world
@@ -194,8 +194,11 @@ class CubeWorldConnection(asyncio.Protocol):
     def data_received(self, data):
         self.packet_handler.feed(data)
 
+    def is_closing(self):
+        return self.disconnected or self.transport.is_closing()
+
     def disconnect(self, reason=None):
-        if self.disconnected:
+        if self.is_closing():
             return
         self.transport.close()
         self.connection_lost(reason)
@@ -211,20 +214,26 @@ class CubeWorldConnection(asyncio.Protocol):
         if self.entity is not None:
             self.entity.destroy()
         if self.entity_id is not None:
-            # XXX handle this in Entity.destroy?
+            # need to handle this here, since the player may not have an
+            # entity yet
             self.world.entity_ids.put_back(self.entity_id)
         if self.scripts is not None:
             self.scripts.unload()
 
     # packet methods
 
+    def send_data(self, data):
+        if self.is_closing():
+            return
+        self.transport.write(data)
+
     def send_packet(self, packet):
-        if self.disconnected:
+        if self.is_closing():
             return
         self.transport.write(packets.write_packet(packet))
 
     def on_packet(self, packet):
-        if self.disconnected:
+        if self.is_closing():
             return
         if packet is None:
             self.on_invalid_packet('data')
@@ -252,8 +261,9 @@ class CubeWorldConnection(asyncio.Protocol):
             self.entity = self.world.create_entity(self.entity_id)
             self.entity.connection = self
 
+        self.old_entity = self.entity.copy()
         mask = packet.update_entity(self.entity)
-        if not self.has_joined and getattr(self.entity, 'name', None):
+        if not self.has_joined and entitydata.is_name_set(mask):
             self.on_join()
             return
 
@@ -269,7 +279,7 @@ class CubeWorldConnection(asyncio.Protocol):
         if entitydata.is_class_set(mask):
             self.scripts.call('on_class_update')
         if entitydata.is_name_set(mask):
-            self.scripts.call('on_name_update')
+            self.on_name_update()
         if entitydata.is_multiplier_set(mask):
             self.scripts.call('on_multiplier_update')
         if entitydata.is_level_set(mask):
@@ -291,6 +301,11 @@ class CubeWorldConnection(asyncio.Protocol):
         if self.mounted_entity:
             self.mounted_entity.on_unmount(self)
         self.mounted_entity = entity
+
+    def on_name_update(self):
+        if self.old_entity.name:
+            print(self.old_entity.name, 'changed name to', self.entity.name)
+        self.scripts.call('on_name_update')
 
     def on_pos_update(self):
         try:
@@ -515,9 +530,17 @@ class CubeWorldServer:
         self.set_clock('12:00')
 
         # start listening
+        self.loop.set_exception_handler(self.exception_handler)
         self.loop.create_task(self.create_server(self.build_protocol,
                                                  port=base.port,
                                                  family=socket.AF_INET))
+
+    def exception_handler(self, loop, context):
+        exception = context.get('exception')
+        if isinstance(exception, TimeoutError):
+            pass
+        else:
+            loop.default_exception_handler(context)
 
     def build_protocol(self):
         return CubeWorldConnection(self)
@@ -619,7 +642,7 @@ class CubeWorldServer:
     def broadcast_packet(self, packet):
         data = packets.write_packet(packet)
         for player in self.players.values():
-            player.transport.write(data)
+            player.send_data(data)
 
     # line/string formatting options based on config
 

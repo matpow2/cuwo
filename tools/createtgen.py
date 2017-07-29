@@ -183,7 +183,7 @@ def main():
                 postfix = '_reset'
             pyx.putln(f'def make_standalone{postfix}(self):')
             pyx.indent()
-            pyx.putln('if self.holder != None:')
+            pyx.putln('if self.holder is not None:')
             pyx.indent()
             if not copy:
                 pyx.putln(f'memset(self.data, 0, sizeof({s_name}))')
@@ -306,37 +306,55 @@ def main():
                 vec_name = vec_type.replace(' ', '').replace('*', 'Ptr')
                 wrap_name = f'Wrap{vec_name}Vec'
                 vec_gens[vec_type] = wrap_name
-                pyx.putln(f'return self._{prop_name}')
 
                 setter.putln(f'raise NotImplementedError()')
 
                 python_obj_pxd.putln(f'cdef {wrap_name} _{prop_name}')
-                python_obj_init.putln(f'self._{prop_name} = '
-                                      f'{get_new(wrap_name)}')
-                python_obj_init.putln(f'self._{prop_name}.holder = self.holder')
-                python_obj_init.putln(f'self._{prop_name}._init_ptr(&{value})')
-                python_obj_reset.putln(f'self._{prop_name}.holder = self.holder')
+
+                pyx.putln(f'if self._{prop_name} is not None:')
+                pyx.indent()
+                pyx.putln(f'return self._{prop_name}')
+                pyx.dedent()
+
+                pyx.putln(f'self._{prop_name} = {get_new(wrap_name)}')
+                pyx.putln(f'self._{prop_name}.holder = self.holder')
+                pyx.putln(f'self._{prop_name}._init_ptr(&{value})')
+                pyx.putln(f'return self._{prop_name}')
+
+                python_obj_reset.putln(f'if self._{prop_name} is not None:')
+                python_obj_reset.indent()
+                python_obj_reset.putln(f'self._{prop_name}.holder = '
+                                        'self.holder')
                 python_obj_reset.putln(f'self._{prop_name}._set_ptr(&{value})')
+                python_obj_reset.dedent()
             elif attr.typ in VEC_TYPES and not attr.ptr:
                 typt, typ = VEC_TYPES[attr.typ]
-                pyx.putln(f'return self._{prop_name}')
 
                 python_obj_pxd.putln(f'cdef np.ndarray '
                                      f'_{prop_name}')
-                python_obj_init.putln(f'Py_INCREF({typ})')
-                python_obj_init.putln(f'cdef {typt} * {prop_name}ptr = '
-                                      f'&{value}[0]')
-                python_obj_init.putln(f'self._{prop_name} = '
+
+                pyx.putln(f'if self._{prop_name} is not None:')
+                pyx.indent()
+                pyx.putln(f'return self._{prop_name}')
+                pyx.dedent()
+
+                pyx.putln(f'Py_INCREF({typ})')
+                pyx.putln(f'cdef {typt} * {prop_name}ptr = &{value}[0]')
+                pyx.putln(f'self._{prop_name} = '
                     f'PyArray_NewFromDescr(<PyTypeObject *>Vector3, '
                     f'{typ}, 1, '
                     f'&vec3_dim, NULL, <void*>{prop_name}ptr, np.NPY_DEFAULT, '
                     f'<object>NULL);')
-                python_obj_init.putln(f'np.set_array_base(self._{prop_name}, '
-                                      f'self.holder)')
+                pyx.putln(f'np.set_array_base(self._{prop_name}, self.holder)')
+                pyx.putln(f'return self._{prop_name}')
+
+                python_obj_reset.putln(f'if self._{prop_name} is not None:')
+                python_obj_reset.indent()
                 python_obj_reset.putln(f'np.set_array_base(self._{prop_name}, '
                                        f'self.holder)')
                 python_obj_reset.putln(f'self._{prop_name}.data = '
                                        f'<char*>&{value}')
+                python_obj_reset.dedent()
                 setter.putln(f'{value} = value')
             elif not attr.is_local() and not attr.ptr:
                 ret_type = CYTHON_TYPES.get(attr.typ, attr.typ)
@@ -345,12 +363,22 @@ def main():
                 if attr.dim is not None:
                     ret_type_p += f'[:{attr.dim}]'
                     ret_type_c += f'[:{attr.dim}]'
-                    pyx.putln(f'return self._{prop_name}')
                     python_obj_pxd.putln(f'cdef carray _{prop_name}')
-                    python_obj_init.putln(f'self._{prop_name} = '
-                                          f'<{ret_type_c}>(&{value}[0])')
+
+                    pyx.putln(f'if self._{prop_name} is not None:')
+                    pyx.indent()
+                    pyx.putln(f'return self._{prop_name}')
+                    pyx.dedent()
+
+                    pyx.putln(f'self._{prop_name} = '
+                              f'<{ret_type_c}>(&{value}[0])')
+                    pyx.putln(f'return self._{prop_name}')
+
+                    python_obj_reset.putln(f'if self._{prop_name} is not None:')
+                    python_obj_reset.indent()
                     python_obj_reset.putln(f'self._{prop_name}.data = '
                                            f'<char*>(&{value}[0])')
+                    python_obj_reset.dedent()
                     setter.putln(f'raise NotImplementedError()')
                 else:
                     pyx.putln(f'return {value}')
@@ -373,15 +401,22 @@ def main():
                     array_gens[k] = wrap_name
 
                 python_obj_pxd.putln(f'cdef {wrap_name} _{prop_name}')
-                python_obj_init.putln(f'self._{prop_name} = '
-                                      f'{get_new(wrap_name)}')
-                python_obj_init.putln(f'self._{prop_name}.holder = '
-                                       'self.holder')
-                python_obj_init.putln(f'self._{prop_name}._init_ptr({value})')
+                pyx.putln(f'if self._{prop_name} is not None:')
+                pyx.indent()
+                pyx.putln(f'return self._{prop_name}')
+                pyx.dedent()
+
+                pyx.putln(f'self._{prop_name} = {get_new(wrap_name)}')
+                pyx.putln(f'self._{prop_name}.holder = self.holder')
+                pyx.putln(f'self._{prop_name}._init_ptr({value})')
+                pyx.putln(f'return self._{prop_name}')
+
+                python_obj_reset.putln(f'if self._{prop_name} is not None:')
+                python_obj_reset.indent()
                 python_obj_reset.putln(f'self._{prop_name}.holder = '
                                         'self.holder')
                 python_obj_reset.putln(f'self._{prop_name}._set_ptr({value})')
-                pyx.putln(f'return self._{prop_name}')
+                python_obj_reset.dedent()
                 # if attr.ptr:
                 #     setter.putln(f'cdef {wrap_name} v = value')
                 #     setter.putln(f'{value} = v.array')
@@ -389,16 +424,24 @@ def main():
                 setter.putln(f'raise NotImplementedError()')
             elif attr.is_local():
                 wrap_name = f'Wrap{attr.typ}'
+
+                pyx.putln(f'if self._{prop_name} is not None:')
+                pyx.indent()
                 pyx.putln(f'return self._{prop_name}')
+                pyx.dedent()
+
                 python_obj_pxd.putln(f'cdef {wrap_name} _{prop_name}')
-                python_obj_init.putln(f'self._{prop_name} = '
-                                      f'{get_new(wrap_name)}')
-                python_obj_init.putln(f'self._{prop_name}.holder = '
-                                       'self.holder')
-                python_obj_init.putln(f'self._{prop_name}._init_ptr(&{value})')
+                pyx.putln(f'self._{prop_name} = {get_new(wrap_name)}')
+                pyx.putln(f'self._{prop_name}.holder = self.holder')
+                pyx.putln(f'self._{prop_name}._init_ptr(&{value})')
+                pyx.putln(f'return self._{prop_name}')
+
+                python_obj_reset.putln(f'if self._{prop_name} is not None:')
+                python_obj_reset.indent()
                 python_obj_reset.putln(f'self._{prop_name}.holder = '
                                         'self.holder')
                 python_obj_reset.putln(f'self._{prop_name}._set_ptr(&{value})')
+                python_obj_reset.dedent()
                 setter.putln(f'cdef {wrap_name} v = value')
                 setter.putln(f'{value} = v.data[0]')
             else:
