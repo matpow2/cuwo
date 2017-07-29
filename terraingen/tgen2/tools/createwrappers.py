@@ -106,6 +106,7 @@ use64
 
     mov rsp, rbp
     pop rbp
+    ret
 '''
 
 set_stack_call_msvc = '''

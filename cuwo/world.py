@@ -270,10 +270,10 @@ class Chunk:
         self.gen_f.add_done_callback(self.on_chunk)
 
     def on_chunk(self, f):
-        if f.cancelled():
+        try:
+            self.data = f.result()
+        except asyncio.CancelledError:
             return
-        self.data = f.result()
-
         region = (self.data.x // 64, self.data.y // 64)
         if region in self.world.regions:
             self.region = self.world.regions[region]
@@ -528,8 +528,8 @@ class World:
             pos, f = data
             res = tgen.generate(*pos)
             def set_result():
-                if f.cancelled():
+                try:
+                    f.set_result(res)
+                except asyncio.InvalidStateError:
                     return
-                f.set_result(res)
-
             self.loop.call_soon_threadsafe(set_result)
