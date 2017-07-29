@@ -664,6 +664,7 @@ cdef class ZoneData(WrapZone):
             self.data = get_zone(tgen_get_manager(), self.x, self.y)
             self.region = get_region(tgen_get_manager(),
                                      self.x / 64, self.y / 64)
+        self._init_ptr(self.data)
 
         if self.data == NULL:
             print('Invalid zone')
@@ -767,15 +768,18 @@ def remove_creature(WrapCreature creature):
 def add_creature(uint64_t id):
     cdef CCreature * c = sim_add_creature(id)
     cdef WrapCreature wrap = WrapCreature.__new__(WrapCreature)
-    wrap.data = <Creature*>c
+    wrap._init_ptr(<Creature*>c)
     return wrap
 
 cdef dict creature_map = {}
 
 cdef void get_creature_map(CCreature * c):
     cdef WrapCreature wrap = WrapCreature.__new__(WrapCreature)
-    wrap.data = <Creature*>c
-    creature_map[wrap.data[0].entity_id] = wrap
+    if c == NULL:
+        creature_map[wrap.data[0].entity_id] = None
+    else:
+        wrap._init_ptr(<Creature*>c)
+        creature_map[wrap.data[0].entity_id] = wrap
 
 def get_creatures():
     creature_map.clear()
@@ -793,7 +797,7 @@ def set_in_packets(list hits, list passives):
 def get_out_packets():
     cdef CPacketQueue * q = sim_get_out_packets()
     cdef WrapPacketQueue wrap = WrapPacketQueue.__new__(WrapPacketQueue)
-    wrap.data = <PacketQueue*>q
+    wrap._init_ptr(<PacketQueue*>q)
     return wrap
 
 def set_breakpoint(value):

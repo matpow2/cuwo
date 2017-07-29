@@ -63,5 +63,5 @@ use_tgen = True
 use_entities = True
 
 # Number of seconds before a chunk is destroyed when no player has visited it
-# for a while. For permanent item drops and similar, set this to None.
-chunk_retire_time = 30.0
+# for a while.
+chunk_retire_time = 15.0

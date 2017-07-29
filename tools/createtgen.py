@@ -28,8 +28,6 @@ VEC_TYPES = {
 }
 
 PYX_DEFS = '''
-cimport numpy as np
-import numpy as np
 from cython cimport view
 from libc.string cimport memset, memcpy, memcmp
 from cuwo.vector import Vector3
@@ -38,6 +36,7 @@ from cuwo import strings
 from cuwo.bytes cimport ByteReader, ByteWriter
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
 from cpython.ref cimport PyTypeObject, Py_INCREF
+import numpy as np
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject * subtype, np.dtype descr,
@@ -51,15 +50,30 @@ cdef np.dtype dtype_int64 = np.dtype(np.int64)
 cdef np.npy_intp vec3_dim = 3
 
 np.import_array()
+
+cdef class MemoryHolder:
+    def __dealloc__(self):
+        PyMem_Free(self.data)
 '''
 
 DEFS = '''
+cimport numpy as np
+import numpy as np
+from cython.view cimport array as carray
 from libc.stdint cimport (uintptr_t, uint32_t, uint8_t, uint64_t, int64_t,
                           int32_t, int8_t, int16_t, uint16_t)
+from cpython.mem cimport PyMem_Malloc
 
 ctypedef float vec3[3];
 ctypedef int64_t qvec3[3];
 ctypedef int32_t ivec3[3];
+
+cdef class MemoryHolder:
+    cdef void * data
+
+    cdef inline void * alloc(self, uint32_t size):
+        self.data = PyMem_Malloc(size)
+        return self.data
 '''
 
 H_DEFS = '''
@@ -141,16 +155,16 @@ def main():
 
         pyx.putln(f'def cast(self, object klass):')
         pyx.indent()
-        pyx.putln(f'cdef object inst = klass.__new__(klass)')
-        pyx.putln(f'cdef Wrap{s_name} c = inst')
-        pyx.putln(f'c.data = self.data')
-        pyx.putln(f'return inst')
+        pyx.putln(f'cdef Wrap{s_name} c = {get_new("klass")}')
+        pyx.putln(f'c.holder = self.holder')
+        pyx.putln(f'c._init_ptr(self.data)')
+        pyx.putln(f'return c')
         pyx.dedent()
 
         pyx.putln(f'def copy(self):')
         pyx.indent()
-        wrap_name = f'Wrap{s_name}'
-        pyx.putln(f'cdef {wrap_name} inst = {wrap_name}.__new__({wrap_name})')
+        wrap_name = main_wrap_name = f'Wrap{s_name}'
+        pyx.putln(f'cdef {wrap_name} inst = {get_new(wrap_name)}')
         pyx.putln(f'inst.alloc()')
         pyx.putln(f'memcpy(inst.data, self.data, sizeof({s_name}))')
         pyx.putln(f'return inst')
@@ -159,34 +173,43 @@ def main():
         pyx.putln(f'def __init__(self):')
         pyx.indent()
         pyx.putln(f'self.alloc()')
+        pyx.putln()
         pyx.dedent()
 
-        pyx.putln(f'def __dealloc__(self):')
-        pyx.indent()
-        pyx.putln(f'if self.storage != NULL:')
-        pyx.indent()
-        pyx.putln(f'PyMem_Free(self.storage)')
-        pyx.dedent()
-        pyx.dedent()
+        for copy in (True, False):
+            if copy:
+                postfix = '_copy'
+            else:
+                postfix = '_reset'
+            pyx.putln(f'def make_standalone{postfix}(self):')
+            pyx.indent()
+            pyx.putln('if self.holder != None:')
+            pyx.indent()
+            if not copy:
+                pyx.putln(f'memset(self.data, 0, sizeof({s_name}))')
+            pyx.putln('return')
+            pyx.dedent()
+            pyx.putln(f'cdef {s_name} * old_data = self.data')
+            pyx.putln(f'self.realloc()')
+            if copy:
+                pyx.putln(f'memcpy(self.data, old_data, sizeof({s_name}))')
+            else:
+                pyx.putln(f'memset(self.data, 0, sizeof({s_name}))')
+            pyx.dedent()
 
-        pyx.putln('def realloc(self):')
+        pyx.putln(f'cdef void realloc(self):')
         pyx.indent()
-        pyx.putln('if self.storage != NULL:')
-        pyx.indent()
-        pyx.putln('return')
-        pyx.dedent()
-        pyx.putln(f'cdef {s_name} * old_data = self.data')
-        pyx.putln(f'self.alloc()')
-        pyx.putln(f'memcpy(self.data, old_data, sizeof({s_name}))')
-        pyx.putln(f'self.parent = None')
+        pyx.putln(f'self.holder = {get_new("MemoryHolder")}')
+        pyx.putln(f'cdef void * buf = self.holder.alloc(sizeof({s_name}))')
+        pyx.putln(f'self._set_ptr(<{s_name}*>buf)')
         pyx.dedent()
 
         pyx.putln(f'cdef void alloc(self):')
         pyx.indent()
-        pyx.putln(f'self.storage = PyMem_Malloc(sizeof({s_name}))')
-        pyx.putln(f'self.data = <{s_name}*>self.storage')
+        pyx.putln(f'self.holder = {get_new("MemoryHolder")}')
+        pyx.putln(f'cdef void * buf = self.holder.alloc(sizeof({s_name}))')
+        pyx.putln(f'self._init_ptr(<{s_name}*>buf)')
         pyx.dedent()
-
 
         pxd.putln(f'cdef struct {s_name}:')
         pxd.indent()
@@ -196,7 +219,8 @@ def main():
         reset_f.indent()
         reset_f.putln(f'memset(self.data, 0, sizeof(self.data[0]))')
 
-        python_obj = FormattedOutput(None)
+        python_obj_pxd = FormattedOutput(None)
+        python_obj_init = FormattedOutput(None)
         python_obj_reset = FormattedOutput(None)
 
         done_attr = set()
@@ -238,6 +262,7 @@ def main():
             # pyx
             if attr.name == 'pad':
                 continue
+
             pyx.putln(f'@property')
             value = f'self.data[0].{name}'
             pyx.putln(f'def {prop_name}(self):')
@@ -276,33 +301,42 @@ def main():
                 setter.putln(f'{value}[i] = c[i]')
                 setter.dedent()
                 setter.dedent()
+
             elif is_vec:
                 vec_name = vec_type.replace(' ', '').replace('*', 'Ptr')
                 wrap_name = f'Wrap{vec_name}Vec'
                 vec_gens[vec_type] = wrap_name
-                pyx.putln(f'cdef {wrap_name} ret = {get_new(wrap_name)}')
-                pyx.putln(f'ret.data = &{value}')
-                pyx.putln(f'ret.parent = self')
-                pyx.putln(f'return ret')
+                pyx.putln(f'return self._{prop_name}')
 
                 setter.putln(f'raise NotImplementedError()')
-                # setter.dedent()
-                # setter.putln(f'@{prop_name}.deleter')
-                # setter.indent()
-                # setter.putln(f'{}')
-                # setter.putln(f'{value} = value')
+
+                python_obj_pxd.putln(f'cdef {wrap_name} _{prop_name}')
+                python_obj_init.putln(f'self._{prop_name} = '
+                                      f'{get_new(wrap_name)}')
+                python_obj_init.putln(f'self._{prop_name}.holder = self.holder')
+                python_obj_init.putln(f'self._{prop_name}._init_ptr(&{value})')
+                python_obj_reset.putln(f'self._{prop_name}.holder = self.holder')
+                python_obj_reset.putln(f'self._{prop_name}._set_ptr(&{value})')
             elif attr.typ in VEC_TYPES and not attr.ptr:
                 typt, typ = VEC_TYPES[attr.typ]
-                pyx.putln(f'cdef {typt} * ptr = &{value}[0]')
-                pyx.putln(f'Py_INCREF({typ})')
-                pyx.putln(f'cdef np.ndarray arr = '
-                          f'PyArray_NewFromDescr(<PyTypeObject *>Vector3, '
-                          f'{typ}, 1, '
-                          f'&vec3_dim, NULL, <void*>ptr, np.NPY_DEFAULT, '
-                          f'<object>NULL);')
-                pyx.putln(f'np.set_array_base(arr, self)')
-                pyx.putln('return arr')
+                pyx.putln(f'return self._{prop_name}')
 
+                python_obj_pxd.putln(f'cdef np.ndarray '
+                                     f'_{prop_name}')
+                python_obj_init.putln(f'Py_INCREF({typ})')
+                python_obj_init.putln(f'cdef {typt} * {prop_name}ptr = '
+                                      f'&{value}[0]')
+                python_obj_init.putln(f'self._{prop_name} = '
+                    f'PyArray_NewFromDescr(<PyTypeObject *>Vector3, '
+                    f'{typ}, 1, '
+                    f'&vec3_dim, NULL, <void*>{prop_name}ptr, np.NPY_DEFAULT, '
+                    f'<object>NULL);')
+                python_obj_init.putln(f'np.set_array_base(self._{prop_name}, '
+                                      f'self.holder)')
+                python_obj_reset.putln(f'np.set_array_base(self._{prop_name}, '
+                                       f'self.holder)')
+                python_obj_reset.putln(f'self._{prop_name}.data = '
+                                       f'<char*>&{value}')
                 setter.putln(f'{value} = value')
             elif not attr.is_local() and not attr.ptr:
                 ret_type = CYTHON_TYPES.get(attr.typ, attr.typ)
@@ -310,21 +344,25 @@ def main():
                 ret_type_c = ret_type
                 if attr.dim is not None:
                     ret_type_p += f'[:{attr.dim}]'
-                    ret_type_c += '*'
-                pyx.putln(f'return <{ret_type_p}>(<{ret_type_c}>{value})')
-                if attr.dim is None:
-                    setter.putln(f'{value} = value')
-                else:
+                    ret_type_c += f'[:{attr.dim}]'
+                    pyx.putln(f'return self._{prop_name}')
+                    python_obj_pxd.putln(f'cdef carray _{prop_name}')
+                    python_obj_init.putln(f'self._{prop_name} = '
+                                          f'<{ret_type_c}>(&{value}[0])')
+                    python_obj_reset.putln(f'self._{prop_name}.data = '
+                                           f'<char*>(&{value}[0])')
                     setter.putln(f'raise NotImplementedError()')
+                else:
+                    pyx.putln(f'return {value}')
+                    setter.putln(f'{value} = value')
             elif attr.ptr or attr.dim is not None:
                 if attr.ptr:
                     pyx.putln(f'if {value} == 0:')
                     pyx.indent()
                     pyx.putln('return None')
                     pyx.dedent()
-                if attr.ptr:
                     value = f'(<{attr_typ}*>{value})'
-                print(attr.ptr, attr.dim, attr.typ, name)
+
                 typ = attr.typ
                 value = f'&{value}[0]'
                 k = (typ, attr.dim)
@@ -333,10 +371,17 @@ def main():
                 else:
                     wrap_name = f'WrapArray{len(array_gens)}'
                     array_gens[k] = wrap_name
-                pyx.putln(f'cdef {wrap_name} ret = {get_new(wrap_name)}')
-                pyx.putln(f'ret.array = {value}')
-                pyx.putln(f'ret.parent = self')
-                pyx.putln(f'return ret')
+
+                python_obj_pxd.putln(f'cdef {wrap_name} _{prop_name}')
+                python_obj_init.putln(f'self._{prop_name} = '
+                                      f'{get_new(wrap_name)}')
+                python_obj_init.putln(f'self._{prop_name}.holder = '
+                                       'self.holder')
+                python_obj_init.putln(f'self._{prop_name}._init_ptr({value})')
+                python_obj_reset.putln(f'self._{prop_name}.holder = '
+                                        'self.holder')
+                python_obj_reset.putln(f'self._{prop_name}._set_ptr({value})')
+                pyx.putln(f'return self._{prop_name}')
                 # if attr.ptr:
                 #     setter.putln(f'cdef {wrap_name} v = value')
                 #     setter.putln(f'{value} = v.array')
@@ -344,10 +389,16 @@ def main():
                 setter.putln(f'raise NotImplementedError()')
             elif attr.is_local():
                 wrap_name = f'Wrap{attr.typ}'
-                pyx.putln(f'cdef {wrap_name} ret = {get_new(wrap_name)}')
-                pyx.putln(f'ret.data = &{value}')
-                pyx.putln(f'ret.parent = self')
-                pyx.putln(f'return ret')
+                pyx.putln(f'return self._{prop_name}')
+                python_obj_pxd.putln(f'cdef {wrap_name} _{prop_name}')
+                python_obj_init.putln(f'self._{prop_name} = '
+                                      f'{get_new(wrap_name)}')
+                python_obj_init.putln(f'self._{prop_name}.holder = '
+                                       'self.holder')
+                python_obj_init.putln(f'self._{prop_name}._init_ptr(&{value})')
+                python_obj_reset.putln(f'self._{prop_name}.holder = '
+                                        'self.holder')
+                python_obj_reset.putln(f'self._{prop_name}._set_ptr(&{value})')
                 setter.putln(f'cdef {wrap_name} v = value')
                 setter.putln(f'{value} = v.data[0]')
             else:
@@ -364,13 +415,33 @@ def main():
         pxd.putln(f'cdef class Wrap{s_name}:')
         pxd.indent()
         pxd.putln(f'cdef void alloc(self)')
+        pxd.putln(f'cdef void realloc(self)')
+        pxd.putln(f'cdef void _init_ptr(self, {s_name} * ptr)')
+        pxd.putln(f'cdef void _set_ptr(self, {s_name} * ptr)')
         pxd.putln(f'cdef {s_name} * data')
-        pxd.putln(f'cdef object parent')
-        pxd.putln(f'cdef void * storage')
-        pxd.putcode(python_obj)
+        pxd.putln(f'cdef MemoryHolder holder')
+        pxd.putcode(python_obj_pxd)
         pxd.dedent()
 
         pyx.putcode(reset_f)
+
+        pyx.putln(f'cdef void _init_ptr(self, {s_name} * ptr):')
+        pyx.indent()
+        pyx.putln('self.data = ptr')
+        pyx.putcode(python_obj_init)
+        pyx.dedent()
+
+        pyx.putln(f'cdef void _set_ptr(self, {s_name} * ptr):')
+        pyx.indent()
+        pyx.putln('self.data = ptr')
+        pyx.putcode(python_obj_reset)
+        pyx.dedent()
+
+        pyx.putln(f'def set_ptr(self, {main_wrap_name} v):')
+        pyx.indent()
+        pyx.putln(f'self.holder = v.holder')
+        pyx.putln(f'self._set_ptr(v.data)')
+        pyx.dedent()
 
         if s_name == 'EntityData':
             # setters
@@ -421,24 +492,59 @@ def main():
         pyx.indent()
 
         c_typ = CYTHON_TYPES.get(typ, typ)
+        is_basic = c_typ in CYTHON_TYPES.values()
+        use_arr = not is_basic and max_index is not None
+        wrap_name = f'Wrap{typ}'
         pxd.putln(f'cdef class {name}:')
         pxd.indent()
-        pxd.putln(f'cdef {c_typ} * array')
-        pxd.putln(f'cdef object parent')
+        pxd.putln(f'cdef MemoryHolder holder')
+        if use_arr:
+            for i in range(max_index):
+                pxd.putln(f'cdef {wrap_name} _data{i}')
+        else:
+            pxd.putln(f'cdef {c_typ} * data')
+        pxd.putln(f'cdef void _init_ptr(self, {c_typ} * ptr)')
+        pxd.putln(f'cdef void _set_ptr(self, {c_typ} * ptr)')
         pxd.dedent()
+
+        init = FormattedOutput(None)
+        reset = FormattedOutput(None)
 
         pyx.putln(f'def __getitem__(self, uint32_t index):')
         pyx.indent()
         if max_index is not None:
             pyx.putln(f'if index >= {max_index}: raise IndexError()')
         if c_typ in CYTHON_TYPES.values():
-            pyx.putln('return self.array[index]')
+            pyx.putln('return self.data[index]')
+        elif use_arr:
+            for i in range(max_index):
+                init.putln(f'self._data{i} = {get_new(wrap_name)}')
+                init.putln(f'self._data{i}.holder = self.holder')
+                init.putln(f'self._data{i}._init_ptr(&ptr[{i}])')
+                reset.putln(f'self._data{i}._set_ptr(&ptr[{i}])')
+                pyx.putln(f'if index == {i}: return self._data{i}')
         else:
-            wrap_name = f'Wrap{typ}'
-            pyx.putln(f'cdef {wrap_name} ret = {wrap_name}()')
-            pyx.putln(f'ret.data = &self.array[index]')
+            pyx.putln(f'cdef {wrap_name} ret = {get_new(wrap_name)}')
+            pyx.putln(f'ret.holder = self.holder')
+            pyx.putln(f'ret._init_ptr(&self.data[index])')
             pyx.putln(f'return ret')
         pyx.dedent()
+
+        pyx.putln(f'cdef void _init_ptr(self, {c_typ} * ptr):')
+        pyx.indent()
+        if not use_arr:
+            pyx.putln(f'self.data = ptr')
+        pyx.putcode(init)
+        pyx.dedent()
+
+        pyx.putln(f'cdef void _set_ptr(self, {c_typ} * ptr):')
+        pyx.indent()
+        if not use_arr:
+            pyx.putln(f'self.data = ptr')
+        pyx.putcode(reset)
+        pyx.dedent()
+
+
         if max_index is not None:
             pyx.putln(f'def __len__(self):')
             pyx.indent()
@@ -460,8 +566,20 @@ def main():
         pxd.putln(f'cdef class {name}:')
         pxd.indent()
         pxd.putln(f'cdef uint32_t * data')
-        pxd.putln(f'cdef object parent')
+        pxd.putln(f'cdef MemoryHolder holder')
+        pxd.putln(f'cdef void _init_ptr(self, uint32_t * ptr)')
+        pxd.putln(f'cdef void _set_ptr(self, uint32_t * ptr)')
         pxd.dedent()
+
+        pyx.putln(f'cdef void _init_ptr(self, uint32_t * ptr):')
+        pyx.indent()
+        pyx.putln('self.data = ptr')
+        pyx.dedent()
+
+        pyx.putln(f'cdef void _set_ptr(self, uint32_t * ptr):')
+        pyx.indent()
+        pyx.putln('self.data = ptr')
+        pyx.dedent()
 
         pyx.putln('def get_data(self): return (self.data[0], '
                                               'self.data[1], '
@@ -498,8 +616,9 @@ def main():
             pyx.putln('return res[0]')
         else:
             wrap_name = f'Wrap{final_type}'
-            pyx.putln(f'cdef {wrap_name} ret = {wrap_name}()')
-            pyx.putln(f'ret.data = &res[0]')
+            pyx.putln(f'cdef {wrap_name} ret = {get_new(wrap_name)}')
+            pyx.putln(f'ret.holder = self.holder')
+            pyx.putln(f'ret._init_ptr(&res[0])')
             pyx.putln(f'return ret')
         pyx.dedent()
         pyx.putln(f'def __len__(self):')

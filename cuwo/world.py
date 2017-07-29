@@ -137,7 +137,7 @@ class Entity(WrapEntityData):
     def destroy(self):
         if self.is_tgen:
             raise NotImplementedError('cannot remove tgen entities')
-        self.realloc()
+        self.make_standalone_copy()
         tgen.remove_creature(self.creature)
         self.unlink()
 
@@ -254,6 +254,7 @@ def spawn_to_entity(spawn, entity):
 
 class Chunk:
     data = None
+    last_visit = 0
 
     def __init__(self, world, pos):
         self.world = world
@@ -330,8 +331,11 @@ class World:
     entity_class = Entity
     tgen_init = False
     debug_fp = None
+    generating = True
+    step_index = 0
 
-    def __init__(self, loop, seed, use_tgen=True, use_entities=True):
+    def __init__(self, loop, seed, use_tgen=True, use_entities=True,
+                 chunk_retire_time=None):
         if use_tgen:
             for name in ('data1.db', 'data4.db', 'Server.exe'):
                 path = os.path.join(self.data_path, name)
@@ -348,6 +352,7 @@ class World:
         self.entities = {}
         self.entity_ids = IDPool(1)
         self.seed = seed
+        self.chunk_retire_time = chunk_retire_time
 
         if not self.use_tgen:
             return
@@ -355,6 +360,7 @@ class World:
         # tgen incoming packets
         self.hits = []
         self.passives = []
+        self.generating = set()
 
         self.gen_queue = Queue()
         loop.run_in_executor(None, self.run_gen, seed)
@@ -390,10 +396,36 @@ class World:
     def add_passive(self, packet):
         self.passives.append(packet)
 
+    def retire_chunks(self):
+        retire_time = self.chunk_retire_time
+        if retire_time is None:
+            return
+
+        chunks = list(self.chunks.values())
+        for chunk in chunks:
+            chunk.last_visit += self.dt
+
+        for entity in self.entities.values():
+            if entity.is_tgen:
+                continue
+            chunk_pos = get_chunk(entity.pos)
+            if not chunk_pos in self.chunks:
+                continue
+            self.get_chunk(chunk_pos).last_visit = 0
+
+        for chunk in chunks:
+            if chunk.last_visit < retire_time:
+                continue
+            chunk.destroy()
+
     def update(self, dt):
         if not self.tgen_init:
             return None
+
+        self.step_index += 1
         self.dt = dt
+        self.retire_chunks()
+
         tgen.set_in_packets(self.hits, self.passives)
         self.hits = []
         self.passives = []
@@ -409,16 +441,14 @@ class World:
         self.write_debug()
         tgen.step(int(dt * 1000.0))
 
-        for entity in self.entities.values():
-            if entity.is_tgen:
-                if entity.hostile_type == 0:
-                    raise NotImplementedError()
-                continue
-            entity.hostile_type = entity.old_hostile_type
-
         creatures = tgen.get_creatures()
         for entity_id, creature in creatures.items():
-            if entity_id in self.entities:
+            ent = self.entities.get(entity_id, None)
+            if ent is not None:
+                if creature.entity_data.get_addr() == ent.get_addr():
+                    continue
+                ent.creature.set_ptr(creature)
+                ent.set_ptr(creature.entity_data)
                 continue
             ret = creature.entity_data.cast(self.entity_class)
             ret.init(self, creature, entity_id, True, True)
@@ -433,6 +463,14 @@ class World:
 
         for entity in deleted:
             entity.unlink()
+            entity.make_standalone_reset()
+
+        for entity in self.entities.values():
+            if entity.is_tgen:
+                if entity.hostile_type == 0:
+                    raise NotImplementedError(self.step_index)
+                continue
+            entity.hostile_type = entity.old_hostile_type
 
         out_packets = tgen.get_out_packets()
         for chunk_items in iterate_packet_list(out_packets.chunk_items):
@@ -458,7 +496,9 @@ class World:
         return chunk
 
     def get_data(self, pos):
+        self.generating.add(pos)
         f = asyncio.Future()
+        f.add_done_callback(lambda x: self.generating.remove(pos))
         self.gen_queue.put((pos, f), False)
         return f
 

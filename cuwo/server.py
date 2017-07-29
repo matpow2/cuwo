@@ -94,10 +94,6 @@ class StaticEntity(world.StaticEntity):
 
 
 class Chunk(world.Chunk):
-    def __init__(self, *arg, **kw):
-        super().__init__(*arg, **kw)
-        self.last_visit = self.world.server.loop.time()
-
     def update(self):
         self.world.server.updated_chunks.add(self)
 
@@ -494,8 +490,10 @@ class CubeWorldServer:
         self.update_loop.start(1.0 / base.update_fps, now=False)
 
         # world
-        self.world = World(self, self.loop, base.seed, base.use_tgen,
-                           base.use_entities)
+        self.world = World(self, self.loop, base.seed,
+                           use_tgen=base.use_tgen,
+                           use_entities=base.use_entities,
+                           chunk_retire_time=base.chunk_retire_time)
         if base.world_debug_file is not None:
             debug_fp = open(base.world_debug_file, 'wb')
             self.world.set_debug(debug_fp)
@@ -565,24 +563,6 @@ class CubeWorldServer:
 
     def update(self):
         self.scripts.call('update')
-
-        # entity updates
-        for player in self.players.values():
-            entity = player.entity
-            chunk_pos = get_chunk(entity.pos)
-            if not chunk_pos in self.world.chunks:
-                continue
-            self.world.get_chunk(chunk_pos).last_visit = self.loop.time()
-
-        # retire any old chunks
-        retire_time = self.config.base.chunk_retire_time
-        if retire_time is not None:
-            t = self.loop.time()
-            for chunk in list(self.world.chunks.values()):
-                elapsed = t - chunk.last_visit
-                if elapsed < retire_time:
-                    continue
-                chunk.destroy()
 
         for passive in self.update_packet.passive_actions:
             self.world.add_passive(passive)
