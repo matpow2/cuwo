@@ -1,5 +1,5 @@
 /*
-    Copyright (c) Mathias Kaerlev 2013-2014.
+    Copyright (c) Mathias Kaerlev 2013-2017.
 
     This file is part of cuwo.
 

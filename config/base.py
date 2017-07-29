@@ -65,3 +65,6 @@ use_entities = True
 # Number of seconds before a chunk is destroyed when no player has visited it
 # for a while.
 chunk_retire_time = 15.0
+
+# Save data directory for storing e.g. ban information.
+save_path = './save'

@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev 2013-2014.
+# Copyright (c) Mathias Kaerlev 2013-2017.
 #
 # This file is part of cuwo.
 #
@@ -713,7 +713,7 @@ class CubeWorldServer:
     # binary data store methods
 
     def load_data(self, name, default=None):
-        path = './save/%s.dat' % name
+        path = os.path.join(self.config.base.save_path, f'{name}.dat')
         try:
             with open(path, 'rU') as fp:
                 data = fp.read()
@@ -722,7 +722,8 @@ class CubeWorldServer:
         return eval(data)
 
     def save_data(self, name, value):
-        path = './save/%s.dat' % name
+        os.makedirs(self.config.base.save_path, exist_ok=True)
+        path = os.path.join(self.config.base.save_path, f'{name}.dat')
         data = pprint.pformat(value, width=1)
         with open(path, 'w') as fp:
             fp.write(data)

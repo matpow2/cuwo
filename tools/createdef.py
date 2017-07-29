@@ -1,4 +1,4 @@
-# Copyright (c) Mathias Kaerlev 2013-2014.
+# Copyright (c) Mathias Kaerlev 2013-2017.
 #
 # This file is part of cuwo.
 #
@@ -253,7 +253,7 @@ def get_structs():
     return parse_header(text)
 
 license_header = '''\
-# Copyright (c) Mathias Kaerlev 2013-2014.
+# Copyright (c) Mathias Kaerlev 2013-2017.
 #
 # This file is part of cuwo.
 #
