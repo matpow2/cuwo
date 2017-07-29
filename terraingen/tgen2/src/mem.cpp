@@ -182,6 +182,10 @@ void run_with_stack(void (*f)())
 
 #endif
 
+thread_local Heap * current_heap = NULL;
+extern Heap main_heap;
+extern Heap sim_heap;
+
 extern "C" {
     #define HAVE_MORECORE 1
     #define HAVE_MMAP 0
@@ -195,6 +199,12 @@ extern "C" {
     void * heap_morecore(int size)
     {
         std::cout << "Out of tgen memory!" << std::endl;
+        if (current_heap == &sim_heap)
+            std::cout << "Sim heap\n";
+        else if (current_heap == &main_heap)
+            std::cout << "Main heap\n";
+        else
+            std::cout << "Gen heap\n";
         assert(false);
 		return NULL;
     }
@@ -261,8 +271,6 @@ void destroy_heap(Heap * heap)
     free_mem(heap->buffer, heap->size);
 }
 
-thread_local Heap * current_heap = NULL;
-
 void set_heap(Heap * heap)
 {
     current_heap = heap;
@@ -275,8 +283,6 @@ void * heap_alloc(uint32_t size)
         current_heap->first_alloc = ret;
     return ret;
 }
-
-extern Heap main_heap;
 
 void heap_dealloc(void * mem)
 {
