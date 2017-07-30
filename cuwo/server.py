@@ -624,9 +624,14 @@ class CubeWorldServer:
         entity_packet.set_entity(entity, entity.entity_id)
         full = packets.write_packet(entity_packet)
 
-        # reduced rate packet (only send pos)
+        # pos entity packet
+        if not entity.is_tgen:
+            entity_packet.set_entity(entity, entity.entity_id,
+                                     entitydata.POS_FLAG)
+            only_pos = packets.write_packet(entity_packet)
+
+        # reduced rate packet
         skip_reduced = self.skip_index != 0
-        self.skip_index = (self.skip_index + 1) % base.reduce_skip
         entity_packet.set_entity(entity, entity.entity_id,
                                  entitydata.POS_FLAG)
         reduced = packets.write_packet(entity_packet)
@@ -649,7 +654,7 @@ class CubeWorldServer:
             dist = (player_entity.pos - entity.pos).length
             if dist > max_distance:
                 if not entity.is_tgen:
-                    connection.send_data(reduced)
+                    connection.send_data(only_pos)
                 continue
             old_ref = old_close_players.get(connection, None)
             if old_ref is None:
@@ -661,7 +666,6 @@ class CubeWorldServer:
                 new_close_players[connection] = old_ref
                 continue
             new_mask = entitydata.get_mask(old_ref, entity)
-            new_mask |= entitydata.POS_FLAG
             entity_packet.set_entity(entity, entity.entity_id, new_mask)
             connection.send_packet(entity_packet)
             new_close_players[connection] = entity.copy()
@@ -675,6 +679,7 @@ class CubeWorldServer:
         self.handle_tgen_packets(out_packets)
 
     def send_update(self):
+        self.skip_index = (self.skip_index + 1) % self.config.base.reduce_skip
         for entity in self.world.entities.values():
             self.send_entity_data(entity)
         self.broadcast_packet(update_finished_packet)
