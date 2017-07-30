@@ -52,7 +52,7 @@ extra_server_update = packets.ServerUpdate()
 
 class Entity(world.Entity):
     connection = None
-    first_update = True
+    full_update = True
 
     def init(self, *args, **kw):
         self.close_players = {}
@@ -321,7 +321,7 @@ class CubeWorldConnection(asyncio.Protocol):
         if self.old_entity.name:
             print(self.old_entity.name, 'changed name to', self.entity.name)
         if self.entity:
-            self.entity.first_update = True
+            self.entity.full_update = True
         self.scripts.call('on_name_update')
 
     def on_pos_update(self):
@@ -624,10 +624,11 @@ class CubeWorldServer:
         entity_packet.set_entity(entity, entity.entity_id)
         full = packets.write_packet(entity_packet)
 
-        # reduced rate dummy packet
+        # reduced rate packet (only send pos)
         skip_reduced = self.skip_index != 0
         self.skip_index = (self.skip_index + 1) % base.reduce_skip
-        entity_packet.set_entity(entity, entity.entity_id, 0)
+        entity_packet.set_entity(entity, entity.entity_id,
+                                 entitydata.POS_FLAG)
         reduced = packets.write_packet(entity_packet)
 
         max_distance = base.max_distance
@@ -641,7 +642,7 @@ class CubeWorldServer:
                 continue
             if entity is player_entity:
                 continue
-            if entity.first_update:
+            if entity.full_update:
                 connection.send_data(full)
                 new_close_players[connection] = entity.copy()
                 continue
@@ -660,12 +661,13 @@ class CubeWorldServer:
                 new_close_players[connection] = old_ref
                 continue
             new_mask = entitydata.get_mask(old_ref, entity)
+            new_mask |= entitydata.POS_FLAG
             entity_packet.set_entity(entity, entity.entity_id, new_mask)
             connection.send_packet(entity_packet)
             new_close_players[connection] = entity.copy()
 
         entity.close_players = new_close_players
-        entity.first_update = False
+        entity.full_update = False
 
     def update(self):
         self.scripts.call('update')
