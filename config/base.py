@@ -52,11 +52,15 @@ network_interface = '0.0.0.0'
 port = 12345
 
 # Server send rate. Change this to a lower value for high-traffic servers.
-# The vanilla server uses 50, but 20 or 25 may be more sensible.
+# The vanilla server uses 50, but 40 or 25 maybe more sensible.
+network_fps = 50
+
+# World update rate. Change this to a lower value to reduce CPU usage.
+# The vanilla server uses 50, but it can be lowered slightly without
+# much difference.
 update_fps = 50
 
-# Enables terrain generation (depends on cuwo.tgen). This may not be needed
-# for barebones PvP servers.
+# Enables terrain generation. This may not be needed for barebones PvP servers.
 use_tgen = True
 
 # Enables NPCs. Currently, only static NPCs work.
@@ -65,6 +69,15 @@ use_entities = True
 # Number of seconds before a chunk is destroyed when no player has visited it
 # for a while.
 chunk_retire_time = 15.0
+
+# Distance at which the server hides NPCs and mobs from players. Make this
+# value smaller to reduce network traffic. Defaults to 128 blocks.
+max_distance = 0x10000 * 128
+
+# Distance at which the server reduces the send rate for NPCs and mobs.
+# Defaults to 50 blocks.
+max_reduce_distance = 0x10000 * 50
+reduce_skip = 8 # sends only every 8th packet
 
 # Save data directory for storing e.g. ban information.
 save_path = './save'

@@ -386,6 +386,16 @@ class ServerUpdate(Packet):
         self.passive_actions = []
         self.missions = []
 
+    def is_empty(self):
+        for l in (self.block_actions, self.player_hits, self.particles,
+                  self.sound_actions, self.shoot_actions, self.static_entities,
+                  self.chunk_items, self.items_8, self.pickups,
+                  self.kill_actions, self.damage_actions, self.passive_actions,
+                  self.missions):
+            if l:
+                return False
+        return True
+
     def read(self, reader):
         size = reader.read_uint32()
         decompressed_data = zlib.decompress(reader.read(size))

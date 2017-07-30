@@ -755,7 +755,7 @@ def main():
     pyx.putln()
     pyx.putln()
 
-    # write masked data (send everything)
+    # write masked data
     pyx.putln('cpdef write_masked_data(WrapEntityData entity, '
               'ByteWriter writer, '
               'uint64_t mask):')
@@ -776,6 +776,19 @@ def main():
             size -= attr_size
             offset += 1
         pyx.dedent()
+    pyx.dedent()
+
+    # get mask description
+    pyx.putln('def get_mask_desc(uint64_t mask):')
+    pyx.indent()
+    pyx.putln('cdef dict ret = {}')
+    for index in sorted(bits):
+        name = bits[index]
+        pyx.putln('if %s:' % get_mask_condition(index))
+        pyx.indent()
+        pyx.putln(f'ret[{index}] = "{name}"')
+        pyx.dedent()
+    pyx.putln('return ret')
     pyx.dedent()
 
     # get mask bits

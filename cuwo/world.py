@@ -38,7 +38,6 @@ import math
 
 
 class Entity(WrapEntityData):
-    ref_entity = None
     old_hostile_type = None
 
     def init(self, world, creature, entity_id, static_id, is_tgen=False):
@@ -48,14 +47,6 @@ class Entity(WrapEntityData):
         self.static_id = static_id
         world.entities[entity_id] = self
         self.world = world
-
-    def get_mask(self):
-        if self.ref_entity is None:
-            return constants.FULL_MASK
-        return get_mask(self.ref_entity, self)
-
-    def reset_mask(self):
-        self.ref_entity = self.copy()
 
     def update(self):
         return

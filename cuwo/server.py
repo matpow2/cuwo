@@ -52,9 +52,18 @@ extra_server_update = packets.ServerUpdate()
 
 class Entity(world.Entity):
     connection = None
+    first_update = True
+
+    def init(self, *args, **kw):
+        self.close_players = {}
+        super().init(*args, **kw)
 
     def kill(self):
         self.damage(self.hp + 100.0)
+
+    def unlink(self, *args, **kw):
+        super().unlink(*args, **kw)
+        self.close_players = None
 
     def damage(self, damage=0, stun_duration=0):
         packet = packets.HitPacket()
@@ -137,6 +146,7 @@ class CubeWorldConnection(asyncio.Protocol):
 
         accept = self.server.scripts.call('on_connection_attempt',
                                           address=self.address).result
+
         # hardban
         if accept is False:
             self.transport.abort()
@@ -153,9 +163,11 @@ class CubeWorldConnection(asyncio.Protocol):
             self.send_packet(join_packet)
 
             def disconnect():
+                self.disconnected = False
                 chat_packet.entity_id = 0
                 chat_packet.value = accept
                 self.send_packet(chat_packet)
+                self.disconnected = True
                 self.transport.close()
 
             # need to add a small delay, since the client will otherwise
@@ -192,6 +204,8 @@ class CubeWorldConnection(asyncio.Protocol):
         server.scripts.call('on_new_connection', connection=self)
 
     def data_received(self, data):
+        if self.is_closing():
+            return
         self.packet_handler.feed(data)
 
     def is_closing(self):
@@ -230,7 +244,8 @@ class CubeWorldConnection(asyncio.Protocol):
     def send_packet(self, packet):
         if self.is_closing():
             return
-        self.transport.write(packets.write_packet(packet))
+        data = packets.write_packet(packet)
+        self.transport.write(data)
 
     def on_packet(self, packet):
         if self.is_closing():
@@ -305,6 +320,8 @@ class CubeWorldConnection(asyncio.Protocol):
     def on_name_update(self):
         if self.old_entity.name:
             print(self.old_entity.name, 'changed name to', self.entity.name)
+        if self.entity:
+            self.entity.first_update = True
         self.scripts.call('on_name_update')
 
     def on_pos_update(self):
@@ -382,6 +399,7 @@ class CubeWorldConnection(asyncio.Protocol):
         self.server.update_packet.shoot_actions.append(packet)
 
     def on_passive_packet(self, packet):
+        self.world.add_passive(packet)
         self.server.update_packet.passive_actions.append(packet)
 
     def on_discover_packet(self, packet):
@@ -486,6 +504,8 @@ class CubeWorldConnection(asyncio.Protocol):
 class CubeWorldServer:
     exit_code = None
     world = None
+    old_time = None
+    skip_index = 0
 
     def __init__(self, loop, config):
         self.loop = loop
@@ -501,8 +521,21 @@ class CubeWorldServer:
 
         self.updated_chunks = set()
 
-        self.update_loop = LoopingCall(self.update)
+        use_same_loop = base.update_fps == base.network_fps
+        if use_same_loop:
+            def update_callback():
+                self.update()
+                self.send_update()
+        else:
+            update_callback = self.update
+        self.update_loop = LoopingCall(update_callback)
         self.update_loop.start(1.0 / base.update_fps, now=False)
+
+        if use_same_loop:
+            self.send_loop = self.update_loop
+        else:
+            self.send_loop = LoopingCall(self.send_update)
+            self.send_loop.start(1.0 / base.network_fps, now=False)
 
         # world
         self.world = World(self, self.loop, base.seed,
@@ -558,7 +591,7 @@ class CubeWorldServer:
 
     def add_packet_list(self, items, l, size):
         for item in iterate_packet_list(l):
-            items.append(item.data)
+            items.append(item.data.copy())
 
     def handle_tgen_packets(self, packets):
         if packets is None:
@@ -584,37 +617,86 @@ class CubeWorldServer:
         self.add_packet_list(p.missions, packets.missions,
                              packets.missions_size)
 
+    def send_entity_data(self, entity):
+        base = self.config.base
+
+        # full entity packet for new, close players
+        entity_packet.set_entity(entity, entity.entity_id)
+        full = packets.write_packet(entity_packet)
+
+        # reduced rate dummy packet
+        skip_reduced = self.skip_index != 0
+        self.skip_index = (self.skip_index + 1) % base.reduce_skip
+        entity_packet.set_entity(entity, entity.entity_id, 0)
+        reduced = packets.write_packet(entity_packet)
+
+        max_distance = base.max_distance
+        max_reduce_distance = base.max_reduce_distance
+
+        old_close_players = entity.close_players
+        new_close_players = {}
+        for connection in self.players.values():
+            player_entity = connection.entity
+            if entity is None:
+                continue
+            if entity is player_entity:
+                continue
+            if entity.first_update:
+                connection.send_data(full)
+                new_close_players[connection] = entity.copy()
+                continue
+            dist = (player_entity.pos - entity.pos).length
+            if dist > max_distance:
+                if not entity.is_tgen:
+                    connection.send_data(reduced)
+                continue
+            old_ref = old_close_players.get(connection, None)
+            if old_ref is None:
+                connection.send_data(full)
+                new_close_players[connection] = entity.copy()
+                continue
+            if dist > max_reduce_distance and skip_reduced:
+                connection.send_data(reduced)
+                new_close_players[connection] = old_ref
+                continue
+            new_mask = entitydata.get_mask(old_ref, entity)
+            entity_packet.set_entity(entity, entity.entity_id, new_mask)
+            connection.send_packet(entity_packet)
+            new_close_players[connection] = entity.copy()
+
+        entity.close_players = new_close_players
+        entity.first_update = False
+
     def update(self):
         self.scripts.call('update')
-
-        for passive in self.update_packet.passive_actions:
-            self.world.add_passive(passive)
         out_packets = self.world.update(self.update_loop.dt)
         self.handle_tgen_packets(out_packets)
 
-        for entity_id, entity in self.world.entities.items():
-            entity_packet.set_entity(entity, entity_id, entity.get_mask())
-            entity.reset_mask()
-            self.broadcast_packet(entity_packet)
+    def send_update(self):
+        for entity in self.world.entities.values():
+            self.send_entity_data(entity)
         self.broadcast_packet(update_finished_packet)
 
         # other updates
         update_packet = self.update_packet
         for chunk in self.updated_chunks:
             chunk.on_update(update_packet)
-        self.broadcast_packet(update_packet)
+        if not update_packet.is_empty():
+            self.broadcast_packet(update_packet)
         update_packet.reset()
 
         # reset drop times
         for chunk in self.updated_chunks:
             chunk.on_post_update()
-
         self.updated_chunks.clear()
 
         # time update
-        time_packet.time = self.get_time()
-        time_packet.day = self.get_day()
-        self.broadcast_packet(time_packet)
+        new_time = (self.get_time(), self.get_day())
+        if new_time != self.old_time:
+            time_packet.time = new_time[0]
+            time_packet.day = new_time[1]
+            self.broadcast_packet(time_packet)
+            self.old_time = new_time
 
     def send_chat(self, value):
         chat_packet.entity_id = 0
