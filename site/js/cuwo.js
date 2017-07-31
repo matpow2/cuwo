@@ -65,7 +65,7 @@ function getCommits() {
 }
 
 function getServers() {
-  $.getJSON('http://mp2.dk/cuwo/servers.json', function(jsonData) {
+  $.getJSON('http://cuwo.org/servers.json', function(jsonData) {
     var table = $('#servers');
     var rowHolder = table.find('tbody');
     rowHolder.find('tr').remove();
