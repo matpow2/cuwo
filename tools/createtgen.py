@@ -355,7 +355,7 @@ def main():
                 python_obj_reset.putln(f'self._{prop_name}.data = '
                                        f'<char*>&{value}')
                 python_obj_reset.dedent()
-                setter.putln(f'{value} = value')
+                setter.putln(f'{value} = <{typt}[3]>value')
             elif not attr.is_local() and not attr.ptr:
                 ret_type = CYTHON_TYPES.get(attr.typ, attr.typ)
                 ret_type_p = ret_type

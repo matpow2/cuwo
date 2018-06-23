@@ -347,7 +347,7 @@ cdef class WrapAppearanceData:
         return self._scale
     @scale.setter
     def scale(self, value):
-        self.data[0].scale = value
+        self.data[0].scale = <float[3]>value
     @property
     def head_model(self):
         return self.data[0].head_model
@@ -503,7 +503,7 @@ cdef class WrapAppearanceData:
         return self._body_offset
     @body_offset.setter
     def body_offset(self, value):
-        self.data[0].body_offset = value
+        self.data[0].body_offset = <float[3]>value
     @property
     def head_offset(self):
         if self._head_offset is not None:
@@ -515,7 +515,7 @@ cdef class WrapAppearanceData:
         return self._head_offset
     @head_offset.setter
     def head_offset(self, value):
-        self.data[0].head_offset = value
+        self.data[0].head_offset = <float[3]>value
     @property
     def hand_offset(self):
         if self._hand_offset is not None:
@@ -527,7 +527,7 @@ cdef class WrapAppearanceData:
         return self._hand_offset
     @hand_offset.setter
     def hand_offset(self, value):
-        self.data[0].hand_offset = value
+        self.data[0].hand_offset = <float[3]>value
     @property
     def foot_offset(self):
         if self._foot_offset is not None:
@@ -539,7 +539,7 @@ cdef class WrapAppearanceData:
         return self._foot_offset
     @foot_offset.setter
     def foot_offset(self, value):
-        self.data[0].foot_offset = value
+        self.data[0].foot_offset = <float[3]>value
     @property
     def tail_offset(self):
         if self._tail_offset is not None:
@@ -551,7 +551,7 @@ cdef class WrapAppearanceData:
         return self._tail_offset
     @tail_offset.setter
     def tail_offset(self, value):
-        self.data[0].tail_offset = value
+        self.data[0].tail_offset = <float[3]>value
     @property
     def wing_offset(self):
         if self._wing_offset is not None:
@@ -563,7 +563,7 @@ cdef class WrapAppearanceData:
         return self._wing_offset
     @wing_offset.setter
     def wing_offset(self, value):
-        self.data[0].wing_offset = value
+        self.data[0].wing_offset = <float[3]>value
     def reset(self):
         memset(self.data, 0, sizeof(self.data[0]))
         self.data[0].hair_red = 255
@@ -790,7 +790,7 @@ cdef class WrapEntityData:
         return self._pos
     @pos.setter
     def pos(self, value):
-        self.data[0].pos = value
+        self.data[0].pos = <int64_t[3]>value
     @property
     def body_roll(self):
         return self.data[0].body_roll
@@ -820,7 +820,7 @@ cdef class WrapEntityData:
         return self._velocity
     @velocity.setter
     def velocity(self, value):
-        self.data[0].velocity = value
+        self.data[0].velocity = <float[3]>value
     @property
     def accel(self):
         if self._accel is not None:
@@ -832,7 +832,7 @@ cdef class WrapEntityData:
         return self._accel
     @accel.setter
     def accel(self, value):
-        self.data[0].accel = value
+        self.data[0].accel = <float[3]>value
     @property
     def extra_vel(self):
         if self._extra_vel is not None:
@@ -844,7 +844,7 @@ cdef class WrapEntityData:
         return self._extra_vel
     @extra_vel.setter
     def extra_vel(self, value):
-        self.data[0].extra_vel = value
+        self.data[0].extra_vel = <float[3]>value
     @property
     def look_pitch(self):
         return self.data[0].look_pitch
@@ -1012,7 +1012,7 @@ cdef class WrapEntityData:
         return self._ray_hit
     @ray_hit.setter
     def ray_hit(self, value):
-        self.data[0].ray_hit = value
+        self.data[0].ray_hit = <float[3]>value
     @property
     def hp(self):
         return self.data[0].hp
@@ -1126,7 +1126,7 @@ cdef class WrapEntityData:
         return self._start_chunk
     @start_chunk.setter
     def start_chunk(self, value):
-        self.data[0].start_chunk = value
+        self.data[0].start_chunk = <int32_t[3]>value
     @property
     def super_weird(self):
         return self.data[0].super_weird
@@ -1144,7 +1144,7 @@ cdef class WrapEntityData:
         return self._spawn_pos
     @spawn_pos.setter
     def spawn_pos(self, value):
-        self.data[0].spawn_pos = value
+        self.data[0].spawn_pos = <int64_t[3]>value
     @property
     def not_used19(self):
         return self.data[0].not_used19
@@ -1162,7 +1162,7 @@ cdef class WrapEntityData:
         return self._not_used20
     @not_used20.setter
     def not_used20(self, value):
-        self.data[0].not_used20 = value
+        self.data[0].not_used20 = <int32_t[3]>value
     @property
     def consumable(self):
         if self._consumable is not None:
@@ -1543,7 +1543,7 @@ cdef class WrapStaticEntityHeader:
         return self._pos
     @pos.setter
     def pos(self, value):
-        self.data[0].pos = value
+        self.data[0].pos = <int64_t[3]>value
     @property
     def orientation(self):
         return self.data[0].orientation
@@ -1561,7 +1561,7 @@ cdef class WrapStaticEntityHeader:
         return self._size
     @size.setter
     def size(self, value):
-        self.data[0].size = value
+        self.data[0].size = <float[3]>value
     @property
     def closed(self):
         return self.data[0].closed
@@ -2592,7 +2592,7 @@ cdef class WrapChunkItemData:
         return self._pos
     @pos.setter
     def pos(self, value):
-        self.data[0].pos = value
+        self.data[0].pos = <int64_t[3]>value
     @property
     def rotation(self):
         return self.data[0].rotation
@@ -4361,7 +4361,7 @@ cdef class WrapHitPacket:
         return self._pos
     @pos.setter
     def pos(self, value):
-        self.data[0].pos = value
+        self.data[0].pos = <int64_t[3]>value
     @property
     def hit_dir(self):
         if self._hit_dir is not None:
@@ -4373,7 +4373,7 @@ cdef class WrapHitPacket:
         return self._hit_dir
     @hit_dir.setter
     def hit_dir(self, value):
-        self.data[0].hit_dir = value
+        self.data[0].hit_dir = <float[3]>value
     @property
     def skill_hit(self):
         return self.data[0].skill_hit
@@ -4462,7 +4462,7 @@ cdef class WrapParticleData:
         return self._pos
     @pos.setter
     def pos(self, value):
-        self.data[0].pos = value
+        self.data[0].pos = <int64_t[3]>value
     @property
     def accel(self):
         if self._accel is not None:
@@ -4474,7 +4474,7 @@ cdef class WrapParticleData:
         return self._accel
     @accel.setter
     def accel(self, value):
-        self.data[0].accel = value
+        self.data[0].accel = <float[3]>value
     @property
     def color(self):
         if self._color is not None:
@@ -4586,7 +4586,7 @@ cdef class WrapSoundAction:
         return self._pos
     @pos.setter
     def pos(self, value):
-        self.data[0].pos = value
+        self.data[0].pos = <float[3]>value
     @property
     def sound_index(self):
         return self.data[0].sound_index
@@ -4672,7 +4672,7 @@ cdef class WrapBlockAction:
         return self._block_pos
     @block_pos.setter
     def block_pos(self, value):
-        self.data[0].block_pos = value
+        self.data[0].block_pos = <int32_t[3]>value
     @property
     def color_red(self):
         return self.data[0].color_red
@@ -4794,7 +4794,7 @@ cdef class WrapShootPacket:
         return self._pos
     @pos.setter
     def pos(self, value):
-        self.data[0].pos = value
+        self.data[0].pos = <int64_t[3]>value
     @property
     def something13(self):
         return self.data[0].something13
@@ -4824,7 +4824,7 @@ cdef class WrapShootPacket:
         return self._velocity
     @velocity.setter
     def velocity(self, value):
-        self.data[0].velocity = value
+        self.data[0].velocity = <float[3]>value
     @property
     def legacy_damage(self):
         return self.data[0].legacy_damage
