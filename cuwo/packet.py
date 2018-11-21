@@ -162,15 +162,52 @@ class UpdateFinished(Packet):
     pass
 
 
-class Unknown3(Packet):
-    # not actually used - probably a legacy packet (or inventory-related?)
+class MultipleAirshipUpdate(Packet):
+    class Airship:
+        pass
+
+    # Definitely actually used - a legacy airship packet.
     def read(self, reader):
         count = reader.read_uint32()
-        self.data = reader.read(120 * count)
+        self.items = []
+        for i in range(count):
+            airship = Airship()
+
+            airship.guid = reader.read_uint64()
+            airship.unk_uint8_1 = reader.read_uint8()
+            reader.skip(3)
+            airship.unk_uint32_1 = reader.read_uint32()
+            airship.position = reader.read_qvec3()
+            airship.velocity = reader.read_vec3()
+            airship.rotation = reader.read_float()
+            airship.start_position = reader.read_qvec3()
+            airship.path_rotation = reader.read_float()
+            airship.unk_uint32_2 = reader.read_uint32()
+            airship.dest_position = reader.read_qvec3()
+            airship.flight_stage = reader.read_uint8()
+            reader.skip(3)
+            airship.unk_uint8_2 = reader.read_uint8()
+            reader.skip(3)
+            self.items.append(airship)
 
     def write(self, writer):
-        writer.write_uint32(len(self.data) / 120)
-        writer.write(self.data)
+        writer.write_uint32(len(self.items))
+        for airship in self.items:
+            writer.write_uint64(airship.guid)
+            writer.write_uint8(airship.unk_uint8_1)
+            writer.pad(3)
+            writer.write_uint32(airship.unk_uint32_1)
+            writer.write_qvec3(airship.position)
+            writer.write_vec3(airship.velocity)
+            writer.write_float(airship.rotation)
+            writer.write_qvec3(airship.start_position)
+            writer.write_float(airship.path_rotation)
+            writer.write_uint32(airship.unk_uint32_2)
+            writer.write_qvec3(airship.dest_position)
+            writer.write_uint8(airship.flight_stage)
+            writer.pad(3)
+            writer.write_uint8(airship.unk_uint8_2)
+            writer.pad(3)
 
 
 class OldBlockAction(Loader):
@@ -711,7 +748,7 @@ SC_PACKETS = {
     0: EntityUpdate,
     1: MultipleEntityUpdate,  # not used
     2: UpdateFinished,
-    3: Unknown3,  # not used
+    3: MultipleAirshipUpdate, # not used
     4: ServerUpdate,
     5: CurrentTime,
     10: ServerChatMessage,
