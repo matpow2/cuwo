@@ -184,6 +184,7 @@ class MultipleAirshipUpdate(Packet):
             airship.path_rotation = reader.read_float()
             airship.unk_uint32_2 = reader.read_uint32()
             airship.dest_position = reader.read_qvec3()
+            # 0 = goto start pos, 1 = landing, 2 = departing, 3 = goto dest pos.
             airship.flight_stage = reader.read_uint8()
             reader.skip(3)
             airship.unk_uint8_2 = reader.read_uint8()
