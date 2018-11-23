@@ -28,8 +28,9 @@ from cuwo.vector import Vector3
 from cuwo.common import filter_bytes
 from cuwo import strings
 from cuwo.bytes cimport ByteReader, ByteWriter
+from cpython.object cimport PyObject
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
-from cpython.ref cimport PyTypeObject, Py_INCREF
+from cpython.ref cimport PyTypeObject, Py_INCREF, Py_XDECREF
 import numpy as np
 
 cdef extern from "numpy/arrayobject.h":
@@ -37,6 +38,16 @@ cdef extern from "numpy/arrayobject.h":
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides, void* data, int flags,
                                 object obj)
+
+cdef inline void set_array_base(np.ndarray arr, object base):
+    cdef PyObject* baseptr
+    if base is None:
+        baseptr = NULL
+    else:
+        Py_INCREF(base)
+        baseptr = <PyObject*>base
+    Py_XDECREF(arr.base)
+    arr.base = baseptr
 
 cdef np.dtype dtype_float32 = np.dtype(np.float32) 
 cdef np.dtype dtype_int32 = np.dtype(np.int32)
@@ -343,7 +354,7 @@ cdef class WrapAppearanceData:
         Py_INCREF(dtype_float32)
         cdef float * scaleptr = &self.data[0].scale[0]
         self._scale = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>scaleptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._scale, self.holder)
+        set_array_base(self._scale, self.holder)
         return self._scale
     @scale.setter
     def scale(self, value):
@@ -500,7 +511,7 @@ cdef class WrapAppearanceData:
         Py_INCREF(dtype_float32)
         cdef float * body_offsetptr = &self.data[0].body_offset[0]
         self._body_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>body_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._body_offset, self.holder)
+        set_array_base(self._body_offset, self.holder)
         return self._body_offset
     @body_offset.setter
     def body_offset(self, value):
@@ -513,7 +524,7 @@ cdef class WrapAppearanceData:
         Py_INCREF(dtype_float32)
         cdef float * head_offsetptr = &self.data[0].head_offset[0]
         self._head_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>head_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._head_offset, self.holder)
+        set_array_base(self._head_offset, self.holder)
         return self._head_offset
     @head_offset.setter
     def head_offset(self, value):
@@ -526,7 +537,7 @@ cdef class WrapAppearanceData:
         Py_INCREF(dtype_float32)
         cdef float * hand_offsetptr = &self.data[0].hand_offset[0]
         self._hand_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>hand_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._hand_offset, self.holder)
+        set_array_base(self._hand_offset, self.holder)
         return self._hand_offset
     @hand_offset.setter
     def hand_offset(self, value):
@@ -539,7 +550,7 @@ cdef class WrapAppearanceData:
         Py_INCREF(dtype_float32)
         cdef float * foot_offsetptr = &self.data[0].foot_offset[0]
         self._foot_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>foot_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._foot_offset, self.holder)
+        set_array_base(self._foot_offset, self.holder)
         return self._foot_offset
     @foot_offset.setter
     def foot_offset(self, value):
@@ -552,7 +563,7 @@ cdef class WrapAppearanceData:
         Py_INCREF(dtype_float32)
         cdef float * tail_offsetptr = &self.data[0].tail_offset[0]
         self._tail_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>tail_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._tail_offset, self.holder)
+        set_array_base(self._tail_offset, self.holder)
         return self._tail_offset
     @tail_offset.setter
     def tail_offset(self, value):
@@ -565,7 +576,7 @@ cdef class WrapAppearanceData:
         Py_INCREF(dtype_float32)
         cdef float * wing_offsetptr = &self.data[0].wing_offset[0]
         self._wing_offset = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>wing_offsetptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._wing_offset, self.holder)
+        set_array_base(self._wing_offset, self.holder)
         return self._wing_offset
     @wing_offset.setter
     def wing_offset(self, value):
@@ -589,25 +600,25 @@ cdef class WrapAppearanceData:
     cdef void _set_ptr(self, AppearanceData * ptr):
         self.data = ptr
         if self._scale is not None:
-            np.set_array_base(self._scale, self.holder)
+            set_array_base(self._scale, self.holder)
             self._scale.data = <char*>&self.data[0].scale
         if self._body_offset is not None:
-            np.set_array_base(self._body_offset, self.holder)
+            set_array_base(self._body_offset, self.holder)
             self._body_offset.data = <char*>&self.data[0].body_offset
         if self._head_offset is not None:
-            np.set_array_base(self._head_offset, self.holder)
+            set_array_base(self._head_offset, self.holder)
             self._head_offset.data = <char*>&self.data[0].head_offset
         if self._hand_offset is not None:
-            np.set_array_base(self._hand_offset, self.holder)
+            set_array_base(self._hand_offset, self.holder)
             self._hand_offset.data = <char*>&self.data[0].hand_offset
         if self._foot_offset is not None:
-            np.set_array_base(self._foot_offset, self.holder)
+            set_array_base(self._foot_offset, self.holder)
             self._foot_offset.data = <char*>&self.data[0].foot_offset
         if self._tail_offset is not None:
-            np.set_array_base(self._tail_offset, self.holder)
+            set_array_base(self._tail_offset, self.holder)
             self._tail_offset.data = <char*>&self.data[0].tail_offset
         if self._wing_offset is not None:
-            np.set_array_base(self._wing_offset, self.holder)
+            set_array_base(self._wing_offset, self.holder)
             self._wing_offset.data = <char*>&self.data[0].wing_offset
     def set_ptr(self, WrapAppearanceData v):
         self.holder = v.holder
@@ -793,7 +804,7 @@ cdef class WrapEntityData:
         Py_INCREF(dtype_int64)
         cdef int64_t * posptr = &self.data[0].pos[0]
         self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
+        set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -824,7 +835,7 @@ cdef class WrapEntityData:
         Py_INCREF(dtype_float32)
         cdef float * velocityptr = &self.data[0].velocity[0]
         self._velocity = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>velocityptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._velocity, self.holder)
+        set_array_base(self._velocity, self.holder)
         return self._velocity
     @velocity.setter
     def velocity(self, value):
@@ -837,7 +848,7 @@ cdef class WrapEntityData:
         Py_INCREF(dtype_float32)
         cdef float * accelptr = &self.data[0].accel[0]
         self._accel = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>accelptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._accel, self.holder)
+        set_array_base(self._accel, self.holder)
         return self._accel
     @accel.setter
     def accel(self, value):
@@ -850,7 +861,7 @@ cdef class WrapEntityData:
         Py_INCREF(dtype_float32)
         cdef float * extra_velptr = &self.data[0].extra_vel[0]
         self._extra_vel = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>extra_velptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._extra_vel, self.holder)
+        set_array_base(self._extra_vel, self.holder)
         return self._extra_vel
     @extra_vel.setter
     def extra_vel(self, value):
@@ -1019,7 +1030,7 @@ cdef class WrapEntityData:
         Py_INCREF(dtype_float32)
         cdef float * ray_hitptr = &self.data[0].ray_hit[0]
         self._ray_hit = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>ray_hitptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._ray_hit, self.holder)
+        set_array_base(self._ray_hit, self.holder)
         return self._ray_hit
     @ray_hit.setter
     def ray_hit(self, value):
@@ -1134,7 +1145,7 @@ cdef class WrapEntityData:
         Py_INCREF(dtype_int32)
         cdef int32_t * start_chunkptr = &self.data[0].start_chunk[0]
         self._start_chunk = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int32, 1, &vec3_dim, NULL, <void*>start_chunkptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._start_chunk, self.holder)
+        set_array_base(self._start_chunk, self.holder)
         return self._start_chunk
     @start_chunk.setter
     def start_chunk(self, value):
@@ -1153,7 +1164,7 @@ cdef class WrapEntityData:
         Py_INCREF(dtype_int64)
         cdef int64_t * spawn_posptr = &self.data[0].spawn_pos[0]
         self._spawn_pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>spawn_posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._spawn_pos, self.holder)
+        set_array_base(self._spawn_pos, self.holder)
         return self._spawn_pos
     @spawn_pos.setter
     def spawn_pos(self, value):
@@ -1172,7 +1183,7 @@ cdef class WrapEntityData:
         Py_INCREF(dtype_int32)
         cdef int32_t * not_used20ptr = &self.data[0].not_used20[0]
         self._not_used20 = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int32, 1, &vec3_dim, NULL, <void*>not_used20ptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._not_used20, self.holder)
+        set_array_base(self._not_used20, self.holder)
         return self._not_used20
     @not_used20.setter
     def not_used20(self, value):
@@ -1252,31 +1263,31 @@ cdef class WrapEntityData:
     cdef void _set_ptr(self, EntityData * ptr):
         self.data = ptr
         if self._pos is not None:
-            np.set_array_base(self._pos, self.holder)
+            set_array_base(self._pos, self.holder)
             self._pos.data = <char*>&self.data[0].pos
         if self._velocity is not None:
-            np.set_array_base(self._velocity, self.holder)
+            set_array_base(self._velocity, self.holder)
             self._velocity.data = <char*>&self.data[0].velocity
         if self._accel is not None:
-            np.set_array_base(self._accel, self.holder)
+            set_array_base(self._accel, self.holder)
             self._accel.data = <char*>&self.data[0].accel
         if self._extra_vel is not None:
-            np.set_array_base(self._extra_vel, self.holder)
+            set_array_base(self._extra_vel, self.holder)
             self._extra_vel.data = <char*>&self.data[0].extra_vel
         if self._appearance is not None:
             self._appearance.holder = self.holder
             self._appearance._set_ptr(&self.data[0].appearance)
         if self._ray_hit is not None:
-            np.set_array_base(self._ray_hit, self.holder)
+            set_array_base(self._ray_hit, self.holder)
             self._ray_hit.data = <char*>&self.data[0].ray_hit
         if self._start_chunk is not None:
-            np.set_array_base(self._start_chunk, self.holder)
+            set_array_base(self._start_chunk, self.holder)
             self._start_chunk.data = <char*>&self.data[0].start_chunk
         if self._spawn_pos is not None:
-            np.set_array_base(self._spawn_pos, self.holder)
+            set_array_base(self._spawn_pos, self.holder)
             self._spawn_pos.data = <char*>&self.data[0].spawn_pos
         if self._not_used20 is not None:
-            np.set_array_base(self._not_used20, self.holder)
+            set_array_base(self._not_used20, self.holder)
             self._not_used20.data = <char*>&self.data[0].not_used20
         if self._consumable is not None:
             self._consumable.holder = self.holder
@@ -1554,7 +1565,7 @@ cdef class WrapStaticEntityHeader:
         Py_INCREF(dtype_int64)
         cdef int64_t * posptr = &self.data[0].pos[0]
         self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
+        set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -1573,7 +1584,7 @@ cdef class WrapStaticEntityHeader:
         Py_INCREF(dtype_float32)
         cdef float * sizeptr = &self.data[0].size[0]
         self._size = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>sizeptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._size, self.holder)
+        set_array_base(self._size, self.holder)
         return self._size
     @size.setter
     def size(self, value):
@@ -1610,10 +1621,10 @@ cdef class WrapStaticEntityHeader:
     cdef void _set_ptr(self, StaticEntityHeader * ptr):
         self.data = ptr
         if self._pos is not None:
-            np.set_array_base(self._pos, self.holder)
+            set_array_base(self._pos, self.holder)
             self._pos.data = <char*>&self.data[0].pos
         if self._size is not None:
-            np.set_array_base(self._size, self.holder)
+            set_array_base(self._size, self.holder)
             self._size.data = <char*>&self.data[0].size
     def set_ptr(self, WrapStaticEntityHeader v):
         self.holder = v.holder
@@ -2605,7 +2616,7 @@ cdef class WrapChunkItemData:
         Py_INCREF(dtype_int64)
         cdef int64_t * posptr = &self.data[0].pos[0]
         self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
+        set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -2657,7 +2668,7 @@ cdef class WrapChunkItemData:
             self._item_data.holder = self.holder
             self._item_data._set_ptr(&self.data[0].item_data)
         if self._pos is not None:
-            np.set_array_base(self._pos, self.holder)
+            set_array_base(self._pos, self.holder)
             self._pos.data = <char*>&self.data[0].pos
     def set_ptr(self, WrapChunkItemData v):
         self.holder = v.holder
@@ -4375,7 +4386,7 @@ cdef class WrapHitPacket:
         Py_INCREF(dtype_int64)
         cdef int64_t * posptr = &self.data[0].pos[0]
         self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
+        set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -4388,7 +4399,7 @@ cdef class WrapHitPacket:
         Py_INCREF(dtype_float32)
         cdef float * hit_dirptr = &self.data[0].hit_dir[0]
         self._hit_dir = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>hit_dirptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._hit_dir, self.holder)
+        set_array_base(self._hit_dir, self.holder)
         return self._hit_dir
     @hit_dir.setter
     def hit_dir(self, value):
@@ -4419,10 +4430,10 @@ cdef class WrapHitPacket:
     cdef void _set_ptr(self, HitPacket * ptr):
         self.data = ptr
         if self._pos is not None:
-            np.set_array_base(self._pos, self.holder)
+            set_array_base(self._pos, self.holder)
             self._pos.data = <char*>&self.data[0].pos
         if self._hit_dir is not None:
-            np.set_array_base(self._hit_dir, self.holder)
+            set_array_base(self._hit_dir, self.holder)
             self._hit_dir.data = <char*>&self.data[0].hit_dir
     def set_ptr(self, WrapHitPacket v):
         self.holder = v.holder
@@ -4478,7 +4489,7 @@ cdef class WrapParticleData:
         Py_INCREF(dtype_int64)
         cdef int64_t * posptr = &self.data[0].pos[0]
         self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
+        set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -4491,7 +4502,7 @@ cdef class WrapParticleData:
         Py_INCREF(dtype_float32)
         cdef float * accelptr = &self.data[0].accel[0]
         self._accel = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>accelptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._accel, self.holder)
+        set_array_base(self._accel, self.holder)
         return self._accel
     @accel.setter
     def accel(self, value):
@@ -4543,10 +4554,10 @@ cdef class WrapParticleData:
     cdef void _set_ptr(self, ParticleData * ptr):
         self.data = ptr
         if self._pos is not None:
-            np.set_array_base(self._pos, self.holder)
+            set_array_base(self._pos, self.holder)
             self._pos.data = <char*>&self.data[0].pos
         if self._accel is not None:
-            np.set_array_base(self._accel, self.holder)
+            set_array_base(self._accel, self.holder)
             self._accel.data = <char*>&self.data[0].accel
         if self._color is not None:
             self._color.data = <char*>(&self.data[0].color[0])
@@ -4604,7 +4615,7 @@ cdef class WrapSoundAction:
         Py_INCREF(dtype_float32)
         cdef float * posptr = &self.data[0].pos[0]
         self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
+        set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -4635,7 +4646,7 @@ cdef class WrapSoundAction:
     cdef void _set_ptr(self, SoundAction * ptr):
         self.data = ptr
         if self._pos is not None:
-            np.set_array_base(self._pos, self.holder)
+            set_array_base(self._pos, self.holder)
             self._pos.data = <char*>&self.data[0].pos
     def set_ptr(self, WrapSoundAction v):
         self.holder = v.holder
@@ -4691,7 +4702,7 @@ cdef class WrapBlockAction:
         Py_INCREF(dtype_int32)
         cdef int32_t * block_posptr = &self.data[0].block_pos[0]
         self._block_pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int32, 1, &vec3_dim, NULL, <void*>block_posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._block_pos, self.holder)
+        set_array_base(self._block_pos, self.holder)
         return self._block_pos
     @block_pos.setter
     def block_pos(self, value):
@@ -4734,7 +4745,7 @@ cdef class WrapBlockAction:
     cdef void _set_ptr(self, BlockAction * ptr):
         self.data = ptr
         if self._block_pos is not None:
-            np.set_array_base(self._block_pos, self.holder)
+            set_array_base(self._block_pos, self.holder)
             self._block_pos.data = <char*>&self.data[0].block_pos
     def set_ptr(self, WrapBlockAction v):
         self.holder = v.holder
@@ -4814,7 +4825,7 @@ cdef class WrapShootPacket:
         Py_INCREF(dtype_int64)
         cdef int64_t * posptr = &self.data[0].pos[0]
         self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._pos, self.holder)
+        set_array_base(self._pos, self.holder)
         return self._pos
     @pos.setter
     def pos(self, value):
@@ -4845,7 +4856,7 @@ cdef class WrapShootPacket:
         Py_INCREF(dtype_float32)
         cdef float * velocityptr = &self.data[0].velocity[0]
         self._velocity = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>velocityptr, np.NPY_DEFAULT, <object>NULL);
-        np.set_array_base(self._velocity, self.holder)
+        set_array_base(self._velocity, self.holder)
         return self._velocity
     @velocity.setter
     def velocity(self, value):
@@ -4918,10 +4929,10 @@ cdef class WrapShootPacket:
     cdef void _set_ptr(self, ShootPacket * ptr):
         self.data = ptr
         if self._pos is not None:
-            np.set_array_base(self._pos, self.holder)
+            set_array_base(self._pos, self.holder)
             self._pos.data = <char*>&self.data[0].pos
         if self._velocity is not None:
-            np.set_array_base(self._velocity, self.holder)
+            set_array_base(self._velocity, self.holder)
             self._velocity.data = <char*>&self.data[0].velocity
     def set_ptr(self, WrapShootPacket v):
         self.holder = v.holder
@@ -5383,6 +5394,181 @@ cdef class WrapMissionData:
     cdef void _set_ptr(self, MissionData * ptr):
         self.data = ptr
     def set_ptr(self, WrapMissionData v):
+        self.holder = v.holder
+        self._set_ptr(v.data)
+cdef class WrapAirshipData:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(AirshipData))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(AirshipData))
+    def cast(self, object klass):
+        cdef WrapAirshipData c = klass.__new__(klass)
+        c.holder = self.holder
+        c._init_ptr(self.data)
+        return c
+    def copy(self):
+        cdef WrapAirshipData inst = WrapAirshipData.__new__(WrapAirshipData)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(AirshipData))
+        return inst
+    def __init__(self):
+        self.alloc()
+
+    def make_standalone_copy(self):
+        if self.holder is not None:
+            return
+        cdef AirshipData * old_data = self.data
+        self.realloc()
+        memcpy(self.data, old_data, sizeof(AirshipData))
+    def make_standalone_reset(self):
+        if self.holder is not None:
+            memset(self.data, 0, sizeof(AirshipData))
+            return
+        cdef AirshipData * old_data = self.data
+        self.realloc()
+        memset(self.data, 0, sizeof(AirshipData))
+    cdef void realloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(AirshipData))
+        self._set_ptr(<AirshipData*>buf)
+    cdef void alloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(AirshipData))
+        self._init_ptr(<AirshipData*>buf)
+    @property
+    def entity_id(self):
+        return self.data[0].entity_id
+    @entity_id.setter
+    def entity_id(self, value):
+        self.data[0].entity_id = value
+    @property
+    def something1(self):
+        return self.data[0].something1
+    @something1.setter
+    def something1(self, value):
+        self.data[0].something1 = value
+    @property
+    def something2(self):
+        return self.data[0].something2
+    @something2.setter
+    def something2(self, value):
+        self.data[0].something2 = value
+    @property
+    def pos(self):
+        if self._pos is not None:
+            return self._pos
+        Py_INCREF(dtype_int64)
+        cdef int64_t * posptr = &self.data[0].pos[0]
+        self._pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>posptr, np.NPY_DEFAULT, <object>NULL);
+        set_array_base(self._pos, self.holder)
+        return self._pos
+    @pos.setter
+    def pos(self, value):
+        cdef int64_t[3] arr = value
+        self.data[0].pos = arr
+    @property
+    def velocity(self):
+        if self._velocity is not None:
+            return self._velocity
+        Py_INCREF(dtype_float32)
+        cdef float * velocityptr = &self.data[0].velocity[0]
+        self._velocity = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>velocityptr, np.NPY_DEFAULT, <object>NULL);
+        set_array_base(self._velocity, self.holder)
+        return self._velocity
+    @velocity.setter
+    def velocity(self, value):
+        cdef float[3] arr = value
+        self.data[0].velocity = arr
+    @property
+    def rotation(self):
+        if self._rotation is not None:
+            return self._rotation
+        Py_INCREF(dtype_float32)
+        cdef float * rotationptr = &self.data[0].rotation[0]
+        self._rotation = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_float32, 1, &vec3_dim, NULL, <void*>rotationptr, np.NPY_DEFAULT, <object>NULL);
+        set_array_base(self._rotation, self.holder)
+        return self._rotation
+    @rotation.setter
+    def rotation(self, value):
+        cdef float[3] arr = value
+        self.data[0].rotation = arr
+    @property
+    def start_pos(self):
+        if self._start_pos is not None:
+            return self._start_pos
+        Py_INCREF(dtype_int64)
+        cdef int64_t * start_posptr = &self.data[0].start_pos[0]
+        self._start_pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>start_posptr, np.NPY_DEFAULT, <object>NULL);
+        set_array_base(self._start_pos, self.holder)
+        return self._start_pos
+    @start_pos.setter
+    def start_pos(self, value):
+        cdef int64_t[3] arr = value
+        self.data[0].start_pos = arr
+    @property
+    def path_rotation(self):
+        return self.data[0].path_rotation
+    @path_rotation.setter
+    def path_rotation(self, value):
+        self.data[0].path_rotation = value
+    @property
+    def something3(self):
+        return self.data[0].something3
+    @something3.setter
+    def something3(self, value):
+        self.data[0].something3 = value
+    @property
+    def dest_pos(self):
+        if self._dest_pos is not None:
+            return self._dest_pos
+        Py_INCREF(dtype_int64)
+        cdef int64_t * dest_posptr = &self.data[0].dest_pos[0]
+        self._dest_pos = PyArray_NewFromDescr(<PyTypeObject *>Vector3, dtype_int64, 1, &vec3_dim, NULL, <void*>dest_posptr, np.NPY_DEFAULT, <object>NULL);
+        set_array_base(self._dest_pos, self.holder)
+        return self._dest_pos
+    @dest_pos.setter
+    def dest_pos(self, value):
+        cdef int64_t[3] arr = value
+        self.data[0].dest_pos = arr
+    @property
+    def stage(self):
+        return self.data[0].stage
+    @stage.setter
+    def stage(self, value):
+        self.data[0].stage = value
+    @property
+    def something4(self):
+        return self.data[0].something4
+    @something4.setter
+    def something4(self, value):
+        self.data[0].something4 = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+    cdef void _init_ptr(self, AirshipData * ptr):
+        self.data = ptr
+    cdef void _set_ptr(self, AirshipData * ptr):
+        self.data = ptr
+        if self._pos is not None:
+            set_array_base(self._pos, self.holder)
+            self._pos.data = <char*>&self.data[0].pos
+        if self._velocity is not None:
+            set_array_base(self._velocity, self.holder)
+            self._velocity.data = <char*>&self.data[0].velocity
+        if self._rotation is not None:
+            set_array_base(self._rotation, self.holder)
+            self._rotation.data = <char*>&self.data[0].rotation
+        if self._start_pos is not None:
+            set_array_base(self._start_pos, self.holder)
+            self._start_pos.data = <char*>&self.data[0].start_pos
+        if self._dest_pos is not None:
+            set_array_base(self._dest_pos, self.holder)
+            self._dest_pos.data = <char*>&self.data[0].dest_pos
+    def set_ptr(self, WrapAirshipData v):
         self.holder = v.holder
         self._set_ptr(v.data)
 cdef class WrapHitPacketList:

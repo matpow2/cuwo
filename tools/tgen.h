@@ -555,6 +555,27 @@ struct MissionData
   uint32_t chunk_y;
 };
 
+// thanks to Ando for this
+struct AirshipData
+{
+  uint64_t entity_id;
+  uint8_t something1;
+  char pad[3];
+  uint32_t something2;
+  qvec3 pos;
+  vec3 velocity;
+  vec3 rotation;
+  qvec3 start_pos;
+  float path_rotation;
+  uint32_t something3;
+  qvec3 dest_pos;
+  // 0 = goto start pos, 1 = landing, 2 = departing, 3 = goto dest pos.
+  uint8_t stage;
+  char pad[3];
+  uint8_t something4;
+  char pad[3];
+};
+
 // lists
 
 struct HitPacketList

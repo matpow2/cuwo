@@ -34,8 +34,9 @@ from cuwo.vector import Vector3
 from cuwo.common import filter_bytes
 from cuwo import strings
 from cuwo.bytes cimport ByteReader, ByteWriter
+from cpython.object cimport PyObject
 from cpython.mem cimport PyMem_Malloc, PyMem_Realloc, PyMem_Free
-from cpython.ref cimport PyTypeObject, Py_INCREF
+from cpython.ref cimport PyTypeObject, Py_INCREF, Py_XDECREF
 import numpy as np
 
 cdef extern from "numpy/arrayobject.h":
@@ -43,6 +44,16 @@ cdef extern from "numpy/arrayobject.h":
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides, void* data, int flags,
                                 object obj)
+
+cdef inline void set_array_base(np.ndarray arr, object base):
+    cdef PyObject* baseptr
+    if base is None:
+        baseptr = NULL
+    else:
+        Py_INCREF(base)
+        baseptr = <PyObject*>base
+    Py_XDECREF(arr.base)
+    arr.base = baseptr
 
 cdef np.dtype dtype_float32 = np.dtype(np.float32) 
 cdef np.dtype dtype_int32 = np.dtype(np.int32)
@@ -104,7 +115,7 @@ def main():
     tgendef.putln(H_DEFS)
     # pyx.putln(DEFS)
     for name in ('input.h', 'tgen.h'):
-        with open(os.path.join(CUR_DIR, name), 'rU') as fp:
+        with open(os.path.join(CUR_DIR, name), 'r', newline=None) as fp:
             text = comment_remover(fp.read())
         parse_header(text)
 
@@ -345,12 +356,12 @@ def main():
                     f'{typ}, 1, '
                     f'&vec3_dim, NULL, <void*>{prop_name}ptr, np.NPY_DEFAULT, '
                     f'<object>NULL);')
-                pyx.putln(f'np.set_array_base(self._{prop_name}, self.holder)')
+                pyx.putln(f'set_array_base(self._{prop_name}, self.holder)')
                 pyx.putln(f'return self._{prop_name}')
 
                 python_obj_reset.putln(f'if self._{prop_name} is not None:')
                 python_obj_reset.indent()
-                python_obj_reset.putln(f'np.set_array_base(self._{prop_name}, '
+                python_obj_reset.putln(f'set_array_base(self._{prop_name}, '
                                        f'self.holder)')
                 python_obj_reset.putln(f'self._{prop_name}.data = '
                                        f'<char*>&{value}')

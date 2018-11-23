@@ -804,7 +804,7 @@ class CubeWorldServer:
     def load_data(self, name, default=None):
         path = os.path.join(self.config.base.save_path, f'{name}.dat')
         try:
-            with open(path, 'rU') as fp:
+            with open(path, 'r', newline=None) as fp:
                 data = fp.read()
         except IOError:
             return default

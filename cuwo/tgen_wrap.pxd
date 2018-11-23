@@ -940,6 +940,35 @@ cdef class WrapMissionData:
     cdef void _set_ptr(self, MissionData * ptr)
     cdef MissionData * data
     cdef MemoryHolder holder
+cdef struct AirshipData:
+    uint64_t entity_id
+    uint8_t something1
+    int8_t pad2[3]
+    uint32_t something2
+    qvec3 pos
+    vec3 velocity
+    vec3 rotation
+    qvec3 start_pos
+    float path_rotation
+    uint32_t something3
+    qvec3 dest_pos
+    uint8_t stage
+    int8_t pad12[3]
+    uint8_t something4
+    int8_t pad14[3]
+
+cdef class WrapAirshipData:
+    cdef void alloc(self)
+    cdef void realloc(self)
+    cdef void _init_ptr(self, AirshipData * ptr)
+    cdef void _set_ptr(self, AirshipData * ptr)
+    cdef AirshipData * data
+    cdef MemoryHolder holder
+    cdef np.ndarray _pos
+    cdef np.ndarray _velocity
+    cdef np.ndarray _rotation
+    cdef np.ndarray _start_pos
+    cdef np.ndarray _dest_pos
 cdef struct HitPacketList:
     uint32_t next
     uint32_t prev

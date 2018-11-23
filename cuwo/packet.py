@@ -27,6 +27,7 @@ from cuwo.tgen_wrap import (WrapEntityData as EntityData,
                             WrapParticleData as ParticleData,
                             WrapKillAction as KillAction,
                             WrapDamageAction as DamageAction,
+                            WrapAirshipData,
                             WrapPassivePacket,
                             WrapSoundAction,
                             WrapShootPacket,
@@ -162,16 +163,23 @@ class UpdateFinished(Packet):
     pass
 
 
-class Unknown3(Packet):
-    # not actually used - probably a legacy packet (or inventory-related?)
+AIRSHIP_SET_START = 0
+AIRSHIP_LANDING = 1
+AIRSHIP_DEPARTING = 1
+AIRSHIP_SET_DEST = 1
+
+
+class AirshipData(WrapAirshipData):
+    pass
+
+
+class AirshipUpdate(Packet):
+    # not used, but still supported by the game.
     def read(self, reader):
-        count = reader.read_uint32()
-        self.data = reader.read(120 * count)
+        self.items = read_list(AirshipData)
 
     def write(self, writer):
-        writer.write_uint32(len(self.data) / 120)
-        writer.write(self.data)
-
+        write_list(self.items)
 
 class OldBlockAction(Loader):
     def read(self, reader):
@@ -711,7 +719,7 @@ SC_PACKETS = {
     0: EntityUpdate,
     1: MultipleEntityUpdate,  # not used
     2: UpdateFinished,
-    3: Unknown3,  # not used
+    3: AirshipUpdate,  # not used
     4: ServerUpdate,
     5: CurrentTime,
     10: ServerChatMessage,
