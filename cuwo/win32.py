@@ -28,11 +28,8 @@ https://groups.google.com/forum/?fromgroups#!topic/python-tulip/yUFm29WPt88
 import signal
 from ctypes import windll
 from asyncio import windows_events
-
-timeGetTime = windll.winmm.timeGetTime
-timeBeginPeriod = windll.winmm.timeBeginPeriod
-timeEndPeriod = windll.winmm.timeEndPeriod
-TIMERR_NOERROR = 0
+from cuwo.win32c import (timeGetTime, timeBeginPeriod, timeEndPeriod,
+                         TIMERR_NOERROR)
 
 
 def fix_event_loop(klass):

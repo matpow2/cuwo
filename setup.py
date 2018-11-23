@@ -75,6 +75,7 @@ includes = ['./cuwo',
 
 
 if os.name == 'nt':
+    names.append('cuwo.win32c')
     macros += [('_CRT_SECURE_NO_WARNINGS', None),
                ('WIN32', 1)]
     # compile_args.append('/std:c++11')
@@ -113,8 +114,11 @@ tgen_module = Extension('cuwo.tgen', ['./cuwo/tgen.pyx'] + tgen_sources,
 ext_modules.append(tgen_module)
 
 for name in names:
+    use_ext_args = ext_args.copy()
+    if os.name == 'nt' and name == 'cuwo.win32c':
+        use_ext_args['libraries'] = ['winmm']
     ext_modules.append(Extension(name, ['./%s.pyx' % name.replace('.', '/')],
-                                 **ext_args))
+                                 **use_ext_args))
 
 # class build_ext(_build_ext.build_ext):
 #     def build_extensions(self):
