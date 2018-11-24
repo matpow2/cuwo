@@ -142,14 +142,16 @@ struct StackAllocator
 {
     static void alloc()
     {
-        if (stack == NULL)
+        if (stack == NULL) {
             stack = alloc_mem(stack_size);
+        }
     }
 
     ~StackAllocator()
     {
-        if (stack != NULL)
+        if (stack != NULL) {
             free_mem(stack, stack_size);
+        }
     }
 };
 
@@ -169,7 +171,23 @@ void run_with_stack(void (*f)())
     stack_alloc.alloc();
     void * end = stack;
     void * base = (char*)end + stack_size;
-    _run_with_stack(base, end, run_callback);
+#ifdef _WIN32
+    NT_TIB* tib = (NT_TIB*)__readgsqword(0x30);
+    void * old_base = tib->StackBase;
+    void * old_limit = tib->StackLimit;
+    // void * old_dealloc_stack = tib->DeallocationStack;
+    tib->StackBase = base;
+    tib->StackLimit = end;
+    // tib->DeallocationStack = NULL;
+#endif
+
+    _run_with_stack(base, run_callback);
+
+#ifdef _WIN32
+    tib->StackBase = old_base;
+    tib->StackLimit = old_limit;
+    // tib->DeallocationStack = old_dealloc_stack;
+#endif
 }
 
 #else

@@ -88,7 +88,7 @@ use32
 
 '''
 
-# set_stack(void * base, void * limit, void (*f)())
+# set_stack(void * base, void (*f)())
 # msvc: 'rcx', 'rdx', 'r8'
 # other: 'rdi', 'rsi', 'rdx'
 
@@ -102,7 +102,7 @@ use64
     and rdi, 0xfffffffffffffff0
     sub rdi, 128
     mov rsp, rdi
-    call rdx
+    call rsi
 
     mov rsp, rbp
     pop rbp
@@ -115,35 +115,11 @@ use64
     push rbp
     mov rbp, rsp
 
-    ; load NT_TIB
-    mov r10, [gs:qword 0x30]
-
-    ; save current stack base
-    mov rax, [r10+0x08]
-    push rax
-    mov [r10+0x08], rcx
-
-    ; save current stack limit
-    mov rax, [r10+0x010]
-    push rax
-    mov [r10+0x010], rdx
-
     ; move to new stack and call
     and rcx, 0xfffffffffffffff0
     sub rcx, 32
     mov rsp, rcx
-    call r8
-
-    ; load NT_TIB
-    mov r10, [gs:qword 0x030]
-
-    ; restore stack limit
-    pop rax
-    mov [r10+0x010], rax
-
-    ; restore stack base
-    pop rax
-    mov [r10+0x08], rax
+    call rdx
 
     mov rsp, rbp
     pop rbp
@@ -475,7 +451,7 @@ def do_callers():
         else:
             stack_call = set_stack_call
 
-        do_caller('_run_with_stack', ['void*', 'void*', 'void (*f)()'],
+        do_caller('_run_with_stack', ['void*', 'void (*f)()'],
                   stack_call)
 
     state.output_c += setup_callers + '\n\n'
