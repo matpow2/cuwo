@@ -26,6 +26,8 @@
 #include <cmath>
 #include "mem.h"
 
+// #define IMPL_CRITSEC
+
 // import: free
 void free_imp(void * data)
 {
@@ -98,6 +100,13 @@ uint32_t WSAStartup_imp(uint32_t version, uint32_t data)
 bool InitializeCriticalSectionAndSpinCount_imp(uint32_t crit_sec,
                                                uint32_t spincount)
 {
+#ifdef IMPL_CRITSEC
+    void * crit = (void*)crit_sec;
+    std::recursive_mutex * mut = new std::recursive_mutex();
+    memcpy(crit, &mut, sizeof(mut));
+    crit += sizeof(mut);
+    memcpy(crit, &spincount, sizeof(spincount));
+#endif
     return 1;
 }
 
@@ -105,6 +114,12 @@ bool InitializeCriticalSectionAndSpinCount_imp(uint32_t crit_sec,
 // stdcall
 void DeleteCriticalSection_imp(uint32_t critical_section)
 {
+#ifdef IMPL_CRITSEC
+    void * crit = (void*)critical_section;
+    std::recursive_mutex * mut;
+    memcpy(&mut, crit, sizeof(mut));
+    delete[] mut;
+#endif
     std::cout << "DeleteCriticalSection" << std::endl;
 }
 
