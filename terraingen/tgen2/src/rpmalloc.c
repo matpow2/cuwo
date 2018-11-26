@@ -12,7 +12,8 @@
 #include "rpmalloc.h"
 #include "mem32.h"
 #define VirtualAlloc VirtualAllocSmall
-#define mmap mmap_small
+#define mmap(addr, len, prot, flags, fd, offset) \
+		mmap_small(addr, len, prot, flags, fd, offset)
 
 /// Build time configurable limits
 #ifndef HEAP_ARRAY_SIZE

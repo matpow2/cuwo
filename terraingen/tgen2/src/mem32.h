@@ -47,10 +47,12 @@ static void * VirtualAllocSmall(void * ptr,
 #endif
 
 #ifdef IS_X64
-#define mmap_small(addr, len, prot, flags, fd, offset) \
-        mmap(addr, len, prot, (flags) | MAP_32BIT, fd, offset)
+#define EXTRA_MMAP_FLAG MAP_32BIT
 #else
-#define mmap_small mmap
+#define EXTRA_MMAP_FLAG (0)
 #endif
+
+#define mmap_small(addr, len, prot, flags, fd, offset) \
+        mmap(addr, len, prot, (flags) | EXTRA_MMAP_FLAG, fd, offset)
 
 #endif // TGEN_MEM32_H
