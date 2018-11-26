@@ -162,7 +162,7 @@ static FORCEINLINE int     atomic_cas_ptr(atomicptr_t* dst, void* val, void* ref
 
 #else
 
-#include <stdatomic.h>
+#include "stdatomiccompat.h"
 
 typedef volatile _Atomic(int32_t) atomic32_t;
 typedef volatile _Atomic(int64_t) atomic64_t;
