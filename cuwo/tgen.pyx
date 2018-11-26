@@ -62,20 +62,18 @@ cdef extern from "tgen.h" nogil:
     void tgen_init()
     void tgen_set_path(const char * dir)
     void tgen_set_seed(uint32_t seed)
-    Heap * tgen_generate_chunk(uint32_t, uint32_t)
-    void tgen_destroy_chunk(Heap * v)
+    void tgen_generate_chunk(uint32_t, uint32_t)
+    void tgen_destroy_chunk(uint32_t x, uint32_t y)
+    void tgen_destroy_reg_seed(uint32_t x, uint32_t y)
+    void tgen_destroy_reg_data(uint32_t x, uint32_t y)
     void tgen_simulate()
     void tgen_dump_mem(const char * filename)
-    void * tgen_get_heap_base()
+    Heap * tgen_get_heap()
     # uint32_t tgen_generate_debug_chunk(const char *, uint32_t, uint32_t)
     void * tgen_get_manager()
     void tgen_read_str(void * addr, string&)
     void tgen_read_wstr(void * addr, string&)
 
-    void sim_add_zone(CZone * z, uint32_t x, uint32_t y)
-    void sim_remove_zone(uint32_t x, uint32_t y)
-    void sim_add_region(char * r, uint32_t x, uint32_t y)
-    void sim_remove_region(uint32_t x, uint32_t y)
     void sim_step(uint32_t dt)
     void sim_remove_creature(CCreature * c)
     CCreature * sim_add_creature(uint64_t id)
@@ -177,9 +175,8 @@ def generate(x, y):
 
 def dump_mem(filename):
     tgen_dump_mem(filename.encode('utf-8'))
-    cdef uint32_t heap_base = <uint32_t>tgen_get_heap_base()
     cdef uint32_t manager_base = <uint32_t>tgen_get_manager()
-    return (heap_base, manager_base)
+    return manager_base
 
 
 # createdef.py helpers
@@ -651,7 +648,6 @@ cdef Zone * get_zone(void * manager, uint32_t zone_x, uint32_t zone_y) nogil:
 cdef class ZoneData(WrapZone):
     # chunk::Zone
 
-    cdef Heap * heap
     cdef char * region
 
     cdef public:
@@ -662,7 +658,7 @@ cdef class ZoneData(WrapZone):
         self.y = y
 
         with nogil:
-            self.heap = tgen_generate_chunk(self.x, self.y)
+            tgen_generate_chunk(self.x, self.y)
             self.data = get_zone(tgen_get_manager(), self.x, self.y)
             self.region = get_region(tgen_get_manager(),
                                      self.x / 64, self.y / 64)
@@ -677,10 +673,8 @@ cdef class ZoneData(WrapZone):
         return <uint32_t>self.region
 
     cdef _destroy(self):
-        if self.heap == NULL:
-            return
-        tgen_destroy_chunk(self.heap)
-        self.heap = NULL
+        with nogil:
+            tgen_destroy_chunk(self.x, self.y)
         self.data = NULL
         self.region = NULL
 
@@ -747,20 +741,20 @@ cdef class ZoneData(WrapZone):
         cdef Field * data = self.get_xy(x, y)
         return (<int64_t>(data.a) + <int64_t>(data.size))
 
-def add_region(ZoneData zone):
-    sim_add_region(zone.region, zone.x / 64, zone.y / 64)
+def has_region(x, y):
+    return get_region(tgen_get_manager(), x, y) != NULL
 
-def remove_region(ZoneData zone):
-    sim_remove_region(zone.x / 64, zone.y / 64)
+def destroy_region_data(uint32_t x, uint32_t y):
+    with nogil:
+        tgen_destroy_reg_data(x, y)
 
-def add_zone(ZoneData zone):
-    sim_add_zone(<CZone*>zone.data, zone.x, zone.y)
-
-def remove_zone(ZoneData zone):
-    sim_remove_zone(zone.x, zone.y)
+def destroy_region_seed(uint32_t x, uint32_t y):
+    with nogil:
+        tgen_destroy_reg_seed(x, y)
 
 def step(uint32_t dt):
-    sim_step(dt)
+    with nogil:
+        sim_step(dt)
 
 def remove_creature(WrapCreature creature):
     sim_remove_creature(<CCreature*>creature.data)

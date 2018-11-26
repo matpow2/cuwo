@@ -35,7 +35,7 @@ import os
 from queue import Queue
 import asyncio
 import math
-
+import threading
 
 class Entity(WrapEntityData):
     old_hostile_type = None
@@ -183,27 +183,29 @@ class StaticEntity:
 
 
 class Region:
-    def __init__(self, world, pos, owner):
+    def __init__(self, world, pos):
         self.pos = pos
         self.world = world
-        self.owner = owner
         self.chunks = set()
-        tgen.add_region(owner)
+        self.ref_count = 0
+        self.has_data = False
+
+    def add_ref_count(self, count):
+        self.ref_count += count
+        if self.ref_count <= 0:
+            del self.world.regions[self.pos]
+            self.world = None
+            if self.has_data:
+                self.world.gen_queue.put(('destroy_region', self.pos))
+
+    def update_data(self):
+        self.has_data = True
 
     def add(self, data):
         self.chunks.add(data)
 
     def remove(self, data):
-        tgen.remove_zone(data)
         self.chunks.remove(data)
-        if not self.chunks:
-            tgen.remove_region(self.owner)
-            self.owner.destroy()
-            self.owner = None
-            del self.world.regions[self.pos]
-            self.world = None
-        elif data is not self.owner:
-            data.destroy()
 
 def spawn_to_entity(spawn, entity):
     entity.reset()
@@ -245,6 +247,7 @@ def spawn_to_entity(spawn, entity):
 
 class Chunk:
     data = None
+    region = None
     last_visit = 0
 
     def __init__(self, world, pos):
@@ -252,26 +255,45 @@ class Chunk:
         self.pos = pos
         self.items = []
         self.static_entities = {}
-        self.region = None
 
         if not world.use_tgen:
             return
 
+        for reg_pos in self.get_neighborhood_regions():
+            try:
+                reg = self.world.regions[reg_pos]
+            except KeyError:
+                reg = Region(self.world, reg_pos)
+                self.world.regions[reg_pos] = reg
+            reg.add_ref_count(1)
+
         self.gen_f = world.get_data(pos)
         self.gen_f.add_done_callback(self.on_chunk)
+
+    def get_region_pos(self):
+        x, y = self.pos
+        return (x // 64, y // 64)
+
+    def get_neighborhood_regions(self):
+        reg_x, reg_y = self.get_region_pos()
+        # CW generates region in 3x3 neighborhood
+        for off_x in range(-1, 2):
+            for off_y in range(-1, 2):
+                new_reg_x = reg_x + off_x
+                new_reg_y = reg_y + off_y
+                yield (new_reg_x, new_reg_y)
 
     def on_chunk(self, f):
         try:
             self.data = f.result()
         except asyncio.CancelledError:
             return
-        region = (self.data.x // 64, self.data.y // 64)
-        if region in self.world.regions:
-            self.region = self.world.regions[region]
-        else:
-            self.region = Region(self.world, region, self.data)
-            self.world.regions[region] = self.region
-        self.region.add(self.data)
+
+        for reg_pos in self.get_neighborhood_regions():
+            self.world.regions[reg_pos].update_data()
+
+        self.region = self.world.regions[self.get_region_pos()]
+        self.region.add(self)
 
         chunk_items = self.data.items
         self.items.extend([item.copy() for item in chunk_items])
@@ -282,9 +304,6 @@ class Chunk:
             new_entity = self.world.static_entity_class(entity_id, header,
                                                         self)
             self.static_entities[entity_id] = new_entity
-
-        if self.world.use_entities:
-            tgen.add_zone(self.data)
 
         self.update()
 
@@ -309,8 +328,10 @@ class Chunk:
 
     def destroy(self):
         self.gen_f.cancel()
-        if self.region is not None:
-            self.region.remove(self.data)
+        if self.data is not None:
+            self.world.gen_queue.put(('destroy_chunk', self.data))
+        for reg_pos in self.get_neighborhood_regions():
+            self.world.regions[reg_pos].add_ref_count(-1)
         self.items = None
         self.region = None
         self.data = None
@@ -355,6 +376,7 @@ class World:
         self.passives = []
         self.generating = set()
 
+        self.chunk_lock = threading.Lock()
         self.gen_queue = Queue()
         loop.run_in_executor(None, self.run_gen, seed)
 
@@ -432,7 +454,9 @@ class World:
             entity.hostile_type = constants.FRIENDLY_PLAYER_TYPE
 
         self.write_debug()
+        self.chunk_lock.acquire()
         tgen.step(int(dt * 1000.0))
+        self.chunk_lock.release()
 
         creatures = tgen.get_creatures()
         for entity_id, creature in creatures.items():
@@ -494,7 +518,7 @@ class World:
         self.generating.add(pos)
         f = asyncio.Future()
         f.add_done_callback(lambda x: self.generating.remove(pos))
-        self.gen_queue.put((pos, f), False)
+        self.gen_queue.put(('gen', pos, f), False)
         return f
 
     def get_height(self, pos):
@@ -516,11 +540,30 @@ class World:
             data = self.gen_queue.get()
             if data is None:
                 break
-            pos, f = data
-            res = tgen.generate(*pos)
-            def set_result():
-                try:
-                    f.set_result(res)
-                except asyncio.InvalidStateError:
-                    return
-            self.loop.call_soon_threadsafe(set_result)
+            cmd = data[0]
+            args = data[1:]
+            if cmd == 'gen':
+                pos, f = args
+                print('gen:', pos)
+                res = tgen.generate(*pos)
+                def set_result():
+                    try:
+                        f.set_result(res)
+                    except asyncio.InvalidStateError:
+                        return
+                self.loop.call_soon_threadsafe(set_result)
+            elif cmd == 'destroy_chunk':
+                chunk = args[0]
+                print('destroy chunk:', chunk.x, chunk.y)
+                self.chunk_lock.acquire()
+                chunk.destroy()
+                self.chunk_lock.release()
+            elif cmd == 'destroy_region':
+                pos = args[0]
+                print('destroy region:', pos)
+                self.chunk_lock.acquire()
+                tgen.destroy_region_seed(*pos)
+                tgen.destroy_region_data(*pos)
+                self.chunk_lock.release()
+            else:
+                raise NotImplementedError()

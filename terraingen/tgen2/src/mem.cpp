@@ -6,60 +6,16 @@
 #include "config.h"
 #include <stdio.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/mman.h>
-#endif
-
-#ifdef _WIN64
-// from LuaJIT
-/* Undocumented, but hey, that's what we all love so much about Windows. */
-typedef long (*PNTAVM)(HANDLE handle, PVOID *addr, ULONG_PTR zbits,
-                       PSIZE_T size, ULONG alloctype, ULONG prot);
-static PNTAVM ntavm;
-
-/* Number of top bits of the lower 32 bits of an address that must be zero.
-** Apparently 0 gives us full 64 bit addresses and 1 gives us the lower 2GB.
-*/
-#define NTAVM_ZEROBITS      1
-
-void * VirtualAllocSmall(SIZE_T dwSize,
-                         DWORD flAllocationType,
-                         DWORD flProtect)
-{
-    if (ntavm == NULL) {
-        ntavm = (PNTAVM)GetProcAddress(GetModuleHandleA("ntdll.dll"),
-                                       "NtAllocateVirtualMemory");
-    }
-    DWORD olderr = GetLastError();
-    void *ptr = NULL;
-    long st = ntavm(INVALID_HANDLE_VALUE, &ptr, NTAVM_ZEROBITS, &dwSize,
-                    flAllocationType, flProtect);
-    assert((uint32_t)ptr <= 0xFFFFFFFF);
-    SetLastError(olderr);
-    return st == 0 ? ptr : NULL;
-}
-
-#elif _WIN32
-
-void * VirtualAllocSmall(SIZE_T dwSize,
-                         DWORD flAllocationType,
-                         DWORD flProtect)
-{
-    return VirtualAlloc(0, dwSize, flAllocationType, flProtect);
-}
-
-#endif
+#include "mem32.h"
 
 void * alloc_exec(size_t size)
 {
 #ifdef _WIN32
-    void* ptr = VirtualAllocSmall(size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    void* ptr = VirtualAllocSmall(0, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     assert(ptr != NULL);
 #else
-    void* ptr = mmap(0, size, PROT_READ | PROT_WRITE | PROT_EXEC,
-                     MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, 0);
+    void* ptr = mmap_small(0, size, PROT_READ | PROT_WRITE | PROT_EXEC,
+                           MAP_ANON | MAP_PRIVATE, -1, 0);
     assert((uintptr_t)ptr <= 0xFFFFFFFF);
     assert(ptr != MAP_FAILED);
 #endif
@@ -69,10 +25,10 @@ void * alloc_exec(size_t size)
 void * alloc_mem(size_t size)
 {
 #ifdef _WIN32
-    void* ptr = VirtualAllocSmall(size, MEM_COMMIT, PAGE_READWRITE);
+    void* ptr = VirtualAllocSmall(0, size, MEM_COMMIT, PAGE_READWRITE);
 #else
-    void * ptr = mmap(0, size, PROT_READ | PROT_WRITE,
-                      MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, 0);
+    void * ptr = mmap_small(0, size, PROT_READ | PROT_WRITE,
+                            MAP_ANON | MAP_PRIVATE, -1, 0);
     assert((uintptr_t)ptr <= 0xFFFFFFFF);
     assert(ptr != MAP_FAILED);
 #endif
@@ -200,124 +156,60 @@ void run_with_stack(void (*f)())
 
 #endif
 
-thread_local Heap * current_heap = NULL;
 extern Heap main_heap;
-extern Heap sim_heap;
+#define CUR_HEAP main_heap
+#include "rpmalloc.h"
 
-extern "C" {
-    #define HAVE_MORECORE 1
-    #define HAVE_MMAP 0
-    #define FOOTERS 1
-    #define USE_DL_PREFIX
-    #define MSPACES 1
-    #define MORECORE heap_morecore
-    void * heap_morecore(int size);
-    #include "dlmalloc.c"
+struct ThreadAlloc
+{
+    bool has_init;
 
-    void * heap_morecore(int size)
+    ThreadAlloc()
+    : has_init(false)
     {
-        std::cout << "Out of tgen memory!" << std::endl;
-        if (current_heap == &sim_heap)
-            std::cout << "Sim heap\n";
-        else if (current_heap == &main_heap)
-            std::cout << "Main heap\n";
-        else
-            std::cout << "Gen heap\n";
-        assert(false);
-		return NULL;
     }
-}
 
-// extern "C" {
-//     #define HAVE_MMAP 1
-//     #define HAVE_MORECORE 0
-//     #define USE_DL_PREFIX
-//     #define MMAP heap_mmap
-//     #define DIRECT_MMAP heap_mmap
-//     #define MUNMAP heap_munmap
-//     void * heap_mmap(int size);
-//     int heap_munmap(void * ptr, int size);
-//     #include "dlmalloc.c"
+    void init()
+    {
+        if (has_init)
+            return;
+        has_init = true;
+        rpmalloc_thread_initialize();
+    }
 
-//     void * heap_mmap(int size)
-//     {
-//         if (size == 0)
-//             return NULL;
-//         // std::cout << "Alloc: " << size << '\n';
-//         void * ret = alloc_mem(size);
+    ~ThreadAlloc()
+    {
+        rpmalloc_thread_finalize();
+    }
+};
 
-//         if (ret == NULL) {
-//             std::cout << "Out of memory" << std::endl;
-//             exit(0);
-//         }
-//         return ret;
-//     }
+static thread_local ThreadAlloc thread_alloc;
 
-//     int heap_munmap(void * ptr, int size)
-//     {
-//         if (size == 0)
-//             return 0;
-//         // std::cout << "Free: " << size << '\n';
-//         free_mem(ptr, size);
-//         return 0;
-//     }
-// }
-
-void create_heap(Heap * heap, uint32_t size)
+void create_heap(Heap * heap, uint32_t init_size)
 {
+    heap->init_size = init_size;
     heap->first_alloc = NULL;
-    heap->size = size;
-    heap->saved = NULL;
-    heap->buffer = (unsigned char*)alloc_mem(size);
-    heap->ms = (void*)create_mspace_with_base(heap->buffer, size, 0);
-}
-
-void save_heap(Heap * heap)
-{
-    if (heap->saved == NULL)
-        heap->saved = (unsigned char*)alloc_mem(heap->size);
-    memcpy(heap->saved, heap->buffer, heap->size);
-}
-
-void restore_heap(Heap * heap)
-{
-    memcpy(heap->buffer, heap->saved, heap->size);
+    rpmalloc_initialize();
 }
 
 void destroy_heap(Heap * heap)
 {
-    free_mem(heap->buffer, heap->size);
-}
-
-void set_heap(Heap * heap)
-{
-    current_heap = heap;
+    rpmalloc_finalize();
 }
 
 void * heap_alloc(uint32_t size)
 {
-    char * ret = (char*)mspace_malloc((mspace)current_heap->ms, size);
-    if (current_heap->first_alloc == NULL)
-        current_heap->first_alloc = ret;
+    thread_alloc.init();
+    void * ret = rpmalloc(size);
+    if (CUR_HEAP.first_alloc == NULL)
+        CUR_HEAP.first_alloc = ret;
     return ret;
 }
 
 void heap_dealloc(void * mem)
 {
-    if (mem == NULL)
-        return;
-    mspace msp = (mspace)current_heap->ms;
-    mchunkptr p = mem2chunk(mem);
-    mspace fm = (mspace)get_mstate_for(p);
-    if (fm != msp) {
-        if (fm == (mspace)main_heap.ms) {
-            std::cout << "Memory dealloc on main heap\n";
-    #ifdef _WIN32
-            __debugbreak();
-    #endif
-        }
-    }
-    mspace_free((mspace)current_heap->ms, mem);
+    thread_alloc.init();
+    rpfree(mem);
 }
 
 

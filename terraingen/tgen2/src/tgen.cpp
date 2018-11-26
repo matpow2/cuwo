@@ -29,25 +29,10 @@ const char * translate_path(char * path)
 }
 
 Heap main_heap;
-Heap sim_heap;
-Heap * gen_heap;
-static uint32_t tgen_generate_chunk_x;
-static uint32_t tgen_generate_chunk_y;
-static void tgen_generate_chunk_call()
-{
-    uint32_t x = tgen_generate_chunk_x;
-    uint32_t y = tgen_generate_chunk_y;
-
-    restore_heap(&main_heap);
-    set_heap(gen_heap);
-
-    call_x86_thiscall_3(
-        get_mem_va(VA_GENERATOR), (uint32_t)main_heap.first_alloc, x, y);
-}
 
 bool sim_add_region(char * region, uint32_t x, uint32_t y)
 {
-    uint32_t * r = tgen_get_region_ptr(sim_heap.first_alloc, x, y);
+    uint32_t * r = tgen_get_region_ptr(main_heap.first_alloc, x, y);
     if (*r != 0) {
         std::cout << "sim_add_region: Region already exists\n";
         return false;
@@ -58,7 +43,7 @@ bool sim_add_region(char * region, uint32_t x, uint32_t y)
 
 bool sim_remove_region(uint32_t x, uint32_t y)
 {
-    uint32_t * r = tgen_get_region_ptr(sim_heap.first_alloc, x, y);
+    uint32_t * r = tgen_get_region_ptr(main_heap.first_alloc, x, y);
     if (*r == 0) {
         std::cout << "sim_remove_region: Could not find region\n";
         return false;
@@ -69,7 +54,7 @@ bool sim_remove_region(uint32_t x, uint32_t y)
 
 bool sim_add_zone(Zone * z, uint32_t x, uint32_t y)
 {
-    uint32_t * r = tgen_get_region_ptr(sim_heap.first_alloc, x / 64, y / 64);
+    uint32_t * r = tgen_get_region_ptr(main_heap.first_alloc, x / 64, y / 64);
     if (*r == 0) {
         std::cout << "sim_add_zone: Could not find region\n";
         return false;
@@ -85,7 +70,7 @@ bool sim_add_zone(Zone * z, uint32_t x, uint32_t y)
 
 bool sim_remove_zone(uint32_t x, uint32_t y)
 {
-    uint32_t * r = tgen_get_region_ptr(sim_heap.first_alloc, x / 64, y / 64);
+    uint32_t * r = tgen_get_region_ptr(main_heap.first_alloc, x / 64, y / 64);
     if (*r == 0) {
         std::cout << "sim_remove_zone: Could not find region\n";
         return false;
@@ -201,12 +186,11 @@ static Creature * add_creature_return;
 
 static uint32_t get_creature_map()
 {
-    return (uint32_t)sim_heap.first_alloc + 4;
+    return (uint32_t)main_heap.first_alloc + 4;
 }
 
 static void sim_add_creature_call()
 {
-    set_heap(&sim_heap);
     uint64_t id = add_id;
     Creature * creature = (Creature*)alloc_mem(sizeof(Creature));
     // init_creature
@@ -232,8 +216,6 @@ static Creature * remove_creature;
 
 static void sim_remove_creature_call()
 {
-    set_heap(&sim_heap);
-
     Creature * c = remove_creature;
 
     // del_creature_in_map
@@ -276,14 +258,11 @@ static PacketQueue * out_queue;
 
 static void sim_init_in_queue()
 {
-    set_heap(&sim_heap);
     call_x86_thiscall_1(get_mem_va(INIT_PACKET_QUEUE), (uint32_t)in_queue);
 }
 
 static void sim_step_call()
 {
-    set_heap(&sim_heap);
-
     if (!in_queue_init)
         sim_init_in_queue();
     in_queue_init = false;
@@ -295,10 +274,10 @@ static void sim_step_call()
 
     call_x86_thiscall_1(get_mem_va(INIT_PACKET_QUEUE), (uint32_t)out_queue);
     call_x86_thiscall_4(get_mem_va(WORLD_SIM),
-                        (uint32_t)sim_heap.first_alloc,
+                        (uint32_t)main_heap.first_alloc,
                         step_dt, (uint32_t)out_queue, (uint32_t)in_queue);
     call_x86_thiscall_1(get_mem_va(0x4239F0), (uint32_t)in_queue);
-    // walk_map((char*)sim_heap.first_alloc + 4, show_creatures);
+    // walk_map((char*)main_heap.first_alloc + 4, show_creatures);
 }
 
 PacketQueue * sim_get_in_packets()
@@ -322,7 +301,6 @@ static PacketQueue * sim_prepare_in_packets()
 void sim_add_in_hit(HitPacket * p)
 {
     PacketQueue * q = sim_prepare_in_packets();
-    set_heap(&sim_heap);
     HitPacketList * l =
         (HitPacketList*)heap_alloc(sizeof(HitPacketList));
 
@@ -337,7 +315,6 @@ void sim_add_in_hit(HitPacket * p)
 void sim_add_in_passive(PassivePacket * p)
 {
     PacketQueue * q = sim_prepare_in_packets();
-    set_heap(&sim_heap);
     PassivePacketList * l =
         (PassivePacketList*)heap_alloc(sizeof(PassivePacketList));
 
@@ -365,19 +342,73 @@ void sim_step(uint32_t dt)
     run_with_stack(sim_step_call);
 }
 
-Heap * tgen_generate_chunk(uint32_t x, uint32_t y)
+static thread_local uint32_t x_param;
+static thread_local uint32_t y_param;
+
+static void tgen_generate_chunk_call()
 {
-    tgen_generate_chunk_x = x;
-    tgen_generate_chunk_y = y;
-    gen_heap = new Heap;
-    create_heap(gen_heap, GEN_HEAP_SIZE);
-    run_with_stack(tgen_generate_chunk_call);
-    return gen_heap;
+    uint32_t x = x_param;
+    uint32_t y = y_param;
+
+    call_x86_thiscall_3(
+        get_mem_va(VA_GENERATOR), (uint32_t)main_heap.first_alloc, x, y);
 }
 
-void tgen_destroy_chunk(Heap * ret)
+void tgen_generate_chunk(uint32_t x, uint32_t y)
 {
-    destroy_heap(ret);
+    x_param = x;
+    y_param = y;
+    run_with_stack(tgen_generate_chunk_call);
+}
+
+static void tgen_destroy_chunk_call()
+{
+    uint32_t x = x_param;
+    uint32_t y = y_param;
+
+    call_x86_thiscall_3(
+        get_mem_va(VA_DESTROY_ZONE), (uint32_t)main_heap.first_alloc, x, y);
+}
+
+void tgen_destroy_chunk(uint32_t x, uint32_t y)
+{
+    x_param = x;
+    y_param = y;
+    run_with_stack(tgen_destroy_chunk_call);
+}
+
+static void tgen_destroy_reg_seed_call()
+{
+    uint32_t x = x_param;
+    uint32_t y = y_param;
+
+    call_x86_thiscall_3(
+        get_mem_va(VA_DESTROY_REG_SEED),
+        (uint32_t)main_heap.first_alloc, x, y);
+}
+
+void tgen_destroy_reg_seed(uint32_t x, uint32_t y)
+{
+    x_param = x;
+    y_param = y;
+    run_with_stack(tgen_destroy_reg_seed_call);
+}
+
+static void tgen_destroy_reg_data_call()
+{
+    uint32_t x = x_param;
+    uint32_t y = y_param;
+
+    call_x86_thiscall_3(
+        get_mem_va(VA_DESTROY_REG_DATA),
+        (uint32_t)main_heap.first_alloc, x, y);
+}
+
+void tgen_destroy_reg_data(uint32_t x, uint32_t y)
+{
+    x_param = x;
+    y_param = y;
+    run_with_stack(tgen_destroy_reg_data_call);
 }
 
 void tgen_set_path(const char * dir)
@@ -459,9 +490,9 @@ void tgen_dump_mem(const char * filename)
 #endif
 }
 
-void * tgen_get_heap_base()
+Heap * tgen_get_heap()
 {
-    return main_heap.buffer;
+    return &main_heap;
 }
 
 void * tgen_get_manager()
