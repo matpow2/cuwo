@@ -88,6 +88,7 @@ if os.name == 'nt':
     libraries.append('advapi32')
 else:
     compile_args.append('-std=c++11')
+    compile_args.append('-std=c99')
     compile_args.append('-fpermissive')
 
 has_sse2 = False
@@ -121,6 +122,7 @@ for name in names:
     use_ext_args = ext_args.copy()
     if os.name == 'nt' and name == 'cuwo.win32c':
         use_ext_args['libraries'] = libraries + ['winmm']
+
     ext_modules.append(Extension(name, ['./%s.pyx' % name.replace('.', '/')],
                                  **use_ext_args))
 
