@@ -88,7 +88,7 @@ if os.name == 'nt':
     libraries.append('advapi32')
 else:
     compile_args.append('-std=c++11')
-    compile_args.append('-std=c99')
+    compile_args.append('-std=gnu99')
     compile_args.append('-fpermissive')
 
 has_sse2 = False
