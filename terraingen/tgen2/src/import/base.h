@@ -20,7 +20,6 @@
 #ifndef TERRAINGEN_BASE_H
 #define TERRAINGEN_BASE_H
 
-#include "crossrand.h"
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
@@ -124,7 +123,7 @@ uint32_t rand_imp()
 // import: srand
 void srand_imp(uint32_t value)
 {
-    hold_rand = (unsigned int)seed;
+    hold_rand = (unsigned int)value;
 }
 
 // import: IsProcessorFeaturePresent
