@@ -193,10 +193,9 @@ class Region:
     def add_ref_count(self, count):
         self.ref_count += count
         if self.ref_count <= 0:
+            self.world.gen_queue.put(('destroy_region', self.pos))
             del self.world.regions[self.pos]
             self.world = None
-            if self.has_data:
-                self.world.gen_queue.put(('destroy_region', self.pos))
 
     def update_data(self):
         self.has_data = True
@@ -249,6 +248,7 @@ class Chunk:
     data = None
     region = None
     last_visit = 0
+    destroyed = False
 
     def __init__(self, world, pos):
         self.world = world
@@ -281,13 +281,15 @@ class Chunk:
             for off_y in range(-1, 2):
                 new_reg_x = reg_x + off_x
                 new_reg_y = reg_y + off_y
+                if (new_reg_x < 0 or new_reg_y < 0 or
+                        new_reg_x >= 1024 or new_reg_y >= 1024):
+                    continue
                 yield (new_reg_x, new_reg_y)
 
     def on_chunk(self, f):
-        try:
-            self.data = f.result()
-        except asyncio.CancelledError:
+        if self.destroyed:
             return
+        self.data = f.result()
 
         for reg_pos in self.get_neighborhood_regions():
             self.world.regions[reg_pos].update_data()
@@ -327,9 +329,8 @@ class Chunk:
         pass
 
     def destroy(self):
-        self.gen_f.cancel()
-        if self.data is not None:
-            self.world.gen_queue.put(('destroy_chunk', self.data))
+        self.destroyed = True
+        self.world.gen_queue.put(('destroy_chunk', self.pos))
         for reg_pos in self.get_neighborhood_regions():
             self.world.regions[reg_pos].add_ref_count(-1)
         self.items = None
@@ -544,7 +545,7 @@ class World:
             args = data[1:]
             if cmd == 'gen':
                 pos, f = args
-                print('gen:', pos)
+                # print('gen:', pos)
                 res = tgen.generate(*pos)
                 def set_result():
                     try:
@@ -553,14 +554,14 @@ class World:
                         return
                 self.loop.call_soon_threadsafe(set_result)
             elif cmd == 'destroy_chunk':
-                chunk = args[0]
-                print('destroy chunk:', chunk.x, chunk.y)
+                pos = args[0]
+                # print('destroy chunk:', pos)
                 self.chunk_lock.acquire()
-                chunk.destroy()
+                tgen.destroy_chunk(*pos)
                 self.chunk_lock.release()
             elif cmd == 'destroy_region':
                 pos = args[0]
-                print('destroy region:', pos)
+                # print('destroy region:', pos)
                 self.chunk_lock.acquire()
                 tgen.destroy_region_seed(*pos)
                 tgen.destroy_region_data(*pos)

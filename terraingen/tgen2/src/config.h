@@ -18,9 +18,9 @@ static const uint32_t VA_CREATE_STRING_FROM_CSTR = 0x401A40;
 static const uint32_t VA_GENERATOR = 0x518630;
 static const uint32_t VA_GET_SECTOR = 0x406210;
 static const uint32_t VA_GET_SECTOR_CHUNK_DATA = 0x406290;
-static const uint32_t VA_DESTROY_ZONE = 0x4D75F0;
-static const uint32_t VA_DESTROY_REG_SEED = 0x4D74E0;
-static const uint32_t VA_DESTROY_REG_DATA = 0x4D7560;
+static const uint32_t VA_DESTROY_ZONE = 0x4D79F0;
+static const uint32_t VA_DESTROY_REG_SEED = 0x4D78E0;
+static const uint32_t VA_DESTROY_REG_DATA = 0x4D7960;
 static const uint32_t WORLD_SIM = 0x5322D0;
 static const uint32_t INIT_PACKET_QUEUE = 0x423510;
 

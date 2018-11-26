@@ -752,6 +752,10 @@ def destroy_region_seed(uint32_t x, uint32_t y):
     with nogil:
         tgen_destroy_reg_seed(x, y)
 
+def destroy_chunk(uint32_t x, uint32_t y):
+    with nogil:
+        tgen_destroy_chunk(x, y)
+
 def step(uint32_t dt):
     with nogil:
         sim_step(dt)

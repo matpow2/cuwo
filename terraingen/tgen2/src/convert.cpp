@@ -438,6 +438,7 @@ int main(int argc, char * argv[])
     tgen_init();
     std::cout << "generate" << '\n';
     tgen_generate_chunk(x, y);
+    tgen_destroy_chunk(x, y);
     uint32_t rx = x / 64;
     uint32_t ry = y / 64;
     char * r = tgen_get_region(tgen_get_manager(), rx, ry);
