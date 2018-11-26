@@ -126,6 +126,29 @@ use64
     ret
 '''
 
+direct_patch_input = [
+    # entity ID fix
+    # https://github.com/ChrisMiuchiz/Cube-World-GUID-Fix-Mod
+    # thanks to ChrisMiuchiz
+    # uint64_t get_entid(unsigned int a1, unsigned int a2, unsigned int a3)
+    # {
+    #     return 0x10000000000ULL + ((a1 + ((uint64_t)a2 << 16)) << 8) + a3;
+    # }
+    (0x4F3850, 0x4F387D,
+     '''
+     mov     eax, dword [esp + 8]
+     mov     edx, eax
+     shl     eax, 16
+     shr     edx, 16
+     add     eax, dword [esp + 4]
+     adc     edx, 0
+     shld    edx, eax, 8
+     shl     eax, 8
+     add     eax, dword [esp + 12]
+     adc     edx, 256
+     ret''')
+]
+
 class state:
     is_msvc = False
     output_c = ''
@@ -497,13 +520,31 @@ for (is_msvc, is_x64) in ((True, True), (False, True),
         patches = [(f'Patch{{(void*)&{func}_wrapc, {patch}, {table}}}')
                     for (patch, table, func) in state.patches]
 
+    direct_patches = []
+    for (addr, addr_end, asm) in direct_patch_input:
+        asm = get_asm('use32\n' + asm)
+        if addr_end is not None:
+            size = addr_end - addr
+            if len(asm) > size:
+                raise NotImplementedError()
+            asm += b'\x90' * (size - len(asm))
+        asm = encode_c(asm)
+        name = 'patch_%X_asm' % addr
+        state.output_c += f'static unsigned char {name}[] = \n{asm}\n\n;'
+        direct_patches.append(f'DirectPatch{{{hex(addr)}, &{name}[0], '
+                              f'sizeof {name}}}')
+
     imports = ',\n'.join(imports)
     patches = ',\n'.join(patches)
+    direct_patches = ',\n'.join(direct_patches)
     state.output_c += (f'std::unordered_map<std::string, Import> imports(\n'
                        f'{{\n{imports}\n}}\n);')
 
     state.output_c += (f'std::vector<Patch> patches(\n'
                        f'{{\n{patches}\n}}\n);')
+
+    state.output_c += (f'std::vector<DirectPatch> direct_patches(\n'
+                       f'{{\n{direct_patches}\n}}\n);')
 
     name = 'wrapper'
     if is_msvc:
@@ -517,3 +558,5 @@ for (is_msvc, is_x64) in ((True, True), (False, True),
         fp.write(state.output_c)
     with open(h_filename, 'w', encoding='utf-8') as fp:
         fp.write(state.output_h)
+
+# direct patches

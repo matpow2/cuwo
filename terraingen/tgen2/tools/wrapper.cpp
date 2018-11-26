@@ -642,7 +642,15 @@ static void TGEN_CDECL sub_46B620_wrapc()
 #endif
 }
 
-std::unordered_map<std::string, Import> imports(
+static unsigned char patch_4F3850_asm[] = 
+{
+0x8b, 0x44, 0x24, 0x8, 0x89, 0xc2, 0xc1, 0xe0, 0x10, 0xc1, 0xea, 0x10,
+0x3, 0x44, 0x24, 0x4, 0x83, 0xd2, 0x0, 0xf, 0xa4, 0xc2, 0x8, 0xc1,
+0xe0, 0x8, 0x3, 0x44, 0x24, 0xc, 0x81, 0xd2, 0x0, 0x1, 0x0, 0x0, 0xc3,
+0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90
+};
+
+;std::unordered_map<std::string, Import> imports(
 {
 {"free", Import{(void*)&free_imp_wrapc}},
 {"void * __cdecl operator new(unsigned int)", Import{(void*)&new_imp_wrapc}},
@@ -722,5 +730,9 @@ Patch{(void*)&sub_469530_wrapc, 0, SQLITE_TABLE+4*2},
 Patch{(void*)&sub_468330_wrapc, 0, SQLITE_TABLE+4*70},
 Patch{(void*)&sub_463500_wrapc, 0, SQLITE_TABLE+4*55},
 Patch{(void*)&sub_46B620_wrapc, 0, SQLITE_TABLE+4*96}
+}
+);std::vector<DirectPatch> direct_patches(
+{
+DirectPatch{0x4f3850, &patch_4F3850_asm[0], sizeof patch_4F3850_asm}
 }
 );

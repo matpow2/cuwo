@@ -332,7 +332,12 @@ static void do_patches()
         *(uint32_t*)p = (uint32_t)x86;
         p += 4;
         *p = 0xC3;
+    }
 
+    for (DirectPatch & patch : direct_patches) {
+        uint8_t * p = (uint8_t*)get_mem_va(patch.patch_addr);
+        assert(p != NULL);
+        memcpy(p, patch.asm_data, patch.asm_size);
     }
 
     // mov esp, ebp -> 89 ec

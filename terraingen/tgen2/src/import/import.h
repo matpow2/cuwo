@@ -26,5 +26,12 @@ struct Patch
     uint32_t patch_table;
 };
 
+struct DirectPatch
+{
+    uint32_t patch_addr;
+    unsigned char * asm_data;
+    unsigned int asm_size;
+};
+
 extern std::unordered_map<std::string, Import> imports;
 extern std::vector<Patch> patches;

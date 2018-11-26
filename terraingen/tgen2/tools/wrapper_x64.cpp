@@ -1674,7 +1674,15 @@ void * f = load_x86(imp.asm_data, imp.asm_size);\
 _run_with_stack = (uint32_t (*)(void*, void (*f)()))f;\
 }
 
-std::unordered_map<std::string, Import> imports(
+static unsigned char patch_4F3850_asm[] = 
+{
+0x8b, 0x44, 0x24, 0x8, 0x89, 0xc2, 0xc1, 0xe0, 0x10, 0xc1, 0xea, 0x10,
+0x3, 0x44, 0x24, 0x4, 0x83, 0xd2, 0x0, 0xf, 0xa4, 0xc2, 0x8, 0xc1,
+0xe0, 0x8, 0x3, 0x44, 0x24, 0xc, 0x81, 0xd2, 0x0, 0x1, 0x0, 0x0, 0xc3,
+0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90
+};
+
+;std::unordered_map<std::string, Import> imports(
 {
 {"free", Import{&free_imp_asm[0], sizeof free_imp_asm, (void*)&free_imp_wrapc}},
 {"void * __cdecl operator new(unsigned int)", Import{&new_imp_asm[0], sizeof new_imp_asm, (void*)&new_imp_wrapc}},
@@ -1770,5 +1778,9 @@ Patch{&sub_469530_asm[0], sizeof sub_469530_asm, (void*)&sub_469530_wrapc, 0,SQL
 Patch{&sub_468330_asm[0], sizeof sub_468330_asm, (void*)&sub_468330_wrapc, 0,SQLITE_TABLE+4*70},
 Patch{&sub_463500_asm[0], sizeof sub_463500_asm, (void*)&sub_463500_wrapc, 0,SQLITE_TABLE+4*55},
 Patch{&sub_46B620_asm[0], sizeof sub_46B620_asm, (void*)&sub_46B620_wrapc, 0,SQLITE_TABLE+4*96}
+}
+);std::vector<DirectPatch> direct_patches(
+{
+DirectPatch{0x4f3850, &patch_4F3850_asm[0], sizeof patch_4F3850_asm}
 }
 );
