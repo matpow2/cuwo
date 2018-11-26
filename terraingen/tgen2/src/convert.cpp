@@ -372,12 +372,9 @@ static void init_static()
 extern const char * translate_path(char * v);
 
 extern Heap main_heap;
-extern Heap sim_heap;
 
 static void do_heap_init(Heap * heap)
 {
-    set_heap(heap);
-
 #ifndef NDEBUG
     std::cout << "do entry point\n";
 #endif
@@ -409,14 +406,8 @@ void real_main()
     do_patches();
 
     create_heap(&main_heap, MAIN_HEAP_SIZE);
-    set_heap(&main_heap);
     init_static();
-
     do_heap_init(&main_heap);
-    save_heap(&main_heap);
-
-    create_heap(&sim_heap, SIM_HEAP_SIZE);
-    do_heap_init(&sim_heap);
 }
 
 void tgen_init()
@@ -438,19 +429,21 @@ static void dummy(Creature * addr)
 
 int main(int argc, char * argv[])
 {
+    uint32_t x = 32802;
+    uint32_t y = 32803;
     std::cout << "set seed" << '\n';
     void tgen_set_seed(uint32_t seed);
     tgen_set_seed(26879);
     std::cout << "init" << '\n';
     tgen_init();
     std::cout << "generate" << '\n';
-    Heap * h = tgen_generate_chunk(32802, 32803);
-    char * r = tgen_get_region(tgen_get_manager(), 32802 / 64, 32803 / 64);
-    Zone * z = tgen_get_zone(r, 32802, 32803);
+    tgen_generate_chunk(x, y);
+    tgen_destroy_chunk(x, y);
+    uint32_t rx = x / 64;
+    uint32_t ry = y / 64;
+    char * r = tgen_get_region(tgen_get_manager(), rx, ry);
+    Zone * z = tgen_get_zone(r, x, y);
     std::cout << "done" << '\n';
-
-    sim_add_region(r, 32802 / 64, 32803 / 64);
-    sim_add_zone(z, 32802, 32803);
 
     Creature * c = sim_add_creature(0);
     EntityData * e = &c->entity_data;

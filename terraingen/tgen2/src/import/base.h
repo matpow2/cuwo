@@ -100,13 +100,6 @@ uint32_t WSAStartup_imp(uint32_t version, uint32_t data)
 bool InitializeCriticalSectionAndSpinCount_imp(uint32_t crit_sec,
                                                uint32_t spincount)
 {
-#ifdef IMPL_CRITSEC
-    void * crit = (void*)crit_sec;
-    std::recursive_mutex * mut = new std::recursive_mutex();
-    memcpy(crit, &mut, sizeof(mut));
-    crit += sizeof(mut);
-    memcpy(crit, &spincount, sizeof(spincount));
-#endif
     return 1;
 }
 
@@ -114,13 +107,9 @@ bool InitializeCriticalSectionAndSpinCount_imp(uint32_t crit_sec,
 // stdcall
 void DeleteCriticalSection_imp(uint32_t critical_section)
 {
-#ifdef IMPL_CRITSEC
-    void * crit = (void*)critical_section;
-    std::recursive_mutex * mut;
-    memcpy(&mut, crit, sizeof(mut));
-    delete[] mut;
-#endif
+#ifndef NDEBUG
     std::cout << "DeleteCriticalSection" << std::endl;
+#endif
 }
 
 // import: rand
@@ -202,21 +191,27 @@ int32_t _setjmp_imp(uint32_t jmp_buf)
 // stdcall
 void InitializeCriticalSection_imp(uint32_t sect)
 {
+#ifndef NDEBUG
     std::cout << "Initialize critical section" << std::endl;
+#endif
 }
 
 // import: EnterCriticalSection
 // stdcall
 void EnterCriticalSection_imp(uint32_t sect)
 {
+#ifndef NDEBUG
     std::cout << "Enter critical section" << std::endl;
+#endif
 }
 
 // import: LeaveCriticalSection
 // stdcall
 void LeaveCriticalSection_imp(uint32_t sect)
 {
+#ifndef NDEBUG
     std::cout << "Leave critical section" << std::endl;
+#endif
 }
 
 // import: InterlockedCompareExchange

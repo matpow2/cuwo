@@ -9,9 +9,11 @@
 
 void tgen_init();
 void tgen_set_seed(uint32_t seed);
-Heap * tgen_generate_chunk(uint32_t x, uint32_t y);
-void tgen_destroy_chunk(Heap * heap);
-void * tgen_get_heap_base();
+void tgen_generate_chunk(uint32_t x, uint32_t y);
+void tgen_destroy_chunk(uint32_t x, uint32_t y);
+void tgen_destroy_reg_seed(uint32_t x, uint32_t y);
+void tgen_destroy_reg_data(uint32_t x, uint32_t y);
+Heap * tgen_get_heap();
 void tgen_dump_mem(const char * filename);
 void tgen_set_path(const char * dir);
 // uint32_t tgen_generate_debug_chunk(const char * filename,

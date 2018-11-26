@@ -7,6 +7,7 @@ set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/external)
 
 set(SRC
     ${SRC_DIR}/convert.cpp
+    ${SRC_DIR}/rpmalloc.c
     ${SRC_DIR}/mem.cpp
     ${SRC_DIR}/sqlite3.c
     ${SRC_DIR}/tgen.cpp

@@ -73,6 +73,7 @@ includes = ['./cuwo',
             './terraingen/tgen2/external',
             numpy.get_include()]
 
+libraries = []
 
 if os.name == 'nt':
     names.append('cuwo.win32c')
@@ -84,6 +85,7 @@ if os.name == 'nt':
     # compile_args.append('/Od')
     # undef_macros.append('NDEBUG')
     # link_args.append('-debug')
+    libraries.append('advapi32')
 else:
     compile_args.append('-std=c++11')
     compile_args.append('-fpermissive')
@@ -96,6 +98,7 @@ if platform.machine() in ('AMD64', 'x86', 'x86_64', 'i386', 'i686'):
 
 tgen_sources = [
     './terraingen/tgen2/src/convert.cpp',
+    './terraingen/tgen2/src/rpmalloc.c',
     './terraingen/tgen2/src/mem.cpp',
     './terraingen/tgen2/src/sqlite3.c',
     './terraingen/tgen2/src/tgen.cpp',
@@ -107,7 +110,8 @@ tgen_sources = [
 ext_args = dict(language='c++', include_dirs=includes,
                 extra_compile_args=compile_args,
                 extra_link_args=link_args,
-                define_macros=macros, undef_macros=undef_macros)
+                define_macros=macros, undef_macros=undef_macros,
+                libraries=libraries)
 
 tgen_module = Extension('cuwo.tgen', ['./cuwo/tgen.pyx'] + tgen_sources,
                         **ext_args)
@@ -116,7 +120,7 @@ ext_modules.append(tgen_module)
 for name in names:
     use_ext_args = ext_args.copy()
     if os.name == 'nt' and name == 'cuwo.win32c':
-        use_ext_args['libraries'] = ['winmm']
+        use_ext_args['libraries'] = libraries + ['winmm']
     ext_modules.append(Extension(name, ['./%s.pyx' % name.replace('.', '/')],
                                  **use_ext_args))
 
