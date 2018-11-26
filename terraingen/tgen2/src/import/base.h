@@ -112,16 +112,19 @@ void DeleteCriticalSection_imp(uint32_t critical_section)
 #endif
 }
 
+static thread_local unsigned int hold_rand = 1;
+
 // import: rand
 uint32_t rand_imp()
 {
-    return cross_rand();
+    hold_rand = hold_rand * 214013 + 2531011;
+    return (hold_rand >> 16) & 0x7FFF;
 }
 
 // import: srand
 void srand_imp(uint32_t value)
 {
-    cross_srand(value);
+    hold_rand = (unsigned int)seed;
 }
 
 // import: IsProcessorFeaturePresent
