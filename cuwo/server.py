@@ -544,7 +544,8 @@ class CubeWorldServer:
         self.world = World(self, self.loop, base.seed,
                            use_tgen=base.use_tgen,
                            use_entities=base.use_entities,
-                           chunk_retire_time=base.chunk_retire_time)
+                           chunk_retire_time=base.chunk_retire_time,
+                           debug=base.world_debug_info)
         if base.world_debug_file is not None:
             debug_fp = open(base.world_debug_file, 'wb')
             self.world.set_debug(debug_fp)

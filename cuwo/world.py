@@ -222,6 +222,8 @@ class Region:
             self.data = None
 
     def update_data(self):
+        if self.world is None:
+            return
         self.data = tgen.get_region(*self.pos)
 
     def update_seed(self):
@@ -362,6 +364,8 @@ class Chunk:
         for reg in self.get_neighborhood_regions(7):
             reg.decrement_seed_ref()
         self.items = None
+        if self.region:
+            self.region.remove(self)
         self.region = None
         self.data = None
         self.static_entities = None
@@ -378,7 +382,7 @@ class World:
     step_index = 0
 
     def __init__(self, loop, seed, use_tgen=True, use_entities=True,
-                 chunk_retire_time=None):
+                 chunk_retire_time=None, debug=False):
         if use_tgen:
             for name in ('data1.db', 'data4.db', 'Server.exe'):
                 path = os.path.join(self.data_path, name)
@@ -396,6 +400,14 @@ class World:
         self.entity_ids = IDPool(1)
         self.seed = seed
         self.chunk_retire_time = chunk_retire_time
+
+        if debug:
+            self.print_debug = print
+        else:
+            def dummy(*arg, **kw):
+                pass
+            self.print_debug = dummy
+
 
         if not self.use_tgen:
             return
@@ -488,9 +500,8 @@ class World:
             entity.hostile_type = constants.FRIENDLY_PLAYER_TYPE
 
         self.write_debug()
-        self.chunk_lock.acquire()
-        tgen.step(int(dt * 1000.0))
-        self.chunk_lock.release()
+        with self.chunk_lock:
+            tgen.step(int(dt * 1000.0))
 
         creatures = tgen.get_creatures()
         for entity_id, creature in creatures.items():
@@ -588,9 +599,9 @@ class World:
                 break
             cmd = data[0]
             args = data[1:]
+            self.print_debug(cmd, args)
             if cmd == 'gen':
                 pos, f = args
-                # print('gen:', pos)
                 res = tgen.generate(*pos)
                 def set_result():
                     try:
@@ -600,21 +611,20 @@ class World:
                 self.loop.call_soon_threadsafe(set_result)
             elif cmd == 'destroy_chunk':
                 pos = args[0]
-                # print('destroy chunk:', pos)
-                self.chunk_lock.acquire()
-                tgen.destroy_chunk(*pos)
-                self.chunk_lock.release()
+                with self.chunk_lock:
+                    tgen.destroy_chunk(*pos)
             elif cmd == 'destroy_region_data':
                 pos = args[0]
-                # print('destroy region data:', pos)
-                self.chunk_lock.acquire()
-                tgen.destroy_region_data(*pos)
-                self.chunk_lock.release()
+                with self.chunk_lock:
+                    tgen.destroy_region_data(*pos)
             elif cmd == 'destroy_region_seed':
                 pos = args[0]
-                # print('destroy region seed:', pos)
-                self.chunk_lock.acquire()
-                tgen.destroy_region_seed(*pos)
-                self.chunk_lock.release()
+                with self.chunk_lock:
+                    tgen.destroy_region_seed(*pos)
+            elif cmd == 'destroy_region':
+                pos = args[0]
+                with self.chunk_lock:
+                    tgen.destroy_region_seed(*pos)
+                    tgen.destroy_region_data(*pos)
             else:
                 raise NotImplementedError()

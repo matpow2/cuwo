@@ -35,6 +35,7 @@ file_log_format = '[%(asctime)s] %(message)s'
 
 # World debug
 world_debug_file = None
+world_debug_info = False
 
 # Profile file. Set to something other than None to enable.
 profile_file = None
