@@ -5310,23 +5310,23 @@ cdef class WrapMissionInfo:
     def mission_id(self, value):
         self.data[0].mission_id = value
     @property
-    def something5(self):
-        return self.data[0].something5
-    @something5.setter
-    def something5(self, value):
-        self.data[0].something5 = value
+    def mission_desc_id(self):
+        return self.data[0].mission_desc_id
+    @mission_desc_id.setter
+    def mission_desc_id(self, value):
+        self.data[0].mission_desc_id = value
     @property
-    def monster_id(self):
-        return self.data[0].monster_id
-    @monster_id.setter
-    def monster_id(self, value):
-        self.data[0].monster_id = value
+    def monster_race_id(self):
+        return self.data[0].monster_race_id
+    @monster_race_id.setter
+    def monster_race_id(self, value):
+        self.data[0].monster_race_id = value
     @property
-    def quest_level(self):
-        return self.data[0].quest_level
-    @quest_level.setter
-    def quest_level(self, value):
-        self.data[0].quest_level = value
+    def monster_level(self):
+        return self.data[0].monster_level
+    @monster_level.setter
+    def monster_level(self, value):
+        self.data[0].monster_level = value
     @property
     def something8(self):
         return self.data[0].something8
@@ -5340,17 +5340,17 @@ cdef class WrapMissionInfo:
     def state(self, value):
         self.data[0].state = value
     @property
-    def something10(self):
-        return self.data[0].something10
-    @something10.setter
-    def something10(self, value):
-        self.data[0].something10 = value
+    def progress_bar_current(self):
+        return self.data[0].progress_bar_current
+    @progress_bar_current.setter
+    def progress_bar_current(self, value):
+        self.data[0].progress_bar_current = value
     @property
-    def something11(self):
-        return self.data[0].something11
-    @something11.setter
-    def something11(self, value):
-        self.data[0].something11 = value
+    def progress_bar_max(self):
+        return self.data[0].progress_bar_max
+    @progress_bar_max.setter
+    def progress_bar_max(self, value):
+        self.data[0].progress_bar_max = value
     @property
     def chunk_x(self):
         return self.data[0].chunk_x
@@ -5509,65 +5509,53 @@ cdef class WrapMissionData:
         cdef void * buf = self.holder.alloc(sizeof(MissionData))
         self._init_ptr(<MissionData*>buf)
     @property
-    def dword0(self):
-        return self.data[0].dword0
-    @dword0.setter
-    def dword0(self, value):
-        self.data[0].dword0 = value
+    def origin_x(self):
+        return self.data[0].origin_x
+    @origin_x.setter
+    def origin_x(self, value):
+        self.data[0].origin_x = value
     @property
-    def dword4(self):
-        return self.data[0].dword4
-    @dword4.setter
-    def dword4(self, value):
-        self.data[0].dword4 = value
+    def origin_y(self):
+        return self.data[0].origin_y
+    @origin_y.setter
+    def origin_y(self, value):
+        self.data[0].origin_y = value
     @property
-    def dword8(self):
-        return self.data[0].dword8
-    @dword8.setter
-    def dword8(self, value):
-        self.data[0].dword8 = value
+    def size(self):
+        return self.data[0].size
+    @size.setter
+    def size(self, value):
+        self.data[0].size = value
     @property
-    def dwordC(self):
-        return self.data[0].dwordC
-    @dwordC.setter
-    def dwordC(self, value):
-        self.data[0].dwordC = value
+    def unk_float(self):
+        return self.data[0].unk_float
+    @unk_float.setter
+    def unk_float(self, value):
+        self.data[0].unk_float = value
     @property
-    def dword10(self):
-        return self.data[0].dword10
-    @dword10.setter
-    def dword10(self, value):
-        self.data[0].dword10 = value
+    def place_category_id(self):
+        return self.data[0].place_category_id
+    @place_category_id.setter
+    def place_category_id(self, value):
+        self.data[0].place_category_id = value
     @property
-    def dword14(self):
-        return self.data[0].dword14
-    @dword14.setter
-    def dword14(self, value):
-        self.data[0].dword14 = value
+    def place_item_id(self):
+        return self.data[0].place_item_id
+    @place_item_id.setter
+    def place_item_id(self, value):
+        self.data[0].place_item_id = value
     @property
-    def dword18(self):
-        return self.data[0].dword18
-    @dword18.setter
-    def dword18(self, value):
-        self.data[0].dword18 = value
+    def namegen_id(self):
+        return self.data[0].namegen_id
+    @namegen_id.setter
+    def namegen_id(self, value):
+        self.data[0].namegen_id = value
     @property
-    def dword1C(self):
-        return self.data[0].dword1C
-    @dword1C.setter
-    def dword1C(self, value):
-        self.data[0].dword1C = value
-    @property
-    def dword20(self):
-        return self.data[0].dword20
-    @dword20.setter
-    def dword20(self, value):
-        self.data[0].dword20 = value
-    @property
-    def dword24(self):
-        return self.data[0].dword24
-    @dword24.setter
-    def dword24(self, value):
-        self.data[0].dword24 = value
+    def area_level(self):
+        return self.data[0].area_level
+    @area_level.setter
+    def area_level(self, value):
+        self.data[0].area_level = value
     @property
     def dword28(self):
         return self.data[0].dword28

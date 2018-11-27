@@ -21,6 +21,7 @@ static const uint32_t VA_GET_SECTOR_CHUNK_DATA = 0x406290;
 static const uint32_t VA_DESTROY_ZONE = 0x4D79F0;
 static const uint32_t VA_DESTROY_REG_SEED = 0x4D78E0;
 static const uint32_t VA_DESTROY_REG_DATA = 0x4D7960;
+static const uint32_t VA_SET_BLOCK_DATA = 0x41FF00;
 static const uint32_t WORLD_SIM = 0x5322D0;
 static const uint32_t INIT_PACKET_QUEUE = 0x423510;
 

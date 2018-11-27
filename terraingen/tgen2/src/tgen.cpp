@@ -342,8 +342,37 @@ void sim_step(uint32_t dt)
     run_with_stack(sim_step_call);
 }
 
+
 static thread_local uint32_t x_param;
 static thread_local uint32_t y_param;
+static thread_local uint32_t z_param;
+
+static thread_local Color color_param;
+static thread_local Zone * zone_param;
+
+static void tgen_set_block_call()
+{
+    uint32_t x = x_param;
+    uint32_t y = y_param;
+    uint32_t z = z_param;
+    Color c = color_param;
+    Zone * zone = zone_param;
+
+    call_x86_thiscall_6(
+        get_mem_va(VA_SET_BLOCK_DATA),
+        (uint32_t)main_heap.first_alloc, x, y, z,
+        (uint32_t)&c, (uint32_t)zone);
+}
+
+void tgen_set_block(uint32_t x, uint32_t y, uint32_t z, Color c, Zone * zone)
+{
+    zone_param = zone;
+    x_param = x;
+    y_param = y;
+    z_param = y;
+    color_param = c;
+    run_with_stack(tgen_set_block_call);
+}
 
 static void tgen_generate_chunk_call()
 {

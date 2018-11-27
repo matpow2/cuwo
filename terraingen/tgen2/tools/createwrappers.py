@@ -388,7 +388,7 @@ def do_callers():
         setup_callers += '}'
 
     for callconv in ('thiscall', 'cdecl', 'stdcall'):
-        for i in range(5):
+        for i in range(7):
             asm = x86_call_base
             asm += f'start:\n'
             asm += f'use64\n'

@@ -537,15 +537,15 @@ struct MissionInfo
 {
   uint32_t something3;
   uint32_t mission_id;
-  uint32_t something5;
-  uint32_t monster_id;
-  uint32_t quest_level;
+  uint32_t mission_desc_id;
+  uint32_t monster_race_id;
+  uint32_t monster_level;
   uint8_t something8;
   // 0: ready, 1: progressing, 2: finished
   uint8_t state;
   char pad[2];
-  float something10;
-  float something11;
+  float progress_bar_current;
+  float progress_bar_max;
   uint32_t chunk_x;
   uint32_t chunk_y;
 };
@@ -554,23 +554,21 @@ struct MissionPacket
 {
   int32_t x; // divide by 8.0 to get region x
   int32_t y; // divide by 8.0 to get region y
-  uint32_t something1; // padding?
-  uint32_t something2; // also padding???
+  uint32_t something1; // set to zero, so maybe unused
+  uint32_t something2; // set to zero, so maybe unused
   MissionInfo info;
 };
 
 struct MissionData
 {
-  _DWORD dword0;
-  _DWORD dword4;
-  _DWORD dword8;
-  _DWORD dwordC;
-  _DWORD dword10;
-  _DWORD dword14;
-  _DWORD dword18;
-  _DWORD dword1C;
-  _DWORD dword20;
-  _DWORD dword24;
+  uint64_t origin_x;
+  uint64_t origin_y;
+  uint32_t size;
+  float unk_float;
+  _DWORD place_category_id; // from LOCATION_NAMES
+  _DWORD place_item_id; // from LOCATION_NAMES
+  _DWORD namegen_id;
+  _DWORD area_level;
   _DWORD dword28;
   MissionInfo info;
   _DWORD dword54;

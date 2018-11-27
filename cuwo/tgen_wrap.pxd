@@ -918,14 +918,14 @@ cdef class WrapPassivePacket:
 cdef struct MissionInfo:
     uint32_t something3
     uint32_t mission_id
-    uint32_t something5
-    uint32_t monster_id
-    uint32_t quest_level
+    uint32_t mission_desc_id
+    uint32_t monster_race_id
+    uint32_t monster_level
     uint8_t something8
     uint8_t state
     int8_t pad7[2]
-    float something10
-    float something11
+    float progress_bar_current
+    float progress_bar_max
     uint32_t chunk_x
     uint32_t chunk_y
 
@@ -952,22 +952,20 @@ cdef class WrapMissionPacket:
     cdef MemoryHolder holder
     cdef WrapMissionInfo _info
 cdef struct MissionData:
-    uint32_t dword0
-    uint32_t dword4
-    uint32_t dword8
-    uint32_t dwordC
-    uint32_t dword10
-    uint32_t dword14
-    uint32_t dword18
-    uint32_t dword1C
-    uint32_t dword20
-    uint32_t dword24
+    uint64_t origin_x
+    uint64_t origin_y
+    uint32_t size
+    float unk_float
+    uint32_t place_category_id
+    uint32_t place_item_id
+    uint32_t namegen_id
+    uint32_t area_level
     uint32_t dword28
     MissionInfo info
     uint32_t dword54
     uint32_t dword58
     uint8_t byte5C
-    int8_t pad15[3]
+    int8_t pad13[3]
 
 cdef class WrapMissionData:
     cdef void alloc(self)

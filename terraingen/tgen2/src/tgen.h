@@ -23,6 +23,7 @@ void tgen_read_str(void * addr, std::string & str);
 void tgen_read_wstr(void * addr, std::string & str);
 void tgen_set_breakpoint(uint32_t addr);
 void tgen_set_thread_breakpoint();
+void tgen_set_block(uint32_t x, uint32_t y, uint32_t z, Color c, Zone * zone);
 
 // sim
 bool sim_add_region(char * reg, uint32_t x, uint32_t y);

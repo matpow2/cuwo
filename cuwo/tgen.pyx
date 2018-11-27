@@ -40,7 +40,7 @@ from cuwo.tgen_wrap cimport (Zone, WrapZone, Color, Field, Creature,
                              WrapCreature, WrapPacketQueue,
                              WrapPassivePacket, WrapHitPacket,
                              MissionData, WrapMissionData,
-                             Region, WrapRegion)
+                             Region, WrapRegion, WrapColor)
 
 cdef extern from "tgen.h" nogil:
     struct Heap:
@@ -48,6 +48,9 @@ cdef extern from "tgen.h" nogil:
 
     struct CZone "Zone":
         pass
+
+    struct CColor "Color":
+        uint8_t r, g, b, a
 
     struct CCreature "Creature":
         pass
@@ -88,6 +91,8 @@ cdef extern from "tgen.h" nogil:
     void sim_add_in_hit(CHitPacket * packet)
     void sim_add_in_passive(CPassivePacket * packet)
     void tgen_set_breakpoint(uint32_t addr)
+    void tgen_set_block(uint32_t x, uint32_t y, uint32_t z,
+                        CColor c, CZone * zone)
 
 cdef extern from "tgen.h":
     void sim_get_creatures(void (*f)(CCreature*))
@@ -717,6 +722,16 @@ cdef class ZoneData(WrapZone):
                 blocks[(x, y, z)] = get_block_tuple(block)
         return blocks
 
+    def set_block(self, uint32_t x, uint32_t y, uint32_t z, tuple v):
+        cdef uint8_t r, g, b, a
+        (r, g, b, a) = v
+        cdef CColor c
+        c.r = r
+        c.g = g
+        c.b = b
+        c.a = a
+        tgen_set_block(x, y, z, c, <CZone*>self.data)
+
     def get_render(self, off_x=0.0, off_y=0.0):
         return RenderBuffer(self, off_x, off_y)
 
@@ -732,6 +747,16 @@ cdef class RegionData(WrapRegion):
         self.x = x
         self.y = y
         self._init_ptr(<Region*>tgen_get_region(tgen_get_manager(), x, y))
+
+def set_block(uint32_t x, uint32_t y, uint32_t z, tuple v):
+    cdef uint8_t r, g, b, a
+    (r, g, b, a) = v
+    cdef CColor c
+    c.r = r
+    c.g = g
+    c.b = b
+    c.a = a
+    tgen_set_block(x, y, z, c, <CZone*>0)
 
 def get_region(uint32_t x, uint32_t y):
     return RegionData(x, y)
