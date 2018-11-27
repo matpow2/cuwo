@@ -470,12 +470,14 @@ class World:
         self.dt = dt
         self.retire_chunks()
 
+        hits = self.hits
+        passives = self.passives
+        self.hits = []
+        self.passives = []
         if not self.use_entities:
             return None
 
-        tgen.set_in_packets(self.hits, self.passives)
-        self.hits = []
-        self.passives = []
+        tgen.set_in_packets(hits, passives)
 
         # we need to save and restore the hostile type so tgen does not
         # deallocate our entities
