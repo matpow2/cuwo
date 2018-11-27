@@ -470,6 +470,9 @@ class World:
         self.dt = dt
         self.retire_chunks()
 
+        if not self.use_entities:
+            return None
+
         tgen.set_in_packets(self.hits, self.passives)
         self.hits = []
         self.passives = []
