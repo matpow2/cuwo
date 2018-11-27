@@ -38,7 +38,9 @@ from libcpp.string cimport string
 from cuwo.tgen_wrap cimport (Zone, WrapZone, Color, Field, Creature,
                              PacketQueue, HitPacket, PassivePacket,
                              WrapCreature, WrapPacketQueue,
-                             WrapPassivePacket, WrapHitPacket)
+                             WrapPassivePacket, WrapHitPacket,
+                             MissionData, WrapMissionData,
+                             Region, WrapRegion)
 
 cdef extern from "tgen.h" nogil:
     struct Heap:
@@ -59,6 +61,11 @@ cdef extern from "tgen.h" nogil:
     struct CPassivePacket "PassivePacket":
         pass
 
+    struct CRegion "Region":
+        pass
+
+    CZone * tgen_get_zone(CRegion*, uint32_t x, uint32_t y)
+    CRegion * tgen_get_region(void*, uint32_t x, uint32_t y)
     void tgen_init()
     void tgen_set_path(const char * dir)
     void tgen_set_seed(uint32_t seed)
@@ -628,27 +635,8 @@ cdef class RenderBuffer:
 #     def get_type(self):
 #         return ENTITY_NAMES[self.entity_type]
 
-cdef char * get_region(void * manager, uint32_t reg_x, uint32_t reg_y) nogil:
-    cdef char * p = <char*>manager + 188
-    cdef uint32_t v = (<uint32_t*>p)[reg_y + reg_x * 1024]
-    return <char*>v
-
-cdef Zone * get_zone(void * manager, uint32_t zone_x, uint32_t zone_y) nogil:
-    cdef uint32_t reg_x = zone_x / 64
-    cdef uint32_t reg_y = zone_y / 64
-    cdef char * reg = get_region(manager, reg_x, reg_y)
-    if reg == NULL:
-        return NULL
-    cdef char * p = <char*>reg + 65560
-    zone_x %= 64
-    zone_y %= 64
-    cdef uint32_t v = (<uint32_t*>p)[zone_y + zone_x * 64]
-    return <Zone*>v
-
 cdef class ZoneData(WrapZone):
     # chunk::Zone
-
-    cdef char * region
 
     cdef public:
         uint32_t x, y
@@ -657,26 +645,21 @@ cdef class ZoneData(WrapZone):
         self.x = x
         self.y = y
 
+        cdef CRegion * r
+
         with nogil:
             tgen_generate_chunk(self.x, self.y)
-            self.data = get_zone(tgen_get_manager(), self.x, self.y)
-            self.region = get_region(tgen_get_manager(),
-                                     self.x / 64, self.y / 64)
+            r = tgen_get_region(tgen_get_manager(), self.x // 64, self.y // 64)
+            self.data = <Zone*>tgen_get_zone(r, self.x, self.y)
         self._init_ptr(self.data)
 
         if self.data == NULL:
             print('Invalid zone')
-        if self.region == NULL:
-            print('Invalid region')
-
-    def get_region(self):
-        return <uint32_t>self.region
 
     cdef _destroy(self):
         with nogil:
             tgen_destroy_chunk(self.x, self.y)
         self.data = NULL
-        self.region = NULL
 
     def destroy(self):
         self._destroy()
@@ -741,8 +724,20 @@ cdef class ZoneData(WrapZone):
         cdef Field * data = self.get_xy(x, y)
         return (<int64_t>(data.a) + <int64_t>(data.size))
 
+cdef class RegionData(WrapRegion):
+    cdef public:
+        uint32_t x, y
+
+    def __init__(self, uint32_t x, uint32_t y):
+        self.x = x
+        self.y = y
+        self._init_ptr(<Region*>tgen_get_region(tgen_get_manager(), x, y))
+
+def get_region(uint32_t x, uint32_t y):
+    return RegionData(x, y)
+
 def has_region(x, y):
-    return get_region(tgen_get_manager(), x, y) != NULL
+    return tgen_get_region(tgen_get_manager(), x, y) != NULL
 
 def destroy_region_data(uint32_t x, uint32_t y):
     with nogil:

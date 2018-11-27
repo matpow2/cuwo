@@ -121,6 +121,18 @@ def main():
 
     array_gens = {}
     vec_gens = {}
+
+    def get_array_wrap(typ, dim, ptr):
+        k = (typ, attr.dim, attr.ptr)
+        if k in array_gens:
+            wrap_name = array_gens[k]
+        else:
+            wrap_name = f'WrapArray{len(array_gens)}'
+            array_gens[k] = wrap_name
+            if attr.ptr and attr.dim:
+                get_array_wrap(typ, 1, False)
+        return wrap_name
+
     for s_name, s in struct_dict.items():
         if s.defs:
             for d in s.defs:
@@ -396,7 +408,7 @@ def main():
                     pyx.putln(f'return {value}')
                     setter.putln(f'{value} = value')
             elif attr.ptr or attr.dim is not None:
-                if attr.ptr:
+                if attr.ptr and attr.dim is None:
                     pyx.putln(f'if {value} == 0:')
                     pyx.indent()
                     pyx.putln('return None')
@@ -405,12 +417,8 @@ def main():
 
                 typ = attr.typ
                 value = f'&{value}[0]'
-                k = (typ, attr.dim)
-                if k in array_gens:
-                    wrap_name = array_gens[k]
-                else:
-                    wrap_name = f'WrapArray{len(array_gens)}'
-                    array_gens[k] = wrap_name
+
+                wrap_name = get_array_wrap(typ, attr.dim, attr.ptr)
 
                 python_obj_pxd.putln(f'cdef {wrap_name} _{prop_name}')
                 pyx.putln(f'if self._{prop_name} is not None:')
@@ -542,13 +550,17 @@ def main():
         tgendef.putln(f'static_assert(sizeof({s_name}) == {s.get_size()},')
         tgendef.putln(f'              "Invalid size for {s_name}");')
 
-    for (typ, max_index), name in array_gens.items():
+    for (typ, max_index, ptr), name in array_gens.items():
         pyx.putln(f'cdef class {name}:')
         pyx.indent()
 
+        ptr_array = ptr and max_index is not None
         c_typ = CYTHON_TYPES.get(typ, typ)
-        is_basic = c_typ in CYTHON_TYPES.values()
-        use_arr = not is_basic and max_index is not None
+        is_basic = c_typ in CYTHON_TYPES.values() and not ptr_array
+        if ptr_array:
+            c_typ = 'uint32_t'
+        use_arr = not is_basic and max_index is not None and max_index <= 32
+
         wrap_name = f'Wrap{typ}'
         pxd.putln(f'cdef class {name}:')
         pxd.indent()
@@ -569,7 +581,7 @@ def main():
         pyx.indent()
         if max_index is not None:
             pyx.putln(f'if index >= {max_index}: raise IndexError()')
-        if c_typ in CYTHON_TYPES.values():
+        if is_basic:
             pyx.putln('return self.data[index]')
         elif use_arr:
             for i in range(max_index):
@@ -578,6 +590,12 @@ def main():
                 init.putln(f'self._data{i}._init_ptr(&ptr[{i}])')
                 reset.putln(f'self._data{i}._set_ptr(&ptr[{i}])')
                 pyx.putln(f'if index == {i}: return self._data{i}')
+        elif ptr_array:
+            pyx.putln('if self.data[index] == 0: return None')
+            pyx.putln(f'cdef {wrap_name} ret = {get_new(wrap_name)}')
+            pyx.putln(f'ret.holder = self.holder')
+            pyx.putln(f'ret._init_ptr(<{typ}*>self.data[index])')
+            pyx.putln(f'return ret')
         else:
             pyx.putln(f'cdef {wrap_name} ret = {get_new(wrap_name)}')
             pyx.putln(f'ret.holder = self.holder')

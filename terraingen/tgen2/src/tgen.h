@@ -45,22 +45,37 @@ inline uint32_t * tgen_get_region_ptr(void * manager,
     return ((uint32_t*)p) + reg_y + reg_x * 1024;
 }
 
-inline char * tgen_get_region(void * manager,
-                              uint32_t reg_x, uint32_t reg_y)
+inline uint32_t * tgen_get_region_seed_ptr(void * manager,
+                                           uint32_t reg_x, uint32_t reg_y)
 {
-    return (char*)*tgen_get_region_ptr(manager, reg_x, reg_y);
+    char * p = (char*)manager + 0x4000BC;
+    return ((uint32_t*)p) + reg_y + reg_x * 1024;
 }
 
-inline uint32_t * tgen_get_zone_ptr(char * reg,
+inline RegionSeed * tgen_get_region_seed(void * manager,
+                                         uint32_t reg_x, uint32_t reg_y)
+{
+    return (RegionSeed*)*tgen_get_region_seed_ptr(manager, reg_x, reg_y);
+}
+
+inline Region * tgen_get_region(void * manager,
+                                uint32_t reg_x, uint32_t reg_y)
+{
+    return (Region*)*tgen_get_region_ptr(manager, reg_x, reg_y);
+}
+
+inline MissionData * tgen_get_mission(Region * reg, uint32_t x, uint32_t y)
+{
+    return (MissionData*)(reg->missions + (y + x*8));
+}
+
+inline uint32_t * tgen_get_zone_ptr(Region * reg,
                                     uint32_t zone_x, uint32_t zone_y)
 {
-    char * p = reg + 65560;
-    zone_x %= 64;
-    zone_y %= 64;
-    return ((uint32_t*)p) + zone_y + zone_x * 64;
+    return (uint32_t*)reg->zones + (zone_y%64 + (zone_x%64)*64);
 }
 
-inline Zone * tgen_get_zone(char * reg, uint32_t zone_x, uint32_t zone_y)
+inline Zone * tgen_get_zone(Region * reg, uint32_t zone_x, uint32_t zone_y)
 {
     uint32_t * p = tgen_get_zone_ptr(reg, zone_x, zone_y);
     return (Zone*)*p;

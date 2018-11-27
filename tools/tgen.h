@@ -533,13 +533,8 @@ struct PassivePacket
   uint64_t target_id2;
 };
 
-struct MissionData
+struct MissionInfo
 {
-  int32_t section_x; // divide by 8.0
-  int32_t section_y; // divide by 8.0
-  uint32_t something1; // padding?
-  uint32_t something2; // also padding???
-  // --
   uint32_t something3;
   uint32_t mission_id;
   uint32_t something5;
@@ -553,6 +548,75 @@ struct MissionData
   float something11;
   uint32_t chunk_x;
   uint32_t chunk_y;
+};
+
+struct MissionPacket
+{
+  int32_t x; // divide by 8.0 to get region x
+  int32_t y; // divide by 8.0 to get region y
+  uint32_t something1; // padding?
+  uint32_t something2; // also padding???
+  MissionInfo info;
+};
+
+struct MissionData
+{
+  _DWORD dword0;
+  _DWORD dword4;
+  _DWORD dword8;
+  _DWORD dwordC;
+  _DWORD dword10;
+  _DWORD dword14;
+  _DWORD dword18;
+  _DWORD dword1C;
+  _DWORD dword20;
+  _DWORD dword24;
+  _DWORD dword28;
+  MissionInfo info;
+  _DWORD dword54;
+  _DWORD dword58;
+  _BYTE byte5C;
+  char pad[3];
+};
+
+struct RegionSomething
+{
+  int field_0;
+  int field_4;
+  int field_8;
+  char field_C;
+  char pad[3];
+};
+
+struct RegionSeed
+{
+  _DWORD dword0;
+  _DWORD dword4;
+  _BYTE byte8;
+  char pad[3];
+  float floatC;
+  float float10;
+  _DWORD dword14;
+  _DWORD dword18;
+};
+
+struct Region
+{
+  _DWORD vtable;
+  char gap4[4];
+  _BYTE set_to_one1;
+  char gap9[3];
+  _DWORD set_to_one2;
+  _DWORD dword10;
+  _DWORD dword14;
+  RegionSomething regsomething[4096];
+  Zone * zones[4096];
+  MissionData missions[64];
+  char byte15A18;
+  char pad[3];
+  _DWORD dword15A1C;
+  _DWORD dword15A20;
+  _DWORD dword15A24;
 };
 
 // thanks to Ando for this
@@ -679,11 +743,11 @@ struct PassivePacketList
   PassivePacket data;
 };
 
-struct MissionDataList
+struct MissionPacketList
 {
-  MissionDataList * next;
-  MissionDataList * prev;
-  MissionData data;
+  MissionPacketList * next;
+  MissionPacketList * prev;
+  MissionPacket data;
 };
 
 struct PacketQueue
@@ -712,6 +776,6 @@ struct PacketQueue
   uint32_t damage_actions_size;
   PassivePacketList * passive_packets;
   uint32_t passive_packets_size;
-  MissionDataList * missions;
+  MissionPacketList * missions;
   uint32_t missions_size;
 };

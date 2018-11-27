@@ -537,6 +537,9 @@ class CubeWorldServer:
             self.send_loop = LoopingCall(self.send_update)
             self.send_loop.start(1.0 / base.network_fps, now=False)
 
+        self.mission_loop = LoopingCall(self.update_missions)
+        self.mission_loop.start(base.mission_update_rate, now=False)
+
         # world
         self.world = World(self, self.loop, base.seed,
                            use_tgen=base.use_tgen,
@@ -593,29 +596,64 @@ class CubeWorldServer:
         for item in iterate_packet_list(l):
             items.append(item.data.copy())
 
-    def handle_tgen_packets(self, packets):
-        if packets is None:
+    def handle_tgen_packets(self, in_queue):
+        if in_queue is None:
             return
 
         p = self.update_packet
-        self.add_packet_list(p.player_hits, packets.player_hits,
-                             packets.player_hits_size)
-        self.add_packet_list(p.sound_actions, packets.sound_actions,
-                             packets.sound_actions_size)
-        self.add_packet_list(p.particles, packets.particles,
-                             packets.particles_size)
-        self.add_packet_list(p.block_actions, packets.block_actions,
-                             packets.block_actions_size)
-        self.add_packet_list(p.shoot_actions, packets.shoot_packets,
-                             packets.shoot_packets_size)
-        self.add_packet_list(p.kill_actions, packets.kill_actions,
-                             packets.kill_actions_size)
-        self.add_packet_list(p.damage_actions, packets.damage_actions,
-                             packets.damage_actions_size)
-        self.add_packet_list(p.passive_actions, packets.passive_packets,
-                             packets.passive_packets_size)
-        self.add_packet_list(p.missions, packets.missions,
-                             packets.missions_size)
+        self.add_packet_list(p.player_hits, in_queue.player_hits,
+                             in_queue.player_hits_size)
+        self.add_packet_list(p.sound_actions, in_queue.sound_actions,
+                             in_queue.sound_actions_size)
+        self.add_packet_list(p.particles, in_queue.particles,
+                             in_queue.particles_size)
+        self.add_packet_list(p.block_actions, in_queue.block_actions,
+                             in_queue.block_actions_size)
+        self.add_packet_list(p.shoot_actions, in_queue.shoot_packets,
+                             in_queue.shoot_packets_size)
+        self.add_packet_list(p.kill_actions, in_queue.kill_actions,
+                             in_queue.kill_actions_size)
+        self.add_packet_list(p.damage_actions, in_queue.damage_actions,
+                             in_queue.damage_actions_size)
+        self.add_packet_list(p.passive_actions, in_queue.passive_packets,
+                             in_queue.passive_packets_size)
+        self.add_packet_list(p.missions, in_queue.missions,
+                             in_queue.missions_size)
+
+    def update_missions(self):
+        max_dist = self.config.base.mission_max_distance
+        p = self.update_packet
+        added = set()
+        for connection in self.players.values():
+            player_entity = connection.entity
+            if player_entity is None:
+                continue
+            min_pos = (player_entity.pos - max_dist) // constants.MISSION_SCALE
+            max_pos = (player_entity.pos + max_dist) // constants.MISSION_SCALE
+            for x in range(min_pos.x, max_pos.x):
+                for y in range(min_pos.y, max_pos.y):
+                    if (x, y) in added:
+                        continue
+                    added.add((x, y))
+                    reg_x = x // constants.MISSIONS_IN_REGION
+                    reg_y = y // constants.MISSIONS_IN_REGION
+                    try:
+                        reg = self.world.get_region((reg_x, reg_y))
+                    except KeyError:
+                        continue
+                    local_x = x % constants.MISSIONS_IN_REGION
+                    local_y = y % constants.MISSIONS_IN_REGION
+                    try:
+                        m = reg.get_mission((local_x, local_y))
+                    except (IndexError, ValueError):
+                        continue
+                    mission_packet = packets.MissionPacket()
+                    mission_packet.x = x
+                    mission_packet.y = y
+                    mission_packet.something1 = 0
+                    mission_packet.something2 = 0
+                    mission_packet.info = m.info
+                    p.missions.append(mission_packet)
 
     def send_entity_data(self, entity):
         base = self.config.base
@@ -643,7 +681,7 @@ class CubeWorldServer:
         new_close_players = {}
         for connection in self.players.values():
             player_entity = connection.entity
-            if entity is None:
+            if player_entity is None:
                 continue
             if entity is player_entity:
                 continue

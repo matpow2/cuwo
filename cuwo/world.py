@@ -187,18 +187,45 @@ class Region:
         self.pos = pos
         self.world = world
         self.chunks = set()
-        self.ref_count = 0
-        self.has_data = False
+        self.data_ref_count = 0
+        self.seed_ref_count = 0
+        self.data = None
 
-    def add_ref_count(self, count):
-        self.ref_count += count
-        if self.ref_count <= 0:
-            self.world.gen_queue.put(('destroy_region', self.pos))
+    def get_mission(self, pos):
+        if self.data is None:
+            raise ValueError()
+        x, y = pos
+        if x < 0 or y < 0 or x >= 8 or y >= 8:
+            raise IndexError()
+        return self.data.missions[x + y * 8]
+
+    def decrement_data_ref(self):
+        if self.data_ref_count <= 0:
+            raise ValueError()
+        self.data_ref_count -= 1
+        if self.data_ref_count == 0:
+            self.world.gen_queue.put(('destroy_region_data', self.pos))
+            self.check_refs()
+
+    def decrement_seed_ref(self):
+        if self.seed_ref_count <= 0:
+            raise ValueError()
+        self.seed_ref_count -= 1
+        if self.seed_ref_count == 0:
+            self.world.gen_queue.put(('destroy_region_seed', self.pos))
+            self.check_refs()
+
+    def check_refs(self):
+        if self.data_ref_count == 0 and self.seed_ref_count == 0:
             del self.world.regions[self.pos]
             self.world = None
+            self.data = None
 
     def update_data(self):
-        self.has_data = True
+        self.data = tgen.get_region(*self.pos)
+
+    def update_seed(self):
+        pass
 
     def add(self, data):
         self.chunks.add(data)
@@ -259,13 +286,11 @@ class Chunk:
         if not world.use_tgen:
             return
 
-        for reg_pos in self.get_neighborhood_regions():
-            try:
-                reg = self.world.regions[reg_pos]
-            except KeyError:
-                reg = Region(self.world, reg_pos)
-                self.world.regions[reg_pos] = reg
-            reg.add_ref_count(1)
+        # CW generates region in 3x3 neighborhood, seed in 7x7
+        for reg in self.get_neighborhood_regions(3):
+            reg.data_ref_count += 1
+        for reg in self.get_neighborhood_regions(7):
+            reg.seed_ref_count += 1
 
         self.gen_f = world.get_data(pos)
         self.gen_f.add_done_callback(self.on_chunk)
@@ -274,27 +299,28 @@ class Chunk:
         x, y = self.pos
         return (x // 64, y // 64)
 
-    def get_neighborhood_regions(self):
+    def get_neighborhood_regions(self, r):
         reg_x, reg_y = self.get_region_pos()
-        # CW generates region in 3x3 neighborhood
-        for off_x in range(-1, 2):
-            for off_y in range(-1, 2):
+        r = r // 2
+
+        for off_x in range(-r, r+1):
+            for off_y in range(-r, r+1):
                 new_reg_x = reg_x + off_x
                 new_reg_y = reg_y + off_y
                 if (new_reg_x < 0 or new_reg_y < 0 or
                         new_reg_x >= 1024 or new_reg_y >= 1024):
                     continue
-                yield (new_reg_x, new_reg_y)
+                yield self.world.create_region((new_reg_x, new_reg_y))
 
     def on_chunk(self, f):
         if self.destroyed:
             return
         self.data = f.result()
 
-        for reg_pos in self.get_neighborhood_regions():
-            self.world.regions[reg_pos].update_data()
+        for reg in self.get_neighborhood_regions(3):
+            reg.update_data()
 
-        self.region = self.world.regions[self.get_region_pos()]
+        self.region = self.world.create_region(self.get_region_pos())
         self.region.add(self)
 
         chunk_items = self.data.items
@@ -331,8 +357,10 @@ class Chunk:
     def destroy(self):
         self.destroyed = True
         self.world.gen_queue.put(('destroy_chunk', self.pos))
-        for reg_pos in self.get_neighborhood_regions():
-            self.world.regions[reg_pos].add_ref_count(-1)
+        for reg in self.get_neighborhood_regions(3):
+            reg.decrement_data_ref()
+        for reg in self.get_neighborhood_regions(7):
+            reg.decrement_seed_ref()
         self.items = None
         self.region = None
         self.data = None
@@ -506,6 +534,18 @@ class World:
             self.gen_queue.queue.clear()
         self.gen_queue.put(None)
 
+    def get_region(self, pos):
+        return self.regions[pos]
+
+    def create_region(self, pos):
+        try:
+            return self.regions[pos]
+        except KeyError:
+            pass
+        reg = Region(self, pos)
+        self.regions[pos] = reg
+        return reg
+
     def get_chunk(self, pos):
         try:
             return self.chunks[pos]
@@ -559,12 +599,17 @@ class World:
                 self.chunk_lock.acquire()
                 tgen.destroy_chunk(*pos)
                 self.chunk_lock.release()
-            elif cmd == 'destroy_region':
+            elif cmd == 'destroy_region_data':
                 pos = args[0]
-                # print('destroy region:', pos)
+                # print('destroy region data:', pos)
+                self.chunk_lock.acquire()
+                tgen.destroy_region_data(*pos)
+                self.chunk_lock.release()
+            elif cmd == 'destroy_region_seed':
+                pos = args[0]
+                # print('destroy region seed:', pos)
                 self.chunk_lock.acquire()
                 tgen.destroy_region_seed(*pos)
-                tgen.destroy_region_data(*pos)
                 self.chunk_lock.release()
             else:
                 raise NotImplementedError()

@@ -30,10 +30,10 @@ class BackendProtocol(asyncio.Protocol):
     def __init__(self, protocol):
         self.protocol = protocol
         protocol.relay_client = self
-        protocol.got_relay_client()
 
     def connection_made(self, transport):
         self.transport = transport
+        self.protocol.got_relay_client()
 
     def data_received(self, data):
         self.protocol.server_data_received(data)
@@ -81,6 +81,7 @@ class FrontendProtocol(asyncio.Protocol):
         self.relay_client.transport.write(write_packet(packet))
 
     def on_entity_update(self, packet):
+        return
         if packet.entity_id not in self.entities:
             entity = entitydata.EntityData()
             self.entities[packet.entity_id] = entity
@@ -90,7 +91,11 @@ class FrontendProtocol(asyncio.Protocol):
         packet.update_entity(entity)
 
     def on_server_update(self, packet):
-        pass
+        if packet.items_8:
+            print(packet.items_8)
+        if packet.missions:
+            print(packet.missions)
+        packet.missions = []
         # for static_entity in packet.static_entities:
         #     print(vars(static_entity.header))
 

@@ -915,11 +915,7 @@ cdef class WrapPassivePacket:
     cdef void _set_ptr(self, PassivePacket * ptr)
     cdef PassivePacket * data
     cdef MemoryHolder holder
-cdef struct MissionData:
-    int32_t section_x
-    int32_t section_y
-    uint32_t something1
-    uint32_t something2
+cdef struct MissionInfo:
     uint32_t something3
     uint32_t mission_id
     uint32_t something5
@@ -927,11 +923,51 @@ cdef struct MissionData:
     uint32_t quest_level
     uint8_t something8
     uint8_t state
-    int8_t pad11[2]
+    int8_t pad7[2]
     float something10
     float something11
     uint32_t chunk_x
     uint32_t chunk_y
+
+cdef class WrapMissionInfo:
+    cdef void alloc(self)
+    cdef void realloc(self)
+    cdef void _init_ptr(self, MissionInfo * ptr)
+    cdef void _set_ptr(self, MissionInfo * ptr)
+    cdef MissionInfo * data
+    cdef MemoryHolder holder
+cdef struct MissionPacket:
+    int32_t x
+    int32_t y
+    uint32_t something1
+    uint32_t something2
+    MissionInfo info
+
+cdef class WrapMissionPacket:
+    cdef void alloc(self)
+    cdef void realloc(self)
+    cdef void _init_ptr(self, MissionPacket * ptr)
+    cdef void _set_ptr(self, MissionPacket * ptr)
+    cdef MissionPacket * data
+    cdef MemoryHolder holder
+    cdef WrapMissionInfo _info
+cdef struct MissionData:
+    uint32_t dword0
+    uint32_t dword4
+    uint32_t dword8
+    uint32_t dwordC
+    uint32_t dword10
+    uint32_t dword14
+    uint32_t dword18
+    uint32_t dword1C
+    uint32_t dword20
+    uint32_t dword24
+    uint32_t dword28
+    MissionInfo info
+    uint32_t dword54
+    uint32_t dword58
+    uint8_t byte5C
+    int8_t pad15[3]
 
 cdef class WrapMissionData:
     cdef void alloc(self)
@@ -940,6 +976,65 @@ cdef class WrapMissionData:
     cdef void _set_ptr(self, MissionData * ptr)
     cdef MissionData * data
     cdef MemoryHolder holder
+    cdef WrapMissionInfo _info
+cdef struct RegionSomething:
+    int32_t field_0
+    int32_t field_4
+    int32_t field_8
+    int8_t field_C
+    int8_t pad4[3]
+
+cdef class WrapRegionSomething:
+    cdef void alloc(self)
+    cdef void realloc(self)
+    cdef void _init_ptr(self, RegionSomething * ptr)
+    cdef void _set_ptr(self, RegionSomething * ptr)
+    cdef RegionSomething * data
+    cdef MemoryHolder holder
+cdef struct RegionSeed:
+    uint32_t dword0
+    uint32_t dword4
+    uint8_t byte8
+    int8_t pad3[3]
+    float floatC
+    float float10
+    uint32_t dword14
+    uint32_t dword18
+
+cdef class WrapRegionSeed:
+    cdef void alloc(self)
+    cdef void realloc(self)
+    cdef void _init_ptr(self, RegionSeed * ptr)
+    cdef void _set_ptr(self, RegionSeed * ptr)
+    cdef RegionSeed * data
+    cdef MemoryHolder holder
+cdef struct Region:
+    uint32_t vtable
+    int8_t pad1[4]
+    uint8_t set_to_one1
+    int8_t pad3[3]
+    uint32_t set_to_one2
+    uint32_t dword10
+    uint32_t dword14
+    RegionSomething regsomething[4096]
+    uint32_t zones[4096]
+    MissionData missions[64]
+    int8_t byte15A18
+    int8_t pad11[3]
+    uint32_t dword15A1C
+    uint32_t dword15A20
+    uint32_t dword15A24
+
+cdef class WrapRegion:
+    cdef void alloc(self)
+    cdef void realloc(self)
+    cdef void _init_ptr(self, Region * ptr)
+    cdef void _set_ptr(self, Region * ptr)
+    cdef Region * data
+    cdef MemoryHolder holder
+    cdef WrapArray5 _regsomething
+    cdef WrapArray6 _zones
+    cdef WrapArray7 _missions
 cdef struct AirshipData:
     uint64_t entity_id
     uint8_t something1
@@ -981,8 +1076,8 @@ cdef class WrapHitPacketList:
     cdef void _set_ptr(self, HitPacketList * ptr)
     cdef HitPacketList * data
     cdef MemoryHolder holder
-    cdef WrapArray5 _next
-    cdef WrapArray5 _prev
+    cdef WrapArray8 _next
+    cdef WrapArray8 _prev
     cdef WrapHitPacket _data
 cdef struct ParticleDataList:
     uint32_t next
@@ -996,8 +1091,8 @@ cdef class WrapParticleDataList:
     cdef void _set_ptr(self, ParticleDataList * ptr)
     cdef ParticleDataList * data
     cdef MemoryHolder holder
-    cdef WrapArray6 _next
-    cdef WrapArray6 _prev
+    cdef WrapArray9 _next
+    cdef WrapArray9 _prev
     cdef WrapParticleData _data
 cdef struct SoundActionList:
     uint32_t next
@@ -1011,8 +1106,8 @@ cdef class WrapSoundActionList:
     cdef void _set_ptr(self, SoundActionList * ptr)
     cdef SoundActionList * data
     cdef MemoryHolder holder
-    cdef WrapArray7 _next
-    cdef WrapArray7 _prev
+    cdef WrapArray10 _next
+    cdef WrapArray10 _prev
     cdef WrapSoundAction _data
 cdef struct BlockActionList:
     uint32_t next
@@ -1026,8 +1121,8 @@ cdef class WrapBlockActionList:
     cdef void _set_ptr(self, BlockActionList * ptr)
     cdef BlockActionList * data
     cdef MemoryHolder holder
-    cdef WrapArray8 _next
-    cdef WrapArray8 _prev
+    cdef WrapArray11 _next
+    cdef WrapArray11 _prev
     cdef WrapBlockAction _data
 cdef struct ShootPacketList:
     uint32_t next
@@ -1041,8 +1136,8 @@ cdef class WrapShootPacketList:
     cdef void _set_ptr(self, ShootPacketList * ptr)
     cdef ShootPacketList * data
     cdef MemoryHolder holder
-    cdef WrapArray9 _next
-    cdef WrapArray9 _prev
+    cdef WrapArray12 _next
+    cdef WrapArray12 _prev
     cdef WrapShootPacket _data
 cdef struct ChunkItemList:
     uint32_t next
@@ -1056,8 +1151,8 @@ cdef class WrapChunkItemList:
     cdef void _set_ptr(self, ChunkItemList * ptr)
     cdef ChunkItemList * data
     cdef MemoryHolder holder
-    cdef WrapArray10 _next
-    cdef WrapArray10 _prev
+    cdef WrapArray13 _next
+    cdef WrapArray13 _prev
     cdef WrapChunkItemData _data
 cdef struct ChunkItemsList:
     uint32_t next
@@ -1073,9 +1168,9 @@ cdef class WrapChunkItemsList:
     cdef void _set_ptr(self, ChunkItemsList * ptr)
     cdef ChunkItemsList * data
     cdef MemoryHolder holder
-    cdef WrapArray11 _next
-    cdef WrapArray11 _prev
-    cdef WrapArray10 _data
+    cdef WrapArray14 _next
+    cdef WrapArray14 _prev
+    cdef WrapArray13 _data
 cdef struct StaticEntityList:
     uint32_t next
     uint32_t prev
@@ -1088,8 +1183,8 @@ cdef class WrapStaticEntityList:
     cdef void _set_ptr(self, StaticEntityList * ptr)
     cdef StaticEntityList * data
     cdef MemoryHolder holder
-    cdef WrapArray12 _next
-    cdef WrapArray12 _prev
+    cdef WrapArray15 _next
+    cdef WrapArray15 _prev
     cdef WrapStaticEntityHeader _data
 cdef struct Items8List_2:
     uint32_t next
@@ -1103,8 +1198,8 @@ cdef class WrapItems8List_2:
     cdef void _set_ptr(self, Items8List_2 * ptr)
     cdef Items8List_2 * data
     cdef MemoryHolder holder
-    cdef WrapArray13 _next
-    cdef WrapArray13 _prev
+    cdef WrapArray16 _next
+    cdef WrapArray16 _prev
     cdef carray _data
 cdef struct Items8List_1:
     uint32_t next
@@ -1119,8 +1214,8 @@ cdef class WrapItems8List_1:
     cdef void _set_ptr(self, Items8List_1 * ptr)
     cdef Items8List_1 * data
     cdef MemoryHolder holder
-    cdef WrapArray14 _next
-    cdef WrapArray14 _prev
+    cdef WrapArray17 _next
+    cdef WrapArray17 _prev
     cdef WrapItems8List_2 _data
 cdef struct PickupActionList:
     uint32_t next
@@ -1134,8 +1229,8 @@ cdef class WrapPickupActionList:
     cdef void _set_ptr(self, PickupActionList * ptr)
     cdef PickupActionList * data
     cdef MemoryHolder holder
-    cdef WrapArray15 _next
-    cdef WrapArray15 _prev
+    cdef WrapArray18 _next
+    cdef WrapArray18 _prev
     cdef WrapPickupAction _data
 cdef struct KillActionList:
     uint32_t next
@@ -1149,8 +1244,8 @@ cdef class WrapKillActionList:
     cdef void _set_ptr(self, KillActionList * ptr)
     cdef KillActionList * data
     cdef MemoryHolder holder
-    cdef WrapArray16 _next
-    cdef WrapArray16 _prev
+    cdef WrapArray19 _next
+    cdef WrapArray19 _prev
     cdef WrapKillAction _data
 cdef struct DamageActionList:
     uint32_t next
@@ -1164,8 +1259,8 @@ cdef class WrapDamageActionList:
     cdef void _set_ptr(self, DamageActionList * ptr)
     cdef DamageActionList * data
     cdef MemoryHolder holder
-    cdef WrapArray17 _next
-    cdef WrapArray17 _prev
+    cdef WrapArray20 _next
+    cdef WrapArray20 _prev
     cdef WrapDamageAction _data
 cdef struct PassivePacketList:
     uint32_t next
@@ -1179,24 +1274,24 @@ cdef class WrapPassivePacketList:
     cdef void _set_ptr(self, PassivePacketList * ptr)
     cdef PassivePacketList * data
     cdef MemoryHolder holder
-    cdef WrapArray18 _next
-    cdef WrapArray18 _prev
+    cdef WrapArray21 _next
+    cdef WrapArray21 _prev
     cdef WrapPassivePacket _data
-cdef struct MissionDataList:
+cdef struct MissionPacketList:
     uint32_t next
     uint32_t prev
-    MissionData data
+    MissionPacket data
 
-cdef class WrapMissionDataList:
+cdef class WrapMissionPacketList:
     cdef void alloc(self)
     cdef void realloc(self)
-    cdef void _init_ptr(self, MissionDataList * ptr)
-    cdef void _set_ptr(self, MissionDataList * ptr)
-    cdef MissionDataList * data
+    cdef void _init_ptr(self, MissionPacketList * ptr)
+    cdef void _set_ptr(self, MissionPacketList * ptr)
+    cdef MissionPacketList * data
     cdef MemoryHolder holder
-    cdef WrapArray19 _next
-    cdef WrapArray19 _prev
-    cdef WrapMissionData _data
+    cdef WrapArray22 _next
+    cdef WrapArray22 _prev
+    cdef WrapMissionPacket _data
 cdef struct PacketQueue:
     uint32_t player_hits
     uint32_t player_hits_size
@@ -1232,19 +1327,19 @@ cdef class WrapPacketQueue:
     cdef void _set_ptr(self, PacketQueue * ptr)
     cdef PacketQueue * data
     cdef MemoryHolder holder
-    cdef WrapArray5 _player_hits
-    cdef WrapArray7 _sound_actions
-    cdef WrapArray6 _particles
-    cdef WrapArray8 _block_actions
-    cdef WrapArray9 _shoot_packets
-    cdef WrapArray11 _chunk_items
-    cdef WrapArray12 _static_entities
-    cdef WrapArray14 _items_8
-    cdef WrapArray15 _pickup_actions
-    cdef WrapArray16 _kill_actions
-    cdef WrapArray17 _damage_actions
-    cdef WrapArray18 _passive_packets
-    cdef WrapArray19 _missions
+    cdef WrapArray8 _player_hits
+    cdef WrapArray10 _sound_actions
+    cdef WrapArray9 _particles
+    cdef WrapArray11 _block_actions
+    cdef WrapArray12 _shoot_packets
+    cdef WrapArray14 _chunk_items
+    cdef WrapArray15 _static_entities
+    cdef WrapArray17 _items_8
+    cdef WrapArray18 _pickup_actions
+    cdef WrapArray19 _kill_actions
+    cdef WrapArray20 _damage_actions
+    cdef WrapArray21 _passive_packets
+    cdef WrapArray22 _missions
 cdef class WrapArray0:
     cdef MemoryHolder holder
     cdef WrapItemUpgrade _data0
@@ -1315,79 +1410,94 @@ cdef class WrapArray4:
     cdef void _set_ptr(self, Field * ptr)
 cdef class WrapArray5:
     cdef MemoryHolder holder
+    cdef RegionSomething * data
+    cdef void _init_ptr(self, RegionSomething * ptr)
+    cdef void _set_ptr(self, RegionSomething * ptr)
+cdef class WrapArray6:
+    cdef MemoryHolder holder
+    cdef uint32_t * data
+    cdef void _init_ptr(self, uint32_t * ptr)
+    cdef void _set_ptr(self, uint32_t * ptr)
+cdef class WrapArray7:
+    cdef MemoryHolder holder
+    cdef MissionData * data
+    cdef void _init_ptr(self, MissionData * ptr)
+    cdef void _set_ptr(self, MissionData * ptr)
+cdef class WrapArray8:
+    cdef MemoryHolder holder
     cdef HitPacketList * data
     cdef void _init_ptr(self, HitPacketList * ptr)
     cdef void _set_ptr(self, HitPacketList * ptr)
-cdef class WrapArray6:
+cdef class WrapArray9:
     cdef MemoryHolder holder
     cdef ParticleDataList * data
     cdef void _init_ptr(self, ParticleDataList * ptr)
     cdef void _set_ptr(self, ParticleDataList * ptr)
-cdef class WrapArray7:
+cdef class WrapArray10:
     cdef MemoryHolder holder
     cdef SoundActionList * data
     cdef void _init_ptr(self, SoundActionList * ptr)
     cdef void _set_ptr(self, SoundActionList * ptr)
-cdef class WrapArray8:
+cdef class WrapArray11:
     cdef MemoryHolder holder
     cdef BlockActionList * data
     cdef void _init_ptr(self, BlockActionList * ptr)
     cdef void _set_ptr(self, BlockActionList * ptr)
-cdef class WrapArray9:
+cdef class WrapArray12:
     cdef MemoryHolder holder
     cdef ShootPacketList * data
     cdef void _init_ptr(self, ShootPacketList * ptr)
     cdef void _set_ptr(self, ShootPacketList * ptr)
-cdef class WrapArray10:
+cdef class WrapArray13:
     cdef MemoryHolder holder
     cdef ChunkItemList * data
     cdef void _init_ptr(self, ChunkItemList * ptr)
     cdef void _set_ptr(self, ChunkItemList * ptr)
-cdef class WrapArray11:
+cdef class WrapArray14:
     cdef MemoryHolder holder
     cdef ChunkItemsList * data
     cdef void _init_ptr(self, ChunkItemsList * ptr)
     cdef void _set_ptr(self, ChunkItemsList * ptr)
-cdef class WrapArray12:
+cdef class WrapArray15:
     cdef MemoryHolder holder
     cdef StaticEntityList * data
     cdef void _init_ptr(self, StaticEntityList * ptr)
     cdef void _set_ptr(self, StaticEntityList * ptr)
-cdef class WrapArray13:
+cdef class WrapArray16:
     cdef MemoryHolder holder
     cdef Items8List_2 * data
     cdef void _init_ptr(self, Items8List_2 * ptr)
     cdef void _set_ptr(self, Items8List_2 * ptr)
-cdef class WrapArray14:
+cdef class WrapArray17:
     cdef MemoryHolder holder
     cdef Items8List_1 * data
     cdef void _init_ptr(self, Items8List_1 * ptr)
     cdef void _set_ptr(self, Items8List_1 * ptr)
-cdef class WrapArray15:
+cdef class WrapArray18:
     cdef MemoryHolder holder
     cdef PickupActionList * data
     cdef void _init_ptr(self, PickupActionList * ptr)
     cdef void _set_ptr(self, PickupActionList * ptr)
-cdef class WrapArray16:
+cdef class WrapArray19:
     cdef MemoryHolder holder
     cdef KillActionList * data
     cdef void _init_ptr(self, KillActionList * ptr)
     cdef void _set_ptr(self, KillActionList * ptr)
-cdef class WrapArray17:
+cdef class WrapArray20:
     cdef MemoryHolder holder
     cdef DamageActionList * data
     cdef void _init_ptr(self, DamageActionList * ptr)
     cdef void _set_ptr(self, DamageActionList * ptr)
-cdef class WrapArray18:
+cdef class WrapArray21:
     cdef MemoryHolder holder
     cdef PassivePacketList * data
     cdef void _init_ptr(self, PassivePacketList * ptr)
     cdef void _set_ptr(self, PassivePacketList * ptr)
-cdef class WrapArray19:
+cdef class WrapArray22:
     cdef MemoryHolder holder
-    cdef MissionDataList * data
-    cdef void _init_ptr(self, MissionDataList * ptr)
-    cdef void _set_ptr(self, MissionDataList * ptr)
+    cdef MissionPacketList * data
+    cdef void _init_ptr(self, MissionPacketList * ptr)
+    cdef void _set_ptr(self, MissionPacketList * ptr)
 cdef class WrapItemWithHeaderVec:
     cdef uint32_t * data
     cdef MemoryHolder holder

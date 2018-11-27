@@ -690,12 +690,8 @@ struct PassivePacket // size 40
 };
 static_assert(sizeof(PassivePacket) == 40,
               "Invalid size for PassivePacket");
-struct MissionData // size 56
+struct MissionInfo // size 40
 {
-    int32_t section_x;
-    int32_t section_y;
-    uint32_t something1;
-    uint32_t something2;
     uint32_t something3;
     uint32_t mission_id;
     uint32_t something5;
@@ -703,14 +699,88 @@ struct MissionData // size 56
     uint32_t quest_level;
     uint8_t something8;
     uint8_t state;
-    int8_t pad11[2];
+    int8_t pad7[2];
     float something10;
     float something11;
     uint32_t chunk_x;
     uint32_t chunk_y;
 };
-static_assert(sizeof(MissionData) == 56,
+static_assert(sizeof(MissionInfo) == 40,
+              "Invalid size for MissionInfo");
+struct MissionPacket // size 56
+{
+    int32_t x;
+    int32_t y;
+    uint32_t something1;
+    uint32_t something2;
+    MissionInfo info;
+};
+static_assert(sizeof(MissionPacket) == 56,
+              "Invalid size for MissionPacket");
+struct MissionData // size 96
+{
+    uint32_t dword0;
+    uint32_t dword4;
+    uint32_t dword8;
+    uint32_t dwordC;
+    uint32_t dword10;
+    uint32_t dword14;
+    uint32_t dword18;
+    uint32_t dword1C;
+    uint32_t dword20;
+    uint32_t dword24;
+    uint32_t dword28;
+    MissionInfo info;
+    uint32_t dword54;
+    uint32_t dword58;
+    uint8_t byte5C;
+    int8_t pad15[3];
+};
+static_assert(sizeof(MissionData) == 96,
               "Invalid size for MissionData");
+struct RegionSomething // size 16
+{
+    int32_t field_0;
+    int32_t field_4;
+    int32_t field_8;
+    int8_t field_C;
+    int8_t pad4[3];
+};
+static_assert(sizeof(RegionSomething) == 16,
+              "Invalid size for RegionSomething");
+struct RegionSeed // size 28
+{
+    uint32_t dword0;
+    uint32_t dword4;
+    uint8_t byte8;
+    int8_t pad3[3];
+    float floatC;
+    float float10;
+    uint32_t dword14;
+    uint32_t dword18;
+};
+static_assert(sizeof(RegionSeed) == 28,
+              "Invalid size for RegionSeed");
+struct Region // size 88104
+{
+    uint32_t vtable;
+    int8_t pad1[4];
+    uint8_t set_to_one1;
+    int8_t pad3[3];
+    uint32_t set_to_one2;
+    uint32_t dword10;
+    uint32_t dword14;
+    RegionSomething regsomething[4096];
+    uint32_t zones[4096];
+    MissionData missions[64];
+    int8_t byte15A18;
+    int8_t pad11[3];
+    uint32_t dword15A1C;
+    uint32_t dword15A20;
+    uint32_t dword15A24;
+};
+static_assert(sizeof(Region) == 88104,
+              "Invalid size for Region");
 struct AirshipData // size 128
 {
     uint64_t entity_id;
@@ -846,14 +916,14 @@ struct PassivePacketList // size 48
 };
 static_assert(sizeof(PassivePacketList) == 48,
               "Invalid size for PassivePacketList");
-struct MissionDataList // size 64
+struct MissionPacketList // size 64
 {
     uint32_t next;
     uint32_t prev;
-    MissionData data;
+    MissionPacket data;
 };
-static_assert(sizeof(MissionDataList) == 64,
-              "Invalid size for MissionDataList");
+static_assert(sizeof(MissionPacketList) == 64,
+              "Invalid size for MissionPacketList");
 struct PacketQueue // size 104
 {
     uint32_t player_hits;

@@ -59,7 +59,7 @@ bool sim_add_zone(Zone * z, uint32_t x, uint32_t y)
         std::cout << "sim_add_zone: Could not find region\n";
         return false;
     }
-    uint32_t * zz = tgen_get_zone_ptr((char*)*r, x, y);
+    uint32_t * zz = tgen_get_zone_ptr((Region*)*r, x, y);
     if (*zz != 0) {
         std::cout << "sim_add_zone: Zone already exists\n";
         return false;
@@ -75,7 +75,7 @@ bool sim_remove_zone(uint32_t x, uint32_t y)
         std::cout << "sim_remove_zone: Could not find region\n";
         return false;
     }
-    uint32_t * zz = tgen_get_zone_ptr((char*)*r, x, y);
+    uint32_t * zz = tgen_get_zone_ptr((Region*)*r, x, y);
     if (*zz == 0) {
         std::cout << "sim_remove_zone: Could not find zone\n";
         return false;

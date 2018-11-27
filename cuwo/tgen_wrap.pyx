@@ -5253,25 +5253,25 @@ cdef class WrapPassivePacket:
     def set_ptr(self, WrapPassivePacket v):
         self.holder = v.holder
         self._set_ptr(v.data)
-cdef class WrapMissionData:
+cdef class WrapMissionInfo:
     def get_addr(self):
         return <uintptr_t>self.data
     def __bytes__(self):
         cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
         return ret
     def read(self, ByteReader reader):
-        reader.read_c(self.data, sizeof(MissionData))
+        reader.read_c(self.data, sizeof(MissionInfo))
     def write(self, ByteWriter writer):
-        writer.write_c(self.data, sizeof(MissionData))
+        writer.write_c(self.data, sizeof(MissionInfo))
     def cast(self, object klass):
-        cdef WrapMissionData c = klass.__new__(klass)
+        cdef WrapMissionInfo c = klass.__new__(klass)
         c.holder = self.holder
         c._init_ptr(self.data)
         return c
     def copy(self):
-        cdef WrapMissionData inst = WrapMissionData.__new__(WrapMissionData)
+        cdef WrapMissionInfo inst = WrapMissionInfo.__new__(WrapMissionInfo)
         inst.alloc()
-        memcpy(inst.data, self.data, sizeof(MissionData))
+        memcpy(inst.data, self.data, sizeof(MissionInfo))
         return inst
     def __init__(self):
         self.alloc()
@@ -5279,48 +5279,24 @@ cdef class WrapMissionData:
     def make_standalone_copy(self):
         if self.holder is not None:
             return
-        cdef MissionData * old_data = self.data
+        cdef MissionInfo * old_data = self.data
         self.realloc()
-        memcpy(self.data, old_data, sizeof(MissionData))
+        memcpy(self.data, old_data, sizeof(MissionInfo))
     def make_standalone_reset(self):
         if self.holder is not None:
-            memset(self.data, 0, sizeof(MissionData))
+            memset(self.data, 0, sizeof(MissionInfo))
             return
-        cdef MissionData * old_data = self.data
+        cdef MissionInfo * old_data = self.data
         self.realloc()
-        memset(self.data, 0, sizeof(MissionData))
+        memset(self.data, 0, sizeof(MissionInfo))
     cdef void realloc(self):
         self.holder = MemoryHolder.__new__(MemoryHolder)
-        cdef void * buf = self.holder.alloc(sizeof(MissionData))
-        self._set_ptr(<MissionData*>buf)
+        cdef void * buf = self.holder.alloc(sizeof(MissionInfo))
+        self._set_ptr(<MissionInfo*>buf)
     cdef void alloc(self):
         self.holder = MemoryHolder.__new__(MemoryHolder)
-        cdef void * buf = self.holder.alloc(sizeof(MissionData))
-        self._init_ptr(<MissionData*>buf)
-    @property
-    def section_x(self):
-        return self.data[0].section_x
-    @section_x.setter
-    def section_x(self, value):
-        self.data[0].section_x = value
-    @property
-    def section_y(self):
-        return self.data[0].section_y
-    @section_y.setter
-    def section_y(self, value):
-        self.data[0].section_y = value
-    @property
-    def something1(self):
-        return self.data[0].something1
-    @something1.setter
-    def something1(self, value):
-        self.data[0].something1 = value
-    @property
-    def something2(self):
-        return self.data[0].something2
-    @something2.setter
-    def something2(self, value):
-        self.data[0].something2 = value
+        cdef void * buf = self.holder.alloc(sizeof(MissionInfo))
+        self._init_ptr(<MissionInfo*>buf)
     @property
     def something3(self):
         return self.data[0].something3
@@ -5389,11 +5365,576 @@ cdef class WrapMissionData:
         self.data[0].chunk_y = value
     def reset(self):
         memset(self.data, 0, sizeof(self.data[0]))
+    cdef void _init_ptr(self, MissionInfo * ptr):
+        self.data = ptr
+    cdef void _set_ptr(self, MissionInfo * ptr):
+        self.data = ptr
+    def set_ptr(self, WrapMissionInfo v):
+        self.holder = v.holder
+        self._set_ptr(v.data)
+cdef class WrapMissionPacket:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(MissionPacket))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(MissionPacket))
+    def cast(self, object klass):
+        cdef WrapMissionPacket c = klass.__new__(klass)
+        c.holder = self.holder
+        c._init_ptr(self.data)
+        return c
+    def copy(self):
+        cdef WrapMissionPacket inst = WrapMissionPacket.__new__(WrapMissionPacket)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(MissionPacket))
+        return inst
+    def __init__(self):
+        self.alloc()
+
+    def make_standalone_copy(self):
+        if self.holder is not None:
+            return
+        cdef MissionPacket * old_data = self.data
+        self.realloc()
+        memcpy(self.data, old_data, sizeof(MissionPacket))
+    def make_standalone_reset(self):
+        if self.holder is not None:
+            memset(self.data, 0, sizeof(MissionPacket))
+            return
+        cdef MissionPacket * old_data = self.data
+        self.realloc()
+        memset(self.data, 0, sizeof(MissionPacket))
+    cdef void realloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(MissionPacket))
+        self._set_ptr(<MissionPacket*>buf)
+    cdef void alloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(MissionPacket))
+        self._init_ptr(<MissionPacket*>buf)
+    @property
+    def x(self):
+        return self.data[0].x
+    @x.setter
+    def x(self, value):
+        self.data[0].x = value
+    @property
+    def y(self):
+        return self.data[0].y
+    @y.setter
+    def y(self, value):
+        self.data[0].y = value
+    @property
+    def something1(self):
+        return self.data[0].something1
+    @something1.setter
+    def something1(self, value):
+        self.data[0].something1 = value
+    @property
+    def something2(self):
+        return self.data[0].something2
+    @something2.setter
+    def something2(self, value):
+        self.data[0].something2 = value
+    @property
+    def info(self):
+        if self._info is not None:
+            return self._info
+        self._info = WrapMissionInfo.__new__(WrapMissionInfo)
+        self._info.holder = self.holder
+        self._info._init_ptr(&self.data[0].info)
+        return self._info
+    @info.setter
+    def info(self, value):
+        cdef WrapMissionInfo v = value
+        self.data[0].info = v.data[0]
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+    cdef void _init_ptr(self, MissionPacket * ptr):
+        self.data = ptr
+    cdef void _set_ptr(self, MissionPacket * ptr):
+        self.data = ptr
+        if self._info is not None:
+            self._info.holder = self.holder
+            self._info._set_ptr(&self.data[0].info)
+    def set_ptr(self, WrapMissionPacket v):
+        self.holder = v.holder
+        self._set_ptr(v.data)
+cdef class WrapMissionData:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(MissionData))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(MissionData))
+    def cast(self, object klass):
+        cdef WrapMissionData c = klass.__new__(klass)
+        c.holder = self.holder
+        c._init_ptr(self.data)
+        return c
+    def copy(self):
+        cdef WrapMissionData inst = WrapMissionData.__new__(WrapMissionData)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(MissionData))
+        return inst
+    def __init__(self):
+        self.alloc()
+
+    def make_standalone_copy(self):
+        if self.holder is not None:
+            return
+        cdef MissionData * old_data = self.data
+        self.realloc()
+        memcpy(self.data, old_data, sizeof(MissionData))
+    def make_standalone_reset(self):
+        if self.holder is not None:
+            memset(self.data, 0, sizeof(MissionData))
+            return
+        cdef MissionData * old_data = self.data
+        self.realloc()
+        memset(self.data, 0, sizeof(MissionData))
+    cdef void realloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(MissionData))
+        self._set_ptr(<MissionData*>buf)
+    cdef void alloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(MissionData))
+        self._init_ptr(<MissionData*>buf)
+    @property
+    def dword0(self):
+        return self.data[0].dword0
+    @dword0.setter
+    def dword0(self, value):
+        self.data[0].dword0 = value
+    @property
+    def dword4(self):
+        return self.data[0].dword4
+    @dword4.setter
+    def dword4(self, value):
+        self.data[0].dword4 = value
+    @property
+    def dword8(self):
+        return self.data[0].dword8
+    @dword8.setter
+    def dword8(self, value):
+        self.data[0].dword8 = value
+    @property
+    def dwordC(self):
+        return self.data[0].dwordC
+    @dwordC.setter
+    def dwordC(self, value):
+        self.data[0].dwordC = value
+    @property
+    def dword10(self):
+        return self.data[0].dword10
+    @dword10.setter
+    def dword10(self, value):
+        self.data[0].dword10 = value
+    @property
+    def dword14(self):
+        return self.data[0].dword14
+    @dword14.setter
+    def dword14(self, value):
+        self.data[0].dword14 = value
+    @property
+    def dword18(self):
+        return self.data[0].dword18
+    @dword18.setter
+    def dword18(self, value):
+        self.data[0].dword18 = value
+    @property
+    def dword1C(self):
+        return self.data[0].dword1C
+    @dword1C.setter
+    def dword1C(self, value):
+        self.data[0].dword1C = value
+    @property
+    def dword20(self):
+        return self.data[0].dword20
+    @dword20.setter
+    def dword20(self, value):
+        self.data[0].dword20 = value
+    @property
+    def dword24(self):
+        return self.data[0].dword24
+    @dword24.setter
+    def dword24(self, value):
+        self.data[0].dword24 = value
+    @property
+    def dword28(self):
+        return self.data[0].dword28
+    @dword28.setter
+    def dword28(self, value):
+        self.data[0].dword28 = value
+    @property
+    def info(self):
+        if self._info is not None:
+            return self._info
+        self._info = WrapMissionInfo.__new__(WrapMissionInfo)
+        self._info.holder = self.holder
+        self._info._init_ptr(&self.data[0].info)
+        return self._info
+    @info.setter
+    def info(self, value):
+        cdef WrapMissionInfo v = value
+        self.data[0].info = v.data[0]
+    @property
+    def dword54(self):
+        return self.data[0].dword54
+    @dword54.setter
+    def dword54(self, value):
+        self.data[0].dword54 = value
+    @property
+    def dword58(self):
+        return self.data[0].dword58
+    @dword58.setter
+    def dword58(self, value):
+        self.data[0].dword58 = value
+    @property
+    def byte5C(self):
+        return self.data[0].byte5C
+    @byte5C.setter
+    def byte5C(self, value):
+        self.data[0].byte5C = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
     cdef void _init_ptr(self, MissionData * ptr):
         self.data = ptr
     cdef void _set_ptr(self, MissionData * ptr):
         self.data = ptr
+        if self._info is not None:
+            self._info.holder = self.holder
+            self._info._set_ptr(&self.data[0].info)
     def set_ptr(self, WrapMissionData v):
+        self.holder = v.holder
+        self._set_ptr(v.data)
+cdef class WrapRegionSomething:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(RegionSomething))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(RegionSomething))
+    def cast(self, object klass):
+        cdef WrapRegionSomething c = klass.__new__(klass)
+        c.holder = self.holder
+        c._init_ptr(self.data)
+        return c
+    def copy(self):
+        cdef WrapRegionSomething inst = WrapRegionSomething.__new__(WrapRegionSomething)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(RegionSomething))
+        return inst
+    def __init__(self):
+        self.alloc()
+
+    def make_standalone_copy(self):
+        if self.holder is not None:
+            return
+        cdef RegionSomething * old_data = self.data
+        self.realloc()
+        memcpy(self.data, old_data, sizeof(RegionSomething))
+    def make_standalone_reset(self):
+        if self.holder is not None:
+            memset(self.data, 0, sizeof(RegionSomething))
+            return
+        cdef RegionSomething * old_data = self.data
+        self.realloc()
+        memset(self.data, 0, sizeof(RegionSomething))
+    cdef void realloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(RegionSomething))
+        self._set_ptr(<RegionSomething*>buf)
+    cdef void alloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(RegionSomething))
+        self._init_ptr(<RegionSomething*>buf)
+    @property
+    def field_0(self):
+        return self.data[0].field_0
+    @field_0.setter
+    def field_0(self, value):
+        self.data[0].field_0 = value
+    @property
+    def field_4(self):
+        return self.data[0].field_4
+    @field_4.setter
+    def field_4(self, value):
+        self.data[0].field_4 = value
+    @property
+    def field_8(self):
+        return self.data[0].field_8
+    @field_8.setter
+    def field_8(self, value):
+        self.data[0].field_8 = value
+    @property
+    def field_C(self):
+        return self.data[0].field_C
+    @field_C.setter
+    def field_C(self, value):
+        self.data[0].field_C = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+    cdef void _init_ptr(self, RegionSomething * ptr):
+        self.data = ptr
+    cdef void _set_ptr(self, RegionSomething * ptr):
+        self.data = ptr
+    def set_ptr(self, WrapRegionSomething v):
+        self.holder = v.holder
+        self._set_ptr(v.data)
+cdef class WrapRegionSeed:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(RegionSeed))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(RegionSeed))
+    def cast(self, object klass):
+        cdef WrapRegionSeed c = klass.__new__(klass)
+        c.holder = self.holder
+        c._init_ptr(self.data)
+        return c
+    def copy(self):
+        cdef WrapRegionSeed inst = WrapRegionSeed.__new__(WrapRegionSeed)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(RegionSeed))
+        return inst
+    def __init__(self):
+        self.alloc()
+
+    def make_standalone_copy(self):
+        if self.holder is not None:
+            return
+        cdef RegionSeed * old_data = self.data
+        self.realloc()
+        memcpy(self.data, old_data, sizeof(RegionSeed))
+    def make_standalone_reset(self):
+        if self.holder is not None:
+            memset(self.data, 0, sizeof(RegionSeed))
+            return
+        cdef RegionSeed * old_data = self.data
+        self.realloc()
+        memset(self.data, 0, sizeof(RegionSeed))
+    cdef void realloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(RegionSeed))
+        self._set_ptr(<RegionSeed*>buf)
+    cdef void alloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(RegionSeed))
+        self._init_ptr(<RegionSeed*>buf)
+    @property
+    def dword0(self):
+        return self.data[0].dword0
+    @dword0.setter
+    def dword0(self, value):
+        self.data[0].dword0 = value
+    @property
+    def dword4(self):
+        return self.data[0].dword4
+    @dword4.setter
+    def dword4(self, value):
+        self.data[0].dword4 = value
+    @property
+    def byte8(self):
+        return self.data[0].byte8
+    @byte8.setter
+    def byte8(self, value):
+        self.data[0].byte8 = value
+    @property
+    def floatC(self):
+        return self.data[0].floatC
+    @floatC.setter
+    def floatC(self, value):
+        self.data[0].floatC = value
+    @property
+    def float10(self):
+        return self.data[0].float10
+    @float10.setter
+    def float10(self, value):
+        self.data[0].float10 = value
+    @property
+    def dword14(self):
+        return self.data[0].dword14
+    @dword14.setter
+    def dword14(self, value):
+        self.data[0].dword14 = value
+    @property
+    def dword18(self):
+        return self.data[0].dword18
+    @dword18.setter
+    def dword18(self, value):
+        self.data[0].dword18 = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+    cdef void _init_ptr(self, RegionSeed * ptr):
+        self.data = ptr
+    cdef void _set_ptr(self, RegionSeed * ptr):
+        self.data = ptr
+    def set_ptr(self, WrapRegionSeed v):
+        self.holder = v.holder
+        self._set_ptr(v.data)
+cdef class WrapRegion:
+    def get_addr(self):
+        return <uintptr_t>self.data
+    def __bytes__(self):
+        cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
+        return ret
+    def read(self, ByteReader reader):
+        reader.read_c(self.data, sizeof(Region))
+    def write(self, ByteWriter writer):
+        writer.write_c(self.data, sizeof(Region))
+    def cast(self, object klass):
+        cdef WrapRegion c = klass.__new__(klass)
+        c.holder = self.holder
+        c._init_ptr(self.data)
+        return c
+    def copy(self):
+        cdef WrapRegion inst = WrapRegion.__new__(WrapRegion)
+        inst.alloc()
+        memcpy(inst.data, self.data, sizeof(Region))
+        return inst
+    def __init__(self):
+        self.alloc()
+
+    def make_standalone_copy(self):
+        if self.holder is not None:
+            return
+        cdef Region * old_data = self.data
+        self.realloc()
+        memcpy(self.data, old_data, sizeof(Region))
+    def make_standalone_reset(self):
+        if self.holder is not None:
+            memset(self.data, 0, sizeof(Region))
+            return
+        cdef Region * old_data = self.data
+        self.realloc()
+        memset(self.data, 0, sizeof(Region))
+    cdef void realloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(Region))
+        self._set_ptr(<Region*>buf)
+    cdef void alloc(self):
+        self.holder = MemoryHolder.__new__(MemoryHolder)
+        cdef void * buf = self.holder.alloc(sizeof(Region))
+        self._init_ptr(<Region*>buf)
+    @property
+    def vtable(self):
+        return self.data[0].vtable
+    @vtable.setter
+    def vtable(self, value):
+        self.data[0].vtable = value
+    @property
+    def set_to_one1(self):
+        return self.data[0].set_to_one1
+    @set_to_one1.setter
+    def set_to_one1(self, value):
+        self.data[0].set_to_one1 = value
+    @property
+    def set_to_one2(self):
+        return self.data[0].set_to_one2
+    @set_to_one2.setter
+    def set_to_one2(self, value):
+        self.data[0].set_to_one2 = value
+    @property
+    def dword10(self):
+        return self.data[0].dword10
+    @dword10.setter
+    def dword10(self, value):
+        self.data[0].dword10 = value
+    @property
+    def dword14(self):
+        return self.data[0].dword14
+    @dword14.setter
+    def dword14(self, value):
+        self.data[0].dword14 = value
+    @property
+    def regsomething(self):
+        if self._regsomething is not None:
+            return self._regsomething
+        self._regsomething = WrapArray5.__new__(WrapArray5)
+        self._regsomething.holder = self.holder
+        self._regsomething._init_ptr(&self.data[0].regsomething[0])
+        return self._regsomething
+    @regsomething.setter
+    def regsomething(self, value):
+        raise NotImplementedError()
+    @property
+    def zones(self):
+        if self._zones is not None:
+            return self._zones
+        self._zones = WrapArray6.__new__(WrapArray6)
+        self._zones.holder = self.holder
+        self._zones._init_ptr(&self.data[0].zones[0])
+        return self._zones
+    @zones.setter
+    def zones(self, value):
+        raise NotImplementedError()
+    @property
+    def missions(self):
+        if self._missions is not None:
+            return self._missions
+        self._missions = WrapArray7.__new__(WrapArray7)
+        self._missions.holder = self.holder
+        self._missions._init_ptr(&self.data[0].missions[0])
+        return self._missions
+    @missions.setter
+    def missions(self, value):
+        raise NotImplementedError()
+    @property
+    def byte15A18(self):
+        return self.data[0].byte15A18
+    @byte15A18.setter
+    def byte15A18(self, value):
+        self.data[0].byte15A18 = value
+    @property
+    def dword15A1C(self):
+        return self.data[0].dword15A1C
+    @dword15A1C.setter
+    def dword15A1C(self, value):
+        self.data[0].dword15A1C = value
+    @property
+    def dword15A20(self):
+        return self.data[0].dword15A20
+    @dword15A20.setter
+    def dword15A20(self, value):
+        self.data[0].dword15A20 = value
+    @property
+    def dword15A24(self):
+        return self.data[0].dword15A24
+    @dword15A24.setter
+    def dword15A24(self, value):
+        self.data[0].dword15A24 = value
+    def reset(self):
+        memset(self.data, 0, sizeof(self.data[0]))
+    cdef void _init_ptr(self, Region * ptr):
+        self.data = ptr
+    cdef void _set_ptr(self, Region * ptr):
+        self.data = ptr
+        if self._regsomething is not None:
+            self._regsomething.holder = self.holder
+            self._regsomething._set_ptr(&self.data[0].regsomething[0])
+        if self._zones is not None:
+            self._zones.holder = self.holder
+            self._zones._set_ptr(&self.data[0].zones[0])
+        if self._missions is not None:
+            self._missions.holder = self.holder
+            self._missions._set_ptr(&self.data[0].missions[0])
+    def set_ptr(self, WrapRegion v):
         self.holder = v.holder
         self._set_ptr(v.data)
 cdef class WrapAirshipData:
@@ -5621,7 +6162,7 @@ cdef class WrapHitPacketList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray5.__new__(WrapArray5)
+        self._next = WrapArray8.__new__(WrapArray8)
         self._next.holder = self.holder
         self._next._init_ptr(&(<HitPacketList*>self.data[0].next)[0])
         return self._next
@@ -5634,7 +6175,7 @@ cdef class WrapHitPacketList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray5.__new__(WrapArray5)
+        self._prev = WrapArray8.__new__(WrapArray8)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<HitPacketList*>self.data[0].prev)[0])
         return self._prev
@@ -5721,7 +6262,7 @@ cdef class WrapParticleDataList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray6.__new__(WrapArray6)
+        self._next = WrapArray9.__new__(WrapArray9)
         self._next.holder = self.holder
         self._next._init_ptr(&(<ParticleDataList*>self.data[0].next)[0])
         return self._next
@@ -5734,7 +6275,7 @@ cdef class WrapParticleDataList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray6.__new__(WrapArray6)
+        self._prev = WrapArray9.__new__(WrapArray9)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<ParticleDataList*>self.data[0].prev)[0])
         return self._prev
@@ -5821,7 +6362,7 @@ cdef class WrapSoundActionList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray7.__new__(WrapArray7)
+        self._next = WrapArray10.__new__(WrapArray10)
         self._next.holder = self.holder
         self._next._init_ptr(&(<SoundActionList*>self.data[0].next)[0])
         return self._next
@@ -5834,7 +6375,7 @@ cdef class WrapSoundActionList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray7.__new__(WrapArray7)
+        self._prev = WrapArray10.__new__(WrapArray10)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<SoundActionList*>self.data[0].prev)[0])
         return self._prev
@@ -5921,7 +6462,7 @@ cdef class WrapBlockActionList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray8.__new__(WrapArray8)
+        self._next = WrapArray11.__new__(WrapArray11)
         self._next.holder = self.holder
         self._next._init_ptr(&(<BlockActionList*>self.data[0].next)[0])
         return self._next
@@ -5934,7 +6475,7 @@ cdef class WrapBlockActionList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray8.__new__(WrapArray8)
+        self._prev = WrapArray11.__new__(WrapArray11)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<BlockActionList*>self.data[0].prev)[0])
         return self._prev
@@ -6021,7 +6562,7 @@ cdef class WrapShootPacketList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray9.__new__(WrapArray9)
+        self._next = WrapArray12.__new__(WrapArray12)
         self._next.holder = self.holder
         self._next._init_ptr(&(<ShootPacketList*>self.data[0].next)[0])
         return self._next
@@ -6034,7 +6575,7 @@ cdef class WrapShootPacketList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray9.__new__(WrapArray9)
+        self._prev = WrapArray12.__new__(WrapArray12)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<ShootPacketList*>self.data[0].prev)[0])
         return self._prev
@@ -6121,7 +6662,7 @@ cdef class WrapChunkItemList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray10.__new__(WrapArray10)
+        self._next = WrapArray13.__new__(WrapArray13)
         self._next.holder = self.holder
         self._next._init_ptr(&(<ChunkItemList*>self.data[0].next)[0])
         return self._next
@@ -6134,7 +6675,7 @@ cdef class WrapChunkItemList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray10.__new__(WrapArray10)
+        self._prev = WrapArray13.__new__(WrapArray13)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<ChunkItemList*>self.data[0].prev)[0])
         return self._prev
@@ -6221,7 +6762,7 @@ cdef class WrapChunkItemsList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray11.__new__(WrapArray11)
+        self._next = WrapArray14.__new__(WrapArray14)
         self._next.holder = self.holder
         self._next._init_ptr(&(<ChunkItemsList*>self.data[0].next)[0])
         return self._next
@@ -6234,7 +6775,7 @@ cdef class WrapChunkItemsList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray11.__new__(WrapArray11)
+        self._prev = WrapArray14.__new__(WrapArray14)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<ChunkItemsList*>self.data[0].prev)[0])
         return self._prev
@@ -6259,7 +6800,7 @@ cdef class WrapChunkItemsList:
             return None
         if self._data is not None:
             return self._data
-        self._data = WrapArray10.__new__(WrapArray10)
+        self._data = WrapArray13.__new__(WrapArray13)
         self._data.holder = self.holder
         self._data._init_ptr(&(<ChunkItemList*>self.data[0].data)[0])
         return self._data
@@ -6334,7 +6875,7 @@ cdef class WrapStaticEntityList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray12.__new__(WrapArray12)
+        self._next = WrapArray15.__new__(WrapArray15)
         self._next.holder = self.holder
         self._next._init_ptr(&(<StaticEntityList*>self.data[0].next)[0])
         return self._next
@@ -6347,7 +6888,7 @@ cdef class WrapStaticEntityList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray12.__new__(WrapArray12)
+        self._prev = WrapArray15.__new__(WrapArray15)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<StaticEntityList*>self.data[0].prev)[0])
         return self._prev
@@ -6434,7 +6975,7 @@ cdef class WrapItems8List_2:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray13.__new__(WrapArray13)
+        self._next = WrapArray16.__new__(WrapArray16)
         self._next.holder = self.holder
         self._next._init_ptr(&(<Items8List_2*>self.data[0].next)[0])
         return self._next
@@ -6447,7 +6988,7 @@ cdef class WrapItems8List_2:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray13.__new__(WrapArray13)
+        self._prev = WrapArray16.__new__(WrapArray16)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<Items8List_2*>self.data[0].prev)[0])
         return self._prev
@@ -6530,7 +7071,7 @@ cdef class WrapItems8List_1:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray14.__new__(WrapArray14)
+        self._next = WrapArray17.__new__(WrapArray17)
         self._next.holder = self.holder
         self._next._init_ptr(&(<Items8List_1*>self.data[0].next)[0])
         return self._next
@@ -6543,7 +7084,7 @@ cdef class WrapItems8List_1:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray14.__new__(WrapArray14)
+        self._prev = WrapArray17.__new__(WrapArray17)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<Items8List_1*>self.data[0].prev)[0])
         return self._prev
@@ -6636,7 +7177,7 @@ cdef class WrapPickupActionList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray15.__new__(WrapArray15)
+        self._next = WrapArray18.__new__(WrapArray18)
         self._next.holder = self.holder
         self._next._init_ptr(&(<PickupActionList*>self.data[0].next)[0])
         return self._next
@@ -6649,7 +7190,7 @@ cdef class WrapPickupActionList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray15.__new__(WrapArray15)
+        self._prev = WrapArray18.__new__(WrapArray18)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<PickupActionList*>self.data[0].prev)[0])
         return self._prev
@@ -6736,7 +7277,7 @@ cdef class WrapKillActionList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray16.__new__(WrapArray16)
+        self._next = WrapArray19.__new__(WrapArray19)
         self._next.holder = self.holder
         self._next._init_ptr(&(<KillActionList*>self.data[0].next)[0])
         return self._next
@@ -6749,7 +7290,7 @@ cdef class WrapKillActionList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray16.__new__(WrapArray16)
+        self._prev = WrapArray19.__new__(WrapArray19)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<KillActionList*>self.data[0].prev)[0])
         return self._prev
@@ -6836,7 +7377,7 @@ cdef class WrapDamageActionList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray17.__new__(WrapArray17)
+        self._next = WrapArray20.__new__(WrapArray20)
         self._next.holder = self.holder
         self._next._init_ptr(&(<DamageActionList*>self.data[0].next)[0])
         return self._next
@@ -6849,7 +7390,7 @@ cdef class WrapDamageActionList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray17.__new__(WrapArray17)
+        self._prev = WrapArray20.__new__(WrapArray20)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<DamageActionList*>self.data[0].prev)[0])
         return self._prev
@@ -6936,7 +7477,7 @@ cdef class WrapPassivePacketList:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray18.__new__(WrapArray18)
+        self._next = WrapArray21.__new__(WrapArray21)
         self._next.holder = self.holder
         self._next._init_ptr(&(<PassivePacketList*>self.data[0].next)[0])
         return self._next
@@ -6949,7 +7490,7 @@ cdef class WrapPassivePacketList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray18.__new__(WrapArray18)
+        self._prev = WrapArray21.__new__(WrapArray21)
         self._prev.holder = self.holder
         self._prev._init_ptr(&(<PassivePacketList*>self.data[0].prev)[0])
         return self._prev
@@ -6986,25 +7527,25 @@ cdef class WrapPassivePacketList:
     def set_ptr(self, WrapPassivePacketList v):
         self.holder = v.holder
         self._set_ptr(v.data)
-cdef class WrapMissionDataList:
+cdef class WrapMissionPacketList:
     def get_addr(self):
         return <uintptr_t>self.data
     def __bytes__(self):
         cdef bytes ret = (<char*>(self.data))[:sizeof(self.data[0])]
         return ret
     def read(self, ByteReader reader):
-        reader.read_c(self.data, sizeof(MissionDataList))
+        reader.read_c(self.data, sizeof(MissionPacketList))
     def write(self, ByteWriter writer):
-        writer.write_c(self.data, sizeof(MissionDataList))
+        writer.write_c(self.data, sizeof(MissionPacketList))
     def cast(self, object klass):
-        cdef WrapMissionDataList c = klass.__new__(klass)
+        cdef WrapMissionPacketList c = klass.__new__(klass)
         c.holder = self.holder
         c._init_ptr(self.data)
         return c
     def copy(self):
-        cdef WrapMissionDataList inst = WrapMissionDataList.__new__(WrapMissionDataList)
+        cdef WrapMissionPacketList inst = WrapMissionPacketList.__new__(WrapMissionPacketList)
         inst.alloc()
-        memcpy(inst.data, self.data, sizeof(MissionDataList))
+        memcpy(inst.data, self.data, sizeof(MissionPacketList))
         return inst
     def __init__(self):
         self.alloc()
@@ -7012,33 +7553,33 @@ cdef class WrapMissionDataList:
     def make_standalone_copy(self):
         if self.holder is not None:
             return
-        cdef MissionDataList * old_data = self.data
+        cdef MissionPacketList * old_data = self.data
         self.realloc()
-        memcpy(self.data, old_data, sizeof(MissionDataList))
+        memcpy(self.data, old_data, sizeof(MissionPacketList))
     def make_standalone_reset(self):
         if self.holder is not None:
-            memset(self.data, 0, sizeof(MissionDataList))
+            memset(self.data, 0, sizeof(MissionPacketList))
             return
-        cdef MissionDataList * old_data = self.data
+        cdef MissionPacketList * old_data = self.data
         self.realloc()
-        memset(self.data, 0, sizeof(MissionDataList))
+        memset(self.data, 0, sizeof(MissionPacketList))
     cdef void realloc(self):
         self.holder = MemoryHolder.__new__(MemoryHolder)
-        cdef void * buf = self.holder.alloc(sizeof(MissionDataList))
-        self._set_ptr(<MissionDataList*>buf)
+        cdef void * buf = self.holder.alloc(sizeof(MissionPacketList))
+        self._set_ptr(<MissionPacketList*>buf)
     cdef void alloc(self):
         self.holder = MemoryHolder.__new__(MemoryHolder)
-        cdef void * buf = self.holder.alloc(sizeof(MissionDataList))
-        self._init_ptr(<MissionDataList*>buf)
+        cdef void * buf = self.holder.alloc(sizeof(MissionPacketList))
+        self._init_ptr(<MissionPacketList*>buf)
     @property
     def next(self):
         if self.data[0].next == 0:
             return None
         if self._next is not None:
             return self._next
-        self._next = WrapArray19.__new__(WrapArray19)
+        self._next = WrapArray22.__new__(WrapArray22)
         self._next.holder = self.holder
-        self._next._init_ptr(&(<MissionDataList*>self.data[0].next)[0])
+        self._next._init_ptr(&(<MissionPacketList*>self.data[0].next)[0])
         return self._next
     @next.setter
     def next(self, value):
@@ -7049,9 +7590,9 @@ cdef class WrapMissionDataList:
             return None
         if self._prev is not None:
             return self._prev
-        self._prev = WrapArray19.__new__(WrapArray19)
+        self._prev = WrapArray22.__new__(WrapArray22)
         self._prev.holder = self.holder
-        self._prev._init_ptr(&(<MissionDataList*>self.data[0].prev)[0])
+        self._prev._init_ptr(&(<MissionPacketList*>self.data[0].prev)[0])
         return self._prev
     @prev.setter
     def prev(self, value):
@@ -7060,30 +7601,30 @@ cdef class WrapMissionDataList:
     def data(self):
         if self._data is not None:
             return self._data
-        self._data = WrapMissionData.__new__(WrapMissionData)
+        self._data = WrapMissionPacket.__new__(WrapMissionPacket)
         self._data.holder = self.holder
         self._data._init_ptr(&self.data[0].data)
         return self._data
     @data.setter
     def data(self, value):
-        cdef WrapMissionData v = value
+        cdef WrapMissionPacket v = value
         self.data[0].data = v.data[0]
     def reset(self):
         memset(self.data, 0, sizeof(self.data[0]))
-    cdef void _init_ptr(self, MissionDataList * ptr):
+    cdef void _init_ptr(self, MissionPacketList * ptr):
         self.data = ptr
-    cdef void _set_ptr(self, MissionDataList * ptr):
+    cdef void _set_ptr(self, MissionPacketList * ptr):
         self.data = ptr
         if self._next is not None:
             self._next.holder = self.holder
-            self._next._set_ptr(&(<MissionDataList*>self.data[0].next)[0])
+            self._next._set_ptr(&(<MissionPacketList*>self.data[0].next)[0])
         if self._prev is not None:
             self._prev.holder = self.holder
-            self._prev._set_ptr(&(<MissionDataList*>self.data[0].prev)[0])
+            self._prev._set_ptr(&(<MissionPacketList*>self.data[0].prev)[0])
         if self._data is not None:
             self._data.holder = self.holder
             self._data._set_ptr(&self.data[0].data)
-    def set_ptr(self, WrapMissionDataList v):
+    def set_ptr(self, WrapMissionPacketList v):
         self.holder = v.holder
         self._set_ptr(v.data)
 cdef class WrapPacketQueue:
@@ -7136,7 +7677,7 @@ cdef class WrapPacketQueue:
             return None
         if self._player_hits is not None:
             return self._player_hits
-        self._player_hits = WrapArray5.__new__(WrapArray5)
+        self._player_hits = WrapArray8.__new__(WrapArray8)
         self._player_hits.holder = self.holder
         self._player_hits._init_ptr(&(<HitPacketList*>self.data[0].player_hits)[0])
         return self._player_hits
@@ -7155,7 +7696,7 @@ cdef class WrapPacketQueue:
             return None
         if self._sound_actions is not None:
             return self._sound_actions
-        self._sound_actions = WrapArray7.__new__(WrapArray7)
+        self._sound_actions = WrapArray10.__new__(WrapArray10)
         self._sound_actions.holder = self.holder
         self._sound_actions._init_ptr(&(<SoundActionList*>self.data[0].sound_actions)[0])
         return self._sound_actions
@@ -7174,7 +7715,7 @@ cdef class WrapPacketQueue:
             return None
         if self._particles is not None:
             return self._particles
-        self._particles = WrapArray6.__new__(WrapArray6)
+        self._particles = WrapArray9.__new__(WrapArray9)
         self._particles.holder = self.holder
         self._particles._init_ptr(&(<ParticleDataList*>self.data[0].particles)[0])
         return self._particles
@@ -7193,7 +7734,7 @@ cdef class WrapPacketQueue:
             return None
         if self._block_actions is not None:
             return self._block_actions
-        self._block_actions = WrapArray8.__new__(WrapArray8)
+        self._block_actions = WrapArray11.__new__(WrapArray11)
         self._block_actions.holder = self.holder
         self._block_actions._init_ptr(&(<BlockActionList*>self.data[0].block_actions)[0])
         return self._block_actions
@@ -7212,7 +7753,7 @@ cdef class WrapPacketQueue:
             return None
         if self._shoot_packets is not None:
             return self._shoot_packets
-        self._shoot_packets = WrapArray9.__new__(WrapArray9)
+        self._shoot_packets = WrapArray12.__new__(WrapArray12)
         self._shoot_packets.holder = self.holder
         self._shoot_packets._init_ptr(&(<ShootPacketList*>self.data[0].shoot_packets)[0])
         return self._shoot_packets
@@ -7231,7 +7772,7 @@ cdef class WrapPacketQueue:
             return None
         if self._chunk_items is not None:
             return self._chunk_items
-        self._chunk_items = WrapArray11.__new__(WrapArray11)
+        self._chunk_items = WrapArray14.__new__(WrapArray14)
         self._chunk_items.holder = self.holder
         self._chunk_items._init_ptr(&(<ChunkItemsList*>self.data[0].chunk_items)[0])
         return self._chunk_items
@@ -7250,7 +7791,7 @@ cdef class WrapPacketQueue:
             return None
         if self._static_entities is not None:
             return self._static_entities
-        self._static_entities = WrapArray12.__new__(WrapArray12)
+        self._static_entities = WrapArray15.__new__(WrapArray15)
         self._static_entities.holder = self.holder
         self._static_entities._init_ptr(&(<StaticEntityList*>self.data[0].static_entities)[0])
         return self._static_entities
@@ -7269,7 +7810,7 @@ cdef class WrapPacketQueue:
             return None
         if self._items_8 is not None:
             return self._items_8
-        self._items_8 = WrapArray14.__new__(WrapArray14)
+        self._items_8 = WrapArray17.__new__(WrapArray17)
         self._items_8.holder = self.holder
         self._items_8._init_ptr(&(<Items8List_1*>self.data[0].items_8)[0])
         return self._items_8
@@ -7288,7 +7829,7 @@ cdef class WrapPacketQueue:
             return None
         if self._pickup_actions is not None:
             return self._pickup_actions
-        self._pickup_actions = WrapArray15.__new__(WrapArray15)
+        self._pickup_actions = WrapArray18.__new__(WrapArray18)
         self._pickup_actions.holder = self.holder
         self._pickup_actions._init_ptr(&(<PickupActionList*>self.data[0].pickup_actions)[0])
         return self._pickup_actions
@@ -7307,7 +7848,7 @@ cdef class WrapPacketQueue:
             return None
         if self._kill_actions is not None:
             return self._kill_actions
-        self._kill_actions = WrapArray16.__new__(WrapArray16)
+        self._kill_actions = WrapArray19.__new__(WrapArray19)
         self._kill_actions.holder = self.holder
         self._kill_actions._init_ptr(&(<KillActionList*>self.data[0].kill_actions)[0])
         return self._kill_actions
@@ -7326,7 +7867,7 @@ cdef class WrapPacketQueue:
             return None
         if self._damage_actions is not None:
             return self._damage_actions
-        self._damage_actions = WrapArray17.__new__(WrapArray17)
+        self._damage_actions = WrapArray20.__new__(WrapArray20)
         self._damage_actions.holder = self.holder
         self._damage_actions._init_ptr(&(<DamageActionList*>self.data[0].damage_actions)[0])
         return self._damage_actions
@@ -7345,7 +7886,7 @@ cdef class WrapPacketQueue:
             return None
         if self._passive_packets is not None:
             return self._passive_packets
-        self._passive_packets = WrapArray18.__new__(WrapArray18)
+        self._passive_packets = WrapArray21.__new__(WrapArray21)
         self._passive_packets.holder = self.holder
         self._passive_packets._init_ptr(&(<PassivePacketList*>self.data[0].passive_packets)[0])
         return self._passive_packets
@@ -7364,9 +7905,9 @@ cdef class WrapPacketQueue:
             return None
         if self._missions is not None:
             return self._missions
-        self._missions = WrapArray19.__new__(WrapArray19)
+        self._missions = WrapArray22.__new__(WrapArray22)
         self._missions.holder = self.holder
-        self._missions._init_ptr(&(<MissionDataList*>self.data[0].missions)[0])
+        self._missions._init_ptr(&(<MissionPacketList*>self.data[0].missions)[0])
         return self._missions
     @missions.setter
     def missions(self, value):
@@ -7421,7 +7962,7 @@ cdef class WrapPacketQueue:
             self._passive_packets._set_ptr(&(<PassivePacketList*>self.data[0].passive_packets)[0])
         if self._missions is not None:
             self._missions.holder = self.holder
-            self._missions._set_ptr(&(<MissionDataList*>self.data[0].missions)[0])
+            self._missions._set_ptr(&(<MissionPacketList*>self.data[0].missions)[0])
     def set_ptr(self, WrapPacketQueue v):
         self.holder = v.holder
         self._set_ptr(v.data)
@@ -7693,6 +8234,46 @@ cdef class WrapArray4:
         self.data = ptr
 cdef class WrapArray5:
     def __getitem__(self, uint32_t index):
+        if index >= 4096: raise IndexError()
+        cdef WrapRegionSomething ret = WrapRegionSomething.__new__(WrapRegionSomething)
+        ret.holder = self.holder
+        ret._init_ptr(&self.data[index])
+        return ret
+    cdef void _init_ptr(self, RegionSomething * ptr):
+        self.data = ptr
+    cdef void _set_ptr(self, RegionSomething * ptr):
+        self.data = ptr
+    def __len__(self):
+        return 4096
+cdef class WrapArray6:
+    def __getitem__(self, uint32_t index):
+        if index >= 4096: raise IndexError()
+        if self.data[index] == 0: return None
+        cdef WrapZone ret = WrapZone.__new__(WrapZone)
+        ret.holder = self.holder
+        ret._init_ptr(<Zone*>self.data[index])
+        return ret
+    cdef void _init_ptr(self, uint32_t * ptr):
+        self.data = ptr
+    cdef void _set_ptr(self, uint32_t * ptr):
+        self.data = ptr
+    def __len__(self):
+        return 4096
+cdef class WrapArray7:
+    def __getitem__(self, uint32_t index):
+        if index >= 64: raise IndexError()
+        cdef WrapMissionData ret = WrapMissionData.__new__(WrapMissionData)
+        ret.holder = self.holder
+        ret._init_ptr(&self.data[index])
+        return ret
+    cdef void _init_ptr(self, MissionData * ptr):
+        self.data = ptr
+    cdef void _set_ptr(self, MissionData * ptr):
+        self.data = ptr
+    def __len__(self):
+        return 64
+cdef class WrapArray8:
+    def __getitem__(self, uint32_t index):
         cdef WrapHitPacketList ret = WrapHitPacketList.__new__(WrapHitPacketList)
         ret.holder = self.holder
         ret._init_ptr(&self.data[index])
@@ -7701,7 +8282,7 @@ cdef class WrapArray5:
         self.data = ptr
     cdef void _set_ptr(self, HitPacketList * ptr):
         self.data = ptr
-cdef class WrapArray6:
+cdef class WrapArray9:
     def __getitem__(self, uint32_t index):
         cdef WrapParticleDataList ret = WrapParticleDataList.__new__(WrapParticleDataList)
         ret.holder = self.holder
@@ -7711,7 +8292,7 @@ cdef class WrapArray6:
         self.data = ptr
     cdef void _set_ptr(self, ParticleDataList * ptr):
         self.data = ptr
-cdef class WrapArray7:
+cdef class WrapArray10:
     def __getitem__(self, uint32_t index):
         cdef WrapSoundActionList ret = WrapSoundActionList.__new__(WrapSoundActionList)
         ret.holder = self.holder
@@ -7721,7 +8302,7 @@ cdef class WrapArray7:
         self.data = ptr
     cdef void _set_ptr(self, SoundActionList * ptr):
         self.data = ptr
-cdef class WrapArray8:
+cdef class WrapArray11:
     def __getitem__(self, uint32_t index):
         cdef WrapBlockActionList ret = WrapBlockActionList.__new__(WrapBlockActionList)
         ret.holder = self.holder
@@ -7731,7 +8312,7 @@ cdef class WrapArray8:
         self.data = ptr
     cdef void _set_ptr(self, BlockActionList * ptr):
         self.data = ptr
-cdef class WrapArray9:
+cdef class WrapArray12:
     def __getitem__(self, uint32_t index):
         cdef WrapShootPacketList ret = WrapShootPacketList.__new__(WrapShootPacketList)
         ret.holder = self.holder
@@ -7741,7 +8322,7 @@ cdef class WrapArray9:
         self.data = ptr
     cdef void _set_ptr(self, ShootPacketList * ptr):
         self.data = ptr
-cdef class WrapArray10:
+cdef class WrapArray13:
     def __getitem__(self, uint32_t index):
         cdef WrapChunkItemList ret = WrapChunkItemList.__new__(WrapChunkItemList)
         ret.holder = self.holder
@@ -7751,7 +8332,7 @@ cdef class WrapArray10:
         self.data = ptr
     cdef void _set_ptr(self, ChunkItemList * ptr):
         self.data = ptr
-cdef class WrapArray11:
+cdef class WrapArray14:
     def __getitem__(self, uint32_t index):
         cdef WrapChunkItemsList ret = WrapChunkItemsList.__new__(WrapChunkItemsList)
         ret.holder = self.holder
@@ -7761,7 +8342,7 @@ cdef class WrapArray11:
         self.data = ptr
     cdef void _set_ptr(self, ChunkItemsList * ptr):
         self.data = ptr
-cdef class WrapArray12:
+cdef class WrapArray15:
     def __getitem__(self, uint32_t index):
         cdef WrapStaticEntityList ret = WrapStaticEntityList.__new__(WrapStaticEntityList)
         ret.holder = self.holder
@@ -7771,7 +8352,7 @@ cdef class WrapArray12:
         self.data = ptr
     cdef void _set_ptr(self, StaticEntityList * ptr):
         self.data = ptr
-cdef class WrapArray13:
+cdef class WrapArray16:
     def __getitem__(self, uint32_t index):
         cdef WrapItems8List_2 ret = WrapItems8List_2.__new__(WrapItems8List_2)
         ret.holder = self.holder
@@ -7781,7 +8362,7 @@ cdef class WrapArray13:
         self.data = ptr
     cdef void _set_ptr(self, Items8List_2 * ptr):
         self.data = ptr
-cdef class WrapArray14:
+cdef class WrapArray17:
     def __getitem__(self, uint32_t index):
         cdef WrapItems8List_1 ret = WrapItems8List_1.__new__(WrapItems8List_1)
         ret.holder = self.holder
@@ -7791,7 +8372,7 @@ cdef class WrapArray14:
         self.data = ptr
     cdef void _set_ptr(self, Items8List_1 * ptr):
         self.data = ptr
-cdef class WrapArray15:
+cdef class WrapArray18:
     def __getitem__(self, uint32_t index):
         cdef WrapPickupActionList ret = WrapPickupActionList.__new__(WrapPickupActionList)
         ret.holder = self.holder
@@ -7801,7 +8382,7 @@ cdef class WrapArray15:
         self.data = ptr
     cdef void _set_ptr(self, PickupActionList * ptr):
         self.data = ptr
-cdef class WrapArray16:
+cdef class WrapArray19:
     def __getitem__(self, uint32_t index):
         cdef WrapKillActionList ret = WrapKillActionList.__new__(WrapKillActionList)
         ret.holder = self.holder
@@ -7811,7 +8392,7 @@ cdef class WrapArray16:
         self.data = ptr
     cdef void _set_ptr(self, KillActionList * ptr):
         self.data = ptr
-cdef class WrapArray17:
+cdef class WrapArray20:
     def __getitem__(self, uint32_t index):
         cdef WrapDamageActionList ret = WrapDamageActionList.__new__(WrapDamageActionList)
         ret.holder = self.holder
@@ -7821,7 +8402,7 @@ cdef class WrapArray17:
         self.data = ptr
     cdef void _set_ptr(self, DamageActionList * ptr):
         self.data = ptr
-cdef class WrapArray18:
+cdef class WrapArray21:
     def __getitem__(self, uint32_t index):
         cdef WrapPassivePacketList ret = WrapPassivePacketList.__new__(WrapPassivePacketList)
         ret.holder = self.holder
@@ -7831,15 +8412,15 @@ cdef class WrapArray18:
         self.data = ptr
     cdef void _set_ptr(self, PassivePacketList * ptr):
         self.data = ptr
-cdef class WrapArray19:
+cdef class WrapArray22:
     def __getitem__(self, uint32_t index):
-        cdef WrapMissionDataList ret = WrapMissionDataList.__new__(WrapMissionDataList)
+        cdef WrapMissionPacketList ret = WrapMissionPacketList.__new__(WrapMissionPacketList)
         ret.holder = self.holder
         ret._init_ptr(&self.data[index])
         return ret
-    cdef void _init_ptr(self, MissionDataList * ptr):
+    cdef void _init_ptr(self, MissionPacketList * ptr):
         self.data = ptr
-    cdef void _set_ptr(self, MissionDataList * ptr):
+    cdef void _set_ptr(self, MissionPacketList * ptr):
         self.data = ptr
 cdef class WrapItemWithHeaderVec:
     cdef void _init_ptr(self, uint32_t * ptr):

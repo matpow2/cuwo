@@ -19,6 +19,11 @@ import sys
 sys.path.append('..')
 import re
 import collections
+import os
+
+
+def get_path(name):
+    return os.path.join(os.path.dirname(__file__), name)
 
 
 def comment_remover(text):
@@ -186,8 +191,8 @@ class Attribute(object):
 
     def get_size(self):
         if self.ptr:
-            return 4
-        if self.is_local():
+            size = 4
+        elif self.is_local():
             size = struct_dict[self.typ].get_size()
         else:
             size = TYPE_SIZE[self.typ]
@@ -248,7 +253,8 @@ def parse_header(data):
 
 
 def get_structs():
-    with open('input.h', 'rU') as f:
+    input_h = get_path('input.h')
+    with open(input_h, 'r', newline=None) as f:
         text = comment_remover(f.read())
     return parse_header(text)
 
@@ -484,7 +490,7 @@ def main():
 
     # mask data
     mask_data = []
-    mask_input = open('masked_read.h', 'rb').read().decode('utf-8')
+    mask_input = open(get_path('masked_read.h'), 'rb').read().decode('utf-8')
     mask_input = mask_input.splitlines()
     entity_struct = structs['EntityData']
     for bit_index, line in enumerate(mask_input):
@@ -617,10 +623,10 @@ def main():
         out.dedent()
     out.dedent()
 
-    open('../cuwo/entity.pyx', 'wb').write(out.get())
+    open(get_path('../cuwo/entity.pyx'), 'wb').write(out.get())
 
     # sounds
-    sound_input = open('sounds.h', 'rb').read().decode('utf-8')
+    sound_input = open(get_path('sounds.h'), 'rb').read().decode('utf-8')
     sound_input = sound_input.splitlines()
     sounds = {}
     current_index = None
@@ -636,7 +642,7 @@ def main():
             sounds[current_index] = sound_name
 
     # models
-    model_input = open('models.h', 'rb').read().decode('utf-8')
+    model_input = open(get_path('models.h'), 'rb').read().decode('utf-8')
     model_input = model_input.splitlines()
     models = {-1: None}
     current_name = None
@@ -668,7 +674,7 @@ def main():
         current_name = None
 
     # abilities
-    lines = open('abilities.h', 'rb').read().decode('utf-8')
+    lines = open(get_path('abilities.h'), 'rb').read().decode('utf-8')
     lines = lines.splitlines()
     abilities = {}
     current_indices = []
@@ -698,8 +704,10 @@ def main():
 
     # merge static models, static names
     print('Writing defs from tgen')
+    import sys
+    sys.path.append(get_path('..'))
     from cuwo import tgen
-    tgen.initialize(1234, '../data/')
+    tgen.initialize(1234, get_path('../data/'))
     static_names = tgen.get_static_names()
     import staticmodels
     for k, v in staticmodels.STATIC_MODELS.items():
@@ -748,7 +756,7 @@ def main():
     out.write_inverse_dict('ABILITY_IDS', 'ABILITY_NAMES')
     print('Done')
 
-    open('../cuwo/strings.py', 'wb').write(out.get())
+    open(get_path('../cuwo/strings.py'), 'wb').write(out.get())
 
 
 if __name__ == "__main__":

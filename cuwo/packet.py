@@ -27,6 +27,7 @@ from cuwo.tgen_wrap import (WrapEntityData as EntityData,
                             WrapParticleData as ParticleData,
                             WrapKillAction as KillAction,
                             WrapDamageAction as DamageAction,
+                            WrapMissionPacket,
                             WrapAirshipData,
                             WrapPassivePacket,
                             WrapSoundAction,
@@ -338,44 +339,9 @@ class ChunkItems(Loader):
         write_list(writer, self.items)
 
 
-class MissionData(Loader):
-    def read(self, reader):
-        self.section_x = reader.read_int32() / 8.0
-        self.section_y = reader.read_int32() / 8.0
-        self.something1 = reader.read_uint32()  # padding?
-        self.something2 = reader.read_uint32()  # also padding???
-        # --
-        self.something3 = reader.read_uint32()
-        self.mission_id = reader.read_uint32()
-        self.something5 = reader.read_uint32()
-        self.monster_id = reader.read_uint32()
-        self.quest_level = reader.read_uint32()
-        self.something8 = reader.read_uint8()
-        # 0: ready, 1: progressing, 2: finished
-        self.state = reader.read_uint8()
-        reader.skip(2)
-        self.something10 = reader.read_float()
-        self.something11 = reader.read_float()
-        self.chunk_x = reader.read_uint32()
-        self.chunk_y = reader.read_uint32()
-
-    def write(self, writer):
-        writer.write_int32(self.section_x * 8.0)
-        writer.write_int32(self.section_y * 8.0)
-        writer.write_uint32(self.something1)
-        writer.write_uint32(self.something2)
-        writer.write_uint32(self.something3)
-        writer.write_uint32(self.mission_id)
-        writer.write_uint32(self.something5)
-        writer.write_uint32(self.monster_id)
-        writer.write_uint32(self.quest_level)
-        writer.write_uint8(self.something8)
-        writer.write_uint8(self.state)
-        writer.pad(2)
-        writer.write_uint32(self.something10)
-        writer.write_uint32(self.something11)
-        writer.write_uint32(self.chunk_x)
-        writer.write_uint32(self.chunk_y)
+class MissionPacket(WrapMissionPacket):
+    def get_region(self):
+        return (self.x / 8.0, self.y / 8.0)
 
 
 class ServerUpdate(Packet):
@@ -433,7 +399,7 @@ class ServerUpdate(Packet):
         # action such as a spell cast. (NPC rclick action?)
         self.passive_actions = read_list(reader, PassivePacket)
 
-        self.missions = read_list(reader, MissionData)
+        self.missions = read_list(reader, MissionPacket)
 
         debug = False
         if debug:

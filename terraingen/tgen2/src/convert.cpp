@@ -446,7 +446,16 @@ int main(int argc, char * argv[])
     tgen_destroy_chunk(x, y);
     uint32_t rx = x / 64;
     uint32_t ry = y / 64;
-    char * r = tgen_get_region(tgen_get_manager(), rx, ry);
+    Region * r = tgen_get_region(tgen_get_manager(), rx, ry);
+
+    unsigned int regseed_count = 0;
+    for (int x = -20; x < 20; ++x)
+    for (int y = -20; y < 20; ++y) {
+        if (*tgen_get_region_seed_ptr(tgen_get_manager(), rx+x, ry+y))
+            regseed_count++;
+    }
+    std::cout << "regseed_count: " << regseed_count << '\n';
+
     Zone * z = tgen_get_zone(r, x, y);
     std::cout << "done" << '\n';
 

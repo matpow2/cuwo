@@ -60,6 +60,12 @@ network_fps = 50
 # much difference.
 update_fps = 50
 
+# Mission update rate in seconds.
+mission_update_rate = 5
+
+# Distance from which to show missions to players. Defaults to a region.
+mission_max_distance = 0x10000 * 256 * 64
+
 # Enables terrain generation. This may not be needed for barebones PvP servers.
 use_tgen = True
 
