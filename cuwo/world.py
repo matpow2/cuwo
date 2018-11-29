@@ -197,14 +197,20 @@ class Region:
         x, y = pos
         if x < 0 or y < 0 or x >= 8 or y >= 8:
             raise IndexError()
-        return self.data.missions[x + y * 8]
+        m = self.data.missions[x + y * 8]
+        m.make_standalone_copy()
+        return m
 
     def decrement_data_ref(self):
         if self.data_ref_count <= 0:
             raise ValueError()
         self.data_ref_count -= 1
         if self.data_ref_count == 0:
-            self.world.gen_queue.put(('destroy_region_data', self.pos))
+            self.data = None
+            def destroy_data(lock, pos):
+                with lock:
+                    tgen.destroy_region_data(*pos)
+            self.world.call_gen(destroy_data, self.world.chunk_lock, self.pos)
             self.check_refs()
 
     def decrement_seed_ref(self):
@@ -212,17 +218,19 @@ class Region:
             raise ValueError()
         self.seed_ref_count -= 1
         if self.seed_ref_count == 0:
-            self.world.gen_queue.put(('destroy_region_seed', self.pos))
+            def destroy_seed(lock, pos):
+                with lock:
+                    tgen.destroy_region_seed(*pos)
+            self.world.call_gen(destroy_seed, self.world.chunk_lock, self.pos)
             self.check_refs()
 
     def check_refs(self):
         if self.data_ref_count == 0 and self.seed_ref_count == 0:
             del self.world.regions[self.pos]
             self.world = None
-            self.data = None
 
     def update_data(self):
-        if self.world is None:
+        if self.data_ref_count == 0:
             return
         self.data = tgen.get_region(*self.pos)
 
@@ -277,7 +285,8 @@ class Chunk:
     data = None
     region = None
     last_visit = 0
-    destroyed = False
+    has_generation = False
+    missing_data = False
 
     def __init__(self, world, pos):
         self.world = world
@@ -288,14 +297,8 @@ class Chunk:
         if not world.use_tgen:
             return
 
-        # CW generates region in 3x3 neighborhood, seed in 7x7
-        for reg in self.get_neighborhood_regions(3):
-            reg.data_ref_count += 1
-        for reg in self.get_neighborhood_regions(7):
-            reg.seed_ref_count += 1
-
-        self.gen_f = world.get_data(pos)
-        self.gen_f.add_done_callback(self.on_chunk)
+        self.missing_data = True
+        self.world.add_chunk_queue(self)
 
     def get_region_pos(self):
         x, y = self.pos
@@ -314,16 +317,24 @@ class Chunk:
                     continue
                 yield self.world.create_region((new_reg_x, new_reg_y))
 
-    def on_chunk(self, f):
-        if self.destroyed:
+    def on_gen_start(self):
+        self.has_generation = True
+        # CW generates region in 3x3 neighborhood, seed in 7x7
+        for reg in self.get_neighborhood_regions(3):
+            reg.data_ref_count += 1
+        for reg in self.get_neighborhood_regions(7):
+            reg.seed_ref_count += 1
+
+    def on_gen(self, ret):
+        if not self.missing_data:
             return
-        self.data = f.result()
+        self.missing_data = False
+        self.data = ret
 
         for reg in self.get_neighborhood_regions(3):
             reg.update_data()
-
-        self.region = self.world.create_region(self.get_region_pos())
-        self.region.add(self)
+        for reg in self.get_neighborhood_regions(7):
+            reg.update_seed()
 
         chunk_items = self.data.items
         self.items.extend([item.copy() for item in chunk_items])
@@ -357,18 +368,27 @@ class Chunk:
         pass
 
     def destroy(self):
-        self.destroyed = True
-        self.world.gen_queue.put(('destroy_chunk', self.pos))
-        for reg in self.get_neighborhood_regions(3):
-            reg.decrement_data_ref()
-        for reg in self.get_neighborhood_regions(7):
-            reg.decrement_seed_ref()
+        if self.missing_data and not self.has_generation:
+            self.world.chunk_queue.remove(self)
+
+        if self.has_generation:
+            def destroy_chunk(lock, pos):
+                with lock:
+                    tgen.destroy_chunk(*pos)
+            self.world.call_gen(destroy_chunk, self.world.chunk_lock, self.pos)
+            for reg in self.get_neighborhood_regions(3):
+                reg.decrement_data_ref()
+            for reg in self.get_neighborhood_regions(7):
+                reg.decrement_seed_ref()
+
         self.items = None
         if self.region:
             self.region.remove(self)
         self.region = None
         self.data = None
         self.static_entities = None
+        self.missing_data = False
+        self.has_generation = False
         del self.world.chunks[self.pos]
 
 class World:
@@ -378,7 +398,7 @@ class World:
     entity_class = Entity
     tgen_init = False
     debug_fp = None
-    generating = True
+    generating = None
     step_index = 0
 
     def __init__(self, loop, seed, use_tgen=True, use_entities=True,
@@ -400,6 +420,7 @@ class World:
         self.entity_ids = IDPool(1)
         self.seed = seed
         self.chunk_retire_time = chunk_retire_time
+        self.chunk_queue = []
 
         if debug:
             self.print_debug = print
@@ -408,14 +429,12 @@ class World:
                 pass
             self.print_debug = dummy
 
-
         if not self.use_tgen:
             return
 
         # tgen incoming packets
         self.hits = []
         self.passives = []
-        self.generating = set()
 
         self.chunk_lock = threading.Lock()
         self.gen_queue = Queue()
@@ -457,7 +476,8 @@ class World:
         if retire_time is None:
             return
 
-        chunks = list(self.chunks.values())
+        chunks = set(self.chunks.values())
+        seen = set()
         for chunk in chunks:
             chunk.last_visit += self.dt
 
@@ -467,12 +487,31 @@ class World:
             chunk_pos = get_chunk(entity.pos)
             if not chunk_pos in self.chunks:
                 continue
-            self.get_chunk(chunk_pos).last_visit = 0
+            chunk = self.get_chunk(chunk_pos)
+            seen.add(chunk)
+            chunk.last_visit = 0
 
         for chunk in chunks:
-            if chunk.last_visit < retire_time:
-                continue
-            chunk.destroy()
+            if (chunk.last_visit >= retire_time or
+                    (not chunk.has_generation and chunk not in seen)):
+                chunk.destroy()
+
+    def add_chunk_queue(self, chunk):
+        self.chunk_queue.append(chunk)
+        self.update_chunk_queue()
+
+    def update_chunk_queue(self):
+        if not self.chunk_queue or self.generating:
+            return
+        chunk = self.chunk_queue.pop(0)
+        self.generating = chunk
+        chunk.on_gen_start()
+        def on_chunk(f):
+            data = f.result()
+            chunk.on_gen(data)
+            self.generating = None
+            self.update_chunk_queue()
+        self.call_gen(tgen.generate, *chunk.pos).add_done_callback(on_chunk)
 
     def update(self, dt):
         if not self.tgen_init:
@@ -571,13 +610,6 @@ class World:
         self.chunks[pos] = chunk
         return chunk
 
-    def get_data(self, pos):
-        self.generating.add(pos)
-        f = asyncio.Future()
-        f.add_done_callback(lambda x: self.generating.remove(pos))
-        self.gen_queue.put(('gen', pos, f), False)
-        return f
-
     def get_height(self, pos):
         chunk_pos = get_chunk(pos)
         try:
@@ -590,6 +622,11 @@ class World:
         pos //= constants.BLOCK_SCALE
         return chunk.data.get_height(pos.x, pos.y) * constants.BLOCK_SCALE
 
+    def call_gen(self, func, *args):
+        f = asyncio.Future()
+        self.gen_queue.put((func, args, f))
+        return f
+
     def run_gen(self, seed):
         tgen.initialize(seed, self.data_path)
         self.tgen_init = True
@@ -597,34 +634,18 @@ class World:
             data = self.gen_queue.get()
             if data is None:
                 break
-            cmd = data[0]
-            args = data[1:]
-            self.print_debug(cmd, args)
-            if cmd == 'gen':
-                pos, f = args
-                res = tgen.generate(*pos)
-                def set_result():
-                    try:
-                        f.set_result(res)
-                    except asyncio.InvalidStateError:
+            func, args, f = data
+            self.print_debug(*data)
+            try:
+                res = func(*args)
+                def set_res(f, res):
+                    if f.cancelled():
                         return
-                self.loop.call_soon_threadsafe(set_result)
-            elif cmd == 'destroy_chunk':
-                pos = args[0]
-                with self.chunk_lock:
-                    tgen.destroy_chunk(*pos)
-            elif cmd == 'destroy_region_data':
-                pos = args[0]
-                with self.chunk_lock:
-                    tgen.destroy_region_data(*pos)
-            elif cmd == 'destroy_region_seed':
-                pos = args[0]
-                with self.chunk_lock:
-                    tgen.destroy_region_seed(*pos)
-            elif cmd == 'destroy_region':
-                pos = args[0]
-                with self.chunk_lock:
-                    tgen.destroy_region_seed(*pos)
-                    tgen.destroy_region_data(*pos)
-            else:
-                raise NotImplementedError()
+                    f.set_result(res)
+                self.loop.call_soon_threadsafe(set_res, f, res)
+            except Exception as e:
+                def set_exc(f, e):
+                    if f.cancelled():
+                        return
+                    f.set_exception(e)
+                self.loop.call_soon_threadsafe(set_exc, f, e)
