@@ -362,11 +362,20 @@ static void init_static()
         std::cout << "static: " << p << '\n';
 #endif
         uint32_t dw = get_dword_va(p);
+#ifndef NDEBUG
+        std::cout << "static dw: " << dw << '\n';
+#endif
         if (has_ignore_static(i)) {
             continue;
         }
         void * fp = (void*)get_mem(dw);
+#ifndef NDEBUG
+        std::cout << "fp: " << (uintptr_t)fp << '\n';
+#endif
         call_x86_cdecl_0(fp);
+#ifndef NDEBUG
+        std::cout << "called\n";
+#endif
     }
 
 #ifndef NDEBUG
