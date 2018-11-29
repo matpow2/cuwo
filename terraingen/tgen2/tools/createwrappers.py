@@ -42,6 +42,12 @@ use64
     a:
     mov    dword [rsp + 4], 0x23
     add    dword [rsp], b - a
+
+    ; needed for AMD processors on Windows, for some reason
+    push rax
+    mov ax, 0x2b
+    mov ss, ax
+    pop rax
 use32
     retf
     b:
@@ -81,6 +87,12 @@ use64
     c:
     mov dword [rsp+4], 0x23
     add dword [rsp], d - c
+
+    ; needed for AMD processors on Windows, for some reason
+    push rax
+    mov ax, 0x2b
+    mov ss, ax
+    pop rax
 use32
     retf
     d:
