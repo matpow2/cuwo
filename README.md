@@ -114,6 +114,7 @@ FAQ
 Special thanks
 ==============
 
+```
 9th - help with RE
 Andoryuuta - native RE
 BLACKROCK - for help on passive packet
@@ -134,3 +135,4 @@ Somer - help with some protocol variables
 uwee - protocol variables
 Xaymar - RE and character details
 ZeZeene - web interface for master server
+```
