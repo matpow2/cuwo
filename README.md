@@ -114,38 +114,23 @@ FAQ
 Special thanks
 ==============
 
-Sarcen - help with protocol variables, scripting, anticheat
-
-Perl - protocol RE
-
-ZeZeene - web interface for master server
-
-Lord_Nightmare - terraingen help and support with x86
-
-Kyle - master server JS
-
-MazeXD - master server JS and design
-
-cs475x - website design
-
-Kainzo - testing
-
-uwee - protocol variables
-
-Somer - help with some protocol variables
-
-Favorlock - scripting and commands
-
-SLoW - scripting
-
-DRayX - encrypt.py and protocol RE
-
-MAT4DOR - cub model details
-
-Xaymar - RE and character details
-
-Endimmion - for his generous Pledgie donation
-
-BLACKROCK - for help on passive packet
-
 9th - help with RE
+Andoryuuta - native RE
+BLACKROCK - for help on passive packet
+ChrisMiuchiz - native patches and RE
+cs475x - website design
+DRayX - encrypt.py and protocol RE
+Endimmion - for his generous Pledgie donation
+Favorlock - scripting and commands
+Kainzo - testing
+Kyle - master server JS
+Lord_Nightmare - terraingen help and support with x86
+MAT4DOR - cub model details
+MazeXD - master server JS and design
+Perl - protocol RE
+Sarcen - help with protocol variables, scripting, anticheat
+SLoW - scripting
+Somer - help with some protocol variables
+uwee - protocol variables
+Xaymar - RE and character details
+ZeZeene - web interface for master server
