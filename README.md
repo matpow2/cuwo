@@ -112,6 +112,7 @@ Special thanks
 Andoryuuta - native RE
 BLACKROCK - for help on passive packet
 ChrisMiuchiz - native patches and RE
+ColdMeekly - help with AMD 64bit troubleshooting
 cs475x - website design
 DRayX - encrypt.py and protocol RE
 Endimmion - for his generous Pledgie donation
