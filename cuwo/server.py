@@ -400,6 +400,8 @@ class CubeWorldConnection(asyncio.Protocol):
 
     def on_passive_packet(self, packet):
         self.world.add_passive(packet)
+        # we need to remember who sent each passive so we don't send them back
+        self.server.received_passives[packet] = self
         self.server.update_packet.passive_actions.append(packet)
 
     def on_discover_packet(self, packet):
@@ -515,6 +517,7 @@ class CubeWorldServer:
         # game-related
         self.update_packet = packets.ServerUpdate()
         self.update_packet.reset()
+        self.received_passives = dict()
 
         self.connections = set()
         self.players = MultikeyDict()
@@ -728,7 +731,17 @@ class CubeWorldServer:
         for chunk in self.updated_chunks:
             chunk.on_update(update_packet)
         if not update_packet.is_empty():
-            self.broadcast_packet(update_packet)
+            # passive_actions will be modified for each player, so we must keep a copy of the original
+            old_passives = update_packet.passive_actions
+            # send update to each player
+            for player in self.players.values():
+                # generate only passives actions which were not originally sent by this player
+                update_packet.passive_actions = [x for x in old_passives 
+                                                 if self.received_passives.get(x, None) != player]
+                data = packets.write_packet(update_packet)
+                player.send_data(data)
+                
+        self.received_passives.clear()
         update_packet.reset()
 
         # reset drop times
